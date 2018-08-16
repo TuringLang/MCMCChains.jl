@@ -1,5 +1,9 @@
 module Chain
 
+import Showoff: showoff
+import StatsBase: autocor, autocov, countmap, counts, describe, predict,
+       quantile, sample, sem, summarystats
+
 export Chains
 
 abstract type AbstractChains end
