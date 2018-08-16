@@ -1,0 +1,6 @@
+authors = ["Martin Trapp <trapp.martin@gmail.com>"]
+name = "Chain"
+uuid = "d13f0b2e-a18e-11e8-2327-ede629f4264d"
+version = "0.1.0"
+
+[deps]
