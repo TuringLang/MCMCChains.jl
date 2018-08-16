@@ -2,7 +2,7 @@
 
 #################### Types and Constructors ####################
 
-immutable ChainSummary
+struct ChainSummary
   value::Array{Float64, 3}
   rownames::Vector{AbstractString}
   colnames::Vector{AbstractString}
@@ -36,11 +36,6 @@ end
 
 
 #################### Base Methods ####################
-
-function Base.showall(io::IO, s::ChainSummary)
-  println(io, s.header)
-  show(io, s)
-end
 
 ## write n ' ' characters to io
 wrtsp(io::IO, n) = while (n -= 1) >= 0 write(io, ' ') end

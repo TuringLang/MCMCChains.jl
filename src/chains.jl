@@ -70,7 +70,7 @@ end
 window2inds(c::AbstractChains, window) =
   throw(ArgumentError("$(typeof(window)) iteration indexing is unsupported"))
 window2inds(c::AbstractChains, ::Colon) = window2inds(c, 1:size(c, 1))
-window2inds(c::AbstractChains, window::Range) = begin
+window2inds(c::AbstractChains, window::AbstractRange) = begin
   range = @mapiters(window, c)
   a = max(ceil(Int, first(range)), 1)
   b = step(window)
@@ -80,7 +80,7 @@ end
 
 iters2inds(c::AbstractChains, iters) = iters
 iters2inds(c::AbstractChains, ::Colon) = 1:size(c.value, 1)
-iters2inds(c::AbstractChains, iters::Range) =
+iters2inds(c::AbstractChains, iters::AbstractRange) =
   convert(StepRange{Int, Int}, @mapiters(iters, c))
 iters2inds(c::AbstractChains, iter::Real) = Int(@mapiters(iter, c))
 iters2inds(c::AbstractChains, iters::Vector{T}) where {T<:Real} =

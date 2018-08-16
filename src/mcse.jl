@@ -1,13 +1,13 @@
 #################### Monte Carlo Standard Errors ####################
 
-function mcse{T<:Real}(x::Vector{T}, method::Symbol=:imse; args...)
+function mcse(x::Vector{T}, method::Symbol=:imse; args...) where {T<:Real}
   method == :bm ? mcse_bm(x; args...) :
   method == :imse ? mcse_imse(x) :
   method == :ipse ? mcse_ipse(x) :
     throw(ArgumentError("unsupported mcse method $method"))
 end
 
-function mcse_bm{T<:Real}(x::Vector{T}; size::Integer=100)
+function mcse_bm(x::Vector{T}; size::Integer=100) where {T<:Real}
   n = length(x)
   m = div(n, size)
   m >= 2 ||
@@ -18,7 +18,7 @@ function mcse_bm{T<:Real}(x::Vector{T}; size::Integer=100)
   sem(mbar)
 end
 
-function mcse_imse{T<:Real}(x::Vector{T})
+function mcse_imse(x::Vector{T}) where {T<:Real}
   n = length(x)
   m = div(n - 2, 2)
   ghat = autocov(x, [0, 1])
@@ -32,7 +32,7 @@ function mcse_imse{T<:Real}(x::Vector{T})
   sqrt(value / n)
 end
 
-function mcse_ipse{T<:Real}(x::Vector{T})
+function mcse_ipse(x::Vector{T}) where {T<:Real}
   n = length(x)
   m = div(n - 2, 2)
   ghat = autocov(x, [0, 1])

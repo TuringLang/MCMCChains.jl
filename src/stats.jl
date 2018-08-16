@@ -51,7 +51,7 @@ function describe(io::IO, c::AbstractChains;
   show(io, ps_quantiles)
 end
 
-function hpd{T<:Real}(x::Vector{T}; alpha::Real=0.05)
+function hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
   n = length(x)
   m = max(1, ceil(Int, alpha * n))
 

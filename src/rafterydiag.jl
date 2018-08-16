@@ -1,8 +1,8 @@
 #################### Raftery and Lewis Diagnostic ####################
 
-function rafterydiag{T<:Real}(x::Vector{T}; q::Real=0.025, r::Real=0.005,
+function rafterydiag(x::Vector{T}; q::Real=0.025, r::Real=0.005,
                               s::Real=0.95, eps::Real=0.001,
-                              range::Range=1:length(x))
+                              range::AbstractRange=1:length(x)) where {T<:Real}
   nx = length(x)
   phi = sqrt(2.0) * erfinv(s)
   nmin = ceil(Int, q * (1.0 - q) * (phi / r)^2)
