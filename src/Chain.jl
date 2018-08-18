@@ -3,8 +3,13 @@ module Chain
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
+# import Gadfly: draw, Geom, Guide, Layer, layer, PDF, PGF, Plot, plot, PNG, PS,
+#       render, Scale, SVG, Theme
+import Plots: plot
 
-export Chains
+export Chains, plot, unicodeplots, pyplot, gr
+
+using Plots: Plot, unicodeplots, pyplot, gr, histogram, contour
 
 abstract type AbstractChains end
 
@@ -16,6 +21,8 @@ struct Chains <: AbstractChains
 end
 
 # imports
+include("utils.jl")
+
 include("chains.jl")
 include("chainsummary.jl")
 include("discretediag.jl")
@@ -28,7 +35,6 @@ include("mcse.jl")
 #include("modelstats.jl")
 include("rafterydiag.jl")
 include("stats.jl")
-#include("plot.jl")
-
+include("plot.jl")
 
 end # module
