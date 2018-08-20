@@ -1,0 +1,9 @@
+*.dylib
+*.dll
+*.so
+*.orig
+tmp/
+.vscode/
+
+*.jld
+.ipynb_checkpoints
