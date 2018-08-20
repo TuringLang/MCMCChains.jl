@@ -28,7 +28,7 @@ function Chains(value::Array{T, 3};
   end
 
   v = convert(Array{Float64, 3}, value)
-  Chains(v, range(start, thin, n), AbstractString[names...], Int[chains...])
+  Chains(v, range(start, step = thin, length = n), AbstractString[names...], Int[chains...])
 end
 
 function Chains(value::Matrix{T};
