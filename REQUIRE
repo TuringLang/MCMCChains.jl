@@ -1,3 +1,4 @@
 julia 1.0
 Showoff
 StatsBase
+Plots
