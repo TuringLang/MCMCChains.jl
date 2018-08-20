@@ -1,8 +1,9 @@
 name = "Chain"
 uuid = "d13f0b2e-a18e-11e8-2327-ede629f4264d"
 authors = ["Martin Trapp <trapp.martin@gmail.com>"]
-version = "0.1.0"
+version = "0.0.0"
 
 [deps]
 Showoff = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"

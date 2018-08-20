@@ -5,11 +5,11 @@ import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 # import Gadfly: draw, Geom, Guide, Layer, layer, PDF, PGF, Plot, plot, PNG, PS,
 #       render, Scale, SVG, Theme
-import Plots: plot
+import Plots: plot, histogram, contour
 
-export Chains, plot, unicodeplots, pyplot, gr
+export Chains, plot
 
-using Plots: Plot, unicodeplots, pyplot, gr, histogram, contour
+#using Plots: Plot, unicodeplots, pyplot, gr, histogram, contour
 
 abstract type AbstractChains end
 
