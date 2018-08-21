@@ -7,7 +7,7 @@
 Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations. 
 
 ## Manual
-####Plotting
+### Plotting
 ```julia
 # construct trace plots
 plot(c::AbstractChain, :trace)
