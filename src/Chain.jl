@@ -3,11 +3,11 @@ module Chain
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
-# import Gadfly: draw, Geom, Guide, Layer, layer, PDF, PGF, Plot, plot, PNG, PS,
-#       render, Scale, SVG, Theme
-import Plots: plot, histogram, contour
+using RecipesBase
+import Plots.plot
 
-export Chains, plot
+export Chains
+#export traceplot
 
 #using Plots: Plot, unicodeplots, pyplot, gr, histogram, contour
 
@@ -35,6 +35,7 @@ include("mcse.jl")
 #include("modelstats.jl")
 include("rafterydiag.jl")
 include("stats.jl")
-include("plot.jl")
+#include("plot.jl")
+#include("plot2.jl")
 
 end # module

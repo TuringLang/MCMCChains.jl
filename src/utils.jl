@@ -50,7 +50,7 @@
 
 # isprobvec(p::AbstractVector) = isprobvec(convert(Vector{Float64}, p))
 
-cummean(x::AbstractArray) = mapslices(cummean, x, 1)
+cummean(x::AbstractArray) = mapslices(cummean, x, dims = [1])
 
 function cummean(x::AbstractVector{T}) where T<:Real
   y = similar(x, Float64)
