@@ -64,7 +64,7 @@ savefig("demo-plot.png")
 ```
 The above code results in the following visualization which can be adjusted using the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
-
+![demo_plot](https://user-images.githubusercontent.com/7974003/44415798-325e7380-a569-11e8-82e7-74acf7b1f359.png)
 
 ## License Notice
 Note that this package heavily uses and adapts code from the Mamba.jl package licensed under MIT License, see License.md.
