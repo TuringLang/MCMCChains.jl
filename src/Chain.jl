@@ -4,12 +4,11 @@ import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 using RecipesBase
+using StatPlots
 import Plots.plot
 
 export Chains
-#export traceplot
-
-#using Plots: Plot, unicodeplots, pyplot, gr, histogram, contour
+export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
 
 abstract type AbstractChains end
 
@@ -35,7 +34,7 @@ include("mcse.jl")
 #include("modelstats.jl")
 include("rafterydiag.jl")
 include("stats.jl")
-#include("plot.jl")
+include("plot.jl")
 #include("plot2.jl")
 
 end # module
