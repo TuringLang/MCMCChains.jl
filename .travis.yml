@@ -13,21 +13,10 @@ notifications:
   email: false
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - |
-      julia -e "
-        if VERSION >= v\"0.7.0-DEV.3656\"
-            using Pkg
-        end
-        if VERSION >= v\"0.7.0-DEV.5183\"
-            if any(f->endswith(f, \"Project.toml\"), readdir(pwd()))
-                Pkg.instantiate()
-            else
-                Pkg.develop(pwd())
-            end
-        else
-            Pkg.clone(pwd(), \"Chain\")
-        end
-        Pkg.build(\"Chain\")
+  - julia -e "
+        using Pkg
+        Pkg.clone(pwd(), \"Chain\");
+        Pkg.build(\"Chain\");
         Pkg.test(\"Chain\"; coverage=true)
       "
 after_success:
