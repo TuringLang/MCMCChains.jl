@@ -14,7 +14,7 @@ notifications:
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia -e "
-        using Pkg
+        using Pkg;
         Pkg.clone(pwd(), \"Chain\");
         Pkg.build(\"Chain\");
         Pkg.test(\"Chain\"; coverage=true)
