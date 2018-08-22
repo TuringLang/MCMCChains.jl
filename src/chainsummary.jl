@@ -47,8 +47,8 @@ function Base.show(io::IO, s::ChainSummary)
   ## column name widths
   cnwid = map(length, s.colnames)
   ## s.value as right alignable strings
-  charv = mapslices(showoff, s.value, 1)
-  colwid = 1 + max.(cnwid, vec(maximum(map(length, charv), [1, 3])))
+  charv = mapslices(showoff, s.value, dims = [1])
+  colwid = 1 .+ max.(cnwid, vec(maximum(map(length, charv), dims = [1, 3] )))
   m, n, f = size(charv)
   for k in 1:f
     ## write the column headers centered on the column widths

@@ -26,6 +26,11 @@ function hangartner_inner(Y::AbstractMatrix, m::Int)
   return (n * sum(chi_stat), m_tot)
 end
 
+"""
+  weiss(X::AbstractMatrix) -> (statistic, m_tot, pvalue, ca)
+
+The weiss procedure to assess convergence in MCMC output computes X^2/c and evaluates a p-value from the X^2 distribution with (|R| − 1)(s − 1) degrees of freedom.
+"""
 function weiss(X::AbstractMatrix{U}) where {U<:Any}
   ## number of iterations, number of chains
   n, d = size(X)
@@ -129,27 +134,28 @@ function billingsley_sub(f::Array{Int64,3})
   df = 0.0
   stat = 0.0
 
-  m, d = size(f,2,3)
+  m, d = size(f)[2:3]
 
   # marginal transitions, i.e.
   # number of transitions from each category
-  mf = mapslices(sum, f,2)
+  mf = mapslices(sum, f, dims = [2])
 
   # For each category, number of chains for which
   # that category was present
-  A = vec(mapslices( (x)-> sum(x.>0), mf, 3))
+  A = vec(mapslices( (x)-> sum(x.>0), mf, dims = [3]))
 
   # For each category, number of categories it
   # transitioned to
-  B =  vec(mapslices((x)-> sum(x.>0), mapslices(sum,f,3),2))
+  B =  vec(mapslices((x)-> sum(x.>0), mapslices(sum,f, dims = [3]), dims = [2]))
 
   # transition probabilities in each chain
   P = f ./ mf
 
   # transition probabilities
-  mP = reshape((mapslices(sum,f,3) ./ mapslices(sum,mf,3)), Val{2})
+  mP = (mapslices(sum,f,dims = [3]) ./ mapslices(sum,mf,dims = [3]))
+  mP = reshape(mP, size(mP)[1:2])
 
-  idx = find(A .* B)
+  idx = findall((A .* B) .> 0)
   for j in idx
     #df for billingsley
     df += (A[j] - 1) * (B[j] - 1)
@@ -254,7 +260,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
       phia, chi_stat, m_tot = weiss_sub(u, v, t)
       hot_stat, df, mP = billingsley_sub(f)
 
-      phat = mapslices(sum,u,2)[:,1] / sum(mapslices(sum,u,2))
+      phat = mapslices(sum,u,dims = [2])[:,1] / sum(mapslices(sum,u,dims = [2]))
       ca = (1 + phia) / (1 - phia)
       stat = NaN
       pval = NaN
@@ -363,52 +369,52 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
    
 end
 
-function discretediagplot(c::AbstractChains; frac::Real=0.3, 
-                          method::Symbol=:weiss, nsim::Int=1000,
-                          start_iter::Int=100, step_size::Int=10000)
-                   
-  num_iters, num_vars, num_chains = size(c.value)
-
-  valid_methods = [:hangartner, :weiss, :DARBOOT,
-                   :MCBOOT, :billingsley, :billingsleyBOOT]
-  if !(method in valid_methods)
-    methods_str = join([":$f" for f in valid_methods], ", ")
-    throw(ArgumentError("method must be one of ", methods_str))
-  end
-
-  if !(0.0 < frac < 1.0)
-    throw(ArgumentError("frac must be in (0,1)"))
-  end
-
-  if (start_iter > num_iters ) || (step_size > num_iters)
-    throw(ArgumentError("start_iter, step_size must be less than $num_iters"))
-  end
-
-  V, vals, plot_vals_stat, plot_vals_pval = 
-    discretediag_sub(c, frac, method, nsim, start_iter, step_size)
-
-  p1 = plot(y=vcat([plot_vals_stat[:,j] for j in 1:length(V)]...),
-            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000, 
-                     outer=[length(V)]),
-            Geom.line, 
-            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
-            Guide.ylabel("stat/df",orientation=:vertical),
-            Scale.color_discrete(), Guide.colorkey(title="Variable"),
-            color=repeat(c.names[V], 
-                         inner=[length(start_iter:step_size:num_iters)]))
-
-  p2 = plot(y=vcat([plot_vals_pval[:,j] for j in 1:length(V)]...),
-            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000, 
-                     outer=[length(V)]),
-            Geom.line, 
-            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
-            Guide.ylabel("pval",orientation=:vertical),
-            Scale.color_discrete(), Guide.colorkey(title="Variable"),
-            color=repeat(c.names[V], 
-                         inner=[length(start_iter:step_size:num_iters)]))
-
-  return [p1, p2]
-end
+#function discretediagplot(c::AbstractChains; frac::Real=0.3, 
+#                          method::Symbol=:weiss, nsim::Int=1000,
+#                          start_iter::Int=100, step_size::Int=10000)
+#                   
+#  num_iters, num_vars, num_chains = size(c.value)
+#
+#  valid_methods = [:hangartner, :weiss, :DARBOOT,
+#                   :MCBOOT, :billingsley, :billingsleyBOOT]
+#  if !(method in valid_methods)
+#    methods_str = join([":$f" for f in valid_methods], ", ")
+#    throw(ArgumentError("method must be one of ", methods_str))
+#  end
+#
+#  if !(0.0 < frac < 1.0)
+#    throw(ArgumentError("frac must be in (0,1)"))
+#  end
+#
+#  if (start_iter > num_iters ) || (step_size > num_iters)
+#    throw(ArgumentError("start_iter, step_size must be less than $num_iters"))
+#  end
+#
+#  V, vals, plot_vals_stat, plot_vals_pval = 
+#    discretediag_sub(c, frac, method, nsim, start_iter, step_size)
+#
+#  p1 = plot(y=vcat([plot_vals_stat[:,j] for j in 1:length(V)]...),
+#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000, 
+#                     outer=[length(V)]),
+#            Geom.line, 
+#            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
+#            Guide.ylabel("stat/df",orientation=:vertical),
+#            Scale.color_discrete(), Guide.colorkey(title="Variable"),
+#            color=repeat(c.names[V], 
+#                         inner=[length(start_iter:step_size:num_iters)]))
+#
+#  p2 = plot(y=vcat([plot_vals_pval[:,j] for j in 1:length(V)]...),
+#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000, 
+#                     outer=[length(V)]),
+#            Geom.line, 
+#            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
+#            Guide.ylabel("pval",orientation=:vertical),
+#            Scale.color_discrete(), Guide.colorkey(title="Variable"),
+#            color=repeat(c.names[V], 
+ #                        inner=[length(start_iter:step_size:num_iters)]))
+#
+#  return [p1, p2]
+#end
 
 function discretediag(c::AbstractChains; frac::Real=0.3, 
                       method::Symbol=:weiss, nsim::Int=1000)
@@ -431,7 +437,7 @@ function discretediag(c::AbstractChains; frac::Real=0.3,
 
   hdr = header(c) * "\nChisq Diagnostic:\nEnd Fractions = $frac\n" *
   "method = $method\n"
-  ChainSummary(round.(vals,3)', c.names[V], 
+  ChainSummary(collect(round.(vals, digits = 3)'), c.names[V], 
                convert(Array{AbstractString, 1}, 
                        vcat([["stat", "df", "p-value"] 
                              for k in 1:(num_chains + 1)]...)), hdr)

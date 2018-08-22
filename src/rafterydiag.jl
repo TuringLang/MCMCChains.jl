@@ -7,7 +7,7 @@ function rafterydiag(x::Vector{T}; q::Real=0.025, r::Real=0.005,
   phi = sqrt(2.0) * erfinv(s)
   nmin = ceil(Int, q * (1.0 - q) * (phi / r)^2)
   if nmin > nx
-    warn("At least $nmin samples are needed for specified q, r, and s")
+    @warn "At least $nmin samples are needed for specified q, r, and s"
     kthin = burnin = total = NaN
   else
     dichot = Int[(x .<= quantile(x, q))...]
@@ -49,7 +49,7 @@ end
 function rafterydiag(c::AbstractChains; q::Real=0.025, r::Real=0.005,
                      s::Real=0.95, eps::Real=0.001)
   _, p, m = size(c.value)
-  vals = Array{Float64}(p, 5, m)
+  vals = Array{Float64}(undef, p, 5, m)
   for j in 1:p, k in 1:m
     vals[j, :, k] = rafterydiag(c.value[:, j, k], q=q, r=r, s=s, eps=eps,
                                 range=c.range)

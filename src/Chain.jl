@@ -3,12 +3,19 @@ module Chain
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
+import Plots: plot
+import LinearAlgebra: diag
+
 using RecipesBase
 using StatPlots
-import Plots.plot
+using Distributions
+using SpecialFunctions
 
-export Chains
+export Chains, getindex, setindex!
 export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
+
+# export diagnostics functions
+export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 
 abstract type AbstractChains end
 

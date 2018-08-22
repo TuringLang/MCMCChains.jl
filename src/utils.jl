@@ -48,7 +48,7 @@
 
 #################### Mathematical Operators ####################
 
-# isprobvec(p::AbstractVector) = isprobvec(convert(Vector{Float64}, p))
+isprobvec(p::AbstractVector) = isprobvec(convert(Vector{Float64}, p))
 
 cummean(x::AbstractArray) = mapslices(cummean, x, dims = [1])
 
@@ -63,22 +63,22 @@ function cummean(x::AbstractVector{T}) where T<:Real
 end
 
 # dot(x) = dot(x, x)
-#
+
 # logit(x::Real) = log(x / (1.0 - x))
 # invlogit(x::Real) = 1.0 / (exp(-x) + 1.0)
-#
-# ## Csorgo S and Faraway JJ. The exact and asymptotic distributions of the
-# ## Cramer-von Mises statistic. Journal of the Royal Statistical Society,
-# ## Series B, 58: 221-234, 1996.
-# function pcramer(q::Real)
-#   p = 0.0
-#   for k in 0:3
-#     c1 = 4.0 * k + 1.0
-#     c2 = c1^2 / (16.0 * q)
-#     p += gamma(k + 0.5) / factorial(k) * sqrt(c1) * exp(-c2) * besselk(0.25, c2)
-#   end
-#   p / (pi^1.5 * sqrt(q))
-# end
+
+## Csorgo S and Faraway JJ. The exact and asymptotic distributions of the
+## Cramer-von Mises statistic. Journal of the Royal Statistical Society,
+## Series B, 58: 221-234, 1996.
+function pcramer(q::Real)
+  p = 0.0
+  for k in 0:3
+    c1 = 4.0 * k + 1.0
+    c2 = c1^2 / (16.0 * q)
+    p += gamma(k + 0.5) / factorial(k) * sqrt(c1) * exp(-c2) * besselk(0.25, c2)
+  end
+  p / (pi^1.5 * sqrt(q))
+end
 
 
 #################### Auxiliary Functions ####################

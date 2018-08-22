@@ -61,30 +61,34 @@ function Base.setindex!(c::AbstractChains, value, iters, names, chains)
   setindex!(c.value, value, iters2inds(c, iters), names2inds(c, names), chains)
 end
 
-macro mapiters(iters, c)
-  quote
-    ($(esc(iters)) - first($(esc(c)))) / step($(esc(c))) + 1.0
-  end
-end
+# this is currently broken
+#macro mapiters(iters, c)
+#  quote
+#    ($(esc(iters)) - first($(esc(c)))) / step($(esc(c))) + 1.0
+#  end
+#end
+
+# this is a work around
+mapiters(iters, c) = (collect(iters) .- first(c)) / step(c) .+ 1.
 
 window2inds(c::AbstractChains, window) =
   throw(ArgumentError("$(typeof(window)) iteration indexing is unsupported"))
 window2inds(c::AbstractChains, ::Colon) = window2inds(c, 1:size(c, 1))
 window2inds(c::AbstractChains, window::AbstractRange) = begin
-  range = @mapiters(window, c)
-  a = max(ceil(Int, first(range)), 1)
+  range_ = mapiters(window, c)
+  a = max(ceil(Int, first(range_)), 1)
   b = step(window)
-  c = min(floor(Int, last(range)), size(c.value, 1))
+  c = min(floor(Int, last(range_)), size(c.value, 1))
   a:b:c
 end
 
 iters2inds(c::AbstractChains, iters) = iters
 iters2inds(c::AbstractChains, ::Colon) = 1:size(c.value, 1)
 iters2inds(c::AbstractChains, iters::AbstractRange) =
-  convert(StepRange{Int, Int}, @mapiters(iters, c))
-iters2inds(c::AbstractChains, iter::Real) = Int(@mapiters(iter, c))
+  convert(StepRange{Int, Int}, mapiters(iters, c))
+iters2inds(c::AbstractChains, iter::Real) = Int(mapiters(iter, c))
 iters2inds(c::AbstractChains, iters::Vector{T}) where {T<:Real} =
-  Int[@mapiters(i, c) for i in iters]
+  Int[mapiters(i, c) for i in iters]
 
 names2inds(c::AbstractChains, names) = names
 names2inds(c::AbstractChains, ::Colon) = 1:size(c.value, 2)

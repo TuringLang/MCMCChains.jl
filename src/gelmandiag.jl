@@ -8,18 +8,18 @@ function gelmandiag(c::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
 
   psi = transform ? link(c) : c.value
 
-  S2 = mapslices(cov, psi, [1, 2])
-  W = squeeze(mapslices(mean, S2, 3), 3)
+  S2 = mapslices(cov, psi, dims = [1, 2])
+  W = dropdims(mapslices(mean, S2, dims = [3]), dims = 3)
 
-  psibar = reshape(mapslices(mean, psi, 1), p, m)'
+  psibar = reshape(mapslices(mean, psi, dims = [1]), p, m)'
   B = n * cov(psibar)
 
   w = diag(W)
   b = diag(B)
-  s2 = reshape(mapslices(diag, S2, [1, 2]), p, m)'
-  psibar2 = vec(mapslices(mean, psibar, 1))
+  s2 = reshape(mapslices(diag, S2, dims = [1, 2]), p, m)'
+  psibar2 = vec(mapslices(mean, psibar, dims = [1]))
 
-  var_w = vec(mapslices(var, s2, 1)) / m
+  var_w = vec(mapslices(var, s2, dims = [1])) / m
   var_b = (2.0 / (m - 1)) * b.^2
   var_wb = (n / m) * (diag(cov(s2, psibar.^2))
                       - 2.0 * psibar2 .* diag(cov(s2, psibar)))
@@ -31,7 +31,7 @@ function gelmandiag(c::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
   B_df = m - 1
   W_df = 2.0 * w.^2 ./ var_w
 
-  psrf = Array{Float64}(p, 2)
+  psrf = Array{Float64}(undef, p, 2)
   R_fixed = (n - 1) / n
   R_random_scale = (m + 1) / (m * n)
   q = 1.0 - alpha / 2.0
@@ -56,5 +56,5 @@ function gelmandiag(c::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
   end
 
   hdr = header(c) * "\nGelman, Rubin, and Brooks Diagnostic:"
-  ChainSummary(round.(psrf, 3), psrf_names, psrf_labels, hdr)
+  ChainSummary(round.(psrf, digits = 3), psrf_names, psrf_labels, hdr)
 end
