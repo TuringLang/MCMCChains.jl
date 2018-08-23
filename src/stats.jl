@@ -38,7 +38,7 @@ function changerate(c::AbstractChains)
   ChainSummary(vals, [c.names; "Multivariate"], ["Change Rate"], header(c))
 end
 
-describe(c::AbstractChains; args...) = describe(STDOUT, c; args...)
+describe(c::AbstractChains; args...) = describe(stdout, c; args...)
 
 function describe(io::IO, c::AbstractChains;
                   q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975], etype=:bm, args...)

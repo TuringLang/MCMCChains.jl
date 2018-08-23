@@ -26,7 +26,7 @@ function names2inds(mc::ModelChains, nodekeys::Vector{Symbol})
   inds = Int[]
   missing = Symbol[]
   for key in nodekeys
-    keyinds = indexin(names(mc.model, key), mc.names)
+    keyinds = indexin(names(mc.model, all=key), mc.names)
     0 in keyinds ? push!(missing, key) : append!(inds, keyinds)
   end
   if !isempty(missing)
@@ -46,7 +46,7 @@ function Base.keys(mc::ModelChains, ntype::Symbol, at...)
     keys(m, :dependent) :
     intersect(keys(m, ntype, at...), keys(m, :dependent))
   for key in nodekeys
-    all(name -> name in mc.names, names(m, key)) && push!(values, key)
+    all(name -> name in mc.names, names(m, all=key)) && push!(values, key)
   end
   values
 end
@@ -59,7 +59,7 @@ function link(c::ModelChains)
   inds_queue = 1:length(c.names)
   for key in intersect(keys(c.model, :monitor), keys(c.model, :stochastic))
     node = c.model[key]
-    inds = findin(c.names, names(node))
+    inds = findall(in(names(node)), c.names)
     if !isempty(inds)
       f(x) = unlist(node, relist(node, x), true)
       cc[:, inds, :] = mapslices(f, cc[:, inds, :], 2)

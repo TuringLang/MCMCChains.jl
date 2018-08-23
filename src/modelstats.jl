@@ -81,7 +81,7 @@ function predict(mc::ModelChains,
       join(map(string, outputs), ", ")
     )))
 
-  nodenames = names(m, nodekeys)
+  nodenames = names(m, all=nodekeys)
   relistkeys, updatekeys = getsimkeys(mc, nodekeys)
   inds = names2inds(mc, relistkeys)
 

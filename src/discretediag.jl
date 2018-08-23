@@ -288,7 +288,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
           s = hangartner_inner(Y, m)[1]
           bstats[b] = s 
         end
-        idx = find(!isnan(bstats))
+        idx = findall(!isnan(bstats))
         df0 = mean(bstats[idx])
         pval = sum(stat .<= bstats[idx])/length(idx)
       elseif method == :MCBOOT
@@ -298,7 +298,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
           s = hangartner_inner(Y, m)[1]
           bstats[b] = s 
         end
-        idx = find(!isnan(bstats))
+        idx = findall(!isnan(bstats))
         df0 = mean(bstats[idx])
         pval = sum(stat .<= bstats[idx])/length(idx)
       elseif method == :billingsley
@@ -315,7 +315,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
           (s,sd) = bd_inner(Y, m)[1:2]
           bstats[b] = s/sd
         end
-        idx = find(!isnan(bstats))
+        idx = findall(!isnan(bstats))
         df0 = mean(bstats[idx])
         pval = sum(stat/df .<= bstats[idx])/length(idx)
       else

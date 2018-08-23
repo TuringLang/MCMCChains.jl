@@ -139,12 +139,12 @@ function contourplot(c::AbstractChains; bins::Integer=100, na...)
   n = nrows * nchains
   for i in 1:(nvars - 1)
     X = c.value[:, i, :]
-    qx = linspace(minimum(X) - offset, maximum(X) + offset, bins + 1)
+    qx = range(minimum(X) - offset, stop=maximum(X) + offset, length=bins + 1)
     mx = map(k -> mean([qx[k], qx[k + 1]]), 1:bins)
     idx = Int[findfirst(k -> qx[k] <= x < qx[k + 1], 1:bins) for x in X]
     for j in (i + 1):nvars
       Y = c.value[:, j, :]
-      qy = linspace(minimum(Y) - offset, maximum(Y) + offset, bins + 1)
+      qy = range(minimum(Y) - offset, stop=maximum(Y) + offset, length=bins + 1)
       my = map(k -> mean([qy[k], qy[k + 1]]), 1:bins)
       idy = Int[findfirst(k -> qy[k] <= y < qy[k + 1], 1:bins) for y in Y]
       density = zeros(bins, bins)
