@@ -20,11 +20,11 @@ chn = Chains(val, start = 1, thin = 2)
   @test last(chn) == 999
   @test size(chn) == (999, 4, 2)
   @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
-  @test isa(chn[:,1,:], Chain.AbstractChains)
+  @test isa(chn[:,1,:], MCMCChain.AbstractChains)
   @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
   @test all(chn[:,1,1].value .== val[:,1,1])
   @test all(chn[:,1,2].value .== val[:,1,2])
-  @test all(Chain.indiscretesupport(chn) .== [false, false, false, true])
+  @test all(MCMCChain.indiscretesupport(chn) .== [false, false, false, true])
 end
 
 @testset "function tests" begin
@@ -35,15 +35,15 @@ end
   # - 
 
   # the following tests only check if the function calls work!
-  @test Chain.diag_all(rand(100, 2), :weiss, 1, 1, 1) != nothing
-  @test Chain.diag_all(rand(100, 2), :hangartner, 1, 1, 1) != nothing
-  @test Chain.diag_all(rand(100, 2), :billingsley, 1, 1, 1) != nothing
+  @test MCMCChain.diag_all(rand(100, 2), :weiss, 1, 1, 1) != nothing
+  @test MCMCChain.diag_all(rand(100, 2), :hangartner, 1, 1, 1) != nothing
+  @test MCMCChain.diag_all(rand(100, 2), :billingsley, 1, 1, 1) != nothing
 
-  @test isa(discretediag(chn[:,4,:]), Chain.ChainSummary)
-  @test isa(gelmandiag(chn[:,1,:]), Chain.ChainSummary)
-  @test isa(gewekediag(chn[:,1,:]), Chain.ChainSummary)
-  @test isa(heideldiag(chn[:,1,:]), Chain.ChainSummary)
-  @test isa(rafterydiag(chn[:,1,:]), Chain.ChainSummary)
+  @test isa(discretediag(chn[:,4,:]), MCMCChain.ChainSummary)
+  @test isa(gelmandiag(chn[:,1,:]), MCMCChain.ChainSummary)
+  @test isa(gewekediag(chn[:,1,:]), MCMCChain.ChainSummary)
+  @test isa(heideldiag(chn[:,1,:]), MCMCChain.ChainSummary)
+  @test isa(rafterydiag(chn[:,1,:]), MCMCChain.ChainSummary)
 
 
 end
