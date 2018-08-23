@@ -20,5 +20,5 @@ script:
         Pkg.test(\"MCMCChain\"; coverage=true)
       "
 after_success:
-  - julia -e 'cd(Pkg.dir("MCMCChain")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
+  - julia -e 'using Pkg; cd(Pkg.dir("MCMCChain")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 
