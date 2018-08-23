@@ -1,4 +1,4 @@
-module Chain
+module MCMCChain
 
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,

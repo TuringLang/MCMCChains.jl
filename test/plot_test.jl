@@ -1,4 +1,4 @@
-using Chain
+using MCMCChain
 
 n_iter = 500
 n_name = 3

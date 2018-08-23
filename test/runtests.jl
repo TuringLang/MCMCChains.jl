@@ -1,4 +1,3 @@
-using Chain
 using Test
 
 # run plotting tests

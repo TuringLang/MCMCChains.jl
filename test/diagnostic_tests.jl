@@ -1,4 +1,4 @@
-using Chain
+using MCMCChain
 using Test
 
 ## CHAIN TESTS
