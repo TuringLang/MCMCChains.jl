@@ -1,3 +1,4 @@
+using Plots
 using MCMCChain
 
 n_iter = 500
