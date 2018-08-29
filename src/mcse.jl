@@ -14,7 +14,7 @@ function mcse_bm(x::Vector{T}; size::Integer=100) where {T<:Real}
     throw(ArgumentError(
       "iterations are < $(2 * size) and batch size is > $(div(n, 2))"
     ))
-  mbar = [mean(x[i * size + (1:size)]) for i in 0:(m - 1)]
+  mbar = [mean(x[i * size .+ (1:size)]) for i in 0:(m - 1)]
   sem(mbar)
 end
 

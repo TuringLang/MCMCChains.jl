@@ -13,6 +13,7 @@ using SpecialFunctions
 
 export Chains, getindex, setindex!
 export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
+export describe
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
