@@ -1,11 +1,11 @@
 using RecipesBase
 using StatPlots
-import Plots.plot
 #################### Posterior Plot Recipies ####################
-
-@recipe function plot(c::MCMCChain.AbstractChains, ptypes::Vector{Symbol}; 
-                      maxlag = round(Int, 10 * log10(length(c.range))),
-  barbounds = (0, Inf))
+@recipe function f(c::MCMCChain.AbstractChains,
+                   ptypes::Union{Symbol, AbstractArray{Symbol}};
+                   maxlag = round(Int, 10 * log10(length(c.range))),
+                   barbounds = (0, Inf))
+  ptypes = ptypes isa Symbol ? [ptypes] : ptypes
 
   nrows, nvars, nchains = size(c.value)
   ntypes = length(ptypes)
@@ -70,8 +70,6 @@ import Plots.plot
     end
   end
 end
-
-plot(c::MCMCChain.AbstractChains, ptype::Symbol; args...) = plot(c, [ptype]; args...)
 
 meanplot(c::MCMCChain.AbstractChains; args...) = plot(c, [:mean]; args...)
 autocorplot(c::MCMCChain.AbstractChains; args...) = plot(c, [:autocor]; args...)
