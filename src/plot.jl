@@ -1,6 +1,8 @@
 using RecipesBase
 using StatPlots
 
+export MeanPlot, AutocorPlot, HistogramPlot, DensityPlot, MixedDensityPlot, TracePlot
+
 @userplot MeanPlot
 @userplot AutocorPlot
 @userplot HistogramPlot
@@ -49,7 +51,7 @@ end
   c.value[:, i, :]
 end
 
-@recipe function f(p::MixedDensityPlot)
+@recipe function f(p::MixedDensityPlot, barbounds = (0, Inf))
   c, i = p.args
   discrete = MCMCChain.indiscretesupport(c, barbounds)
   seriestype := discrete[i] ? :histogram : :density
@@ -59,8 +61,7 @@ end
 end
 
 @recipe function f(c::MCMCChain.AbstractChains,
-                   ptypes::AbstractArray;
-                   barbounds = (0, Inf))
+                   ptypes::AbstractArray)
   nrows, nvars, nchains = size(c.value)
   ntypes = length(ptypes)
   layout := (nvars, ntypes)
@@ -79,3 +80,4 @@ end
     end
   end
 end
+
