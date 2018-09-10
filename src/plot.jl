@@ -61,10 +61,11 @@ end
 end
 
 @recipe function f(c::MCMCChain.AbstractChains,
-                   ptypes::AbstractArray)
+                   ptypes::AbstractArray, width=500, height=250)
   nrows, nvars, nchains = size(c.value)
   ntypes = length(ptypes)
   layout := (nvars, ntypes)
+  size := (ntypes*width, nvars*height)
   indices = reshape(1:nvars*ntypes, ntypes, nvars)'
 
   legend --> false
