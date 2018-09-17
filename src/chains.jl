@@ -2,47 +2,77 @@
 
 #################### Constructors ####################
 
-function Chains(iters::Integer, params::Integer;
-               start::Integer=1, thin::Integer=1, chains::Integer=1,
-               names::Vector{T}=AbstractString[]) where {T <: AbstractString}
-  value = Array{Float64}(length(start:thin:iters), params, chains)
-  fill!(value, NaN)
-  Chains(value, start=start, thin=thin, names=names)
+function Chains(
+                iters::Int,
+                params::Int;
+                start = 1,
+                thin = 1,
+                chains = 1,
+                names = AbstractString[]
+               )
+    value = ones(length(start:thin:iters), params, chains)
+    fill!(value, NaN)
+
+    Chains(value, start=start, thin=thin, names=names)
 end
 
-function Chains(value::Array{T, 3};
-               start::Integer=1, thin::Integer=1,
-               names::Vector{U}=AbstractString[], chains::Vector{V}=Int[]) where {T<:Real, U<:AbstractString, V<:Integer}
-  n, p, m = size(value)
+function Chains(
+                value::Array{T, 3};
+                start = 1,
+                thin = 1,
+                names = AbstractString[], 
+                chains = Int[]
+               ) where {T<:Real}
 
-  if isempty(names)
-    names = map(i -> "Param$i", 1:p)
-  elseif length(names) != p
-    throw(DimensionMismatch("size(value, 2) and names length differ"))
-  end
+    n, p, m = size(value)
 
-  if isempty(chains)
-    chains = collect(1:m)
-  elseif length(chains) != m
-    throw(DimensionMismatch("size(value, 3) and chains length differ"))
-  end
+    if isempty(names)
+        names = map(i -> "Param#$i", 1:p)
+    elseif length(names) != p
+        throw(DimensionMismatch("size(value, 2) and names length differ"))
+    end
 
-  v = convert(Array{Float64, 3}, value)
-  Chains(v, range(start, step = thin, length = n), AbstractString[names...], Int[chains...])
+    if isempty(chains)
+        chains = collect(1:m)
+    elseif length(chains) != m
+        throw(DimensionMismatch("size(value, 3) and chains length differ"))
+    end
+
+    v = convert(Array{Union{Missing, Real}, 3}, value)
+    Chains(v, range(start, step = thin, length = n), names, chains)
 end
 
-function Chains(value::Matrix{T};
-               start::Integer=1, thin::Integer=1,
-               names::Vector{U}=AbstractString[], chains::Integer=1) where {T<:Real, U<:AbstractString}
-  Chains(reshape(value, size(value, 1), size(value, 2), 1), start=start,
-         thin=thin, names=names, chains=Int[chains])
+function Chains(
+                value::Matrix{T};
+                start = 1,
+                thin = 1,
+                names = AbstractString[],
+                chains = 1
+               ) where {T<:Real}
+
+    Chains(
+        reshape(value, size(value, 1), size(value, 2), 1), 
+        start=start,
+        thin=thin,
+        names=names,
+        chains=Int[chains]
+    )
 end
 
-function Chains(value::Vector{T};
-               start::Integer=1, thin::Integer=1,
-               names::AbstractString="Param1", chains::Integer=1) where {T<:Real}
-  Chains(reshape(value, length(value), 1, 1), start=start, thin=thin,
-         names=AbstractString[names], chains=Int[chains])
+function Chains(
+                value::Vector{T};
+                start = 1,
+                thin = 1,
+                names = "Param#1",
+                chains = 1
+               ) where {T<:Real}
+    Chains(
+         reshape(value, length(value), 1, 1),
+         start=start,
+         thin=thin,
+         names=AbstractString[names],
+         chains=Int[chains]
+    )
 end
 
 
