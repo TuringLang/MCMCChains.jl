@@ -1,8 +1,13 @@
 #################### Raftery and Lewis Diagnostic ####################
 
-function rafterydiag(x::Vector{T}; q::Real=0.025, r::Real=0.005,
-                              s::Real=0.95, eps::Real=0.001,
-                              range::AbstractRange=1:length(x)) where {T<:Real}
+function rafterydiag(
+                     x::Vector{T};
+                     q = 0.025,
+                     r = 0.005,
+                     s = 0.95,
+                     eps = 0.001,
+                     range = 1:length(x)
+                    ) where {T<:Real}
   nx = length(x)
   phi = sqrt(2.0) * erfinv(s)
   nmin = ceil(Int, q * (1.0 - q) * (phi / r)^2)
@@ -46,15 +51,27 @@ function rafterydiag(x::Vector{T}; q::Real=0.025, r::Real=0.005,
   [kthin, burnin, total, nmin, total / nmin]
 end
 
-function rafterydiag(c::AbstractChains; q::Real=0.025, r::Real=0.005,
-                     s::Real=0.95, eps::Real=0.001)
-  _, p, m = size(c.value)
-  vals = Array{Float64}(undef, p, 5, m)
-  for j in 1:p, k in 1:m
-    vals[j, :, k] = rafterydiag(c.value[:, j, k], q=q, r=r, s=s, eps=eps,
-                                range=c.range)
-  end
-  hdr = header(c) * "\nRaftery and Lewis Diagnostic:\n" *
+function rafterydiag(
+                     c::AbstractChains;
+                     q = 0.025,
+                     r = 0.005,
+                     s = 0.95,
+                     eps = 0.001
+                    )
+    _, p, m = size(c.value)
+    vals = Array{Float64}(undef, p, 5, m)
+    for j in 1:p, k in 1:m
+        vals[j, :, k] = rafterydiag(
+            collect(skipmissing(c.value[:, j, k])),
+            q=q,
+            r=r,
+            s=s,
+            eps=eps,
+            range=c.range
+        )
+    end
+
+    hdr = header(c) * "\nRaftery and Lewis Diagnostic:\n" *
         "Quantile (q) = $q\nAccuracy (r) = $r\nProbability (s) = $s\n"
   ChainSummary(vals, c.names, ["Thinning", "Burn-in", "Total", "Nmin",
                                "Dependence Factor"], hdr)

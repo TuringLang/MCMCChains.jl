@@ -22,7 +22,7 @@ function Chains(
                 thin = 1,
                 names = AbstractString[], 
                 chains = Int[]
-               ) where {T<:Real}
+               ) where {T<:Union{Real, Missing}}
 
     n, p, m = size(value)
 
@@ -48,7 +48,7 @@ function Chains(
                 thin = 1,
                 names = AbstractString[],
                 chains = 1
-               ) where {T<:Real}
+               ) where {T<:Union{Real, Missing}}
 
     Chains(
         reshape(value, size(value, 1), size(value, 2), 1), 
@@ -65,7 +65,7 @@ function Chains(
                 thin = 1,
                 names = "Param#1",
                 chains = 1
-               ) where {T<:Real}
+               ) where {T<:Union{Real, Missing}}
     Chains(
          reshape(value, length(value), 1, 1),
          start=start,
