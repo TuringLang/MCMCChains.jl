@@ -1,26 +1,30 @@
 language: julia
+
 os:
   - linux
-  - osx
+#  - osx
+
 julia:
   - 1.0
   - nightly
+
 matrix:
   allow_failures:
     - julia: nightly
   fast_finish: true
+
 notifications:
   email: false
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e "
-        using Pkg;
-        Pkg.add(\"Plots\");
-        Pkg.add(\"StatPlots\");
-        Pkg.clone(pwd(), \"MCMCChain\");
-        Pkg.build(\"MCMCChain\");
-        Pkg.test(\"MCMCChain\"; coverage=true)
-      "
+
+#script:
+#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#  - julia -e "
+#        using Pkg;
+#        Pkg.clone(pwd(), \"MCMCChain\");
+#        Pkg.build(\"MCMCChain\");
+#        Pkg.test(\"MCMCChain\"; coverage=true)
+#      "
+
 after_success:
   - julia -e 'using Pkg; cd(Pkg.dir("MCMCChain")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 
