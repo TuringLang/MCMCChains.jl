@@ -7,7 +7,6 @@ import StatsBase: autocor, autocov, countmap, counts, describe, predict,
 import LinearAlgebra: diag
 
 using RecipesBase
-using StatPlots
 using Distributions
 using SpecialFunctions
 

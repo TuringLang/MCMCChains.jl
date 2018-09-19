@@ -1,6 +1,3 @@
-using RecipesBase
-using StatPlots
-
 export MeanPlot, AutocorPlot, HistogramPlot, DensityPlot, MixedDensityPlot, TracePlot
 
 @userplot MeanPlot
@@ -60,8 +57,11 @@ end
   c.value[:, i, :]
 end
 
-@recipe function f(c::MCMCChain.AbstractChains,
-                   ptypes::AbstractArray, width=500, height=250)
+@recipe function f(c::MCMCChain.AbstractChains;
+                   ptypes = [TracePlot, MeanPlot], 
+                   width = 500, 
+                   height = 250
+                  )
   nrows, nvars, nchains = size(c.value)
   ntypes = length(ptypes)
   layout := (nvars, ntypes)
@@ -81,4 +81,3 @@ end
     end
   end
 end
-
