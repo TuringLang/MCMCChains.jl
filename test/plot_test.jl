@@ -36,5 +36,8 @@ ps_mixed = mixeddensityplot(chn, 1)
 # plotting combinations
 ps_trace_mean = plot(chn)
 @test isa(ps_trace_mean, Plots.Plot)
+
+#savefig("demo-plot.png")
+
 ps_mixed_auto = plot(chn, ptypes = [MixedDensityPlot, AutocorPlot])
 @test isa(ps_mixed_auto, Plots.Plot)

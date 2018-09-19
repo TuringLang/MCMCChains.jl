@@ -9,7 +9,7 @@ Implementation of Julia types for summarizing MCMC simulations and utility funct
 The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
 ```julia
 using MCMCChain
-using Plots
+using Plots, StatPlots
 
 # Define the experiment
 n_iter = 500
@@ -23,15 +23,15 @@ val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 # construct a Chains object
 chn = Chains(val)
 
-# visualize a density plot / histogram plot, autocorrelation plot and a running average plot
-plot(chn, [:mixeddensity, :autocor, :mean])
+# visualize the MCMC simulation results 
+plot(chn)
 
 # save to a png file
 savefig("demo-plot.png")
 ```
 This code results in the visualization shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
-![demo_plot](https://user-images.githubusercontent.com/7974003/44415798-325e7380-a569-11e8-82e7-74acf7b1f359.png)
+![demo_plot](https://user-images.githubusercontent.com/7974003/45752721-5798dd00-bc0e-11e8-817f-0634f8243c87.png)
 
 ## Manual
 ### Chains type
@@ -85,34 +85,31 @@ rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ### Plotting
 ```julia
 # construct a plot
-plot(c::AbstractChains, type::Symbol)
+plot(c::AbstractChains; ptypes = [TracePlot, MeanPlot])
 
 # construct trace plots
-plot(c::AbstractChains, :trace)
-traceplot(c::AbstractChains)
+plot(c::AbstractChains, ptypes = [TracePlot])
+traceplot(c::AbstractChains, variable::Int)
 
 # construct running average plots
-plot(c::AbstractChains, :mean)
-meanplot(c::AbstractChains)
+plot(c::AbstractChains, ptypes = [MeanPlot])
+meanplot(c::AbstractChains, variable::Int)
 
 # construct density plots
-plot(c::AbstractChains, :density)
-densityplot(c::AbstractChains)
+plot(c::AbstractChains, ptypes = [DensityPlot])
+densityplot(c::AbstractChains, variable::Int)
 
 # construct histogram plots
-plot(c::AbstractChains, :histogram)
-histogramplot(c::AbstractChains)
+plot(c::AbstractChains, ptypes = [HistogramPlot])
+histogramplot(c::AbstractChains, variable::Int)
 
 # construct mixed density plots
-plot(c::AbstractChains, :mixeddensity)
-mixeddensityplot(c::AbstractChains)
+plot(c::AbstractChains, ptypes = [MixedDensityPlot])
+mixeddensityplot(c::AbstractChains, variable::Int)
 
 # construct autocorrelation plots
-plot(c::AbstractChains, :autocor)
-autocorplot(c::AbstractChains)
-
-# combine different kinds of plots, e.g.
-plot(c::AbstractChain, [:trace, :density])
+plot(c::AbstractChains, ptypes = [AutocorPlot])
+autocorplot(c::AbstractChains, variable::Int)
 ```
 
 ## License Notice
