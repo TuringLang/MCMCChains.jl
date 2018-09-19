@@ -27,15 +27,15 @@ end
 @recipe function f(p::HistogramPlot)
   c, i = p.args
   seriestype := :histogram
-  xaxis := "Value"
-  yaxis := "Value"
+  xaxis := "Sample value"
+  yaxis := "Frequency"
   c.value[:, i, :]
 end
 
 @recipe function f(p::DensityPlot)
   c, i = p.args
   seriestype := :density
-  xaxis := "Value"
+  xaxis := "Sample value"
   yaxis := "Density"
   c.value[:, i, :]
 end
@@ -44,7 +44,7 @@ end
   c, i = p.args
   seriestype := :line
   xaxis := "Iteration"
-  yaxis := "Density"
+  yaxis := "Sample value"
   c.value[:, i, :]
 end
 
@@ -52,13 +52,13 @@ end
   c, i = p.args
   discrete = MCMCChain.indiscretesupport(c, barbounds)
   seriestype := discrete[i] ? :histogram : :density
-  xaxis := "Value"
-  yaxis := "Density"
+  xaxis := "Sample value"
+  yaxis := discrete[i] ? "Frequency" : "Density"
   c.value[:, i, :]
 end
 
 @recipe function f(c::MCMCChain.AbstractChains;
-                   ptypes = [TracePlot, MeanPlot], 
+                   ptypes = [TracePlot, MixedDensityPlot], 
                    width = 500, 
                    height = 250
                   )

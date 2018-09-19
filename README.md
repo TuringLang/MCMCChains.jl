@@ -31,7 +31,7 @@ savefig("demo-plot.png")
 ```
 This code results in the visualization shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
-![demo_plot](https://user-images.githubusercontent.com/7974003/45752721-5798dd00-bc0e-11e8-817f-0634f8243c87.png)
+![demo_plot](https://user-images.githubusercontent.com/7974003/45754225-fb848780-bc12-11e8-8652-e292e5e7c75c.png)
 
 ## Manual
 ### Chains type
@@ -85,7 +85,7 @@ rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ### Plotting
 ```julia
 # construct a plot
-plot(c::AbstractChains; ptypes = [TracePlot, MeanPlot])
+plot(c::AbstractChains; ptypes = [TracePlot, MixedDensityPlot])
 
 # construct trace plots
 plot(c::AbstractChains, ptypes = [TracePlot])
