@@ -8,12 +8,13 @@ function Chains(
                 start = 1,
                 thin = 1,
                 chains = 1,
-                names = AbstractString[]
+                names = AbstractString[],
+                uniquenames = Dict{Symbol, Int}()
                )
     value = ones(length(start:thin:iters), params, chains)
     fill!(value, NaN)
 
-    Chains(value, start=start, thin=thin, names=names)
+    Chains(value, start=start, thin=thin, names=names, uniquenames = uniquenames)
 end
 
 function Chains(
@@ -21,6 +22,7 @@ function Chains(
                 start = 1,
                 thin = 1,
                 names = AbstractString[], 
+                uniquenames = Dict{Symbol, Int}(),
                 chains = Int[]
                ) where {T<:Union{Real, Missing}}
 
@@ -31,6 +33,12 @@ function Chains(
     elseif length(names) != p
         throw(DimensionMismatch("size(value, 2) and names length differ"))
     end
+    
+    if isempty(uniquenames)
+        uniquenames = Dict(gensym() => i for i in 1:p)
+    elseif length(uniquenames) != p
+        throw(DimensionMismatch("size(value, 2) and uniquenames length differ"))
+    end
 
     if isempty(chains)
         chains = collect(1:m)
@@ -39,7 +47,7 @@ function Chains(
     end
 
     v = convert(Array{Union{Missing, Real}, 3}, value)
-    Chains(v, range(start, step = thin, length = n), names, chains)
+    Chains(v, range(start, step = thin, length = n), names, uniquenames, chains)
 end
 
 function Chains(
@@ -47,6 +55,7 @@ function Chains(
                 start = 1,
                 thin = 1,
                 names = AbstractString[],
+                uniquenames = Dict{Symbol, Int}(),
                 chains = 1
                ) where {T<:Union{Real, Missing}}
 
@@ -55,6 +64,7 @@ function Chains(
         start=start,
         thin=thin,
         names=names,
+        uniquenames = uniquenames,
         chains=Int[chains]
     )
 end
@@ -64,6 +74,7 @@ function Chains(
                 start = 1,
                 thin = 1,
                 names = "Param#1",
+                uniquenames = gensym(),
                 chains = 1
                ) where {T<:Union{Real, Missing}}
     Chains(
@@ -71,6 +82,7 @@ function Chains(
          start=start,
          thin=thin,
          names=AbstractString[names],
+         uniquenames = Dict{Symbol, Int}(uniquenames => 1),
          chains=Int[chains]
     )
 end

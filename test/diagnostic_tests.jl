@@ -34,9 +34,9 @@ end
     # - 
 
     # the following tests only check if the function calls work!
-#    @test MCMCChain.diag_all(rand(100, 2), :weiss, 1, 1, 1) != nothing
-#    @test MCMCChain.diag_all(rand(100, 2), :hangartner, 1, 1, 1) != nothing
-#    @test MCMCChain.diag_all(rand(100, 2), :billingsley, 1, 1, 1) != nothing
+    @test MCMCChain.diag_all(rand(100, 2), :weiss, 1, 1, 1) != nothing
+    @test MCMCChain.diag_all(rand(100, 2), :hangartner, 1, 1, 1) != nothing
+    @test MCMCChain.diag_all(rand(100, 2), :billingsley, 1, 1, 1) != nothing
 
     @test isa(discretediag(chn[:,4,:]), MCMCChain.ChainSummary)
     @test isa(gelmandiag(chn[:,1,:]), MCMCChain.ChainSummary)

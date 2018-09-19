@@ -19,28 +19,30 @@ function mcse_bm(x::Vector{T}; size::Integer=100) where {T<:Real}
 end
 
 function mcse_imse(x::Vector{T}) where {T<:Real}
-  n = length(x)
-  m = div(n - 2, 2)
-  ghat = autocov(x, [0, 1])
-  Ghat = sum(ghat)
-  value = -ghat[1] + 2 * Ghat
-  for i in 1:m
-    Ghat = min(Ghat, sum(autocov(x, [2 * i, 2 * i + 1])))
-    Ghat > 0 || break
-    value += 2 * Ghat
-  end
-  sqrt(value / n)
+    n = length(x)
+    m = div(n - 2, 2)
+    x_ = map(Float64, x)
+    ghat = autocov(x_, [0, 1])
+    Ghat = sum(ghat)
+    value = -ghat[1] + 2 * Ghat
+    for i in 1:m
+        Ghat = min(Ghat, sum(autocov(x_, [2 * i, 2 * i + 1])))
+        Ghat > 0 || break
+        value += 2 * Ghat
+    end
+    return sqrt(value / n)
 end
 
 function mcse_ipse(x::Vector{T}) where {T<:Real}
-  n = length(x)
-  m = div(n - 2, 2)
-  ghat = autocov(x, [0, 1])
-  value = ghat[1] + 2 * ghat[2]
-  for i in 1:m
-    Ghat = sum(autocov(x, [2 * i, 2 * i + 1]))
-    Ghat > 0 || break
-    value += 2 * Ghat
-  end
-  sqrt(value / n)
+    n = length(x)
+    m = div(n - 2, 2)
+    x_ = map(Float64, x)
+    ghat = autocov(x_, [0, 1])
+    value = ghat[1] + 2 * ghat[2]
+    for i in 1:m
+        Ghat = sum(autocov(x_, [2 * i, 2 * i + 1]))
+        Ghat > 0 || break
+        value += 2 * Ghat
+    end
+    return sqrt(value / n)
 end

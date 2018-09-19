@@ -1,6 +1,6 @@
 #################### Mathematical Operators ####################
 
-function cummean(x::AbstractArray{T}) where T<:Real
+function cummean(x::AbstractArray) where T<:Real
     return mapslices(cummean, x, dims = [1])
 end
 

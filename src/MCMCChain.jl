@@ -31,9 +31,10 @@ Parameters:
 - `chains`: List of chain ids
 """
 struct Chains <: AbstractChains
-    value::Array{Float64, 3}
+    value::Array{Union{Missing, T}, 3}
     range::AbstractRange{Int}
-    names::Vector{AbstractString}
+    names::Vector
+    uniquenames::Dict{Symbol, Int}
     chains::Vector{Int}
 end
 
