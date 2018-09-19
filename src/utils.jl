@@ -1,15 +1,21 @@
 #################### Mathematical Operators ####################
 
-function cummean(x::AbstractArray) where T<:Real
-    return mapslices(cummean, x, dims = [1])
+function cummean(x::AbstractArray)
+    return mapslices(cummean, x, dims = 1)
 end
 
-function cummean(x::AbstractVector{T}) where T<:Real
-    y = similar(x, T)
-    xs = zero(T)
+function cummean(x::AbstractVector)
+    y = similar(x, Float64)
+    xs = 0.0
+    fill!(y, xs)
+
+    c = 0
     for i in 1:length(x)
-        xs += x[i]
-        y[i] = xs / i
+        if !ismissing(x[i])
+            c += 1
+            xs += x[i]
+        end
+        y[i] = xs / c
     end
     return y
 end
