@@ -19,11 +19,21 @@ export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 
 abstract type AbstractChains end
 
+"""
+    Chains type
+
+Parameters:
+
+- `value`: `iterations × variables × chains` Data array
+- `range`: Range describing the iterations (considering thinning)
+- `names`: List of variable names (strings)
+- `chains`: List of chain ids
+"""
 struct Chains <: AbstractChains
-	value::Array{Float64, 3}
-	range::AbstractRange{Int}
-	names::Vector{AbstractString}
-	chains::Vector{Int}
+    value::Array{Float64, 3}
+    range::AbstractRange{Int}
+    names::Vector{AbstractString}
+    chains::Vector{Int}
 end
 
 # imports
