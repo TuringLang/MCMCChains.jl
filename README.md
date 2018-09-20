@@ -11,43 +11,50 @@ The following simple example illustrates how to use Chain to visually summarize 
 using MCMCChain
 using Plots, StatPlots
 
+theme(:ggplot2);
+
 # Define the experiment
-n_iter = 500
-n_name = 3
-n_chain = 2
+n_iter = 500;
+n_name = 3;
+n_chain = 2;
 
 # experiment results
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
-val = hcat(val, rand(1:2, n_iter, 1, n_chain))
+val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]';
+val = hcat(val, rand(1:2, n_iter, 1, n_chain));
 
 # construct a Chains object
-chn = Chains(val)
+chn = Chains(val);
 
 # visualize the MCMC simulation results 
-plot(chn)
+p1 = plot(chn)
+p1 = plot(chn, colordim = :parameter)
 
 # save to a png file
-savefig("demo-plot.png")
-```
-This code results in the visualization shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
+savefig(p1, "demo-plot-parameters.png")
+savefig(p2, "demo-plot-chains.png")
 
-![demo_plot](https://user-images.githubusercontent.com/7974003/45754225-fb848780-bc12-11e8-8652-e292e5e7c75c.png)
+```
+This code results in the visualizations shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
+
+![demo_plot](https://user-images.githubusercontent.com/7974003/45815306-2254c380-bcd0-11e8-8964-5d3ed0f08dc5.png)
+![demo_plot](https://user-images.githubusercontent.com/7974003/45815329-31d40c80-bcd0-11e8-81a3-49e2d0abef16.png)
+
 
 ## Manual
 ### Chains type
 ```julia
 # construction of a Chains object
-Chains(iterations::Int, params::Int; 
-		start = 1, thin = 1, chains = 1, 
-		names = String[])
-		
+Chains(iterations::Int, params::Int;
+    start = 1, thin = 1, chains = 1, 
+    names = String[])
+
 # construction of a Chains object using an 
 # iteration * params * chains
 # array (values).
 Chains(values::Array{T, 3}; 
-		start = 1, thin = 1, chains = 1, 
-		names = String[])
-		
+    start = 1, thin = 1, chains = 1, 
+    names = String[])
+
 # Indexing a Chains object
 chn = Chains(...)
 chn_param1 = chn[:,2,:] # returns a new Chains object for parameter 2
@@ -86,30 +93,31 @@ rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ```julia
 # construct a plot
 plot(c::AbstractChains; ptypes = [TracePlot, MixedDensityPlot])
+plot(c::AbstractChains; [:trace, :mixeddensity]) # deprecated
 
 # construct trace plots
-plot(c::AbstractChains, ptypes = [TracePlot])
-traceplot(c::AbstractChains, variable::Int)
+plot(c::AbstractChains, TracePlot)
+plot(c::AbstractChains, :trace) # deprecated
 
 # construct running average plots
-plot(c::AbstractChains, ptypes = [MeanPlot])
-meanplot(c::AbstractChains, variable::Int)
+plot(c::AbstractChains, MeanPlot)
+plot(c::AbstractChains, :mean) # deprecated
 
 # construct density plots
-plot(c::AbstractChains, ptypes = [DensityPlot])
-densityplot(c::AbstractChains, variable::Int)
+plot(c::AbstractChains, DensityPlot)
+plot(c::AbstractChains, :density) # deprecated
 
 # construct histogram plots
-plot(c::AbstractChains, ptypes = [HistogramPlot])
-histogramplot(c::AbstractChains, variable::Int)
+plot(c::AbstractChains, HistogramPlot)
+plot(c::AbstractChains, :histogram) # deprecated
 
 # construct mixed density plots
-plot(c::AbstractChains, ptypes = [MixedDensityPlot])
-mixeddensityplot(c::AbstractChains, variable::Int)
+plot(c::AbstractChains, MixedDensityPlot)
+plot(c::AbstractChains, :mixeddensity) # deprecated
 
 # construct autocorrelation plots
-plot(c::AbstractChains, ptypes = [AutocorPlot])
-autocorplot(c::AbstractChains, variable::Int)
+plot(c::AbstractChains, AutocorPlot)
+plot(c::AbstractChains, :autocor) # deprecated
 ```
 
 ## License Notice
