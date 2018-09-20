@@ -27,7 +27,7 @@ chn = Chains(val);
 
 # visualize the MCMC simulation results 
 p1 = plot(chn)
-p1 = plot(chn, colordim = :parameter)
+p2 = plot(chn, colordim = :parameter)
 
 # save to a png file
 savefig(p1, "demo-plot-parameters.png")
@@ -36,9 +36,12 @@ savefig(p2, "demo-plot-chains.png")
 ```
 This code results in the visualizations shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
-![demo_plot](https://user-images.githubusercontent.com/7974003/45815306-2254c380-bcd0-11e8-8964-5d3ed0f08dc5.png)
-![demo_plot](https://user-images.githubusercontent.com/7974003/45815329-31d40c80-bcd0-11e8-81a3-49e2d0abef16.png)
+Summarize parameters | Summarize chains
+:-------------------------:|:-------------------------:
+`plot(chn; colordim = :chain)` | `plot(chn; colordim = :parameter)`
+![p1](https://user-images.githubusercontent.com/7974003/45822242-f0009180-bce2-11e8-8fa0-a97c8732400f.png)  |  ![p2](https://user-images.githubusercontent.com/7974003/45822249-f131be80-bce2-11e8-8dd3-42db7d58abd9.png)
 
+ 
 
 ## Manual
 ### Chains type
