@@ -3,10 +3,11 @@ module MCMCChain
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
-#import Plots: plot
 import LinearAlgebra: diag
 
 using RecipesBase
+import RecipesBase: plot
+
 using Distributions
 using SpecialFunctions
 
