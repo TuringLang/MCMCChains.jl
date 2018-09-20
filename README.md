@@ -9,45 +9,55 @@ Implementation of Julia types for summarizing MCMC simulations and utility funct
 The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
 ```julia
 using MCMCChain
-using Plots
+using Plots, StatPlots
+
+theme(:ggplot2);
 
 # Define the experiment
-n_iter = 500
-n_name = 3
-n_chain = 2
+n_iter = 500;
+n_name = 3;
+n_chain = 2;
 
 # experiment results
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
-val = hcat(val, rand(1:2, n_iter, 1, n_chain))
+val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]';
+val = hcat(val, rand(1:2, n_iter, 1, n_chain));
 
 # construct a Chains object
-chn = Chains(val)
+chn = Chains(val);
 
-# visualize a density plot / histogram plot, autocorrelation plot and a running average plot
-plot(chn, [:mixeddensity, :autocor, :mean])
+# visualize the MCMC simulation results 
+p1 = plot(chn)
+p2 = plot(chn, colordim = :parameter)
 
 # save to a png file
-savefig("demo-plot.png")
-```
-This code results in the visualization shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
+savefig(p1, "demo-plot-parameters.png")
+savefig(p2, "demo-plot-chains.png")
 
-![demo_plot](https://user-images.githubusercontent.com/7974003/44415798-325e7380-a569-11e8-82e7-74acf7b1f359.png)
+```
+This code results in the visualizations shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
+
+Summarize parameters | Summarize chains
+:-------------------------:|:-------------------------:
+`plot(chn; colordim = :chain)` | `plot(chn; colordim = :parameter)`
+![p1](https://user-images.githubusercontent.com/7974003/45822242-f0009180-bce2-11e8-8fa0-a97c8732400f.png)  |  ![p2](https://user-images.githubusercontent.com/7974003/45822249-f131be80-bce2-11e8-8dd3-42db7d58abd9.png)
+
+ 
 
 ## Manual
 ### Chains type
 ```julia
 # construction of a Chains object
-Chains(iterations::Int, params::Int; 
-		start = 1, thin = 1, chains = 1, 
-		names = String[])
-		
+Chains(iterations::Int, params::Int;
+    start = 1, thin = 1, chains = 1, 
+    names = String[])
+
 # construction of a Chains object using an 
 # iteration * params * chains
 # array (values).
 Chains(values::Array{T, 3}; 
-		start = 1, thin = 1, chains = 1, 
-		names = String[])
-		
+    start = 1, thin = 1, chains = 1, 
+    names = String[])
+
 # Indexing a Chains object
 chn = Chains(...)
 chn_param1 = chn[:,2,:] # returns a new Chains object for parameter 2
@@ -85,34 +95,32 @@ rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ### Plotting
 ```julia
 # construct a plot
-plot(c::AbstractChains, type::Symbol)
+plot(c::AbstractChains; ptypes = [TracePlot, MixedDensityPlot])
+plot(c::AbstractChains; [:trace, :mixeddensity]) # deprecated
 
 # construct trace plots
-plot(c::AbstractChains, :trace)
-traceplot(c::AbstractChains)
+plot(c::AbstractChains, TracePlot)
+plot(c::AbstractChains, :trace) # deprecated
 
 # construct running average plots
-plot(c::AbstractChains, :mean)
-meanplot(c::AbstractChains)
+plot(c::AbstractChains, MeanPlot)
+plot(c::AbstractChains, :mean) # deprecated
 
 # construct density plots
-plot(c::AbstractChains, :density)
-densityplot(c::AbstractChains)
+plot(c::AbstractChains, DensityPlot)
+plot(c::AbstractChains, :density) # deprecated
 
 # construct histogram plots
-plot(c::AbstractChains, :histogram)
-histogramplot(c::AbstractChains)
+plot(c::AbstractChains, HistogramPlot)
+plot(c::AbstractChains, :histogram) # deprecated
 
 # construct mixed density plots
-plot(c::AbstractChains, :mixeddensity)
-mixeddensityplot(c::AbstractChains)
+plot(c::AbstractChains, MixedDensityPlot)
+plot(c::AbstractChains, :mixeddensity) # deprecated
 
 # construct autocorrelation plots
-plot(c::AbstractChains, :autocor)
-autocorplot(c::AbstractChains)
-
-# combine different kinds of plots, e.g.
-plot(c::AbstractChain, [:trace, :density])
+plot(c::AbstractChains, AutocorPlot)
+plot(c::AbstractChains, :autocor) # deprecated
 ```
 
 ## License Notice

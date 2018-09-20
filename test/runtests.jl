@@ -1,4 +1,13 @@
 using Test
+using Pkg
+
+# add packages
+to_add = [
+    PackageSpec(name="Plots"),
+    PackageSpec(name="StatPlots"),
+]
+
+Pkg.add(to_add)
 
 # run plotting tests
 include("plot_test.jl")

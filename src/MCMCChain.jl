@@ -3,11 +3,11 @@ module MCMCChain
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
-#import Plots: plot
 import LinearAlgebra: diag
 
 using RecipesBase
-using StatPlots
+import RecipesBase: plot
+
 using Distributions
 using SpecialFunctions
 
@@ -20,11 +20,21 @@ export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 
 abstract type AbstractChains end
 
+"""
+    Chains type
+
+Parameters:
+
+- `value`: `iterations × variables × chains` Data array
+- `range`: Range describing the iterations (considering thinning)
+- `names`: List of variable names (strings)
+- `chains`: List of chain ids
+"""
 struct Chains <: AbstractChains
-	value::Array{Float64, 3}
-	range::AbstractRange{Int}
-	names::Vector{AbstractString}
-	chains::Vector{Int}
+    value::Array{Float64, 3}
+    range::AbstractRange{Int}
+    names::Vector{AbstractString}
+    chains::Vector{Int}
 end
 
 # imports
