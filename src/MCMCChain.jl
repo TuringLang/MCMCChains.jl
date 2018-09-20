@@ -30,7 +30,7 @@ Parameters:
 - `names`: List of variable names (strings)
 - `chains`: List of chain ids
 """
-struct Chains <: AbstractChains
+struct Chains{T<:Real} <: AbstractChains
     value::Array{Union{Missing, T}, 3}
     range::AbstractRange{Int}
     names::Vector

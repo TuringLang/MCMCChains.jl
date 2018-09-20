@@ -1,41 +1,54 @@
 #################### Posterior Statistics ####################
 
-function autocor(c::AbstractChains; lags::Vector=[1, 5, 10, 50],
+function autocor(c::AbstractChains; 
+                 lags::Vector=[1, 5, 10, 50],
                  relative::Bool=true)
-  if relative
-    lags *= step(c)
-  elseif any(lags .% step(c) .!= 0)
-    throw(ArgumentError("lags do not correspond to thinning interval"))
-  end
-  labels = map(x -> "Lag " * string(x), lags)
-  vals = mapslices(x -> autocor(x, lags)', c.value, dims = [1, 2])
-  ChainSummary(vals, c.names, labels, header(c))
+    if relative
+        lags *= step(c)
+    elseif any(lags .% step(c) .!= 0)
+        throw(ArgumentError("lags do not correspond to thinning interval"))
+    end
+    labels = map(x -> "Lag " * string(x), lags)
+    
+    (niter, nvar, nchain) = size(c.value)
+
+    vals = zeros(nvar, length(lags), nchain)
+    for k in 1:nchain
+        for v in 1:nvar
+            # skipping missing values
+            # skipping should be done inside of autocor to ensure correct alignment
+            # TODO: modify autocor to deal with missing values
+            x = convert(Vector{Float64}, collect(skipmissing(c.value[:,v,k])))
+            vals[v, :, k] = autocor(x, lags)
+        end
+    end
+    ChainSummary(vals, c.names, labels, header(c))
 end
 
 function cor(c::AbstractChains)
-  ChainSummary(cor(combine(c)), c.names, c.names, header(c))
+    ChainSummary(cor(combine(c)), c.names, c.names, header(c))
 end
 
 function changerate(c::AbstractChains)
-  n, p, m = size(c.value)
-  r = zeros(Float64, p, 1, 1)
-  r_mv = 0.0
-  delta = Array{Bool}(p)
-  for k in 1:m
-    prev = c.value[1, :, k]
-    for i in 2:n
-      for j in 1:p
-        x = c.value[i, j, k]
-        dx = x != prev[j]
-        r[j] += dx
-        delta[j] = dx
-        prev[j] = x
-      end
-      r_mv += any(delta)
+    n, p, m = size(c.value)
+    r = zeros(Float64, p, 1, 1)
+    r_mv = 0.0
+    delta = Array{Bool}(p)
+    for k in 1:m
+        prev = c.value[1, :, k]
+        for i in 2:n
+            for j in 1:p
+                x = c.value[i, j, k]
+                dx = x != prev[j]
+                r[j] += dx
+                delta[j] = dx
+                prev[j] = x
+            end
+            r_mv += any(delta)
+        end
     end
-  end
-  vals = round.([r; r_mv] / (m * (n - 1)), 3)
-  ChainSummary(vals, [c.names; "Multivariate"], ["Change Rate"], header(c))
+    vals = round.([r; r_mv] / (m * (n - 1)), 3)
+    ChainSummary(vals, [c.names; "Multivariate"], ["Change Rate"], header(c))
 end
 
 describe(c::AbstractChains; args...) = describe(stdout, c; args...)
