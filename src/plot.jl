@@ -68,11 +68,13 @@ end
     if colordim == :parameter
         title := "Chain $(c.chains[i])"
         labels := c.names
-        c.value[:, :, i]
+        nvars = size(c)[2]
+        [collect(skipmissing(c.value[:, k, i])) for k in 1:nvars]
     else
         title := c.names[i]
         labels := map(k -> "Chain $(c.chains[k])", 1:size(c)[3])
-        c.value[:, i, :]
+        nchains = size(c)[3]
+        [collect(skipmissing(c.value[:, i, k])) for k in 1:nchains]
     end
 end
 
@@ -87,11 +89,13 @@ end
     if colordim == :parameter
         title := "Chain $(c.chains[i])"
         labels := c.names
-        c.value[:, :, i]
+        nvars = size(c)[2]
+        [collect(skipmissing(c.value[:, k, i])) for k in 1:nvars]
     else
         title := c.names[i]
         labels := map(k -> "Chain $(c.chains[k])", 1:size(c)[3])
-        c.value[:, i, :]
+        nchains = size(c)[3]
+        [collect(skipmissing(c.value[:, i, k])) for k in 1:nchains]
     end
 end
 
@@ -126,14 +130,16 @@ end
     if colordim == :parameter
         title := "Chain $(c.chains[i])"
         labels := c.names
-        c.value[:, :, i]
+        nvars = size(c)[2]
+        [collect(skipmissing(c.value[:, k, i])) for k in 1:nvars]
     else
         seriestype := discrete[i] ? :histogram : :density
         yaxis := discrete[i] ? "Frequency" : "Density"
         fillalpha := discrete[i] ? 0.7 : 1.0
         title := c.names[i]
         labels := map(k -> "Chain $(c.chains[k])", 1:size(c)[3])
-        c.value[:, i, :]
+        nchains = size(c)[3]
+        [collect(skipmissing(c.value[:, i, k])) for k in 1:nchains]
     end
 end
 
