@@ -419,6 +419,8 @@ end
 function discretediag(c::AbstractChains; frac::Real=0.3, 
                       method::Symbol=:weiss, nsim::Int=1000)
 
+    @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
+
   num_iters, num_vars, num_chains = size(c.value)
 
   valid_methods = [:hangartner, :weiss, :DARBOOT,
