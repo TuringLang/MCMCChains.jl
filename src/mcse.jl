@@ -8,14 +8,15 @@ function mcse(x::Vector{T}, method::Symbol=:imse; args...) where {T<:Real}
 end
 
 function mcse_bm(x::Vector{T}; size::Integer=100) where {T<:Real}
-  n = length(x)
-  m = div(n, size)
-  m >= 2 ||
-    throw(ArgumentError(
-      "iterations are < $(2 * size) and batch size is > $(div(n, 2))"
-    ))
-  mbar = [mean(x[i * size .+ (1:size)]) for i in 0:(m - 1)]
-  sem(mbar)
+    n = length(x)
+    m = div(n, size)
+    if m < 2
+        throw(
+         ArgumentError("iterations are < $(2 * size) and batch size is > $(div(n, 2))")
+        )
+    end
+    mbar = [mean(x[i * size .+ (1:size)]) for i in 0:(m - 1)]
+    return sem(mbar)
 end
 
 function mcse_imse(x::Vector{T}) where {T<:Real}
