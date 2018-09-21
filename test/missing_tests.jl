@@ -25,8 +25,8 @@ end
 end
 
 @testset "diagnostic functions" begin
-    chn = Chains(randn(1000, 2, 2))
-    
+    chn = Chains(randn(5000, 2, 2))
+
     # Add missing values.
     chn_m = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
 
@@ -35,7 +35,7 @@ end
     
     @test all(gewekediag(chn).value .== gewekediag(chn_m).value)
     @test all(heideldiag(chn).value .== heideldiag(chn_m).value)
-    @test_broken all(rafterydiag(chn).value .== rafterydiag(chn_m).value)
+    @test all(rafterydiag(chn).value .== rafterydiag(chn_m).value)
 
     @test_throws AssertionError discretediag(chn_m)
 end
