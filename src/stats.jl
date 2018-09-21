@@ -69,7 +69,6 @@ function describe(io::IO,
     print(io, "Quantiles:\n")
     show(io, ps_quantiles)
 
-    return ps_stats, ps_quantiles
 end
 
 function hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
