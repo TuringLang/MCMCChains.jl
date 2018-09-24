@@ -12,13 +12,15 @@ end
     chn = Chains(randn(1000, 2, 2))
 
     # Call describe without missing values.
-    (s1, s2) = describe(devnull, chn)
+    describe(devnull, chn)
+    s1, s2 = summarystats(chn), quantile(chn)
 
     # Add missing values.
     chn = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
 
     # Call describe with missing values.
-    (m1, m2) = describe(devnull, chn)
+    describe(devnull, chn)
+    m1, m2 = summarystats(chn), quantile(chn)
 
     @test all(s1.value[:,1:4,:] .== m1.value[:,1:4,:])
     @test all(s1.value[:,5,:] .+ 1 .== m1.value[:,5,:])
