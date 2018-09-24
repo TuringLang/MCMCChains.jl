@@ -13,14 +13,14 @@ end
 
     # Call describe without missing values.
     describe(devnull, chn)
-    s1, s2 = summarystats(chn), quantile(chn)
+    s1, s2 = MCMCChain.summarystats(chn), MCMCChain.quantile(chn)
 
     # Add missing values.
     chn = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
 
     # Call describe with missing values.
     describe(devnull, chn)
-    m1, m2 = summarystats(chn), quantile(chn)
+    m1, m2 = MCMCChain.summarystats(chn), MCMCChain.quantile(chn)
 
     @test all(s1.value[:,1:4,:] .== m1.value[:,1:4,:])
     @test all(s1.value[:,5,:] .+ 1 .== m1.value[:,5,:])
