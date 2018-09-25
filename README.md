@@ -3,13 +3,13 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/1av8osv0099nqw8m/branch/master?svg=true)](https://ci.appveyor.com/project/trappmartin/mcmcchain-jl/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/TuringLang/MCMCChain.jl/badge.svg?branch=master)](https://coveralls.io/github/TuringLang/MCMCChain.jl?branch=master)
 
-Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations. 
+Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations.
 
 ## Example
 The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
 ```julia
 using MCMCChain
-using Plots, StatPlots
+using StatPlots
 
 theme(:ggplot2);
 
@@ -25,7 +25,7 @@ val = hcat(val, rand(1:2, n_iter, 1, n_chain));
 # construct a Chains object
 chn = Chains(val);
 
-# visualize the MCMC simulation results 
+# visualize the MCMC simulation results
 p1 = plot(chn)
 p2 = plot(chn, colordim = :parameter)
 
@@ -41,21 +41,21 @@ Summarize parameters | Summarize chains
 `plot(chn; colordim = :chain)` | `plot(chn; colordim = :parameter)`
 ![p1](https://user-images.githubusercontent.com/7974003/45822242-f0009180-bce2-11e8-8fa0-a97c8732400f.png)  |  ![p2](https://user-images.githubusercontent.com/7974003/45822249-f131be80-bce2-11e8-8dd3-42db7d58abd9.png)
 
- 
+
 
 ## Manual
 ### Chains type
 ```julia
 # construction of a Chains object
 Chains(iterations::Int, params::Int;
-    start = 1, thin = 1, chains = 1, 
+    start = 1, thin = 1, chains = 1,
     names = String[])
 
-# construction of a Chains object using an 
+# construction of a Chains object using an
 # iteration * params * chains
 # array (values).
-Chains(values::Array{T, 3}; 
-    start = 1, thin = 1, chains = 1, 
+Chains(values::Array{T, 3};
+    start = 1, thin = 1, chains = 1,
     names = String[])
 
 # Indexing a Chains object
@@ -95,31 +95,44 @@ rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ### Plotting
 ```julia
 # construct a plot
-plot(c::AbstractChains; ptypes = [TracePlot, MixedDensityPlot])
+plot(c::AbstractChains, seriestype = (:traceplot, :mixeddensity))
+plot(c::AbstractChains; ptypes = [TracePlot, MixedDensityPlot]) # deprecated
 plot(c::AbstractChains; [:trace, :mixeddensity]) # deprecated
 
 # construct trace plots
-plot(c::AbstractChains, TracePlot)
+traceplot(c::AbstractChains)
+plot(c::AbstractChains, seriestype = :traceplot)
+plot(c::AbstractChains, TracePlot) # deprecated
 plot(c::AbstractChains, :trace) # deprecated
 
 # construct running average plots
-plot(c::AbstractChains, MeanPlot)
+meanplot(c::AbstractChains)
+plot(c::AbstractChains, seriestype = :meanplot)
+plot(c::AbstractChains, MeanPlot) # deprecated
 plot(c::AbstractChains, :mean) # deprecated
 
 # construct density plots
-plot(c::AbstractChains, DensityPlot)
+density(c::AbstractChains)
+plot(c::AbstractChains, seriestype = :density)
+plot(c::AbstractChains, DensityPlot) # deprecated
 plot(c::AbstractChains, :density) # deprecated
 
 # construct histogram plots
-plot(c::AbstractChains, HistogramPlot)
+histogram(c::AbstractChains)
+plot(c::AbstractChains, seriestype = :histogram)
+plot(c::AbstractChains, HistogramPlot) # deprecated
 plot(c::AbstractChains, :histogram) # deprecated
 
 # construct mixed density plots
-plot(c::AbstractChains, MixedDensityPlot)
+mixeddensity(c::AbstractChains)
+plot(c::AbstractChains, seriestype = :mixeddensity)
+plot(c::AbstractChains, MixedDensityPlot) # deprecated
 plot(c::AbstractChains, :mixeddensity) # deprecated
 
 # construct autocorrelation plots
-plot(c::AbstractChains, AutocorPlot)
+autocorplot(c::AbstractChains)
+plot(c::AbstractChains, seriestype = :autocorplot)
+plot(c::AbstractChains, AutocorPlot) # deprecated
 plot(c::AbstractChains, :autocor) # deprecated
 ```
 

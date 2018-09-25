@@ -1,5 +1,4 @@
 using Test
-using Plots
 using StatPlots
 using MCMCChain
 
@@ -19,7 +18,7 @@ ps_trace = traceplot(chn, 1)
 ps_mean = meanplot(chn, 1)
 @test isa(ps_mean, Plots.Plot)
 
-ps_density = densityplot(chn, 1)
+ps_density = density(chn, 1)
 @test isa(ps_density, Plots.Plot)
 
 ps_autocor = autocorplot(chn, 1)
@@ -27,10 +26,10 @@ ps_autocor = autocorplot(chn, 1)
 
 #ps_contour = plot(chn, :contour)
 
-ps_hist = histogramplot(chn, 1)
+ps_hist = histogram(chn, 1)
 @test isa(ps_hist, Plots.Plot)
 
-ps_mixed = mixeddensityplot(chn, 1)
+ps_mixed = mixeddensity(chn, 1)
 @test isa(ps_mixed, Plots.Plot)
 
 # plotting combinations
@@ -39,5 +38,5 @@ ps_trace_mean = plot(chn)
 
 savefig("demo-plot.png")
 
-ps_mixed_auto = plot(chn, ptypes = [MixedDensityPlot, AutocorPlot])
+ps_mixed_auto = plot(chn, seriestype = (:mixeddensity, :autocorplot))
 @test isa(ps_mixed_auto, Plots.Plot)
