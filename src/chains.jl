@@ -1,6 +1,55 @@
 #################### Chains ####################
 
 #################### Constructors ####################
+function Chains(
+                value::Array{T, 3};
+                start = 1,
+                thin = 1,
+                names = AbstractString[],
+                uniquenames = Dict{Symbol, Int}(),
+                chains = Int[]
+               ) where {T<:Real}
+
+    return Chains(convert(Array{Union{Missing, T}, 3}, value);
+                start = start,
+                thin = thin,
+                names = names,
+                uniquenames = uniquenames,
+                chains = chains
+                )
+end
+
+function Chains(
+                value::Array{Union{T, Missing}, 3};
+                start = 1,
+                thin = 1,
+                names = AbstractString[],
+                uniquenames = Dict{Symbol, Int}(),
+                chains = Int[]
+               ) where {T<:Real}
+
+    n, p, m = size(value)
+
+    if isempty(names)
+        names = map(i -> "Param#$i", 1:p)
+    elseif length(names) != p
+        throw(DimensionMismatch("size(value, 2) and names length differ"))
+    end
+
+    if isempty(uniquenames)
+        uniquenames = Dict(gensym() => i for i in 1:p)
+    elseif length(uniquenames) != p
+        throw(DimensionMismatch("size(value, 2) and uniquenames length differ"))
+    end
+
+    if isempty(chains)
+        chains = collect(1:m)
+    elseif length(chains) != m
+        throw(DimensionMismatch("size(value, 3) and chains length differ"))
+    end
+
+    Chains{T}(zero(T), value, range(start, step = thin, length = n), names, uniquenames, chains)
+end
 
 function Chains(
                 iters::Int,
@@ -18,39 +67,6 @@ function Chains(
 end
 
 function Chains(
-                value::Array{T, 3};
-                start = 1,
-                thin = 1,
-                names = AbstractString[], 
-                uniquenames = Dict{Symbol, Int}(),
-                chains = Int[]
-               ) where {T<:Union{Real, Missing}}
-
-    n, p, m = size(value)
-
-    if isempty(names)
-        names = map(i -> "Param#$i", 1:p)
-    elseif length(names) != p
-        throw(DimensionMismatch("size(value, 2) and names length differ"))
-    end
-    
-    if isempty(uniquenames)
-        uniquenames = Dict(gensym() => i for i in 1:p)
-    elseif length(uniquenames) != p
-        throw(DimensionMismatch("size(value, 2) and uniquenames length differ"))
-    end
-
-    if isempty(chains)
-        chains = collect(1:m)
-    elseif length(chains) != m
-        throw(DimensionMismatch("size(value, 3) and chains length differ"))
-    end
-
-    v = convert(Array{Union{Missing, Real}, 3}, value)
-    Chains(v, range(start, step = thin, length = n), names, uniquenames, chains)
-end
-
-function Chains(
                 value::Matrix{T};
                 start = 1,
                 thin = 1,
@@ -60,7 +76,7 @@ function Chains(
                ) where {T<:Union{Real, Missing}}
 
     Chains(
-        reshape(value, size(value, 1), size(value, 2), 1), 
+        reshape(value, size(value, 1), size(value, 2), 1),
         start=start,
         thin=thin,
         names=names,
@@ -256,6 +272,7 @@ end
 
 function header(c::AbstractChains)
   string(
+    "Log model evidence = $(c.logevidence)\n",
     "Iterations = $(first(c)):$(last(c))\n",
     "Thinning interval = $(step(c))\n",
     "Chains = $(join(map(string, c.chains), ","))\n",

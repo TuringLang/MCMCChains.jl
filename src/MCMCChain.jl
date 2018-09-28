@@ -31,6 +31,7 @@ Parameters:
 - `chains`: List of chain ids
 """
 struct Chains{T<:Real} <: AbstractChains
+    logevidence::T
     value::Array{Union{Missing, T}, 3}
     range::AbstractRange{Int}
     names::Vector
