@@ -235,7 +235,7 @@ function Base.keys(c::AbstractChains)
   c.names
 end
 
-function Base.show(io::IO, c::AbstractChains)
+function Base.show(io::IO, c::Chains)
   print(io, "Object of type \"$(summary(c))\"\n\n")
   println(io, header(c))
   show(io, c.value)
