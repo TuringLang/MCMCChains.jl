@@ -116,15 +116,12 @@ function Base.getindex(c::Chains, window, names, chains)
 end
 
 function Base.setindex!(c::AbstractChains, value, iters, names, chains)
-  setindex!(c.value, value, iters2inds(c, iters), names2inds(c, names), chains)
+    nids = names2inds(c, names)
+    if nothing in nids
+        @error "Could not find $names in Chain."
+    end
+    setindex!(c.value, value, iters2inds(c, iters), nids, chains)
 end
-
-# this is currently broken
-#macro mapiters(iters, c)
-#  quote
-#    ($(esc(iters)) - first($(esc(c)))) / step($(esc(c))) + 1.0
-#  end
-#end
 
 # this is a work around
 mapiters(iters, c) = (collect(iters) .- first(c)) / step(c) .+ 1.
@@ -272,7 +269,7 @@ end
 
 function header(c::AbstractChains)
   string(
-    "Log model evidence = $(c.logevidence)\n",
+    # "Log model evidence = $(c.logevidence)\n", #FIXME: Uncomment.
     "Iterations = $(first(c)):$(last(c))\n",
     "Thinning interval = $(step(c))\n",
     "Chains = $(join(map(string, c.chains), ","))\n",
