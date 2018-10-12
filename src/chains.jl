@@ -107,9 +107,9 @@ end
 #################### Indexing ####################
 
 function Base.getindex(c::Chains, window, names, chains)
-  inds1 = window2inds(c, window)
-  inds2 = names2inds(c, names)
-  Chains(c.value[inds1, inds2, chains],
+    inds1 = window2inds(c, window)
+    inds2 = names2inds(c, names)
+    return Chains(c.value[inds1, inds2, chains],
          start = first(c) + (first(inds1) - 1) * step(c),
          thin = step(inds1) * step(c), names = c.names[inds2],
          chains = c.chains[chains])

@@ -38,7 +38,12 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity)
 
     if st == :mixeddensity
         discrete = MCMCChain.indiscretesupport(c, barbounds)
-        st = (discrete[i] && colordim == :chain) ? :histogram : :density
+        st = if colordim == :chain
+            discrete[i] ? :histogram : :density
+        else
+            # NOTE: It might make sense to overlay histograms and density plots here.
+            :density
+        end
         seriestype := st
     end
 
@@ -57,14 +62,14 @@ end
 @recipe function f(p::_DensityPlot)
     xaxis --> "Sample value"
     yaxis --> "Density"
-    [collect(skipmissing(p.val[:,k])) for k in axes(p.val, 2)]
+    [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
 end
 
 @recipe function f(p::_HistogramPlot)
     xaxis --> "Sample value"
     yaxis --> "Frequency"
     fillalpha --> 0.7
-    [collect(skipmissing(p.val[:,k])) for k in axes(p.val, 2)]
+    [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
 end
 
 @recipe function f(p::_MeanPlot)
@@ -100,7 +105,7 @@ end
     ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
     @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
 
-    nrows, nvars, nchains = size(c.value)
+    nrows, nvars, nchains = size(c)
     ntypes = length(ptypes)
     N = colordim == :chain ? nvars : nchains
     layout := (N, ntypes)
