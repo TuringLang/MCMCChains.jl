@@ -115,12 +115,12 @@ function Base.getindex(c::Chains, window, names, chains)
          chains = c.chains[chains])
 end
 
-function Base.setindex!(c::AbstractChains, value, iters, names, chains)
+function Base.setindex!(c::AbstractChains, value, iter::Int, names, chain::Int)
     nids = names2inds(c, names)
     if nothing in nids
         @error "Could not find $names in Chain."
     end
-    setindex!(c.value, value, iters2inds(c, iters), nids, chains)
+    setindex!(c.value, value, iters2inds(c, iter), nids..., chain)
 end
 
 # this is a work around
