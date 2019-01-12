@@ -32,8 +32,11 @@ function heideldiag(c::AbstractChains;
                     etype = :imse,
                     args...
                    )
+    # Preallocate.
     _, p, m = size(c.value)
     vals = Array{Float64}(undef, p, 6, m)
+
+    # Perform tests.
     for j in 1:p, k in 1:m
         vals[j, :, k] = heideldiag(
                             collect(skipmissing(c.value[:, j, k])),
@@ -43,9 +46,16 @@ function heideldiag(c::AbstractChains;
                             start=first(c.range);
                             args...
                            )
-  end
-  hdr = header(c) * "\nHeidelberger and Welch Diagnostic:\n" *
+    end
+
+    # Set header.
+    hdr = header(c) * "\nHeidelberger and Welch Diagnostic:\n" *
         "Target Halfwidth Ratio = $eps\nAlpha = $alpha\n"
-  ChainSummary(vals, c.names, ["Burn-in", "Stationarity", "p-value", "Mean",
+
+    # Round values.
+    vals = map(x -> round(x, digits=4), vals)
+
+    # Make a ChainSummary object.
+    ChainSummary(vals, c.names, ["Burn-in", "Stationarity", "p-value", "Mean",
                                "Halfwidth", "Test"], hdr)
 end
