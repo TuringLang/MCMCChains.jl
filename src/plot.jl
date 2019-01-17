@@ -137,3 +137,12 @@ function plot(c::AbstractChains, psym::Symbol; args...)
     @warn "This syntax is deprecated, please use plot(c, seriestype = $(translationdict[psym])) instead"
     return plot(c; seriestype = psym, args...)
 end
+
+@userplot ChainCorner
+@recipe function f(cs::ChainCorner)
+    chain, syms = cs.args
+
+    label --> permutedims(syms)
+    compact --> true
+    RecipesBase.recipetype(:cornerplot, reduce(hcat, chain[s] for s in syms))
+end
