@@ -101,28 +101,32 @@ end
 
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
 
-    # sanity check
-    ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
-    @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
+    if ptypes != :corner
+        # sanity check
+        ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
+        @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
 
-    nrows, nvars, nchains = size(c)
-    ntypes = length(ptypes)
-    N = colordim == :chain ? nvars : nchains
-    layout := (N, ntypes)
-    size --> (ntypes*width, N*height)
-    indices = reshape(1:N*ntypes, ntypes, N)'
+        nrows, nvars, nchains = size(c)
+        ntypes = length(ptypes)
+        N = colordim == :chain ? nvars : nchains
+        layout := (N, ntypes)
+        size --> (ntypes*width, N*height)
+        indices = reshape(1:N*ntypes, ntypes, N)'
 
-    legend --> false
+        legend --> false
 
-    for (j, ptype) in enumerate(ptypes)
-        for i in 1:N
-            @series begin
-                subplot := indices[i, j]
-                colordim := colordim
-                seriestype := ptype
-                c, i
+        for (j, ptype) in enumerate(ptypes)
+            for i in 1:N
+                @series begin
+                    subplot := indices[i, j]
+                    colordim := colordim
+                    seriestype := ptype
+                    c, i
+                end
             end
         end
+    else
+        Corner(c)
     end
 end
 
@@ -138,11 +142,12 @@ function plot(c::AbstractChains, psym::Symbol; args...)
     return plot(c; seriestype = psym, args...)
 end
 
-@userplot ChainCorner
-@recipe function f(cs::ChainCorner)
-    chain, syms = cs.args
+struct Corner; c; end
 
+@recipe function f(corner::Corner)
+    syms = keys(corner.c)
     label --> permutedims(syms)
     compact --> true
-    RecipesBase.recipetype(:cornerplot, reduce(hcat, chain[s] for s in syms))
+    size --> (800, 800)
+    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[s] for s in Symbol.(syms)))
 end
