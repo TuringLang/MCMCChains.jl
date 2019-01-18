@@ -3,6 +3,7 @@
 @shorthands autocorplot
 @shorthands mixeddensity
 @shorthands traceplot
+@shorthands corner
 
 struct _TracePlot; c; val; end
 struct _MeanPlot; c; val;  end
