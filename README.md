@@ -118,7 +118,7 @@ mixeddensity(c::AbstractChains)
 autocorplot(c::AbstractChains)
 
 # make a cornerplot (requires StatPlots) of parameters in a Chain:
-corner(c::AbstractChains, parameters = [:A, :B])
+corner(c::AbstractChains, [:A, :B])
 ```
 
 ## License Notice
