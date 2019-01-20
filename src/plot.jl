@@ -22,6 +22,8 @@ const translationdict = Dict(
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity)
 
+@recipe f(c::AbstractChains, s::Symbol) = c, indexin([s], keys(c))
+
 @recipe function f(c::AbstractChains, i::Int; colordim = :chain, barbounds = (0, Inf), maxlag = nothing)
     st = get(plotattributes, :seriestype, :traceplot)
 
@@ -95,6 +97,7 @@ end
 end
 
 @recipe function f(c::MCMCChain.AbstractChains;
+                   parameters = Symbol[],
                    width = 500,
                    height = 250,
                    colordim = :chain
@@ -127,7 +130,8 @@ end
             end
         end
     else
-        Corner(c)
+        params = isempty(parameters) ? Symbol.(keys(c)) : Symbol.(parameters)
+        Corner(c, params)
     end
 end
 
@@ -143,12 +147,14 @@ function plot(c::AbstractChains, psym::Symbol; args...)
     return plot(c; seriestype = psym, args...)
 end
 
-struct Corner; c; end
+struct Corner
+    c
+    parameters
+end
 
 @recipe function f(corner::Corner)
-    syms = keys(corner.c)
-    label --> permutedims(syms)
+    label --> permutedims(corner.parameters)
     compact --> true
-    size --> (800, 800)
-    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[s] for s in Symbol.(syms)))
+    size --> (600, 600)
+    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[s] for s in corner.parameters))
 end
