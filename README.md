@@ -96,44 +96,29 @@ rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ```julia
 # construct a plot
 plot(c::AbstractChains, seriestype = (:traceplot, :mixeddensity))
-plot(c::AbstractChains; ptypes = [TracePlot, MixedDensityPlot]) # deprecated
-plot(c::AbstractChains; [:trace, :mixeddensity]) # deprecated
 
 # construct trace plots
-traceplot(c::AbstractChains)
 plot(c::AbstractChains, seriestype = :traceplot)
-plot(c::AbstractChains, TracePlot) # deprecated
-plot(c::AbstractChains, :trace) # deprecated
+# or for all seriestypes use the alternative shorthand syntax
+traceplot(c::AbstractChains)
 
 # construct running average plots
 meanplot(c::AbstractChains)
-plot(c::AbstractChains, seriestype = :meanplot)
-plot(c::AbstractChains, MeanPlot) # deprecated
-plot(c::AbstractChains, :mean) # deprecated
 
 # construct density plots
 density(c::AbstractChains)
-plot(c::AbstractChains, seriestype = :density)
-plot(c::AbstractChains, DensityPlot) # deprecated
-plot(c::AbstractChains, :density) # deprecated
 
 # construct histogram plots
 histogram(c::AbstractChains)
-plot(c::AbstractChains, seriestype = :histogram)
-plot(c::AbstractChains, HistogramPlot) # deprecated
-plot(c::AbstractChains, :histogram) # deprecated
 
 # construct mixed density plots
 mixeddensity(c::AbstractChains)
-plot(c::AbstractChains, seriestype = :mixeddensity)
-plot(c::AbstractChains, MixedDensityPlot) # deprecated
-plot(c::AbstractChains, :mixeddensity) # deprecated
 
 # construct autocorrelation plots
 autocorplot(c::AbstractChains)
-plot(c::AbstractChains, seriestype = :autocorplot)
-plot(c::AbstractChains, AutocorPlot) # deprecated
-plot(c::AbstractChains, :autocor) # deprecated
+
+# make a cornerplot (requires StatPlots) of parameters in a Chain:
+corner(c::AbstractChains, parameters = [:A, :B])
 ```
 
 ## License Notice
