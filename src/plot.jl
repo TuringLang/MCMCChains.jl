@@ -125,7 +125,6 @@ end
         for (j, ptype) in enumerate(ptypes)
             for (i, par) in enumerate(parameters)
                 @series begin
-                    @show parameters
                     subplot := indices[i, j]
                     colordim := colordim
                     seriestype := ptype
