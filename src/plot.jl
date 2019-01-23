@@ -3,6 +3,7 @@
 @shorthands autocorplot
 @shorthands mixeddensity
 @shorthands traceplot
+@shorthands corner
 
 struct _TracePlot; c; val; end
 struct _MeanPlot; c; val;  end
@@ -19,7 +20,9 @@ const translationdict = Dict(
                         :autocorplot => _AutocorPlot
                       )
 
-const supportedplots = push!(collect(keys(translationdict)), :mixeddensity)
+const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
+
+@recipe f(c::AbstractChains, s::Symbol) = c, [s]
 
 @recipe function f(c::AbstractChains, i::Int; colordim = :chain, barbounds = (0, Inf), maxlag = nothing)
     st = get(plotattributes, :seriestype, :traceplot)
@@ -93,47 +96,56 @@ end
     p.c.range, p.val
 end
 
-@recipe function f(c::MCMCChain.AbstractChains;
+@recipe function f(c::MCMCChain.AbstractChains, parameters::AbstractVector{Symbol}; colordim = :chain)
+    colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
+    ret = indexin(parameters, Symbol.(keys(c)))
+    any(isnothing, ret) && error("Parameter not found")
+    c, Int.(ret)
+end
+
+@recipe function f(c::MCMCChain.AbstractChains,
+                   parameters::AbstractVector{<:Integer} = Int[];
                    width = 500,
                    height = 250,
                    colordim = :chain
                   )
-
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
-
-    # sanity check
     ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
     @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
-
-    nrows, nvars, nchains = size(c)
     ntypes = length(ptypes)
-    N = colordim == :chain ? nvars : nchains
-    layout := (N, ntypes)
-    size --> (ntypes*width, N*height)
-    indices = reshape(1:N*ntypes, ntypes, N)'
+    nrows, nvars, nchains = size(c)
+    isempty(parameters) && (parameters = colordim == :chain ? (1:nvars) : (1:nchains))
+    N = length(parameters)
 
-    legend --> false
-
-    for (j, ptype) in enumerate(ptypes)
-        for i in 1:N
-            @series begin
-                subplot := indices[i, j]
-                colordim := colordim
-                seriestype := ptype
-                c, i
+    if !(:corner ∈ ptypes)
+        layout := (N, ntypes)
+        size --> (ntypes*width, N*height)
+        indices = reshape(1:N*ntypes, ntypes, N)'
+        legend --> false
+        for (j, ptype) in enumerate(ptypes)
+            for (i, par) in enumerate(parameters)
+                @series begin
+                    subplot := indices[i, j]
+                    colordim := colordim
+                    seriestype := ptype
+                    c, par
+                end
             end
         end
+    else
+        length(ptypes) > 1 && error(":corner is not compatible with multiple seriestypes")
+        Corner(c, Symbol.(keys(c)[parameters]))
     end
 end
 
-function plot(c::AbstractChains, psyms::Vector{Symbol}; args...)
-    @assert all(map(psym -> haskey(translationdict, psym), psyms))
-    @warn "This syntax is deprecated, please use plot(c; seriestype = $psyms) instead."
-    return plot(c; seriestype = map(psym -> translationdict[psym], psyms))
+struct Corner
+    c
+    parameters
 end
 
-function plot(c::AbstractChains, psym::Symbol; args...)
-    @assert haskey(translationdict, psym)
-    @warn "This syntax is deprecated, please use plot(c, seriestype = $(translationdict[psym])) instead"
-    return plot(c; seriestype = psym, args...)
+@recipe function f(corner::Corner)
+    label --> permutedims(corner.parameters)
+    compact --> true
+    size --> (600, 600)
+    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[s] for s in corner.parameters))
 end
