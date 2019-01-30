@@ -99,7 +99,7 @@ end
 @recipe function f(c::MCMCChain.AbstractChains, parameters::AbstractVector{Symbol}; colordim = :chain)
     colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
     ret = indexin(parameters, Symbol.(keys(c)))
-    any(isnothing, ret) && error("Parameter not found")
+    any(y -> y == nothing, ret) && error("Parameter not found")
     c, Int.(ret)
 end
 
