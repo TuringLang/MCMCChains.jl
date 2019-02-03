@@ -76,7 +76,10 @@ function Chains(
                ) where {T<:Union{Real, Missing}}
 
     Chains(
-        reshape(value, size(value, 1), size(value, 2), 1),
+        convert(
+            Array{Union{Missing, T}, 3},
+            reshape(value, size(value, 1), size(value, 2), 1)
+        ),
         start=start,
         thin=thin,
         names=names,

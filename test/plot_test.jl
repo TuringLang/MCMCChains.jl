@@ -1,5 +1,5 @@
 using Test
-using StatPlots
+using StatsPlots
 using MCMCChain
 
 n_iter = 500

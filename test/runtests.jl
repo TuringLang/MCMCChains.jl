@@ -4,7 +4,7 @@ using Pkg
 # add packages
 to_add = [
     PackageSpec(name="Plots"),
-    PackageSpec(name="StatPlots"),
+    PackageSpec(name="StatsPlots"),
 ]
 
 Pkg.add(to_add)
