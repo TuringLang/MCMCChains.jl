@@ -4,12 +4,14 @@ import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 import LinearAlgebra: diag
+import Base: sort
 
 using RecipesBase
 import RecipesBase: plot
 
 using Distributions
 using SpecialFunctions
+using AxisArrays
 
 export Chains, getindex, setindex!
 export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
@@ -31,12 +33,9 @@ Parameters:
 - `chains`: List of chain ids
 """
 struct Chains{T<:Real} <: AbstractChains
+    value::AxisArray
     logevidence::T
-    value::Array{Union{Missing, T}, 3}
-    range::AbstractRange{Int}
-    names::Vector
-    uniquenames::Dict{Symbol, Int}
-    chains::Vector{Int}
+    name_map::Dict{Any, Vector}
 end
 
 # imports

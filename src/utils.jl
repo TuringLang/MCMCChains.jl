@@ -31,3 +31,24 @@ function pcramer(q::Real)
     end
     return p / (pi^1.5 * sqrt(q))
 end
+
+# This sorting stack was sourced from https://rosettacode.org/wiki/Natural_sorting#Julia
+splitbynum(x) = split(x, r"(?<=\D)(?=\d)|(?<=\d)(?=\D)")
+numstringtonum(arr) = [(n = tryparse(Float32, e)) != nothing ? n : e for e in arr]
+function natural(x, y)
+    xarr = numstringtonum(splitbynum(x))
+    yarr = numstringtonum(splitbynum(y))
+    for i in 1:min(length(xarr), length(yarr))
+        if typeof(xarr[i]) != typeof(yarr[i])
+            a = string(xarr[i]); b = string(yarr[i])
+        else
+             a = xarr[i]; b = yarr[i]
+        end
+        if a == b
+            continue
+        else
+            return a < b
+        end
+    end
+    return length(xarr) < length(yarr)
+end

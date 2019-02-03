@@ -28,12 +28,12 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     st = get(plotattributes, :seriestype, :traceplot)
 
     if colordim == :parameter
-        title := "Chain $(c.chains[i])"
-        labels := c.names
+        title := "Chain $(chains(c)[i])"
+        labels := c
         val = c.value[:, :, i]
     elseif colordim == :chain
-        title := c.names[i]
-        labels := map(k -> "Chain $(c.chains[k])", 1:size(c)[3])
+        title := names(c)[i]
+        labels := map(k -> "Chain $(chains(c)[k])", 1:size(c)[3])
         val = c.value[:, i, :]
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
@@ -51,14 +51,14 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     end
 
     if st == :autocorplot
-        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(c.range))) : maxlag)
+        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
         ac = MCMCChain.autocor(c, lags=collect(lags))
         val = colordim == :parameter ? ac.value[:, :, i]' : ac.value[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ supportedplots
         translationdict[st](c, val)
     else
-        c.range, val
+        range(c), val
     end
 end
 
@@ -79,7 +79,7 @@ end
     seriestype := :path
     xaxis --> "Iteration"
     yaxis --> "Mean"
-    p.c.range, MCMCChain.cummean(p.val)
+    range(p.c), MCMCChain.cummean(p.val)
 end
 
 @recipe function f(p::_AutocorPlot)
@@ -93,7 +93,7 @@ end
     seriestype := :path
     xaxis --> "Iteration"
     yaxis --> "Sample value"
-    p.c.range, p.val
+    range(p.c), p.val
 end
 
 @recipe function f(c::MCMCChain.AbstractChains, parameters::AbstractVector{Symbol}; colordim = :chain)
@@ -147,5 +147,5 @@ end
     label --> permutedims(corner.parameters)
     compact --> true
     size --> (600, 600)
-    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[s] for s in corner.parameters))
+    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[:,s,:] for s in corner.parameters))
 end
