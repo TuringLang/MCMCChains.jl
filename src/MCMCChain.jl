@@ -4,6 +4,7 @@ import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 import LinearAlgebra: diag
+import Serialization: serialize, deserialize
 
 using RecipesBase
 import RecipesBase: plot
