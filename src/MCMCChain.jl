@@ -9,6 +9,7 @@ import Base: sort
 using RecipesBase
 import RecipesBase: plot
 
+using Serialization
 using Distributions
 using SpecialFunctions
 using AxisArrays

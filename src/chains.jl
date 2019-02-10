@@ -21,6 +21,11 @@ function Chains(val::AbstractArray{T,3},
         name_map = Dict(name_map)
     end
 
+    # Make sure that we have a :parameters index.
+    if !in(:parameters, keys(name_map))
+        name_map[:parameters] = []
+    end
+
     names = [:iter, :var, :chain]
     axvals = [
               1:size(val, 1),
@@ -51,6 +56,21 @@ function Chains(val::AbstractArray{T,3},
     axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
     A = AxisArray(convert(Array{Union{Missing,T},3}, val), axs...)
     return Chains{T}(A, zero(T), name_map)
+end
+
+# Retrieve a new chain with only a specific section pulled out.
+function Chains(c::Chains{T}, section::Symbol) where T <: Real
+    # Make sure the section exists first.
+    in(section, keys(c.name_map)) ||
+        throw(ArgumentError("$section not found in Chains name map."))
+
+    # Extract wanted values.
+    new_vals = c.value[:, c.name_map[section], :]
+
+    # Create the new chain.
+    return Chains{T}(new_vals,
+        c.logevidence,
+        Dict(section => c.name_map[section]))
 end
 
 

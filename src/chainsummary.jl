@@ -78,14 +78,15 @@ function Base.show(io::IO, cs::ChainSummaries)
         show(io, cs.summaries[1])
     else
         for i in cs.summaries
-            println(i.header)
             show(io, i)
-            println()
         end
     end
 end
 
 function Base.show(io::IO, s::ChainSummary)
+    # Print the header.
+    println(s.header)
+
     # Sort the summary if needed.
     if s.sorted
         s = sort(s)

@@ -2,9 +2,9 @@
 
 function gelmandiag(c::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
                     transform::Bool=false)
-  
+
     @assert !any(ismissing.(c.value)) "Gelman diagnostics doesn't support missing values"
-    
+
     n, p, m = size(c.value)
   m >= 2 ||
     throw(ArgumentError("less than 2 chains supplied to gelman diagnostic"))
@@ -14,7 +14,7 @@ function gelmandiag(c::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
   S2 = mapslices(cov, psi, dims = [1, 2])
   W = dropdims(mapslices(mean, S2, dims = [3]), dims = 3)
 
-  psibar = reshape(mapslices(mean, psi, dims = [1]), p, m)'
+  psibar = reshape(mapslices(mean, convert(Array, psi), dims = [1]), p, m)'
   B = n * cov(psibar)
 
   w = diag(W)
@@ -48,7 +48,7 @@ function gelmandiag(c::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
     psrf[i, 2] = sqrt(correction * (R_fixed + R_random))
   end
   psrf_labels = ["PSRF", string(100 * q) * "%"]
-  psrf_names = c.names
+  psrf_names = string.(names(c))
 
   if mpsrf
     x = isposdef(W) ?
@@ -59,5 +59,5 @@ function gelmandiag(c::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
   end
 
   hdr = header(c) * "\nGelman, Rubin, and Brooks Diagnostic:"
-  ChainSummary(round.(psrf, digits = 3), psrf_names, psrf_labels, hdr)
+  ChainSummary(round.(psrf, digits = 3), psrf_names, psrf_labels, hdr, true)
 end
