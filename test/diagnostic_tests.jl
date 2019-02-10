@@ -31,7 +31,7 @@ end
     # do not test the following functions
     # - wrtsp
     # - window2inds (tested above, see getindex)
-    # - 
+    # -
 
     # the following tests only check if the function calls work!
     @test MCMCChain.diag_all(rand(100, 2), :weiss, 1, 1, 1) != nothing
@@ -43,4 +43,17 @@ end
     @test isa(gewekediag(chn[:,1,:]), MCMCChain.ChainSummary)
     @test isa(heideldiag(chn[:,1,:]), MCMCChain.ChainSummary)
     @test isa(rafterydiag(chn[:,1,:]), MCMCChain.ChainSummary)
+end
+
+@testset "File IO" begin
+    loc = mktempdir()
+
+    # Serialize and deserialize.
+    write(joinpath(loc, "chain1"), chn)
+    chn2 = read(joinpath(loc, "chain1"), Chains)
+
+    # Test that the values were read correctly.
+    @test chn2.value == chn.value
+    
+    rm(loc; force=true, recursive=true)
 end
