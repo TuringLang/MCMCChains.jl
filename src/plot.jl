@@ -24,7 +24,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
 @recipe f(c::AbstractChains, s::Symbol) = c, [s]
 
-@recipe function f(c::AbstractChains, i::Int; colordim = :chain, barbounds = (0, Inf), maxlag = nothing)
+@recipe function f(c::AbstractChains, i::Int; colordim = :chain, barbounds = (0, Inf), maxlag = nothing, section = :parameters)
     st = get(plotattributes, :seriestype, :traceplot)
 
     if colordim == :parameter
@@ -52,7 +52,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
     if st == :autocorplot
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
-        ac = MCMCChain.autocor(c, lags=collect(lags))
+        ac = MCMCChain.autocor(c, lags=collect(lags); showall=true).summaries[1]
         val = colordim == :parameter ? ac.value[:, :, i]' : ac.value[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ supportedplots
@@ -96,19 +96,23 @@ end
     range(p.c), p.val
 end
 
-@recipe function f(c::MCMCChain.AbstractChains, parameters::AbstractVector{Symbol}; colordim = :chain)
+@recipe function f(chn::MCMCChain.AbstractChains, parameters::AbstractVector{Symbol};
+        colordim = :chain, section = :parameters)
+    c = Chains(chn, section)
     colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
     ret = indexin(parameters, Symbol.(keys(c)))
     any(y -> y == nothing, ret) && error("Parameter not found")
     c, Int.(ret)
 end
 
-@recipe function f(c::MCMCChain.AbstractChains,
+@recipe function f(chn::MCMCChain.AbstractChains,
                    parameters::AbstractVector{<:Integer} = Int[];
                    width = 500,
                    height = 250,
-                   colordim = :chain
+                   colordim = :chain,
+                   section = :parameters
                   )
+    c = isempty(parameters) ? Chains(chn, section; sorted=true) : sort(chn)
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
     @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))

@@ -55,22 +55,41 @@ function Chains(val::AbstractArray{T,3},
 
     axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
     A = AxisArray(convert(Array{Union{Missing,T},3}, val), axs...)
-    return Chains{T}(A, zero(T), name_map)
+    return sort(Chains{T}(A, zero(T), name_map, Dict{Symbol, Any}()))
 end
 
 # Retrieve a new chain with only a specific section pulled out.
-function Chains(c::Chains{T}, section::Symbol) where T <: Real
-    # Make sure the section exists first.
-    in(section, keys(c.name_map)) ||
-        throw(ArgumentError("$section not found in Chains name map."))
+function Chains(c::Chains{T}, section::Union{Vector, Any};
+                sorted=false) where T <: Real
+    section = typeof(section) <: AbstractArray ? section : [section]
+
+    # If we received an empty list, return the original chain.
+    if isempty(section) return c end
+
+    # Gather the names from the relevant sections.
+    names = []
+    for s in section
+        # Make sure the section exists first.
+        in(s, keys(c.name_map)) ||
+            throw(ArgumentError("$section not found in Chains name map."))
+
+        names = vcat(names, c.name_map[s])
+    end
 
     # Extract wanted values.
-    new_vals = c.value[:, c.name_map[section], :]
+    new_vals = c.value[:, names, :]
 
     # Create the new chain.
-    return Chains{T}(new_vals,
+    new_chn = Chains{T}(new_vals,
         c.logevidence,
-        Dict(section => c.name_map[section]))
+        Dict([s => c.name_map[s] for s in section]),
+        c.info)
+
+    if sorted
+        return sort(new_chn)
+    else
+        return new_chn
+    end
 end
 
 
@@ -81,7 +100,15 @@ Base.getindex(c::Chains, i) = getindex(c.value, :, i, :)
 Base.setindex!(c::Chains, v, i) = setindex!(c.value, v, :, i, :)
 
 # Otherwise, forward the indexing to AxisArrays.
-Base.getindex(c::Chains, i...) = getindex(c.value, i...)
+function Base.getindex(c::Chains{T}, i...) where {T<:Real}
+    newval = getindex(c.value, i...)
+    return Chains{T}(newval,
+        c.logevidence,
+        _trim_name_map(newval[Axis{:var}].val, c.name_map),
+        c.info)
+end
+
+
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
 #################### Concatenation ####################
@@ -166,7 +193,7 @@ end
 function Base.show(io::IO, c::Chains)
     print(io, "Object of type \"$(summary(c))\"\n\n")
     println(io, header(c))
-    show(io, summarystats(c))
+    # show(io, summarystats(c))
 end
 
 function Base.size(c::AbstractChains)
@@ -186,7 +213,7 @@ Base.last(c::AbstractChains) = last(c.value[Axis{:iter}].val)
 
 function combine(c::AbstractChains)
   n, p, m = size(c.value)
-  value = Array{Float64}(n * m, p)
+  value = Array{Float64}(undef, n * m, p)
   for j in 1:p
     idx = 1
     for i in 1:n, k in 1:m
@@ -207,6 +234,17 @@ end
 
 function names(c::AbstractChains)
     return c.value[Axis{:var}].val
+end
+
+# Return a new chain for each section.
+function get_sections(c::AbstractChains, sections::Vector = [])
+    sections = length(sections) == 0 ? collect(keys(c.name_map)) : sections
+    return [Chains(c, section) for section in sections]
+end
+
+# Return a new chain for each section.
+function get_sections(c::AbstractChains, section::Union{Symbol, String})
+    return get_sections(c, [section])
 end
 
 function header(c::AbstractChains)
@@ -247,4 +285,27 @@ function link(c::AbstractChains)
     end
   end
   cc
+end
+
+function _trim_name_map(names::Vector, name_map::Dict)
+    n = name_map
+    for (key, values) in name_map
+        n[key] = values ∩ names
+    end
+    return n
+end
+
+### Chains specific functions ###
+function sort(c::Chains{T}) where {T<:Real}
+    v = c.value
+    x, y, z = size(v)
+    unsorted = collect(zip(1:y, v.axes[2].val))
+    sorted = sort(unsorted, by = x -> string(x[2]), lt=MCMCChain.natural)
+    new_axes = (v.axes[1], Axis{:var}([n for (_, n) in sorted]), v.axes[3])
+    new_v = copy(v.data)
+    for i in eachindex(sorted)
+        new_v[:, i, :] = v[:, sorted[i][1], :]
+    end
+    aa = AxisArray(new_v, new_axes...)
+    return MCMCChain.Chains{T}(aa, c.logevidence, c.name_map, c.info)
 end

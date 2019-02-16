@@ -5,6 +5,7 @@ import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 import LinearAlgebra: diag
 import Base: sort
+import Statistics: cor
 
 using RecipesBase
 import RecipesBase: plot
@@ -37,6 +38,7 @@ struct Chains{T<:Real} <: AbstractChains
     value::AxisArray
     logevidence::T
     name_map::Dict{Any, Vector}
+    info::Dict{Symbol, Any}
 end
 
 # imports

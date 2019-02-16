@@ -42,8 +42,9 @@ function ChainSummary(value::Matrix{Float64},
 end
 
 struct ChainSummaries
+    header::String
     summaries::Vector{ChainSummary}
-    ChainSummaries(v::Vector) = new(v)
+    ChainSummaries(h::String, v::Vector) = new(h, v)
 end
 
 #################### Base Methods ####################
@@ -55,7 +56,7 @@ function sort(c::ChainSummary)
     new_rows = sorted_names
     new_value = copy(c.value)
     for i in eachindex(indices)
-        new_value[i, :] = c.value[indices[i], :]
+        new_value[i, :, :] = c.value[indices[i], :, :]
     end
     return ChainSummary(new_value, new_rows, c.colnames, c.header, c.sorted)
 end
@@ -74,12 +75,10 @@ end
 wrtsp(io::IO, n) = while (n -= 1) >= 0 write(io, ' ') end
 
 function Base.show(io::IO, cs::ChainSummaries)
-    if length(cs.summaries) == 1
-        show(io, cs.summaries[1])
-    else
-        for i in cs.summaries
-            show(io, i)
-        end
+    # Print the header if it's of a non-zero length.
+    length(cs.header) == 0 || println(io, cs.header)
+    for i in cs.summaries
+        show(io, i)
     end
 end
 
