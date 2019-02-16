@@ -101,11 +101,12 @@ Base.setindex!(c::Chains, v, i) = setindex!(c.value, v, :, i, :)
 
 # Otherwise, forward the indexing to AxisArrays.
 function Base.getindex(c::Chains{T}, i...) where {T<:Real}
-    newval = getindex(c.value, i...)
-    return Chains{T}(newval,
-        c.logevidence,
-        _trim_name_map(newval[Axis{:var}].val, c.name_map),
-        c.info)
+    return getindex(c.value, i...)
+    # return newval
+    # return Chains{T}(newval,
+    #     c.logevidence,
+    #     _trim_name_map(newval[Axis{:var}].val, c.name_map),
+    #     c.info)
 end
 
 
