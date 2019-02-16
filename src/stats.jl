@@ -136,14 +136,23 @@ function describe(io::IO,
                   q = [0.025, 0.25, 0.5, 0.75, 0.975],
                   etype=:bm,
                   showall=false,
+                  section=:parameters,
                   args...
                  )
     # Print the chain header.
     println(io, header(c))
 
     # Generate summary statistics.
-    ps_stats = summarystats(c; etype=etype, showall=showall, suppress_header=true, args...)
-    ps_quantiles = quantile(c, q=q, showall=showall, suppress_header=true)
+    ps_stats = summarystats(c; etype=etype,
+        showall=showall,
+        suppress_header=true,
+        section=section,
+        args...)
+    ps_quantiles = quantile(c,
+        q=q,
+        showall=showall,
+        suppress_header=true,
+        section=section)
 
     # Get linewidths.
     stats_linewidth = maximum(map(max_width, ps_stats.summaries))
