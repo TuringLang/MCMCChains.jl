@@ -3,18 +3,22 @@
 ## Constructors ##
 
 # Default name map.
-const DEFAULT_MAP = Dict{Symbol, Vector{Symbol}}(:parameters => [])
+const DEFAULT_MAP = Dict{Symbol, Vector}(:parameters => [])
 
 # Set default parameter names if not given.
-function Chains(val::AbstractArray{T,3}) where T <: Real
+function Chains(val::AbstractArray{T,3};
+        start::Int=1,
+        thin::Int=1) where T <: Real
     parameter_names = map(i->Symbol("Param$i"), 1:size(val, 2))
-    return Chains(val, parameter_names)
+    return Chains(val, parameter_names, start=start, thin=thin)
 end
 
 # Generic chain constructor.
 function Chains(val::AbstractArray{T,3},
-    parameter_names::Vector,
-    name_map = DEFAULT_MAP) where T <: Real
+        parameter_names::Vector,
+        name_map = DEFAULT_MAP;
+        start::Int=1,
+        thin::Int=1) where T <: Real
 
     # If we received an array of pairs, convert it to a dictionary.
     if typeof(name_map) <: Array
@@ -26,11 +30,12 @@ function Chains(val::AbstractArray{T,3},
         name_map[:parameters] = []
     end
 
+    # Provide an alias for start, to avoid clashing with the range call.
     names = [:iter, :var, :chain]
     axvals = [
-              1:size(val, 1),
-              parameter_names,
-              map(i->Symbol("Chain$i"), 1:size(val, 3)),
+        Base.range(start, step=thin, length=size(val, 1)),
+        parameter_names,
+        map(i->Symbol("Chain$i"), 1:size(val, 3)),
     ]
 
     if length(keys(name_map)) == 1
@@ -46,9 +51,17 @@ function Chains(val::AbstractArray{T,3},
                 end
             end
 
-            # Assign to :parameters by default.
+            # Assign to :parameters by default, or :internals if it starts
+            # or ends with an underscore.
             if !found
-                push!(name_map[:parameters], param)
+                if endswith(string(param), "_") || startswith(string(param), "_")
+                    # Add the internals key if it doesn't already exist.
+                    in(:internals, keys(name_map))
+                        || name_map[:internals] = []
+                    push!(name_map[:internals], param)
+                else
+                    push!(name_map[:parameters], param)
+                end
             end
         end
     end
