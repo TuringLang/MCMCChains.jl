@@ -3,22 +3,24 @@
 ## Constructors ##
 
 # Default name map.
-const DEFAULT_MAP = Dict{Symbol, Vector}(:parameters => [])
+const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 
 # Set default parameter names if not given.
-function Chains(val::AbstractArray{T,3};
+function Chains(val::AbstractArray{A,3};
         start::Int=1,
-        thin::Int=1) where T <: Real
-    parameter_names = map(i->Symbol("Param$i"), 1:size(val, 2))
+        thin::Int=1,
+        evidence = 0.0) where {A<:Union{Real, Union{Missing, Real}}}
+    parameter_names = map(i->"Param$i", 1:size(val, 2))
     return Chains(val, parameter_names, start=start, thin=thin)
 end
 
 # Generic chain constructor.
-function Chains(val::AbstractArray{T,3},
+function Chains(val::AbstractArray{A,3},
         parameter_names::Vector,
-        name_map = DEFAULT_MAP;
+        name_map = copy(DEFAULT_MAP);
         start::Int=1,
-        thin::Int=1) where T <: Real
+        thin::Int=1,
+        evidence = 0.0) where {A<:Union{Real, Union{Missing, Real}}}
 
     # If we received an array of pairs, convert it to a dictionary.
     if typeof(name_map) <: Array
@@ -30,6 +32,12 @@ function Chains(val::AbstractArray{T,3},
         name_map[:parameters] = []
     end
 
+    # Preclean the name_map of names that aren't in the
+    # parameter_names vector.
+    for section in keys(name_map)
+        filter!(x -> x ∈ parameter_names, name_map[section])
+    end
+
     # Provide an alias for start, to avoid clashing with the range call.
     names = [:iter, :var, :chain]
     axvals = [
@@ -37,6 +45,19 @@ function Chains(val::AbstractArray{T,3},
         parameter_names,
         map(i->Symbol("Chain$i"), 1:size(val, 3)),
     ]
+
+    # Check if we should stick anything in the :internals field.
+    removed_names = []
+    for param in parameter_names
+        if endswith(string(param), "_") || startswith(string(param), "_")
+            # Add the internals key if it doesn't already exist.
+            in(:internals, keys(name_map)) || (name_map[:internals] = [])
+            push!(name_map[:internals], param)
+        end
+    end
+
+    # Remove the names we put in the internals field.
+    filter!(x -> x ∉ removed_names, parameter_names)
 
     if length(keys(name_map)) == 1
         name_map[first(keys(name_map))] = parameter_names
@@ -56,8 +77,7 @@ function Chains(val::AbstractArray{T,3},
             if !found
                 if endswith(string(param), "_") || startswith(string(param), "_")
                     # Add the internals key if it doesn't already exist.
-                    in(:internals, keys(name_map))
-                        || name_map[:internals] = []
+                    in(:internals, keys(name_map)) || (name_map[:internals] = [])
                     push!(name_map[:internals], param)
                 else
                     push!(name_map[:parameters], param)
@@ -67,13 +87,13 @@ function Chains(val::AbstractArray{T,3},
     end
 
     axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
-    A = AxisArray(convert(Array{Union{Missing,T},3}, val), axs...)
-    return sort(Chains{T}(A, zero(T), name_map, Dict{Symbol, Any}()))
+    arr = AxisArray(convert(Array{Union{Missing,A},3}, val), axs...)
+    return sort(Chains{typeof(evidence)}(arr, evidence, name_map, Dict{Symbol, Any}()))
 end
 
 # Retrieve a new chain with only a specific section pulled out.
 function Chains(c::Chains{T}, section::Union{Vector, Any};
-                sorted=false) where T <: Real
+                sorted=false) where {T<:Real}
     section = typeof(section) <: AbstractArray ? section : [section]
 
     # If we received an empty list, return the original chain.
@@ -108,20 +128,44 @@ end
 
 #################### Indexing ####################
 
-# If only a single argument is given, index by parameter.
-Base.getindex(c::Chains, i) = getindex(c.value, :, i, :)
-Base.setindex!(c::Chains, v, i) = setindex!(c.value, v, :, i, :)
+Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
+Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
+Base.getindex(c::Chains, v::Symbol) = c[[v]]
+Base.getindex(c::Chains, v::String) = c[:, [v], :]
+Base.getindex(c::Chains, v::Vector{String}) = c.value[:, v, :]
 
-# Otherwise, forward the indexing to AxisArrays.
-function Base.getindex(c::Chains{T}, i...) where {T<:Real}
-    return getindex(c.value, i...)
-    # return newval
-    # return Chains{T}(newval,
-    #     c.logevidence,
-    #     _trim_name_map(newval[Axis{:var}].val, c.name_map),
-    #     c.info)
+function Base.getindex(c::Chains, v::Vector{Symbol})
+    v_str = string.(v)
+    idx = indexin(v_str, names(c))
+    syms = []
+    for i in eachindex(idx)
+        value = v_str[i]
+        if idx[i] == nothing
+            append!(syms,
+                collect(Iterators.filter(k -> occursin(value*"[", string(k)), names(c))))
+        else
+            push!(syms, value)
+        end
+    end
+
+    sort!(syms, lt=MCMCChain.natural)
+    return c.value[:, syms, :]
 end
 
+function Base.getindex(c::Chains{T}, i...) where T
+    # Make sure things are in array form to preserve the axes.
+    ind = (i[1],
+           typeof(i[2]) <: Union{AbstractArray, Colon} ?  i[2] : [i[2]],
+           typeof(i[3]) <: Union{AbstractArray, Colon} ?  i[3] : [i[3]]
+    )
+
+    newval = getindex(c.value, ind...)
+    names = newval.axes[2].val
+    return Chains{T}(newval,
+        c.logevidence,
+        _trim_name_map(names, c.name_map),
+        c.info)
+end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
@@ -238,7 +282,7 @@ function combine(c::AbstractChains)
   value
 end
 
-function range(c::AbstractChains)
+function Base.range(c::AbstractChains)
     return c.value[Axis{:iter}].val
 end
 
@@ -246,7 +290,7 @@ function chains(c::AbstractChains)
     return c.value[Axis{:chain}].val
 end
 
-function names(c::AbstractChains)
+function Base.names(c::AbstractChains)
     return c.value[Axis{:var}].val
 end
 
@@ -263,13 +307,20 @@ end
 
 function header(c::AbstractChains)
     rng = range(c)
+    sections = []
+    for (section, nms) in c.name_map
+        push!(sections, string("$section",
+            repeat(" ", 18 - length(string(section))),
+            "= $(join(map(string, nms), ", "))\n"
+        ))
+    end
     string(
         # "Log model evidence = $(c.logevidence)\n", #FIXME: Uncomment.
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
         "Chains            = $(join(map(string, chains(c)), ", "))\n",
         "Samples per chain = $(length(range(c)))\n",
-        "Parameters        = $(join(map(string, names(c)), ", "))\n"
+        sections...
     )
 end
 
@@ -302,15 +353,20 @@ function link(c::AbstractChains)
 end
 
 function _trim_name_map(names::Vector, name_map::Dict)
-    n = name_map
+    n = copy(name_map)
     for (key, values) in name_map
-        n[key] = values ∩ names
+        intersection = values ∩ names
+        if length(intersection) > 0
+            n[key] = intersection
+        else
+            delete!(n, key)
+        end
     end
     return n
 end
 
 ### Chains specific functions ###
-function sort(c::Chains{T}) where {T<:Real}
+function sort(c::Chains{T}) where T<:Real
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
