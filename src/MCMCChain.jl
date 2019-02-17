@@ -4,7 +4,7 @@ import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 import LinearAlgebra: diag
-import Base: sort
+import Base: sort, range, names
 import Statistics: cor
 
 using RecipesBase
@@ -16,7 +16,7 @@ using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
 
-export Chains, getindex, setindex!
+export Chains, getindex, setindex!, chains
 export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
 export describe
 
@@ -35,7 +35,7 @@ Parameters:
 - `names`: List of variable names (strings)
 - `chains`: List of chain ids
 """
-struct Chains{T<:Real} <: AbstractChains
+struct Chains{T} <: AbstractChains
     value::AxisArray
     logevidence::T
     name_map::Dict{Any, Vector}
