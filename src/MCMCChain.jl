@@ -14,6 +14,7 @@ using Serialization
 using Distributions
 using SpecialFunctions
 using AxisArrays
+const axes = Base.axes
 
 export Chains, getindex, setindex!
 export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
