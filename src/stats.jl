@@ -232,7 +232,7 @@ function quantile(chn::AbstractChains; q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975]
 
         # Make labels.
         labels = map(x -> string(100 * x) * "%", q)
-        vals = Array(hcat([quantile(collect(skipmissing(c[i]))) for i in names(c)]...)')
+        vals = Array(hcat([quantile(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)')
         new_summary = ChainSummary(round.(vals, digits=4), string.(names(c)), labels, section_name, true)
         push!(summaries, new_summary)
     end
@@ -273,7 +273,7 @@ function summarystats(chn::AbstractChains; etype=:bm,
         end
 
         # Make summary statistics and ChainSummary.
-        vals = hcat([f(collect(skipmissing(c[i]))) for i in names(c)]...)'
+        vals = hcat([f(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)'
         stats = [vals  min.((vals[:, 2] ./ vals[:, 4]).^2, size(c.value, 1))]
         new_summary = ChainSummary(round.(stats, digits=4), string.(names(c)), labels, section_name, true)
         push!(summaries, new_summary)
