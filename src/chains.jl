@@ -263,6 +263,7 @@ function Base.size(c::AbstractChains, ind)
     size(c)[ind]
 end
 
+Base.length(c::AbstractChains) = length(range(c))
 Base.first(c::AbstractChains) = first(c.value[Axis{:iter}].val)
 Base.step(c::AbstractChains) = step(c.value[Axis{:iter}].val)
 Base.last(c::AbstractChains) = last(c.value[Axis{:iter}].val)
