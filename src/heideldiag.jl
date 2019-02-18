@@ -43,7 +43,7 @@ function heideldiag(c::AbstractChains;
                             alpha=alpha,
                             eps=eps,
                             etype=etype,
-                            start=first(c.range);
+                            start=first(c);
                             args...
                            )
     end
@@ -56,6 +56,6 @@ function heideldiag(c::AbstractChains;
     vals = map(x -> round(x, digits=4), vals)
 
     # Make a ChainSummary object.
-    ChainSummary(vals, c.names, ["Burn-in", "Stationarity", "p-value", "Mean",
+    ChainSummary(vals, string.(names(c)), ["Burn-in", "Stationarity", "p-value", "Mean",
                                "Halfwidth", "Test"], hdr)
 end

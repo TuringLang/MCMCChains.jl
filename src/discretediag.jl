@@ -444,7 +444,7 @@ function discretediag(c::AbstractChains; frac::Real=0.3,
     hdr = header(c) * "\nChisq Diagnostic:\nEnd Fractions = $frac\n" *
     "method = $method\n"
 
-    return ChainSummary(collect(round.(vals, digits = 3)'), c.names[V],
+    return ChainSummary(collect(round.(vals, digits = 3)'), string.(names(c))[V],
     convert(Array{AbstractString, 1},
     vcat([["stat", "df", "p-value"]
     for k in 1:(num_chains + 1)]...)), hdr, true)
