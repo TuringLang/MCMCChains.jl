@@ -1,6 +1,5 @@
 using MCMCChain
 using Test
-import AxisArrays
 
 ## CHAIN TESTS
 # Define the experiment
