@@ -1,5 +1,6 @@
 using MCMCChain
 using Test
+import AxisArrays
 
 ## CHAIN TESTS
 # Define the experiment
@@ -19,14 +20,11 @@ chn = Chains(val, start = 1, thin = 2)
     @test step(chn) == 2
     @test last(chn) == 999
     @test size(chn) == (999, 4, 2)
-    @test keys(chn) == [:Param1, :Param2, :Param3, :Param4]
-    @test isa(chn[:,1,:], AxisArrays.AxisArray)
-    # @test isa(chn[:,1,:], MCMCChain.AbstractChains)
-    @test length(vec(chn[:,1,:])) == n_chain * n_iter
-    # @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
-    @test all(collect(skipmissing(chn[:,1,1])) .== val[:,1,1])
-    # @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
-    @test all(chn[:,1,2] .== val[:,1,2])
+    @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
+    @test isa(chn[:,1,:], MCMCChain.AbstractChains)
+    @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
+    @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
+    @test all(chn[:,1,2].value .== val[:,1,2])
     @test all(MCMCChain.indiscretesupport(chn) .== [false, false, false, true])
 end
 
