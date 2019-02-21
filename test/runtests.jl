@@ -17,3 +17,6 @@ include("diagnostic_tests.jl")
 
 # run tests for missing values
 include("missing_tests.jl")
+
+# run tests for missing values
+include("sections_tests.jl")

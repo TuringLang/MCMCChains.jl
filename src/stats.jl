@@ -161,11 +161,11 @@ function describe(io::IO,
 
     # Print stats.
     print(io, "Empirical Posterior Estimates:\n")
-    println(repeat("=", linewidth))
+    println(io, repeat("=", linewidth))
     show(io, ps_stats)
 
     print(io, "Quantiles:\n")
-    println(repeat("=", linewidth))
+    println(repeat(io, "=", linewidth))
     show(io, ps_quantiles)
 end
 
