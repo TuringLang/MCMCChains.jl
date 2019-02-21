@@ -140,7 +140,7 @@ function describe(io::IO,
                   args...
                  )
     # Print the chain header.
-    println(io, header(c))
+    println(io, header(c, section = showall ? missing : section))
 
     # Generate summary statistics.
     ps_stats = summarystats(c; etype=etype,
