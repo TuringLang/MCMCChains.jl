@@ -38,7 +38,7 @@ function Chains(val::AbstractArray{A,3},
         filter!(x -> x ∈ parameter_names, name_map[section])
     end
 
-    # Provide an alias for start, to avoid clashing with the range call.
+    # Construct axis names and ranges.
     names = [:iter, :var, :chain]
     axvals = [
         Base.range(start, step=thin, length=size(val, 1)),
@@ -46,22 +46,12 @@ function Chains(val::AbstractArray{A,3},
         map(i->Symbol("Chain$i"), 1:size(val, 3)),
     ]
 
-    # Check if we should stick anything in the :internals field.
-    removed_names = []
-    for param in parameter_names
-        if endswith(string(param), "_") || startswith(string(param), "_")
-            # Add the internals key if it doesn't already exist.
-            in(:internals, keys(name_map)) || (name_map[:internals] = [])
-            push!(name_map[:internals], param)
-        end
-    end
-
-    # Remove the names we put in the internals field.
-    filter!(x -> x ∉ removed_names, parameter_names)
-
     if length(keys(name_map)) == 1
         name_map[first(keys(name_map))] = parameter_names
     else
+        # Store unassigned variables.
+        unassigned = Set([])
+
         # Check that all parameters are assigned.
         for param in parameter_names
             found = false
@@ -75,14 +65,13 @@ function Chains(val::AbstractArray{A,3},
             # Assign to :parameters by default, or :internals if it starts
             # or ends with an underscore.
             if !found
-                if endswith(string(param), "_") || startswith(string(param), "_")
-                    # Add the internals key if it doesn't already exist.
-                    in(:internals, keys(name_map)) || (name_map[:internals] = [])
-                    push!(name_map[:internals], param)
-                else
-                    push!(name_map[:parameters], param)
-                end
+                push!(unassigned, param)
             end
+        end
+
+        # Assign all unassigned parameter names.
+        for param in unassigned
+            push!(name_map[:parameters], param)
         end
     end
 
@@ -101,12 +90,19 @@ function Chains(c::Chains{T}, section::Union{Vector, Any};
 
     # Gather the names from the relevant sections.
     names = []
-    for s in section
-        # Make sure the section exists first.
+    if isa(section, Vector)
+        for s in section
+            # Make sure the section exists first.
+            in(s, keys(c.name_map)) ||
+                throw(ArgumentError("$section not found in Chains name map."))
+
+            names = vcat(names, c.name_map[s])
+        end
+    else
         in(s, keys(c.name_map)) ||
             throw(ArgumentError("$section not found in Chains name map."))
 
-        names = vcat(names, c.name_map[s])
+        names = c.name_map[s]
     end
 
     # Extract wanted values.
@@ -306,22 +302,40 @@ function get_sections(c::AbstractChains, section::Union{Symbol, String})
     return get_sections(c, [section])
 end
 
-function header(c::AbstractChains)
+function header(c::AbstractChains; section=missing)
     rng = range(c)
-    sections = []
-    for (section, nms) in c.name_map
-        push!(sections, string("$section",
-            repeat(" ", 18 - length(string(section))),
-            "= $(join(map(string, nms), ", "))\n"
-        ))
+
+    # Function to make section strings.
+    section_str(sec, arr) = string(
+        "$sec",
+        repeat(" ", 18 - length(string(sec))),
+        "= $(join(map(string, arr), ", "))\n"
+    )
+
+    # Set up string array.
+    section_strings = String[]
+
+    # Get section lines.
+    if section isa Missing
+        for (sec, nms) in c.name_map
+            section_string = section_str(sec, nms)
+            push!(section_strings, section_string)
+        end
+    else
+        section in keys(c.name_map) ||
+            throw(ArgumentError("$section not found in name map."))
+        section_string = section_str(section, c.name_map[section])
+        push!(section_strings, section_string)
     end
-    string(
+
+    # Return header.
+    return string(
         # "Log model evidence = $(c.logevidence)\n", #FIXME: Uncomment.
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
         "Chains            = $(join(map(string, chains(c)), ", "))\n",
         "Samples per chain = $(length(range(c)))\n",
-        sections...
+        section_strings...
     )
 end
 
