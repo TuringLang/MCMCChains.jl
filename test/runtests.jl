@@ -20,3 +20,6 @@ include("missing_tests.jl")
 
 # run tests for missing values
 include("sections_tests.jl")
+
+# run tests for missing values
+include("serialization_tests.jl")
