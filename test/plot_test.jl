@@ -1,6 +1,6 @@
 using Test
 using StatsPlots
-using MCMCChain
+using MCMCChains
 
 n_iter = 500
 n_name = 3

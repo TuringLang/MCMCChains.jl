@@ -1,74 +1,172 @@
 #################### Posterior Statistics ####################
-function autocor(c::AbstractChains; 
+function autocor(chn::AbstractChains;
                  lags::Vector=[1, 5, 10, 50],
-                 relative::Bool=true)
-    if relative
-        lags *= step(c)
-    elseif any(lags .% step(c) .!= 0)
-        throw(ArgumentError("lags do not correspond to thinning interval"))
-    end
-    labels = map(x -> "Lag " * string(x), lags)
-    
-    (niter, nvar, nchain) = size(c.value)
+                 relative::Bool=true,
+                 showall=false,
+                 suppress_header=false,
+                 section=:parameters)
 
-    vals = zeros(nvar, length(lags), nchain)
-    for k in 1:nchain
-        for v in 1:nvar
-            # skipping missing values
-            # skipping should be done inside of autocor to ensure correct alignment
-            # TODO: modify autocor to deal with missing values
-            x = convert(Vector{Float64}, collect(skipmissing(c.value[:,v,k])))
-            vals[v, :, k] = autocor(x, lags)
+    # Allocation of summary vector.
+    summaries = Vector{ChainSummary}([])
+
+    # Separate the chain into sections if showall=false.
+    chns = showall ? [chn] : get_sections(chn, section)
+
+    # Set showlabels bool.
+    show_labels = true
+
+    # Iterate through each chain.
+    for c in chns
+        # If we're only going through one section at a time,
+        # set a section name.
+        section_name = showall ? "" : string.(first(keys(c.name_map)))
+
+        if relative
+            lags *= step(c)
+        elseif any(lags .% step(c) .!= 0)
+            throw(ArgumentError("lags do not correspond to thinning interval"))
         end
-    end
-    ChainSummary(vals, c.names, labels, header(c))
-end
+        labels = map(x -> "Lag " * string(x), lags)
 
-function cor(c::AbstractChains)
-    return ChainSummary(cor(combine(c)), c.names, c.names, header(c))
-end
-
-function changerate(c::AbstractChains)
-
-    @assert !any(ismissing.(c.value)) "Change rate comp. doesn't support missing values."
-
-    n, p, m = size(c.value)
-    r = zeros(Float64, p, 1, 1)
-    r_mv = 0.0
-    delta = Array{Bool}(undef, p)
-    for k in 1:m
-        prev = c.value[1, :, k]
-        for i in 2:n
-            for j in 1:p
-                x = c.value[i, j, k]
-                dx = x != prev[j]
-                r[j] += dx
-                delta[j] = dx
-                prev[j] = x
+        (niter, nvar, nchain) = size(c.value)
+        vals = zeros(nvar, length(lags), nchain)
+        for k in 1:nchain
+            for v in 1:nvar
+                # skipping missing values
+                # skipping should be done inside of autocor to ensure correct alignment
+                # TODO: modify autocor to deal with missing values
+                x = convert(Vector{Float64}, collect(skipmissing(c.value[:,v,k])))
+                vals[v, :, k] = autocor(x, lags)
             end
-            r_mv += any(delta)
         end
+
+        new_summary = ChainSummary(vals,
+            string.(names(c)),
+            labels,
+            "",
+            true)
+
+        push!(summaries, new_summary)
     end
-    vals = round.([r; r_mv] / (m * (n - 1)), digits = 3)
-    return ChainSummary(vals, [c.names; "Multivariate"], ["Change Rate"], header(c))
+
+    h = suppress_header ? "" : header(chn)
+    return ChainSummaries(h, summaries)
+end
+
+function cor(chn::AbstractChains;
+    showall=false, suppress_header=false, section=:parameters)
+    # Allocation of summary vector.
+    summaries = Vector{ChainSummary}([])
+
+    # Separate the chain into sections if showall=false.
+    chns = showall ? [chn] : get_sections(chn, section)
+
+    # Set showlabels bool.
+    show_labels = true
+
+    # Iterate through each chain.
+    for c in chns
+        # If we're only going through one section at a time,
+        # set a section name.
+        section_name = showall ? "" : string.(first(keys(c.name_map)))
+        new_summary = ChainSummary(cor(combine(c)),
+            string.(names(c)),
+            string.(names(c)),
+            section_name)
+        push!(summaries, new_summary)
+    end
+
+    h = suppress_header ? "" : header(chn)
+    return ChainSummaries(h, summaries)
+end
+
+function changerate(chn::AbstractChains;
+    showall=false, suppress_header=false, section=:parameters)
+    # Check for missing values.
+    @assert !any(ismissing.(chn.value)) "Change rate comp. doesn't support missing values."
+
+    # Allocation of summary vector.
+    summaries = Vector{ChainSummary}([])
+
+    # Separate the chain into sections if showall=false.
+    chns = showall ? [chn] : get_sections(chn, section)
+
+    # Set showlabels bool.
+    show_labels = true
+
+    # Iterate through each chain.
+    for c in chns
+        # If we're only going through one section at a time,
+        # set a section name.
+        section_name = showall ? "" : string.(first(keys(c.name_map)))
+
+        n, p, m = size(c.value)
+        r = zeros(Float64, p, 1, 1)
+        r_mv = 0.0
+        delta = Array{Bool}(undef, p)
+        for k in 1:m
+            prev = c.value[1, :, k]
+            for i in 2:n
+                for j in 1:p
+                    x = c.value[i, j, k]
+                    dx = x != prev[j]
+                    r[j] += dx
+                    delta[j] = dx
+                    prev[j] = x
+                end
+                r_mv += any(delta)
+            end
+        end
+        vals = round.([r; r_mv] / (m * (n - 1)), digits = 3)
+        new_summary = ChainSummary(vals,
+            [string.(names(c)); "Multivariate"],
+            ["Change Rate"],
+            section_name)
+        push!(summaries, new_summary)
+    end
+
+    h = suppress_header ? "" : header(chn)
+    return ChainSummaries(h, summaries)
 end
 
 describe(c::AbstractChains; args...) = describe(stdout, c; args...)
 
-function describe(io::IO, 
+function describe(io::IO,
                   c::AbstractChains;
                   q = [0.025, 0.25, 0.5, 0.75, 0.975],
                   etype=:bm,
+                  showall=false,
+                  section=:parameters,
                   args...
                  )
-    ps_stats = summarystats(c; etype=etype, args...)
-    ps_quantiles = quantile(c, q=q)
-    println(io, ps_stats.header)
-    print(io, "Empirical Posterior Estimates:\n")
-    show(io, ps_stats)
-    print(io, "Quantiles:\n")
-    show(io, ps_quantiles)
+    # Print the chain header.
+    println(io, header(c, section = showall ? missing : section))
 
+    # Generate summary statistics.
+    ps_stats = summarystats(c; etype=etype,
+        showall=showall,
+        suppress_header=true,
+        section=section,
+        args...)
+    ps_quantiles = quantile(c,
+        q=q,
+        showall=showall,
+        suppress_header=true,
+        section=section)
+
+    # Get linewidths.
+    stats_linewidth = maximum(map(max_width, ps_stats.summaries))
+    quantiles_linewidth = maximum(map(max_width, ps_quantiles.summaries))
+    linewidth = max(quantiles_linewidth, stats_linewidth)
+
+    # Print stats.
+    print(io, "Empirical Posterior Estimates:\n")
+    println(io, repeat("=", linewidth))
+    show(io, ps_stats)
+
+    print(io, "Quantiles:\n")
+    println(repeat(io, "=", linewidth))
+    show(io, ps_quantiles)
 end
 
 function hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
@@ -83,38 +181,104 @@ function hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
     return [a[i], b[i]]
 end
 
-function hpd(c::AbstractChains; alpha::Real=0.05)
-    pct = first(showoff([100.0 * (1.0 - alpha)]))
-    labels = ["$(pct)% Lower", "$(pct)% Upper"]
-    vals = permutedims(
-        mapslices(x -> hpd(collect(skipmissing(x)), alpha=alpha), c.value, dims = [1, 3]),
-        [2, 1, 3]
-    )
-    return ChainSummary(vals, c.names, labels, header(c))
+function hpd(chn::AbstractChains; alpha::Real=0.05,
+    showall=false, suppress_header=false, section=:parameters)
+    # Allocation summary vector.
+    summaries = Vector{ChainSummary}([])
+
+    # Separate the chain into sections if showall=false.
+    chns = showall ? [chn] : get_sections(chn, section)
+
+    # Set showlabels bool.
+    show_labels = true
+
+    # Iterate through each chain.
+    for c in chns
+        # If we're only going through one section at a time,
+        # set a section name.
+        section_name = showall ? "" : string.(first(keys(c.name_map)))
+
+        pct = first(showoff([100.0 * (1.0 - alpha)]))
+        labels = ["$(pct)% Lower", "$(pct)% Upper"]
+        vals = permutedims(
+            mapslices(x -> hpd(collect(skipmissing(x)), alpha=alpha), c.value, dims = [1, 3]),
+            [2, 1, 3]
+        )
+        new_summary = ChainSummary(convert(Array{Float64,3}, vals),
+            string.(names(c)), labels, section_name)
+        push!(summaries, new_summary)
+    end
+
+    h = suppress_header ? "" : header(chn)
+    return ChainSummaries(h, summaries)
 end
 
-function quantile(c::AbstractChains; q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975])
-    labels = map(x -> string(100 * x) * "%", q)
-    vals = permutedims(
-        mapslices(x -> quantile(collect(skipmissing(x)), q), c.value, dims = [1, 3]),
-        [2, 1, 3]
-    )
-    return ChainSummary(vals, c.names, labels, header(c))
+function quantile(chn::AbstractChains; q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
+    showall=false, suppress_header=false, section=:parameters)
+    # Allocation summary vector.
+    summaries = Vector{ChainSummary}([])
+
+    # Separate the chain into sections if showall=false.
+    chns = showall ? [chn] : get_sections(chn, section)
+
+    # Set showlabels bool.
+    show_labels = true
+
+    # Iterate through each chain.
+    for c in chns
+        # If we're only going through one section at a time,
+        # set a section name.
+        section_name = showall ? "" : string.(first(keys(c.name_map)))
+
+        # Make labels.
+        labels = map(x -> string(100 * x) * "%", q)
+        vals = Array(hcat([quantile(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)')
+        new_summary = ChainSummary(round.(vals, digits=4), string.(names(c)), labels, section_name, true)
+        push!(summaries, new_summary)
+    end
+
+    h = suppress_header ? "" : header(chn)
+    return ChainSummaries(h, summaries)
 end
 
-function summarystats(c::AbstractChains; etype=:bm, args...)
-    f = x -> [
-            mean(x),
+function summarystats(chn::AbstractChains; etype=:bm,
+    showall=false, suppress_header=false, section=:parameters, args...)
+    # Allocation summary vector.
+    summaries = Vector{ChainSummary}([])
+
+    # Summary statistics function array.
+    f(x) = [mean(x),
             std(x),
             sem(x),
-            mcse(x, etype; args...)
-    ]
+            mcse(x, etype; args...)]
 
-    labels = ["Mean", "SD", "Naive SE", "MCSE", "ESS"]
-    vals = permutedims(
-        mapslices(x -> f(collect(skipmissing(x))), c.value, dims =  [1, 3]),
-        [2, 1, 3]
-    )
-    stats = [vals  min.((vals[:, 2] ./ vals[:, 4]).^2, size(c.value, 1))]
-    return ChainSummary(stats, c.names, labels, header(c))
+    # Separate the chain into sections if showall=false.
+    chns = showall ? [chn] : get_sections(chn, section)
+
+    # Set showlabels bool.
+    show_labels = true
+
+    # Iterate through each chain.
+    for c in chns
+        # If we're only going through one section at a time,
+        # set a section name.
+        section_name = showall ? "" : string.(first(keys(c.name_map)))
+
+        # Make labels.
+        labels = if show_labels
+            show_labels = false
+            ["Mean", "SD", "Naive SE", "MCSE", "ESS"]
+        else
+            repeat([""], 5)
+        end
+
+        # Make summary statistics and ChainSummary.
+        vals = hcat([f(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)'
+        stats = [vals  min.((vals[:, 2] ./ vals[:, 4]).^2, size(c.value, 1))]
+        new_summary = ChainSummary(round.(stats, digits=4), string.(names(c)), labels, section_name, true)
+        push!(summaries, new_summary)
+    end
+
+    h = suppress_header ? "" : header(chn)
+    return ChainSummaries(h, summaries)
 end

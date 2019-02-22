@@ -1,14 +1,14 @@
-# MCMCChain.jl
-[![Build Status](https://travis-ci.org/TuringLang/MCMCChain.jl.svg?branch=master)](https://travis-ci.org/TuringLang/MCMCChain.jl)
+# MCMCChains.jl
+[![Build Status](https://travis-ci.org/TuringLang/MCMCChains.jl.svg?branch=master)](https://travis-ci.org/TuringLang/MCMCChains.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/1av8osv0099nqw8m/branch/master?svg=true)](https://ci.appveyor.com/project/trappmartin/mcmcchain-jl/branch/master)
-[![Coverage Status](https://coveralls.io/repos/github/TuringLang/MCMCChain.jl/badge.svg?branch=master)](https://coveralls.io/github/TuringLang/MCMCChain.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/TuringLang/MCMCChains.jl/badge.svg?branch=master)](https://coveralls.io/github/TuringLang/MCMCChains.jl?branch=master)
 
 Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations.
 
 ## Example
 The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
 ```julia
-using MCMCChain
+using MCMCChains
 using StatPlots
 
 theme(:ggplot2);
