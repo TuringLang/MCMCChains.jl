@@ -438,8 +438,8 @@ function discretediag(c::AbstractChains; frac::Real=0.3,
     V, vals = discretediag_sub(c, frac, method, nsim,
     size(c.value,1), size(c.value,1))[1:2]
 
-    println(V)
-    println(vals)
+    #println(V)
+    #println(vals)
 
     hdr = header(c) * "\nChisq Diagnostic:\nEnd Fractions = $frac\n" *
     "method = $method\n"
