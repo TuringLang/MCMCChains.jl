@@ -1,6 +1,6 @@
 ########################### Chisq Diagnostic ###########################
 
-function update_hangartner_temp_vars!(u::Matrix{Int64}, X::Matrix{Int64}, 
+function update_hangartner_temp_vars!(u::Matrix{Int64}, X::Matrix{Int64},
                                       t::Int64)
   d = size(X,2)
 
@@ -47,7 +47,7 @@ function weiss(X::AbstractMatrix{U}) where {U<:Any}
 
   ## Count for each category in each chain
   u = zeros(Int, m, d)
-  
+
   ## Number of times a category did not transition in each chain
   v = zeros(Int, m, d)
 
@@ -119,7 +119,7 @@ function weiss_sub(u::Matrix{Int64}, v::Matrix{Int64}, t::Int)
   return (phia, chi_stat, m_tot)
 end
 
-function update_billingsley_temp_vars!(f::Array{Int64,3}, 
+function update_billingsley_temp_vars!(f::Array{Int64,3},
                                        X::Matrix{Int64},
                                        t::Int64)
   d = size(X,2)
@@ -186,7 +186,7 @@ function bd_inner(Y::AbstractMatrix, m::Int)
   billingsley_sub(f)
 end
 
-function simulate_NDARMA(N::Int, p::Int, q::Int, prob::Vector{Float64}, 
+function simulate_NDARMA(N::Int, p::Int, q::Int, prob::Vector{Float64},
                          phi::Vector{Float64})
   X = zeros(Int64, N)
   X[1:p] = rand(Categorical(prob), p)
@@ -210,7 +210,7 @@ function simulate_MC(N::Int, P::Matrix{Float64})
   return X
 end
 
-function diag_all(X::AbstractMatrix{U}, method::Symbol, 
+function diag_all(X::AbstractMatrix{U}, method::Symbol,
                   nsim::Int, start_iter::Int, step_size::Int) where {U<:Any}
 
   ## number of iterations, number of chains
@@ -228,7 +228,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
 
   ## Count for each category in each chain
   u = zeros(Int, m, d)
-  
+
   ## Number of times a category did not transition in each chain
   v = zeros(Int, m, d)
 
@@ -264,7 +264,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
       ca = (1 + phia) / (1 - phia)
       stat = NaN
       pval = NaN
-      df0  = NaN 
+      df0  = NaN
 
       if method == :hangartner
         stat = t * sum(chi_stat)
@@ -283,10 +283,10 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
         stat = t * sum(chi_stat)
         bstats = zeros(Float64, nsim)
         for b in 1:nsim
-          Y = hcat([simulate_NDARMA(t, 1, 0, phat, [phia, 1-phia]) 
+          Y = hcat([simulate_NDARMA(t, 1, 0, phat, [phia, 1-phia])
                 for j in 1:d]...)
           s = hangartner_inner(Y, m)[1]
-          bstats[b] = s 
+          bstats[b] = s
         end
         idx = findall(!isnan(bstats))
         df0 = mean(bstats[idx])
@@ -296,7 +296,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
         for b in 1:nsim
           Y = hcat([simulate_MC(t, mP) for j in 1:d]...)
           s = hangartner_inner(Y, m)[1]
-          bstats[b] = s 
+          bstats[b] = s
         end
         idx = findall(!isnan(bstats))
         df0 = mean(bstats[idx])
@@ -328,14 +328,14 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
   return result
 end
 
-function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol, 
+function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
                           nsim::Int, start_iter::Int, step_size::Int)
 
   num_iters, num_vars, num_chains = size(c.value)
 
   vals = zeros(Float64, 3 * (num_chains + 1), num_vars)
-  plot_vals_stat = zeros(length(start_iter:step_size:num_iters), num_vars) 
-  plot_vals_pval = zeros(length(start_iter:step_size:num_iters), num_vars) 
+  plot_vals_stat = zeros(length(start_iter:step_size:num_iters), num_vars)
+  plot_vals_pval = zeros(length(start_iter:step_size:num_iters), num_vars)
 
   ## Between-chain diagnostic
   X = zeros(Int64, num_iters, num_chains)
@@ -344,7 +344,7 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
     result = diag_all(X, method, nsim, start_iter, step_size)
     plot_vals_stat[:,j] = result[1, :] ./ result[2, :]
     plot_vals_pval[:,j] = result[3, :]
-    vals[1:3, j] = result[:, end] 
+    vals[1:3, j] = result[:, end]
   end
 
   ## Within-chain diagnostic
@@ -361,18 +361,18 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
       n_min = min(length(x1), length(x2))
       Y = [x1[1:n_min] x2[(end - n_min + 1):end]]
 
-      vals[(3 + 3 * (k - 1) + 1):(3 + 3 * (k - 1) + 3), j] = 
+      vals[(3 + 3 * (k - 1) + 1):(3 + 3 * (k - 1) + 3), j] =
         diag_all(Y, method, nsim, n_min, step_size)[:, end]
     end
   end
   return (collect(1:num_vars), vals, plot_vals_stat, plot_vals_pval)
-   
+
 end
 
-#function discretediagplot(c::AbstractChains; frac::Real=0.3, 
+#function discretediagplot(c::AbstractChains; frac::Real=0.3,
 #                          method::Symbol=:weiss, nsim::Int=1000,
 #                          start_iter::Int=100, step_size::Int=10000)
-#                   
+#
 #  num_iters, num_vars, num_chains = size(c.value)
 #
 #  valid_methods = [:hangartner, :weiss, :DARBOOT,
@@ -390,57 +390,62 @@ end
 #    throw(ArgumentError("start_iter, step_size must be less than $num_iters"))
 #  end
 #
-#  V, vals, plot_vals_stat, plot_vals_pval = 
+#  V, vals, plot_vals_stat, plot_vals_pval =
 #    discretediag_sub(c, frac, method, nsim, start_iter, step_size)
 #
 #  p1 = plot(y=vcat([plot_vals_stat[:,j] for j in 1:length(V)]...),
-#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000, 
+#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000,
 #                     outer=[length(V)]),
-#            Geom.line, 
+#            Geom.line,
 #            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
 #            Guide.ylabel("stat/df",orientation=:vertical),
 #            Scale.color_discrete(), Guide.colorkey(title="Variable"),
-#            color=repeat(c.names[V], 
+#            color=repeat(c.names[V],
 #                         inner=[length(start_iter:step_size:num_iters)]))
 #
 #  p2 = plot(y=vcat([plot_vals_pval[:,j] for j in 1:length(V)]...),
-#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000, 
+#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000,
 #                     outer=[length(V)]),
-#            Geom.line, 
+#            Geom.line,
 #            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
 #            Guide.ylabel("pval",orientation=:vertical),
 #            Scale.color_discrete(), Guide.colorkey(title="Variable"),
-#            color=repeat(c.names[V], 
+#            color=repeat(c.names[V],
  #                        inner=[length(start_iter:step_size:num_iters)]))
 #
 #  return [p1, p2]
 #end
 
-function discretediag(c::AbstractChains; frac::Real=0.3, 
+function discretediag(c::AbstractChains; frac::Real=0.3,
                       method::Symbol=:weiss, nsim::Int=1000)
 
     @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
 
-  num_iters, num_vars, num_chains = size(c.value)
+    num_iters, num_vars, num_chains = size(c.value)
 
-  valid_methods = [:hangartner, :weiss, :DARBOOT,
-                   :MCBOOT, :billingsley, :billingsleyBOOT]
-  if !(method in valid_methods)
-    methods_str = join([":$f" for f in valid_methods], ", ")
-    throw(ArgumentError("method must be one of ", methods_str))
-  end
+    valid_methods = [:hangartner, :weiss, :DARBOOT,
+        :MCBOOT, :billingsley, :billingsleyBOOT]
 
-  if !(0.0 < frac < 1.0)
-    throw(ArgumentError("frac must be in (0,1)"))
-  end
+    if !(method in valid_methods)
+        methods_str = join([":$f" for f in valid_methods], ", ")
+        throw(ArgumentError("method must be one of ", methods_str))
+    end
 
-  V, vals = discretediag_sub(c, frac, method, nsim, 
-                             size(c.value,1), size(c.value,1))[1:2]
+    if !(0.0 < frac < 1.0)
+        throw(ArgumentError("frac must be in (0,1)"))
+    end
 
-  hdr = header(c) * "\nChisq Diagnostic:\nEnd Fractions = $frac\n" *
-  "method = $method\n"
-  ChainSummary(collect(round.(vals, digits = 3)'), c.names[V], 
-               convert(Array{AbstractString, 1}, 
-                       vcat([["stat", "df", "p-value"] 
-                             for k in 1:(num_chains + 1)]...)), hdr)
+    V, vals = discretediag_sub(c, frac, method, nsim,
+    size(c.value,1), size(c.value,1))[1:2]
+
+    println(V)
+    println(vals)
+
+    hdr = header(c) * "\nChisq Diagnostic:\nEnd Fractions = $frac\n" *
+    "method = $method\n"
+
+    return ChainSummary(collect(round.(vals, digits = 3)'), string.(names(c))[V],
+    convert(Array{AbstractString, 1},
+    vcat([["stat", "df", "p-value"]
+    for k in 1:(num_chains + 1)]...)), hdr, true)
 end

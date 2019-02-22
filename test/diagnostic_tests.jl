@@ -19,7 +19,7 @@ chn = Chains(val, start = 1, thin = 2)
     @test step(chn) == 2
     @test last(chn) == 999
     @test size(chn) == (999, 4, 2)
-    @test keys(chn) == ["Param#1", "Param#2", "Param#3", "Param#4"]
+    @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
     @test isa(chn[:,1,:], MCMCChains.AbstractChains)
     @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
     @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
@@ -43,17 +43,4 @@ end
     @test isa(gewekediag(chn[:,1,:]), MCMCChains.ChainSummary)
     @test isa(heideldiag(chn[:,1,:]), MCMCChains.ChainSummary)
     @test isa(rafterydiag(chn[:,1,:]), MCMCChains.ChainSummary)
-end
-
-@testset "File IO" begin
-    loc = mktempdir()
-
-    # Serialize and deserialize.
-    write(joinpath(loc, "chain1"), chn)
-    chn2 = read(joinpath(loc, "chain1"), Chains)
-
-    # Test that the values were read correctly.
-    @test chn2.value == chn.value
-    
-    rm(loc; force=true, recursive=true)
 end

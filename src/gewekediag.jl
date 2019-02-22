@@ -33,5 +33,5 @@ function gewekediag(c::AbstractChains; first::Real=0.1, last::Real=0.5,
     end
     hdr = header(c) * "\nGeweke Diagnostic:\nFirst Window Fraction = $first\n" *
         "Second Window Fraction = $last\n"
-    ChainSummary(vals, c.names, ["Z-score", "p-value"], hdr)
+    return ChainSummary(vals, string.(names(c)), ["Z-score", "p-value"], hdr, true)
 end

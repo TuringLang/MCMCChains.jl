@@ -165,7 +165,7 @@ function describe(io::IO,
     show(io, ps_stats)
 
     print(io, "Quantiles:\n")
-    println(repeat(io, "=", linewidth))
+    println(io, repeat("=", linewidth))
     show(io, ps_quantiles)
 end
 

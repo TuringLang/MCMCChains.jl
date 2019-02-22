@@ -1,160 +1,169 @@
 #################### Chains ####################
 
-#################### Constructors ####################
-function Chains(
-                value::Array{T, 3};
-                start = 1,
-                thin = 1,
-                names = AbstractString[],
-                uniquenames = Dict{Symbol, Int}(),
-                chains = Int[]
-               ) where {T<:Real}
+## Constructors ##
 
-    return Chains(convert(Array{Union{Missing, T}, 3}, value);
-                start = start,
-                thin = thin,
-                names = names,
-                uniquenames = uniquenames,
-                chains = chains
-                )
+# Default name map.
+const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
+
+# Set default parameter names if not given.
+function Chains(val::AbstractArray{A,3};
+        start::Int=1,
+        thin::Int=1,
+        evidence = 0.0) where {A<:Union{Real, Union{Missing, Real}}}
+    parameter_names = map(i->"Param$i", 1:size(val, 2))
+    return Chains(val, parameter_names, start=start, thin=thin)
 end
 
-function Chains(
-                value::Array{Union{T, Missing}, 3};
-                start = 1,
-                thin = 1,
-                names = AbstractString[],
-                uniquenames = Dict{Symbol, Int}(),
-                chains = Int[]
-               ) where {T<:Real}
+# Generic chain constructor.
+function Chains(val::AbstractArray{A,3},
+        parameter_names::Vector,
+        name_map = copy(DEFAULT_MAP);
+        start::Int=1,
+        thin::Int=1,
+        evidence = 0.0) where {A<:Union{Real, Union{Missing, Real}}}
 
-    n, p, m = size(value)
-
-    if isempty(names)
-        names = map(i -> "Param#$i", 1:p)
-    elseif length(names) != p
-        throw(DimensionMismatch("size(value, 2) and names length differ"))
+    # If we received an array of pairs, convert it to a dictionary.
+    if typeof(name_map) <: Array
+        name_map = Dict(name_map)
     end
 
-    if isempty(uniquenames)
-        uniquenames = Dict(gensym() => i for i in 1:p)
-    elseif length(uniquenames) != p
-        throw(DimensionMismatch("size(value, 2) and uniquenames length differ"))
+    # Make sure that we have a :parameters index.
+    if !in(:parameters, keys(name_map))
+        name_map[:parameters] = []
     end
 
-    if isempty(chains)
-        chains = collect(1:m)
-    elseif length(chains) != m
-        throw(DimensionMismatch("size(value, 3) and chains length differ"))
+    # Preclean the name_map of names that aren't in the
+    # parameter_names vector.
+    for section in keys(name_map)
+        filter!(x -> x ∈ parameter_names, name_map[section])
     end
 
-    Chains{T}(zero(T), value, range(start, step = thin, length = n), names, uniquenames, chains)
+    # Construct axis names and ranges.
+    names = [:iter, :var, :chain]
+    axvals = [
+        Base.range(start, step=thin, length=size(val, 1)),
+        parameter_names,
+        map(i->Symbol("Chain$i"), 1:size(val, 3)),
+    ]
+
+    if length(keys(name_map)) == 1
+        name_map[first(keys(name_map))] = parameter_names
+    else
+        # Store unassigned variables.
+        unassigned = Set([])
+
+        # Check that all parameters are assigned.
+        for param in parameter_names
+            found = false
+            for (_, assigned) in name_map
+                if param in assigned
+                    found = true
+                    break
+                end
+            end
+
+            # Assign to :parameters by default, or :internals if it starts
+            # or ends with an underscore.
+            if !found
+                push!(unassigned, param)
+            end
+        end
+
+        # Assign all unassigned parameter names.
+        for param in unassigned
+            push!(name_map[:parameters], param)
+        end
+    end
+
+    axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
+    arr = AxisArray(convert(Array{Union{Missing,A},3}, val), axs...)
+    return sort(Chains{typeof(evidence)}(arr, evidence, name_map, Dict{Symbol, Any}()))
 end
 
-function Chains(
-                iters::Int,
-                params::Int;
-                start = 1,
-                thin = 1,
-                chains = 1,
-                names = AbstractString[],
-                uniquenames = Dict{Symbol, Int}()
-               )
-    value = ones(length(start:thin:iters), params, chains)
-    fill!(value, NaN)
+# Retrieve a new chain with only a specific section pulled out.
+function Chains(c::Chains{T}, section::Union{Vector, Any};
+                sorted=false) where {T<:Real}
+    section = typeof(section) <: AbstractArray ? section : [section]
 
-    Chains(value, start=start, thin=thin, names=names, uniquenames = uniquenames)
-end
+    # If we received an empty list, return the original chain.
+    if isempty(section) return c end
 
-function Chains(
-                value::Matrix{T};
-                start = 1,
-                thin = 1,
-                names = AbstractString[],
-                uniquenames = Dict{Symbol, Int}(),
-                chains = 1
-               ) where {T<:Union{Real, Missing}}
+    # Gather the names from the relevant sections.
+    names = []
+    if isa(section, Vector)
+        for s in section
+            # Make sure the section exists first.
+            in(s, keys(c.name_map)) ||
+                throw(ArgumentError("$section not found in Chains name map."))
 
-    Chains(
-        convert(
-            Array{Union{Missing, T}, 3},
-            reshape(value, size(value, 1), size(value, 2), 1)
-        ),
-        start=start,
-        thin=thin,
-        names=names,
-        uniquenames = uniquenames,
-        chains=Int[chains]
-    )
-end
+            names = vcat(names, c.name_map[s])
+        end
+    else
+        in(s, keys(c.name_map)) ||
+            throw(ArgumentError("$section not found in Chains name map."))
 
-function Chains(
-                value::Vector{T};
-                start = 1,
-                thin = 1,
-                names = "Param#1",
-                uniquenames = gensym(),
-                chains = 1
-               ) where {T<:Union{Real, Missing}}
-    Chains(
-         reshape(value, length(value), 1, 1),
-         start=start,
-         thin=thin,
-         names=AbstractString[names],
-         uniquenames = Dict{Symbol, Int}(uniquenames => 1),
-         chains=Int[chains]
-    )
+        names = c.name_map[s]
+    end
+
+    # Extract wanted values.
+    new_vals = c.value[:, names, :]
+
+    # Create the new chain.
+    new_chn = Chains{T}(new_vals,
+        c.logevidence,
+        Dict([s => c.name_map[s] for s in section]),
+        c.info)
+
+    if sorted
+        return sort(new_chn)
+    else
+        return new_chn
+    end
 end
 
 
 #################### Indexing ####################
 
-function Base.getindex(c::Chains, window, names, chains)
-    inds1 = window2inds(c, window)
-    inds2 = names2inds(c, names)
-    return Chains(c.value[inds1, inds2, chains],
-         start = first(c) + (first(inds1) - 1) * step(c),
-         thin = step(inds1) * step(c), names = c.names[inds2],
-         chains = c.chains[chains])
-end
+Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
+Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
+Base.getindex(c::Chains, v::Symbol) = c[[v]]
+Base.getindex(c::Chains, v::String) = c[:, [v], :]
+Base.getindex(c::Chains, v::Vector{String}) = c.value[:, v, :]
 
-function Base.setindex!(c::AbstractChains, value, iter::Int, names, chain::Int)
-    nids = names2inds(c, names)
-    if nothing in nids
-        @error "Could not find $names in Chain."
+function Base.getindex(c::Chains, v::Vector{Symbol})
+    v_str = string.(v)
+    idx = indexin(v_str, names(c))
+    syms = []
+    for i in eachindex(idx)
+        value = v_str[i]
+        if idx[i] == nothing
+            append!(syms,
+                collect(Iterators.filter(k -> occursin(value*"[", string(k)), names(c))))
+        else
+            push!(syms, value)
+        end
     end
-    setindex!(c.value, value, iters2inds(c, iter), nids..., chain)
+
+    sort!(syms, lt=MCMCChains.natural)
+    return c.value[:, syms, :]
 end
 
-# this is a work around
-mapiters(iters, c) = (collect(iters) .- first(c)) / step(c) .+ 1.
+function Base.getindex(c::Chains{T}, i...) where T
+    # Make sure things are in array form to preserve the axes.
+    ind = (i[1],
+           typeof(i[2]) <: Union{AbstractArray, Colon} ?  i[2] : [i[2]],
+           typeof(i[3]) <: Union{AbstractArray, Colon} ?  i[3] : [i[3]]
+    )
 
-window2inds(c::AbstractChains, window) =
-  throw(ArgumentError("$(typeof(window)) iteration indexing is unsupported"))
-window2inds(c::AbstractChains, ::Colon) = window2inds(c, 1:size(c, 1))
-window2inds(c::AbstractChains, window::AbstractRange) = begin
-  range_ = mapiters(window, c)
-  a = max(ceil(Int, first(range_)), 1)
-  b = step(window)
-  c = min(floor(Int, last(range_)), size(c.value, 1))
-  a:b:c
+    newval = getindex(c.value, ind...)
+    names = newval.axes[2].val
+    return Chains{T}(newval,
+        c.logevidence,
+        _trim_name_map(names, c.name_map),
+        c.info)
 end
 
-iters2inds(c::AbstractChains, iters) = iters
-iters2inds(c::AbstractChains, ::Colon) = 1:size(c.value, 1)
-iters2inds(c::AbstractChains, iters::AbstractRange) =
-  convert(StepRange{Int, Int}, mapiters(iters, c))
-iters2inds(c::AbstractChains, iter::Real) = Int(mapiters(iter, c))
-iters2inds(c::AbstractChains, iters::Vector{T}) where {T<:Real} =
-  Int[mapiters(i, c) for i in iters]
-
-names2inds(c::AbstractChains, names) = names
-names2inds(c::AbstractChains, ::Colon) = 1:size(c.value, 2)
-names2inds(c::AbstractChains, name::Real) = [name]
-names2inds(c::AbstractChains, name::AbstractString) = names2inds(c, [name])
-names2inds(c::AbstractChains, names::Vector{T}) where {T<:AbstractString} =
-  indexin(names, c.names)
-
+Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
 #################### Concatenation ####################
 
@@ -232,34 +241,34 @@ Base.vcat(c1::AbstractChains, args::AbstractChains...) = cat(1, c1, args...)
 #################### Base Methods ####################
 
 function Base.keys(c::AbstractChains)
-  c.names
+    names(c)
 end
 
 function Base.show(io::IO, c::Chains)
-  print(io, "Object of type \"$(summary(c))\"\n\n")
-  println(io, header(c))
-  show(io, c.value)
+    print(io, "Object of type \"$(summary(c))\"\n\n")
+    println(io, header(c))
+    # show(io, summarystats(c))
 end
 
 function Base.size(c::AbstractChains)
-  dim = size(c.value)
-  last(c), dim[2], dim[3]
+    dim = size(c.value)
+    last(c), dim[2], dim[3]
 end
 
 function Base.size(c::AbstractChains, ind)
-  size(c)[ind]
+    size(c)[ind]
 end
 
-Base.first(c::AbstractChains) = first(c.range)
-Base.step(c::AbstractChains) = step(c.range)
-Base.last(c::AbstractChains) = last(c.range)
-
+Base.length(c::AbstractChains) = length(range(c))
+Base.first(c::AbstractChains) = first(c.value[Axis{:iter}].val)
+Base.step(c::AbstractChains) = step(c.value[Axis{:iter}].val)
+Base.last(c::AbstractChains) = last(c.value[Axis{:iter}].val)
 
 #################### Auxilliary Functions ####################
 
 function combine(c::AbstractChains)
   n, p, m = size(c.value)
-  value = Array{Float64}(n * m, p)
+  value = Array{Float64}(undef, n * m, p)
   for j in 1:p
     idx = 1
     for i in 1:n, k in 1:m
@@ -270,14 +279,64 @@ function combine(c::AbstractChains)
   value
 end
 
-function header(c::AbstractChains)
-  string(
-    # "Log model evidence = $(c.logevidence)\n", #FIXME: Uncomment.
-    "Iterations = $(first(c)):$(last(c))\n",
-    "Thinning interval = $(step(c))\n",
-    "Chains = $(join(map(string, c.chains), ","))\n",
-    "Samples per chain = $(length(c.range))\n"
-  )
+function Base.range(c::AbstractChains)
+    return c.value[Axis{:iter}].val
+end
+
+function chains(c::AbstractChains)
+    return c.value[Axis{:chain}].val
+end
+
+function Base.names(c::AbstractChains)
+    return c.value[Axis{:var}].val
+end
+
+# Return a new chain for each section.
+function get_sections(c::AbstractChains, sections::Vector = [])
+    sections = length(sections) == 0 ? collect(keys(c.name_map)) : sections
+    return [Chains(c, section) for section in sections]
+end
+
+# Return a new chain for each section.
+function get_sections(c::AbstractChains, section::Union{Symbol, String})
+    return get_sections(c, [section])
+end
+
+function header(c::AbstractChains; section=missing)
+    rng = range(c)
+
+    # Function to make section strings.
+    section_str(sec, arr) = string(
+        "$sec",
+        repeat(" ", 18 - length(string(sec))),
+        "= $(join(map(string, arr), ", "))\n"
+    )
+
+    # Set up string array.
+    section_strings = String[]
+
+    # Get section lines.
+    if section isa Missing
+        for (sec, nms) in c.name_map
+            section_string = section_str(sec, nms)
+            push!(section_strings, section_string)
+        end
+    else
+        section in keys(c.name_map) ||
+            throw(ArgumentError("$section not found in name map."))
+        section_string = section_str(section, c.name_map[section])
+        push!(section_strings, section_string)
+    end
+
+    # Return header.
+    return string(
+        # "Log model evidence = $(c.logevidence)\n", #FIXME: Uncomment.
+        "Iterations        = $(first(c)):$(last(c))\n",
+        "Thinning interval = $(step(c))\n",
+        "Chains            = $(join(map(string, chains(c)), ", "))\n",
+        "Samples per chain = $(length(range(c)))\n",
+        section_strings...
+    )
 end
 
 function indiscretesupport(c::AbstractChains,
@@ -306,4 +365,32 @@ function link(c::AbstractChains)
     end
   end
   cc
+end
+
+function _trim_name_map(names::Vector, name_map::Dict)
+    n = copy(name_map)
+    for (key, values) in name_map
+        intersection = values ∩ names
+        if length(intersection) > 0
+            n[key] = intersection
+        else
+            delete!(n, key)
+        end
+    end
+    return n
+end
+
+### Chains specific functions ###
+function sort(c::Chains{T}) where T<:Real
+    v = c.value
+    x, y, z = size(v)
+    unsorted = collect(zip(1:y, v.axes[2].val))
+    sorted = sort(unsorted, by = x -> string(x[2]), lt=MCMCChains.natural)
+    new_axes = (v.axes[1], Axis{:var}([n for (_, n) in sorted]), v.axes[3])
+    new_v = copy(v.data)
+    for i in eachindex(sorted)
+        new_v[:, i, :] = v[:, sorted[i][1], :]
+    end
+    aa = AxisArray(new_v, new_axes...)
+    return MCMCChains.Chains{T}(aa, c.logevidence, c.name_map, c.info)
 end

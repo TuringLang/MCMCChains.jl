@@ -48,9 +48,9 @@ chn = Chains(val)
     @test isa(p_colordim, Plots.Plot)
 
     # Test if plotting a sub-set work.s
-    p_subset = plot(chn[:,2,:])
+    p_subset = plot(chn, 2)
     @test isa(p_subset, Plots.Plot)
 
-    p_subset_colordim = plot(chn[:,2,:], colordim = :parameter)
+    p_subset_colordim = plot(chn, 2, colordim = :parameter)
     @test isa(p_subset_colordim, Plots.Plot)
 end

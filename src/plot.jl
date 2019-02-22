@@ -24,16 +24,16 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
 @recipe f(c::AbstractChains, s::Symbol) = c, [s]
 
-@recipe function f(c::AbstractChains, i::Int; colordim = :chain, barbounds = (0, Inf), maxlag = nothing)
+@recipe function f(c::AbstractChains, i::Int; colordim = :chain, barbounds = (0, Inf), maxlag = nothing, section = :parameters)
     st = get(plotattributes, :seriestype, :traceplot)
 
     if colordim == :parameter
-        title := "Chain $(c.chains[i])"
-        labels := c.names
+        title := "Chain $(chains(c)[i])"
+        labels := c
         val = c.value[:, :, i]
     elseif colordim == :chain
-        title := c.names[i]
-        labels := map(k -> "Chain $(c.chains[k])", 1:size(c)[3])
+        title := names(c)[i]
+        labels := map(k -> "Chain $(chains(c)[k])", 1:size(c)[3])
         val = c.value[:, i, :]
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
@@ -51,14 +51,14 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     end
 
     if st == :autocorplot
-        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(c.range))) : maxlag)
-        ac = MCMCChains.autocor(c, lags=collect(lags))
+        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
+        ac = MCMCChains.autocor(c, lags=collect(lags); showall=true).summaries[1]
         val = colordim == :parameter ? ac.value[:, :, i]' : ac.value[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ supportedplots
         translationdict[st](c, val)
     else
-        c.range, val
+        range(c), val
     end
 end
 
@@ -79,7 +79,7 @@ end
     seriestype := :path
     xaxis --> "Iteration"
     yaxis --> "Mean"
-    p.c.range, MCMCChains.cummean(p.val)
+    range(p.c), MCMCChains.cummean(p.val)
 end
 
 @recipe function f(p::_AutocorPlot)
@@ -93,22 +93,26 @@ end
     seriestype := :path
     xaxis --> "Iteration"
     yaxis --> "Sample value"
-    p.c.range, p.val
+    range(p.c), p.val
 end
 
-@recipe function f(c::MCMCChains.AbstractChains, parameters::AbstractVector{Symbol}; colordim = :chain)
+@recipe function f(chn::MCMCChains.AbstractChains, parameters::AbstractVector{Symbol};
+        colordim = :chain, section = :parameters)
+    c = Chains(chn, section)
     colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
     ret = indexin(parameters, Symbol.(keys(c)))
     any(y -> y == nothing, ret) && error("Parameter not found")
     c, Int.(ret)
 end
 
-@recipe function f(c::MCMCChains.AbstractChains,
+@recipe function f(chn::MCMCChains.AbstractChains,
                    parameters::AbstractVector{<:Integer} = Int[];
                    width = 500,
                    height = 250,
-                   colordim = :chain
+                   colordim = :chain,
+                   section = :parameters
                   )
+    c = isempty(parameters) ? Chains(chn, section; sorted=true) : sort(chn)
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
     @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
@@ -147,5 +151,5 @@ end
     label --> permutedims(corner.parameters)
     compact --> true
     size --> (600, 600)
-    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[s] for s in corner.parameters))
+    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[:,s,:] for s in corner.parameters))
 end

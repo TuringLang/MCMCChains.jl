@@ -30,7 +30,7 @@ function rafterydiag(
             for i1 in 1:2, i2 in 1:2, i3 in 1:2
                 tt = trantest[i1, i2, i3]
                 if tt > 0
-                    fitted = sum(trantest[:, i2, i3]) * sum(trantest[i1, i2, :]) / 
+                    fitted = sum(trantest[:, i2, i3]) * sum(trantest[i1, i2, :]) /
                         sum(trantest[:, i2, :])
                     g2 += 2.0 * tt * log(tt / fitted)
                 end
@@ -67,16 +67,17 @@ function rafterydiag(
             r=r,
             s=s,
             eps=eps,
-            range=c.range
+            range=range(c)
         )
     end
 
-    hdr = header(c) * "\nRaftery and Lewis Diagnostic:\n" * 
+    hdr = header(c) * "\nRaftery and Lewis Diagnostic:\n" *
         "Quantile (q) = $q\nAccuracy (r) = $r\nProbability (s) = $s\n"
 
     return ChainSummary(vals,
-                        c.names,
+                        string.(names(c)),
                         ["Thinning", "Burn-in", "Total", "Nmin", "Dependence Factor"],
-                        hdr
+                        hdr,
+                        true
     )
 end
