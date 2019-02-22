@@ -144,7 +144,7 @@ function Base.getindex(c::Chains, v::Vector{Symbol})
         end
     end
 
-    sort!(syms, lt=MCMCChain.natural)
+    sort!(syms, lt=MCMCChains.natural)
     return c.value[:, syms, :]
 end
 
@@ -385,12 +385,12 @@ function sort(c::Chains{T}) where T<:Real
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
-    sorted = sort(unsorted, by = x -> string(x[2]), lt=MCMCChain.natural)
+    sorted = sort(unsorted, by = x -> string(x[2]), lt=MCMCChains.natural)
     new_axes = (v.axes[1], Axis{:var}([n for (_, n) in sorted]), v.axes[3])
     new_v = copy(v.data)
     for i in eachindex(sorted)
         new_v[:, i, :] = v[:, sorted[i][1], :]
     end
     aa = AxisArray(new_v, new_axes...)
-    return MCMCChain.Chains{T}(aa, c.logevidence, c.name_map, c.info)
+    return MCMCChains.Chains{T}(aa, c.logevidence, c.name_map, c.info)
 end

@@ -1,11 +1,11 @@
-using MCMCChain
+using MCMCChains
 using Test
 
 # Tests for missing values.
 
 @testset "utils" begin
     x = [1, missing, 3, 2]
-    @test MCMCChain.cummean(x) == [1., 1., 2., 2.]
+    @test MCMCChains.cummean(x) == [1., 1., 2., 2.]
 end
 
 @testset "stats" begin
@@ -13,14 +13,14 @@ end
 
     # Call describe without missing values.
     describe(devnull, chn; showall=true)
-    s1, s2 = MCMCChain.summarystats(chn).summaries[1], MCMCChain.quantile(chn).summaries[1]
+    s1, s2 = MCMCChains.summarystats(chn).summaries[1], MCMCChains.quantile(chn).summaries[1]
 
     # Add missing values.
     chn = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
 
     # Call describe with missing values.
     describe(devnull, chn; showall=true)
-    m1, m2 = MCMCChain.summarystats(chn).summaries[1], MCMCChain.quantile(chn).summaries[1]
+    m1, m2 = MCMCChains.summarystats(chn).summaries[1], MCMCChains.quantile(chn).summaries[1]
 
     @test all(s1.value[:,1:4,:] .== m1.value[:,1:4,:])
     @test all(s1.value[:,5,:] .+ 1 .== m1.value[:,5,:])

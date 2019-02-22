@@ -40,7 +40,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     end
 
     if st == :mixeddensity
-        discrete = MCMCChain.indiscretesupport(c, barbounds)
+        discrete = MCMCChains.indiscretesupport(c, barbounds)
         st = if colordim == :chain
             discrete[i] ? :histogram : :density
         else
@@ -52,7 +52,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
     if st == :autocorplot
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
-        ac = MCMCChain.autocor(c, lags=collect(lags); showall=true).summaries[1]
+        ac = MCMCChains.autocor(c, lags=collect(lags); showall=true).summaries[1]
         val = colordim == :parameter ? ac.value[:, :, i]' : ac.value[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ supportedplots
@@ -79,7 +79,7 @@ end
     seriestype := :path
     xaxis --> "Iteration"
     yaxis --> "Mean"
-    range(p.c), MCMCChain.cummean(p.val)
+    range(p.c), MCMCChains.cummean(p.val)
 end
 
 @recipe function f(p::_AutocorPlot)
@@ -96,7 +96,7 @@ end
     range(p.c), p.val
 end
 
-@recipe function f(chn::MCMCChain.AbstractChains, parameters::AbstractVector{Symbol};
+@recipe function f(chn::MCMCChains.AbstractChains, parameters::AbstractVector{Symbol};
         colordim = :chain, section = :parameters)
     c = Chains(chn, section)
     colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
@@ -105,7 +105,7 @@ end
     c, Int.(ret)
 end
 
-@recipe function f(chn::MCMCChain.AbstractChains,
+@recipe function f(chn::MCMCChains.AbstractChains,
                    parameters::AbstractVector{<:Integer} = Int[];
                    width = 500,
                    height = 250,

@@ -84,7 +84,7 @@ end
 
 function Base.show(io::IO, s::ChainSummary)
     # Print the header.
-    println(s.header)
+    println(io, s.header)
 
     # Sort the summary if needed.
     if s.sorted
