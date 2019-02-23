@@ -148,7 +148,7 @@ function Base.getindex(c::Chains, v::Vector{Symbol})
     return c.value[:, syms, :]
 end
 
-function Base.getindex(c::Chains{T}, i...) where T
+function Base.getindex(c::Chains{A, T}, i...) where {A, T}
     # Make sure things are in array form to preserve the axes.
     ind = (i[1],
            typeof(i[2]) <: Union{AbstractArray, Colon} ?  i[2] : [i[2]],
@@ -157,7 +157,7 @@ function Base.getindex(c::Chains{T}, i...) where T
 
     newval = getindex(c.value, ind...)
     names = newval.axes[2].val
-    return Chains{T}(newval,
+    return Chains{A, T}(newval,
         c.logevidence,
         _trim_name_map(names, c.name_map),
         c.info)

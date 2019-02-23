@@ -3,7 +3,7 @@
 function Base.read(name::AbstractString, ::Type{T}) where {T<:AbstractChains}
   c = open(deserialize, name, "r")
   isa(c, T) || throw(TypeError(:open, "read(\"$name\", $T)", T, c))
-  c
+  return c
 end
 
 function Base.write(name::AbstractString, c::AbstractChains)
