@@ -36,8 +36,8 @@ Parameters:
 - `names`: List of variable names (strings)
 - `chains`: List of chain ids
 """
-struct Chains{T} <: AbstractChains
-    value::AxisArray
+struct Chains{A, T} <: AbstractChains
+    value::AxisArray{Union{Missing,A},3}
     logevidence::T
     name_map::Dict{Any, Vector}
     info::Dict{Symbol, Any}

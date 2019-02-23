@@ -77,12 +77,12 @@ function Chains(val::AbstractArray{A,3},
 
     axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
     arr = AxisArray(convert(Array{Union{Missing,A},3}, val), axs...)
-    return sort(Chains{typeof(evidence)}(arr, evidence, name_map, Dict{Symbol, Any}()))
+    return sort(Chains{A, typeof(evidence)}(arr, evidence, name_map, Dict{Symbol, Any}()))
 end
 
 # Retrieve a new chain with only a specific section pulled out.
-function Chains(c::Chains{T}, section::Union{Vector, Any};
-                sorted=false) where {T<:Real}
+function Chains(c::Chains{A, T}, section::Union{Vector, Any};
+                sorted=false) where {A, T<:Real}
     section = typeof(section) <: AbstractArray ? section : [section]
 
     # If we received an empty list, return the original chain.
@@ -109,7 +109,7 @@ function Chains(c::Chains{T}, section::Union{Vector, Any};
     new_vals = c.value[:, names, :]
 
     # Create the new chain.
-    new_chn = Chains{T}(new_vals,
+    new_chn = Chains{A, T}(new_vals,
         c.logevidence,
         Dict([s => c.name_map[s] for s in section]),
         c.info)
@@ -381,7 +381,7 @@ function _trim_name_map(names::Vector, name_map::Dict)
 end
 
 ### Chains specific functions ###
-function sort(c::Chains{T}) where T<:Real
+function sort(c::Chains{A, T}) where {A, T<:Real}
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
@@ -392,5 +392,5 @@ function sort(c::Chains{T}) where T<:Real
         new_v[:, i, :] = v[:, sorted[i][1], :]
     end
     aa = AxisArray(new_v, new_axes...)
-    return MCMCChains.Chains{T}(aa, c.logevidence, c.name_map, c.info)
+    return MCMCChains.Chains{A, T}(aa, c.logevidence, c.name_map, c.info)
 end
