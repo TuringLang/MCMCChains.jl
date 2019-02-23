@@ -8,9 +8,7 @@ import Serialization: serialize, deserialize
 import Base: sort, range, names
 import Statistics: cor
 
-using RecipesBase
-import RecipesBase: plot
-
+using Requires
 using Serialization
 using Distributions
 using SpecialFunctions
@@ -18,7 +16,6 @@ using AxisArrays
 const axes = Base.axes
 
 export Chains, getindex, setindex!, chains
-export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
 export describe
 
 # export diagnostics functions
@@ -54,11 +51,11 @@ include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
 include("mcse.jl")
-#include("modelchains.jl")
-#include("modelstats.jl")
 include("rafterydiag.jl")
 include("stats.jl")
-include("plot.jl")
-#include("plot2.jl")
+
+function __init__()
+    @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" @eval include("plot.jl")
+end
 
 end # module
