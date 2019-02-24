@@ -18,7 +18,6 @@ using AxisArrays
 const axes = Base.axes
 
 export Chains, getindex, setindex!, chains
-export plot, traceplot, meanplot, densityplot, histogramplot, mixeddensityplot, autcorplot
 export describe
 
 # export diagnostics functions
@@ -54,11 +53,8 @@ include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
 include("mcse.jl")
-#include("modelchains.jl")
-#include("modelstats.jl")
 include("rafterydiag.jl")
 include("stats.jl")
 include("plot.jl")
-#include("plot2.jl")
 
 end # module
