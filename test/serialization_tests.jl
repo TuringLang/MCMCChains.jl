@@ -1,25 +1,24 @@
 using  MCMCChains, Test
 
-ProjDir = @__DIR__
+ProjDir = mktempdir()
 
 @testset "serialization read and write test" begin
-  
-  m10_4s = read(joinpath(ProjDir, "sections_m10.4s.jls"), MCMCChains.Chains)
+    val = rand(500, 5, 1)
+    chn1 = Chains(val)
 
-  write(joinpath(ProjDir, "sections_m10.4.1s.jls"), m10_4s)
-  
-  open(joinpath(ProjDir, "sections_m10.4s.txt"), "w") do io
-    describe(io, m10_4s);
-  end
-  
-  c = read(joinpath(ProjDir, "sections_m10.4.1s.jls"), MCMCChains.Chains)
+    write(joinpath(ProjDir, "chn1.jls"), chn1)
+    chn2 = read(joinpath(ProjDir, "chn1.jls"), MCMCChains.Chains)
 
-  tmpdir = tempdir()
-  open(joinpath(ProjDir, "sections_m10.4.1s.txt"), "w") do io
-    describe(io, c);
-  end
+    open(joinpath(ProjDir, "chn1.txt"), "w") do io
+        describe(io, chn1);
+    end
 
-  @test open(f->read(f, String), joinpath(ProjDir, "sections_m10.4.1s.txt")) ==
-      open(f->read(f, String), joinpath(ProjDir, "sections_m10.4s.txt"))
-    
+    open(joinpath(ProjDir, "chn2.txt"), "w") do io
+        describe(io, chn2);
+    end
+
+    @test open(f->read(f, String), joinpath(ProjDir, "chn1.txt")) ==
+        open(f->read(f, String), joinpath(ProjDir, "chn2.txt"))
 end
+
+rm(ProjDir, force=true, recursive=true)
