@@ -52,3 +52,13 @@ function natural(x, y)
     end
     return length(xarr) < length(yarr)
 end
+
+function _dict2namedtuple(d::Dict)
+    t_keys = ntuple(x -> Symbol(collect(keys(d))[x]), length(keys(d)))
+    t_vals = ntuple(x -> collect(values(d))[x], length(values(d)))
+    return NamedTuple{t_keys}(t_vals)
+end
+
+function _namedtuple2dict(n::NamedTuple)
+    return Dict(pairs(n))
+end

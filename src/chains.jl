@@ -9,7 +9,8 @@ const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 function Chains(val::AbstractArray{A,3};
         start::Int=1,
         thin::Int=1,
-        evidence = 0.0) where {A<:Union{Real, Union{Missing, Real}}}
+        evidence = 0.0,
+        info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
     parameter_names = map(i->"Param$i", 1:size(val, 2))
     return Chains(val, parameter_names, start=start, thin=thin)
 end
@@ -20,7 +21,8 @@ function Chains(val::AbstractArray{A,3},
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
-        evidence = 0.0) where {A<:Union{Real, Union{Missing, Real}}}
+        evidence = 0.0,
+        info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
 
     # If we received an array of pairs, convert it to a dictionary.
     if typeof(name_map) <: Array
@@ -75,14 +77,21 @@ function Chains(val::AbstractArray{A,3},
         end
     end
 
+    # Make the name_map NamedTuple.
+    name_map_tupl = _dict2namedtuple(name_map)
+
+    # Construct the AxisArray.
     axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
     arr = AxisArray(convert(Array{Union{Missing,A},3}, val), axs...)
-    return sort(Chains{A, typeof(evidence)}(arr, evidence, name_map, Dict{Symbol, Any}()))
+    return sort(
+        Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
+            arr, evidence, name_map_tupl, info)
+    )
 end
 
 # Retrieve a new chain with only a specific section pulled out.
-function Chains(c::Chains{A, T}, section::Union{Vector, Any};
-                sorted=false) where {A, T<:Real}
+function Chains(c::Chains{A, T, K, L}, section::Union{Vector, Any};
+                sorted=false) where {A, T<:Real, K, L}
     section = typeof(section) <: AbstractArray ? section : [section]
 
     # If we received an empty list, return the original chain.
@@ -108,10 +117,13 @@ function Chains(c::Chains{A, T}, section::Union{Vector, Any};
     # Extract wanted values.
     new_vals = c.value[:, names, :]
 
+    # Create the new section map.
+    new_section_map = _dict2namedtuple(Dict([s => c.name_map[s] for s in section]))
+
     # Create the new chain.
-    new_chn = Chains{A, T}(new_vals,
+    new_chn = Chains{A, T, typeof(new_section_map), L}(new_vals,
         c.logevidence,
-        Dict([s => c.name_map[s] for s in section]),
+        new_section_map,
         c.info)
 
     if sorted
@@ -148,7 +160,7 @@ function Base.getindex(c::Chains, v::Vector{Symbol})
     return Array(c.value[:, syms, :])
 end
 
-function Base.getindex(c::Chains{A, T}, i...) where {A, T}
+function Base.getindex(c::Chains{A, T, K, L}, i...) where {A, T, K, L}
     # Make sure things are in array form to preserve the axes.
     ind = (i[1],
            typeof(i[2]) <: Union{AbstractArray, Colon} ?  i[2] : [i[2]],
@@ -157,9 +169,10 @@ function Base.getindex(c::Chains{A, T}, i...) where {A, T}
 
     newval = getindex(c.value, ind...)
     names = newval.axes[2].val
-    return Chains{A, T}(newval,
+    new_name_map = _trim_name_map(names, c.name_map)
+    return Chains{A, T, typeof(new_name_map), L}(newval,
         c.logevidence,
-        _trim_name_map(names, c.name_map),
+        new_name_map,
         c.info)
 end
 
@@ -279,19 +292,38 @@ function combine(c::AbstractChains)
   value
 end
 
+"""
+    range(c::AbstractChains)
+
+Returns the range used in a `Chains` object.
+"""
 function Base.range(c::AbstractChains)
     return c.value[Axis{:iter}].val
 end
 
+"""
+    chains(c::AbstractChains)
+
+Returns the names or symbols of each chain in an `AbstractChains` object.
+"""
 function chains(c::AbstractChains)
     return c.value[Axis{:chain}].val
 end
 
+"""
+    names(c::AbstractChains)
+
+Return the parameter names in a `Chains` object.
+"""
 function Base.names(c::AbstractChains)
     return c.value[Axis{:var}].val
 end
 
-# Return a new chain for each section.
+"""
+    get_sections(c::AbstractChains, sections::Vector = [])
+
+Returns multiple `Chains` objects, each containing only a single section.
+"""
 function get_sections(c::AbstractChains, sections::Vector = [])
     sections = length(sections) == 0 ? collect(keys(c.name_map)) : sections
     return [Chains(c, section) for section in sections]
@@ -302,6 +334,23 @@ function get_sections(c::AbstractChains, section::Union{Symbol, String})
     return get_sections(c, [section])
 end
 
+"""
+    header(c::Chains; section=missing)
+
+Returns a string containing summary information for a `Chains` object.
+If the `section` keyword is used, this function prints only the relevant section
+header.
+
+Example:
+
+```julia
+# Printing the whole header.
+header(chn)
+
+# Print only one section's header.
+header(chn, section = :parameter)
+```
+"""
 function header(c::AbstractChains; section=missing)
     rng = range(c)
 
@@ -317,7 +366,7 @@ function header(c::AbstractChains; section=missing)
 
     # Get section lines.
     if section isa Missing
-        for (sec, nms) in c.name_map
+        for (sec, nms) in pairs(c.name_map)
             section_string = section_str(sec, nms)
             push!(section_strings, section_string)
         end
@@ -367,8 +416,14 @@ function link(c::AbstractChains)
   cc
 end
 
-function _trim_name_map(names::Vector, name_map::Dict)
-    n = copy(name_map)
+"""
+    _trim_name_map(names::Vector, name_map::NamedTuple)
+
+This is an internal function used to remove values from a name map
+and return a new name_map.
+"""
+function _trim_name_map(names::Vector, name_map::NamedTuple)
+    n = _namedtuple2dict(name_map)
     for (key, values) in name_map
         intersection = values ∩ names
         if length(intersection) > 0
@@ -377,11 +432,16 @@ function _trim_name_map(names::Vector, name_map::Dict)
             delete!(n, key)
         end
     end
-    return n
+    return _dict2namedtuple(n)
 end
 
 ### Chains specific functions ###
-function sort(c::Chains{A, T}) where {A, T<:Real}
+"""
+    sort(c::Chains)
+
+Returns a new column-sorted version of `c`, using natural sort order.
+"""
+function sort(c::Chains{A, T, K, L}) where {A, T, K, L}
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
@@ -392,5 +452,25 @@ function sort(c::Chains{A, T}) where {A, T<:Real}
         new_v[:, i, :] = v[:, sorted[i][1], :]
     end
     aa = AxisArray(new_v, new_axes...)
-    return MCMCChains.Chains{A, T}(aa, c.logevidence, c.name_map, c.info)
+    return MCMCChains.Chains{A, T, K, L}(aa, c.logevidence, c.name_map, c.info)
+end
+
+"""
+    setinfo(c::Chains, n::NamedTuple)
+
+Returns a new `Chains` object with a `NamedTuple` type `n` placed in the `info` field.
+
+Example:
+
+```julia
+new_chn = setinfo(chn, NamedTuple{(:a, :b)}((1, 2)))
+```
+"""
+function setinfo(c::Chains{A, T, K}, n::NamedTuple) where {A, T, K}
+    return Chains{A, T, K, typeof(n)}(
+        c.value,
+        c.logevidence,
+        c.name_map,
+        n
+    )
 end
