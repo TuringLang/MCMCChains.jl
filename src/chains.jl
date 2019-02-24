@@ -127,8 +127,8 @@ end
 Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
 Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
 Base.getindex(c::Chains, v::Symbol) = c[[v]]
-Base.getindex(c::Chains, v::String) = c[:, [v], :]
-Base.getindex(c::Chains, v::Vector{String}) = c.value[:, v, :]
+Base.getindex(c::Chains, v::String) = Array(c.value[:, [v], :])
+Base.getindex(c::Chains, v::Vector{String}) = Array(c.value[:, v, :])
 
 function Base.getindex(c::Chains, v::Vector{Symbol})
     v_str = string.(v)
@@ -145,7 +145,7 @@ function Base.getindex(c::Chains, v::Vector{Symbol})
     end
 
     sort!(syms, lt=MCMCChains.natural)
-    return c.value[:, syms, :]
+    return Array(c.value[:, syms, :])
 end
 
 function Base.getindex(c::Chains{A, T}, i...) where {A, T}
