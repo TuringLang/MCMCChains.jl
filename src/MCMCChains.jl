@@ -8,7 +8,9 @@ import Serialization: serialize, deserialize
 import Base: sort, range, names
 import Statistics: cor
 
-using Requires
+using RecipesBase
+import RecipesBase: plot
+
 using Serialization
 using Distributions
 using SpecialFunctions
@@ -53,9 +55,6 @@ include("heideldiag.jl")
 include("mcse.jl")
 include("rafterydiag.jl")
 include("stats.jl")
-
-function __init__()
-    @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" @eval include("plot.jl")
-end
+include("plot.jl")
 
 end # module

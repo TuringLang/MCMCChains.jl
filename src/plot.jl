@@ -1,14 +1,3 @@
-using RecipesBase
-import RecipesBase: plot
-
-export plot,
-    traceplot,
-    meanplot,
-    densityplot,
-    histogramplot,
-    mixeddensityplot,
-    autcorplot
-
 @shorthands meanplot
 @shorthands autocorplot
 @shorthands mixeddensity
