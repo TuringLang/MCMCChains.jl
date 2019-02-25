@@ -17,7 +17,7 @@ using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
 
-export Chains, getindex, setindex!, chains
+export Chains, getindex, setindex!, chains, setinfo
 export describe
 
 # export diagnostics functions
@@ -30,16 +30,17 @@ abstract type AbstractChains end
 
 Parameters:
 
-- `value`: `iterations × variables × chains` Data array
-- `range`: Range describing the iterations (considering thinning)
-- `names`: List of variable names (strings)
-- `chains`: List of chain ids
+- `value`: An `AxisArray` object with axes `iter` × `var` × `chains`
+- `logevidence` : A field containing the logevidence.
+- `name_map` : A `NamedTuple` mapping each variable to a section.
+- `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
+The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{A, T} <: AbstractChains
+struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractChains
     value::AxisArray{Union{Missing,A},3}
     logevidence::T
-    name_map::Dict{Any, Vector}
-    info::Dict{Symbol, Any}
+    name_map::K
+    info::L
 end
 
 # imports
@@ -53,8 +54,11 @@ include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
 include("mcse.jl")
+#include("modelchains.jl")
+#include("modelstats.jl")
 include("rafterydiag.jl")
 include("stats.jl")
 include("plot.jl")
+#include("plot2.jl")
 
 end # module

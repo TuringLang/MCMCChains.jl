@@ -25,6 +25,7 @@ chn = Chains(val, start = 1, thin = 2)
     @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
     @test all(chn[:,1,2].value .== val[:,1,2])
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
+    @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
 end
 
 @testset "function tests" begin
