@@ -324,7 +324,7 @@ function header(c::AbstractChains; section=missing)
 
     # Return header.
     return string(
-        # "Log model evidence = $(c.logevidence)\n", #FIXME: Uncomment.
+        "Log evidence      = $(c.logevidence)\n",
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
         "Chains            = $(join(map(string, chains(c)), ", "))\n",
