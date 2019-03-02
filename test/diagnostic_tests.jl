@@ -63,6 +63,7 @@ end
     @test range(c1_2) == 1:1:1000
     @test names(c1_2) == names(c1) == names(c2)
     @test chains(c1_2) == chains(c1) == chains(c2)
+    @test c1_2.value == vcat(c1, c2).value
 
     # Test dim 2
     c1_3 = cat(c1, c3, dims = 2)
@@ -70,6 +71,7 @@ end
     @test range(c1_3) == 1:1:500
     @test names(c1_3) == cat(names(c1), names(c3), dims=1)
     @test chains(c1_3) == chains(c1) == chains(c3)
+    @test c1_3.value == hcat(c1, c3).value
 
     # Test dim 3
     c1_4 = cat(c1, c4, dims = 3)
@@ -77,4 +79,5 @@ end
     @test range(c1_4) == 1:1:500
     @test names(c1_4) == names(c1) == names(c4)
     @test length(chains(c1_4)) == length(chains(c1)) + length(chains(c4))
+    @test c1_4.value == chainscat(c1, c4).value
 end
