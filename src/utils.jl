@@ -62,3 +62,9 @@ end
 function _namedtuple2dict(n::NamedTuple)
     return Dict(pairs(n))
 end
+
+function _ntdictmerge(n::NamedTuple, args::NamedTuple...)
+    ndict = _namedtuple2dict(n)
+    ndict2 = map(x -> _namedtuple2dict(x), args)
+    return _dict2namedtuple(merge(ndict, ndict2...))
+end
