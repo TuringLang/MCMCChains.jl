@@ -17,7 +17,7 @@ using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
 
-export Chains, getindex, setindex!, chains, setinfo
+export Chains, getindex, setindex!, chains, setinfo, chainscat
 export describe
 
 # export diagnostics functions
