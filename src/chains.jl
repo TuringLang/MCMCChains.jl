@@ -494,40 +494,6 @@ function cat3(c1::AbstractChains, args::AbstractChains...)
       info = c1.info)
 end
 
-Base.hcat(c1::AbstractChains, args::AbstractChains...) = cat(2, c1, args...)
-# Base.vcat(c1::AbstractChains, args::AbstractChains...) = cat(1, c1, args...)
-
-function Base.vcat(cs::Chains...)
-    c1 = cs[1]
-
-    evidence = c1.logevidence
-    nms = names(c1)
-    rng = range(c1)
-    chns = chains(c1)
-
-    value = c1.value
-    info = c1.info
-    name_map = c1.name_map
-
-    all(c -> names(c) == nms, cs) ||
-        throw(ArgumentError("parameter names differ"))
-
-    all(c -> chains(c) == chns, cs) ||
-        throw(ArgumentError("sets of chains differ"))
-
-    for c in cs[2:end]
-        @assert evidence == c.logevidence
-        @assert rng == range(c)
-
-        value = cat(value, c.value, dims=1)
-        info = _ntdictmerge(info, map(c -> c.info, args)...)
-        name_map = _ntdictmerge(name_map, map(c -> c.name_map, args)...)
-    end
-
-    chn = Chains(value,
-                nms,
-                name_map,
-                info=info,
-                evidence=evidence)
-    return chn
-end
+chainscat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=3)
+Base.hcat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=2)
+Base.vcat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=1)
