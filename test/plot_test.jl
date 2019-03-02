@@ -53,4 +53,6 @@ chn = Chains(val)
 
     p_subset_colordim = plot(chn, 2, colordim = :parameter)
     @test isa(p_subset_colordim, Plots.Plot)
+
+    rm("demo-plot.png")
 end
