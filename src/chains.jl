@@ -27,6 +27,8 @@ function Chains(val::AbstractArray{A,3},
     # If we received an array of pairs, convert it to a dictionary.
     if typeof(name_map) <: Array
         name_map = Dict(name_map)
+    elseif typeof(name_map) <: NamedTuple
+        name_map = _namedtuple2dict(name_map)
     end
 
     # Make sure that we have a :parameters index.
@@ -79,6 +81,12 @@ function Chains(val::AbstractArray{A,3},
 
     # Make the name_map NamedTuple.
     name_map_tupl = _dict2namedtuple(name_map)
+
+    # Ensure that we have a hashedsummary key in info.
+    if !in(:hashedsummary, keys(info))
+        s = (hash(0), ChainSummaries("", []))
+        info = merge(info, (hashedsummary = Ref(s),))
+    end
 
     # Construct the AxisArray.
     axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
@@ -178,100 +186,37 @@ end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
-#################### Concatenation ####################
-
-function Base.cat(dim::Integer, c1::AbstractChains, args::AbstractChains...)
-  dim == 1 ? cat1(c1, args...) :
-  dim == 2 ? cat2(c1, args...) :
-  dim == 3 ? cat3(c1, args...) :
-    throw(ArgumentError("cannot concatenate along dimension $dim"))
-end
-
-function cat1(c1::AbstractChains, args::AbstractChains...)
-  range = c1.range
-  for c in args
-    last(range) + step(range) == first(c) ||
-      throw(ArgumentError("noncontiguous chain iterations"))
-    step(range) == step(c) ||
-      throw(ArgumentError("chain thinning differs"))
-    range = first(range):step(range):last(c)
-  end
-
-  names = c1.names
-  all(c -> c.names == names, args) ||
-    throw(ArgumentError("chain names differ"))
-
-  chains = c1.chains
-  all(c -> c.chains == chains, args) ||
-    throw(ArgumentError("sets of chains differ"))
-
-  value = cat(1, c1.value, map(c -> c.value, args)...)
-  Chains(value, start=first(range), thin=step(range), names=names,
-         chains=chains)
-end
-
-function cat2(c1::AbstractChains, args::AbstractChains...)
-  range = c1.range
-  all(c -> c.range == range, args) ||
-    throw(ArgumentError("chain ranges differ"))
-
-  names = c1.names
-  n = length(names)
-  for c in args
-    names = union(names, c.names)
-    n += length(c.names)
-    n == length(names) ||
-      throw(ArgumentError("non-unique chain names"))
-  end
-
-  chains = c1.chains
-  all(c -> c.chains == chains, args) ||
-    throw(ArgumentError("sets of chains differ"))
-
-  value = cat(2, c1.value, map(c -> c.value, args)...)
-  Chains(value, start=first(range), thin=step(range), names=names,
-         chains=chains)
-end
-
-function cat3(c1::AbstractChains, args::AbstractChains...)
-  range = c1.range
-  all(c -> c.range == range, args) ||
-    throw(ArgumentError("chain ranges differ"))
-
-  names = c1.names
-  all(c -> c.names == names, args) ||
-    throw(ArgumentError("chain names differ"))
-
-  value = cat(3, c1.value, map(c -> c.value, args)...)
-  Chains(value, start=first(range), thin=step(range), names=names)
-end
-
-Base.hcat(c1::AbstractChains, args::AbstractChains...) = cat(2, c1, args...)
-
-Base.vcat(c1::AbstractChains, args::AbstractChains...) = cat(1, c1, args...)
-
 
 #################### Base Methods ####################
 
-function Base.keys(c::AbstractChains)
-    names(c)
-end
-
 function Base.show(io::IO, c::Chains)
-    print(io, "Object of type \"$(summary(c))\"\n\n")
+    print(io, "Object of type Chains, with data of type $(summary(c.value.data))\n\n")
     println(io, header(c))
-    # show(io, summarystats(c))
+
+    # Grab the value hash.
+    h = hash(c.value)
+
+    if :hashedsummary in keys(c.info)
+        s = c.info.hashedsummary.x
+        if s[1] == h
+            show(io, s[2])
+        else
+            new_summary = summarystats(c, suppress_header=true)
+            c.info.hashedsummary.x = (h, new_summary)
+            show(io, new_summary)
+        end
+    else
+        show(io, summarystats(c, suppress_header=true))
+    end
 end
 
 function Base.size(c::AbstractChains)
-    dim = size(c.value)
-    last(c), dim[2], dim[3]
+  dim = size(c.value)
+  last(c), dim[2], dim[3]
 end
 
-function Base.size(c::AbstractChains, ind)
-    size(c)[ind]
-end
-
+Base.keys(c::AbstractChains) = names(c)
+Base.size(c::AbstractChains, ind) = size(c)[ind]
 Base.length(c::AbstractChains) = length(range(c))
 Base.first(c::AbstractChains) = first(c.value[Axis{:iter}].val)
 Base.step(c::AbstractChains) = step(c.value[Axis{:iter}].val)
@@ -297,7 +242,7 @@ end
 
 Returns the range used in a `Chains` object.
 """
-function Base.range(c::AbstractChains)
+function range(c::AbstractChains)
     return c.value[Axis{:iter}].val
 end
 
@@ -315,7 +260,7 @@ end
 
 Return the parameter names in a `Chains` object.
 """
-function Base.names(c::AbstractChains)
+function names(c::AbstractChains)
     return c.value[Axis{:var}].val
 end
 
@@ -473,4 +418,116 @@ function setinfo(c::Chains{A, T, K}, n::NamedTuple) where {A, T, K}
         c.name_map,
         n
     )
+end
+
+
+#################### Concatenation ####################
+
+function Base.cat(c1::AbstractChains, args::AbstractChains...; dims::Integer = 3)
+  dims == 1 ? cat1(c1, args...) :
+  dims == 2 ? cat2(c1, args...) :
+  dims == 3 ? cat3(c1, args...) :
+    throw(ArgumentError("cannot concatenate along dimension $dim"))
+end
+
+function cat1(c1::AbstractChains, args::AbstractChains...)
+    rng = range(c1)
+    for c in args
+        last(rng) + step(rng) == first(c) ||
+            throw(ArgumentError("noncontiguous chain iterations"))
+        step(rng) == step(c) ||
+            throw(ArgumentError("chain thinning differs"))
+        rng = first(rng):step(rng):last(c)
+    end
+
+    nms = names(c1)
+    all(c -> names(c) == nms, args) ||
+        throw(ArgumentError("chain names differ"))
+
+    chns = chains(c1)
+    all(c -> chains(c1) == chns, args) ||
+        throw(ArgumentError("sets of chains differ"))
+
+    name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
+
+    value = cat(c1.value, map(c -> c.value, args)..., dims=1)
+    Chains(value, nms, name_map, start=first(rng), thin=step(rng),
+        info = c1.info)
+end
+
+function cat2(c1::AbstractChains, args::AbstractChains...)
+  rng = range(c1)
+  all(c -> range(c) == rng, args) ||
+    throw(ArgumentError("chain ranges differ"))
+
+  nms = names(c1)
+  n = length(nms)
+  for c in args
+    nms = union(nms, names(c))
+    n += length(names(c))
+    n == length(nms) ||
+      throw(ArgumentError("non-unique parameter names"))
+  end
+
+  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
+
+  chns = chains(c1)
+  all(c -> chains(c) == chns, args) ||
+    throw(ArgumentError("sets of chains differ"))
+
+  value = cat(c1.value, map(c -> c.value, args)..., dims=2)
+  Chains(value, nms, name_map, start=first(rng), thin=step(rng),
+      info = c1.info)
+end
+
+function cat3(c1::AbstractChains, args::AbstractChains...)
+  rng = range(c1)
+  all(c -> range(c) == rng, args) ||
+    throw(ArgumentError("chain ranges differ"))
+
+  nms = names(c1)
+
+  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
+
+  value = cat(c1.value.data, map(c -> c.value.data, args)..., dims=3)
+  Chains(value, nms, name_map, start=first(rng), thin=step(rng),
+      info = c1.info)
+end
+
+Base.hcat(c1::AbstractChains, args::AbstractChains...) = cat(2, c1, args...)
+# Base.vcat(c1::AbstractChains, args::AbstractChains...) = cat(1, c1, args...)
+
+function Base.vcat(cs::Chains...)
+    c1 = cs[1]
+
+    evidence = c1.logevidence
+    nms = names(c1)
+    rng = range(c1)
+    chns = chains(c1)
+
+    value = c1.value
+    info = c1.info
+    name_map = c1.name_map
+
+    all(c -> names(c) == nms, cs) ||
+        throw(ArgumentError("parameter names differ"))
+
+    all(c -> chains(c) == chns, cs) ||
+        throw(ArgumentError("sets of chains differ"))
+
+    for c in cs[2:end]
+        @assert evidence == c.logevidence
+        @assert rng == range(c)
+
+        value = cat(value, c.value, dims=1)
+        info = _ntdictmerge(info, map(c -> c.info, args)...)
+        name_map = _ntdictmerge(name_map, map(c -> c.name_map, args)...)
+    end
+
+    chn = Chains(value,
+                nms,
+                name_map,
+                info=info,
+                evidence=evidence)
+    return chn
 end
