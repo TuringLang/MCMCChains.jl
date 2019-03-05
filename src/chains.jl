@@ -369,7 +369,7 @@ and return a new name_map.
 """
 function _trim_name_map(names::Vector, name_map::NamedTuple)
     n = _namedtuple2dict(name_map)
-    for (key, values) in name_map
+    for (key, values) in n
         intersection = values ∩ names
         if length(intersection) > 0
             n[key] = intersection
