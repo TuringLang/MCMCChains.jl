@@ -160,12 +160,12 @@ function describe(io::IO,
     linewidth = max(quantiles_linewidth, stats_linewidth)
 
     # Print stats.
-    print(io, "Empirical Posterior Estimates:\n")
-    println(io, repeat("=", linewidth))
+    printstyled(io, "Empirical Posterior Estimates\n", color=:cyan, bold=true)
+    println(io, repeat("─", linewidth))
     show(io, ps_stats)
 
-    print(io, "Quantiles:\n")
-    println(io, repeat("=", linewidth))
+    printstyled(io, "Quantiles\n", color=:cyan, bold=true)
+    println(io, repeat("─", linewidth))
     show(io, ps_quantiles)
 end
 
