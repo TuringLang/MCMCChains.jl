@@ -21,6 +21,9 @@ chn = Chains(val, start = 1, thin = 2)
     @test size(chn) == (999, 4, 2)
     @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
     @test isa(chn[:,1,:], MCMCChains.AbstractChains)
+    @test isa(chn[200:300,"Param1",:], MCMCChains.AbstractChains)
+    @test isa(chn[200:300,["Param1", "Param3"],:], MCMCChains.AbstractChains)
+    @test isa(chn[200:300,"Param1",1], MCMCChains.AbstractChains)
     @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
     @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
     @test all(chn[:,1,2].value .== val[:,1,2])
