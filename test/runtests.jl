@@ -5,6 +5,7 @@ using Pkg
 to_add = [
     PackageSpec(name="Plots"),
     PackageSpec(name="StatsPlots"),
+    PackageSpec(name="Turing"),
 ]
 
 Pkg.add(to_add)
