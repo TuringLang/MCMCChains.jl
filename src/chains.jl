@@ -47,7 +47,7 @@ function Chains(val::AbstractArray{A,3},
     axvals = [
         Base.range(start, step=thin, length=size(val, 1)),
         parameter_names,
-        map(i->Symbol("Chain$i"), 1:size(val, 3)),
+        collect(1:size(val, 3)),
     ]
 
     if length(keys(name_map)) == 1
