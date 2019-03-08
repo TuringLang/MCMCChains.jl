@@ -103,7 +103,13 @@ function Chains(c::Chains{A, T, K, L}, section::Union{Vector, Any};
     section = typeof(section) <: AbstractArray ? section : [section]
 
     # If we received an empty list, return the original chain.
-    if isempty(section) return c end
+    if isempty(section)
+        if sorted
+            return sort(new_chn)
+        else
+            return new_chn
+        end
+    end
 
     # Gather the names from the relevant sections.
     names = []

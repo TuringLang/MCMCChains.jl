@@ -52,13 +52,16 @@ function rafterydiag(
 end
 
 function rafterydiag(
-                     c::AbstractChains;
+                     chn::AbstractChains;
                      q = 0.025,
                      r = 0.005,
                      s = 0.95,
-                     eps = 0.001
+                     eps = 0.001,
+                     showall=false,
+                     section=:parameters
                     )
-     _, p, m = size(c.value)
+    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+    _, p, m = size(c.value)
     vals = Array{Float64}(undef, p, 5, m)
     for j in 1:p, k in 1:m
         vals[j, :, k] = rafterydiag(
@@ -71,8 +74,9 @@ function rafterydiag(
         )
     end
 
-    hdr = header(c) * "\nRaftery and Lewis Diagnostic:\n" *
-        "Quantile (q) = $q\nAccuracy (r) = $r\nProbability (s) = $s\n"
+    section_name = showall ? "" : "\n" * string(section) * "\n"
+    hdr = "Raftery and Lewis Diagnostic:\n" *
+        "Quantile (q) = $q\nAccuracy (r) = $r\nProbability (s) = $s\n" * section_name
 
     return ChainSummary(vals,
                         string.(names(c)),
