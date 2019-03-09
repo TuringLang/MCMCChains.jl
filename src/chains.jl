@@ -143,14 +143,7 @@ end
 
 
 #################### Indexing ####################
-
-Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
-Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
-Base.getindex(c::Chains, v::Symbol) = c[[v]]
-Base.getindex(c::Chains, v::String) = Array(c.value[:, [v], :])
-Base.getindex(c::Chains, v::Vector{String}) = Array(c.value[:, v, :])
-
-function Base.getindex(c::Chains, v::Vector{Symbol})
+function _sym2index(c::Chains, v::Vector{Symbol}; sort = true)
     v_str = string.(v)
     idx = indexin(v_str, names(c))
     syms = []
@@ -163,9 +156,18 @@ function Base.getindex(c::Chains, v::Vector{Symbol})
             push!(syms, value)
         end
     end
+    return sort ? sort!(syms, lt=MCMCChains.natural) : syms
+end
 
-    sort!(syms, lt=MCMCChains.natural)
-    return Array(c.value[:, syms, :])
+Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
+Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
+Base.getindex(c::Chains, v::Symbol) = c[[v]]
+Base.getindex(c::Chains, v::String) = Array(c[:, [v], :])
+Base.getindex(c::Chains, v::Vector{String}) = Array(c[:, v, :])
+
+function Base.getindex(c::Chains, v::Vector{Symbol})
+    syms = _sym2index(c, v)
+    return c[:, syms, :]
 end
 
 function Base.getindex(c::Chains{A, T, K, L}, i...) where {A, T, K, L}
@@ -186,6 +188,30 @@ end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
+get_params1(c::Chains, v::Symbol) = get_params(c, [v])
+function get_params1(c::Chains, v::Vector{Symbol})
+    syms = _sym2index(c, v)
+    return ntuple(i -> c.value[:,syms[i],:], length(syms))
+end
+
+get_params2(c::Chains, v::Symbol) = get_params(c, [v])
+function get_params2(c::Chains, vs::Vector{Symbol})
+    pairs = Dict()
+    for v in vs
+        syms = _sym2index(c, [v])
+        len = length(syms)
+        val = ()
+        if len > 1
+            val = ntuple(i -> c.value[:,syms[i],:], length(syms))
+        elseif len == 1
+            val = c.value[:,syms[1],:]
+        else
+            continue
+        end
+        pairs[v] = val
+    end
+    return _dict2namedtuple(pairs)
+end
 
 #################### Base Methods ####################
 
