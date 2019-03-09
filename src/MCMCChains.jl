@@ -5,7 +5,7 @@ import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 import LinearAlgebra: diag
 import Serialization: serialize, deserialize
-import Base: sort, range, names
+import Base: sort, range, names, get
 import Statistics: cor
 
 using RecipesBase
