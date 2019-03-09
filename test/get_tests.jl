@@ -28,7 +28,7 @@ using Test
     getsection = get(chn, section = :internals)
     @test length(keys(getsection)) == 2
 
-    getall = get_all(chn)
+    getall = get_params(chn)
     @test getall == get(chn, section=[:internals, :parameters])
     @test length(keys(getall)) == 4
 end

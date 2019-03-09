@@ -18,7 +18,7 @@ using AxisArrays
 const axes = Base.axes
 
 export Chains, getindex, setindex!, chains, setinfo, chainscat
-export describe, set_section, get_all, sections
+export describe, set_section, get_params, sections
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag

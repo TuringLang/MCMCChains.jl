@@ -262,7 +262,7 @@ function Base.get(c::Chains; section::Union{Vector{Symbol}, Symbol})
 end
 
 """
-    get_all(c::Chains)
+    get_params(c::Chains)
 
 Returns all parameters packaged as a `NamedTuple`. Variables with a bracket
 in their name (as in "P[1]") will be grouped into the returned value as P.
@@ -270,11 +270,11 @@ in their name (as in "P[1]") will be grouped into the returned value as P.
 Example:
 
 ```julia
-x = get_all(chn)
+x = get_params(chn)
 x.P
 ```
 """
-get_all(c::Chains) = get(c, section = sections(c))
+get_params(c::Chains) = get(c, section = sections(c))
 
 #################### Base Methods ####################
 
