@@ -251,10 +251,19 @@ function summarystats(chn::AbstractChains; etype=:bm,
 
     # Summary statistics function array.
     f(x) = [mean(x),
-            std(x),
-            sem(x),
-            mcse(x, etype; args...)]
+        std(x),
+        sem(x),
+        mcse(x, etype; args...)]
 
+    # Summary statistics function if there aren't enough values
+    # to compute MCSE and ESS.
+    f2(x) = [mean(x),
+        std(x),
+        sem(x)]
+
+    length(chn) >= 200 || @warn "Chain iterations are < 200, " *
+        "MCSE and ESS cannot be computed."
+        
     # Separate the chain into sections if showall=false.
     chns = showall ? [chn] : get_sections(chn, section)
 
@@ -276,10 +285,20 @@ function summarystats(chn::AbstractChains; etype=:bm,
         end
 
         # Make summary statistics and ChainSummary.
-        vals = hcat([f(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)'
-        stats = [vals  min.((vals[:, 2] ./ vals[:, 4]).^2, size(c.value, 1))]
-        new_summary = ChainSummary(round.(stats, digits=4), string.(names(c)), labels, section_name, true)
-        push!(summaries, new_summary)
+        if length(chn) >= 200
+            vals = hcat([f(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)'
+            stats = [vals  min.((vals[:, 2] ./ vals[:, 4]).^2, size(c.value, 1))]
+            new_summary = ChainSummary(round.(stats, digits=4), string.(names(c)), labels, section_name, true)
+            push!(summaries, new_summary)
+        else
+            vals = hcat([f2(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)'
+            new_summary = ChainSummary(round.(Array(vals), digits=4),
+                string.(names(c)),
+                labels[1:3],
+                section_name,
+                true)
+            push!(summaries, new_summary)
+        end
     end
 
     h = suppress_header ? "" : header(chn)
