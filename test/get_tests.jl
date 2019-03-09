@@ -24,4 +24,11 @@ using Test
     @test round(mean(get1.m[10])) ≈ 10.0
     @test length(get2.s) == n_samples
     @test collect(keys(get2)) == [:m, :s]
+
+    getsection = get(chn, section = :internals)
+    @test length(keys(getsection)) == 2
+
+    getall = get_all(chn)
+    @test getall == get(chn, section=[:internals, :parameters])
+    @test length(keys(getall)) == 4
 end
