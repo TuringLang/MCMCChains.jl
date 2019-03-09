@@ -188,14 +188,8 @@ end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
-get_params1(c::Chains, v::Symbol) = get_params(c, [v])
-function get_params1(c::Chains, v::Vector{Symbol})
-    syms = _sym2index(c, v)
-    return ntuple(i -> c.value[:,syms[i],:], length(syms))
-end
-
-get_params2(c::Chains, v::Symbol) = get_params(c, [v])
-function get_params2(c::Chains, vs::Vector{Symbol})
+Base.get(c::Chains, v::Symbol) = get(c, [v])
+function Base.get(c::Chains, vs::Vector{Symbol})
     pairs = Dict()
     for v in vs
         syms = _sym2index(c, [v])
