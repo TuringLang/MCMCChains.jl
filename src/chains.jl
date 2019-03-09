@@ -195,11 +195,13 @@ end
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
 """
-    Base.get(c::Chains, v::Symbol)
-    Base.get(c::Chains, vs::Vector{Symbol})
+    Base.get(c::Chains, v::Symbol; flatten=false)
+    Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
 Returns a `NamedTuple` with `v` as the key, and matching paramter
 names as the values.
+
+Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 Example:
 
@@ -208,8 +210,8 @@ x = get(c, :param1)
 x = get(c, [:param1, :param2])
 ```
 """
-Base.get(c::Chains, v::Symbol) = get(c, [v])
-function Base.get(c::Chains, vs::Vector{Symbol})
+Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)
+function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
     pairs = Dict()
     for v in vs
         syms = _sym2index(c, [v])
@@ -222,15 +224,24 @@ function Base.get(c::Chains, vs::Vector{Symbol})
         else
             continue
         end
-        pairs[v] = val
+
+        if flatten
+            for i in eachindex(syms)
+                pairs[syms[i]] = val[i]
+            end
+        else
+            pairs[v] = val
+        end
     end
     return _dict2namedtuple(pairs)
 end
 
 """
-    get(c::Chains; section::Union{Vector{Symbol}, Symbol}
+    get(c::Chains; section::Union{Vector{Symbol}, Symbol; flatten=false}
 
 Returns all parameters in a given section(s) as a `NamedTuple`.
+
+Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 Example:
 
@@ -239,7 +250,9 @@ x = get(chn, section = :parameters)
 x = get(chn, section = [:internals, :parameters])
 ```
 """
-function Base.get(c::Chains; section::Union{Vector{Symbol}, Symbol})
+function Base.get(c::Chains;
+        section::Union{Vector{Symbol}, Symbol},
+        flatten = false)
     section = section isa Symbol ? [section] : section
     not_found = Symbol[]
     names = Set(String[])
@@ -247,7 +260,9 @@ function Base.get(c::Chains; section::Union{Vector{Symbol}, Symbol})
         if v in keys(c.name_map)
             # If the name contains a bracket,
             # split it so get can group them correctly.
-            nms = map(n -> String(split(n, "[")[1]), c.name_map[v])
+            nms = flatten ?
+                c.name_map[v] :
+                map(n -> String(split(n, "[")[1]), c.name_map[v])
             push!(names, nms...)
         else
             push!(not_found, v)
@@ -262,10 +277,12 @@ function Base.get(c::Chains; section::Union{Vector{Symbol}, Symbol})
 end
 
 """
-    get_params(c::Chains)
+    get_params(c::Chains; flatten=false)
 
 Returns all parameters packaged as a `NamedTuple`. Variables with a bracket
 in their name (as in "P[1]") will be grouped into the returned value as P.
+
+Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 Example:
 
@@ -274,7 +291,7 @@ x = get_params(chn)
 x.P
 ```
 """
-get_params(c::Chains) = get(c, section = sections(c))
+get_params(c::Chains; flatten = false) = get(c, section = sections(c), flatten=flatten)
 
 #################### Base Methods ####################
 
