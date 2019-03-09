@@ -5,20 +5,23 @@ using Test
 @testset "get tests" begin
     @model model(x) = begin
         m = Vector{Real}(undef, 10)
-        [m[i] ~ Normal(0, 0.5) for i in 1:10]
+        [m[i] ~ Normal(i, 0.1) for i in 1:10]
         s ~ InverseGamma(2,3)
         x ~ Normal(0, s)
     end
 
+    n_samples = 1000
     model = model(2.0)
-    sampler = HMC(500, 0.01, 5)
+    sampler = MH(n_samples)
     chn = sample(model, sampler)
 
     get1 = get(chn, :m)
     get2 = get(chn, [:m, :s])
-    
+
     @test length(get1.m) == 10
-    @test length(get1.m[5]) == 500
-    @test length(get2.s) == 500
+    @test length(get1.m[5]) == n_samples
+    @test round(mean(get1.m[1])) ≈ 1.0
+    @test round(mean(get1.m[10])) ≈ 10.0
+    @test length(get2.s) == n_samples
     @test collect(keys(get2)) == [:m, :s]
 end
