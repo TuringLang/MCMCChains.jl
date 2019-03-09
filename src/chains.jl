@@ -432,6 +432,14 @@ function setinfo(c::Chains{A, T, K}, n::NamedTuple) where {A, T, K}
 end
 
 set_section(c::Chains, nt::NamedTuple) = set_section(c, _namedtuple2dict(nt))
+
+"""
+    set_section(c::Chains, nt::Dict)
+
+Changes a chains name mapping to a provided dictionary. This also supports a NamedTuple.
+Any parameters in the chain that are unassigned will be placed into
+the :parameters section.
+"""
 function set_section(c::Chains{A, T, K, L}, d::Dict) where {A,T,K,L}
     # Add :parameters if it's not there.
     if !(:parameters in keys(d))
@@ -446,9 +454,6 @@ function set_section(c::Chains{A, T, K, L}, d::Dict) where {A,T,K,L}
         end
     end
     missing_names = setdiff(names(c), nms)
-    println(nms)
-    println(names(c))
-    println(missing_names)
 
     # Assign everything to :parameters if anything's missing.
     if length(missing_names) > 0
