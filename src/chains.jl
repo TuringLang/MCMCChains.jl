@@ -17,7 +17,7 @@ end
 
 # Generic chain constructor.
 function Chains(val::AbstractArray{A,3},
-        parameter_names::Vector,
+        parameter_names::Vector{String},
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
@@ -194,6 +194,20 @@ end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
+"""
+    Base.get(c::Chains, v::Symbol)
+    Base.get(c::Chains, vs::Vector{Symbol})
+
+Returns a `NamedTuple` with `v` as the key, and matching paramter
+names as the values.
+
+Example:
+
+```julia
+x = get(c, :param1)
+x = get(c, [:param1, :param2])
+```
+"""
 Base.get(c::Chains, v::Symbol) = get(c, [v])
 function Base.get(c::Chains, vs::Vector{Symbol})
     pairs = Dict()
@@ -212,6 +226,55 @@ function Base.get(c::Chains, vs::Vector{Symbol})
     end
     return _dict2namedtuple(pairs)
 end
+
+"""
+    get(c::Chains; section::Union{Vector{Symbol}, Symbol}
+
+Returns all parameters in a given section(s) as a `NamedTuple`.
+
+Example:
+
+```julia
+x = get(chn, section = :parameters)
+x = get(chn, section = [:internals, :parameters])
+```
+"""
+function Base.get(c::Chains; section::Union{Vector{Symbol}, Symbol})
+    section = section isa Symbol ? [section] : section
+    not_found = Symbol[]
+    names = Set(String[])
+    for v in section
+        if v in keys(c.name_map)
+            # If the name contains a bracket,
+            # split it so get can group them correctly.
+            nms = map(n -> String(split(n, "[")[1]), c.name_map[v])
+            push!(names, nms...)
+        else
+            push!(not_found, v)
+        end
+    end
+
+    if length(not_found) > 0
+        throw(ArgumentError("$not_found not found in chains name map."))
+    end
+
+    return get(c, Symbol.(names))
+end
+
+"""
+    get_all(c::Chains)
+
+Returns all parameters packaged as a `NamedTuple`. Variables with a bracket
+in their name (as in "P[1]") will be grouped into the returned value as P.
+
+Example:
+
+```julia
+x = get_all(chn)
+x.P
+```
+"""
+get_all(c::Chains) = get(c, section = sections(c))
 
 #################### Base Methods ####################
 
@@ -309,6 +372,13 @@ end
 function get_sections(c::AbstractChains, section::Union{Symbol, String})
     return get_sections(c, [section])
 end
+
+"""
+    sections(c::AbstractChains)
+
+Retrieve a list of the sections in a chain.
+"""
+sections(c::AbstractChains) = collect(keys(c.name_map))
 
 """
     header(c::Chains; section=missing)
