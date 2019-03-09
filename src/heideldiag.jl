@@ -26,15 +26,20 @@ function heideldiag(x::Vector{T}; alpha::Real=0.05, eps::Real=0.1,
   [i + start - 2, converged, round(pvalue, digits = 4), ybar, halfwidth, passed]
 end
 
-function heideldiag(c::AbstractChains;
+function heideldiag(chn::AbstractChains;
                     alpha = 0.05,
                     eps = 0.1,
                     etype = :imse,
+                    section = :parameters,
+                    showall=false,
                     args...
                    )
+    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+
     # Preallocate.
     _, p, m = size(c.value)
     vals = Array{Float64}(undef, p, 6, m)
+
 
     # Perform tests.
     for j in 1:p, k in 1:m
@@ -49,8 +54,9 @@ function heideldiag(c::AbstractChains;
     end
 
     # Set header.
-    hdr = header(c) * "\nHeidelberger and Welch Diagnostic:\n" *
-        "Target Halfwidth Ratio = $eps\nAlpha = $alpha\n"
+    section_name = showall ? "" : "\n" * string(section) * "\n"
+    hdr = "\nHeidelberger and Welch Diagnostic:\n" *
+        "Target Halfwidth Ratio = $eps\nAlpha = $alpha\n" * section_name
 
     # Round values.
     vals = map(x -> round(x, digits=4), vals)

@@ -17,8 +17,9 @@ function gewekediag(x::Vector{T}; first::Real=0.1, last::Real=0.5,
   [round(z, digits = 3), round(1.0 - erf(abs(z) / sqrt(2.0)), digits = 4)]
 end
 
-function gewekediag(c::AbstractChains; first::Real=0.1, last::Real=0.5,
-                    etype=:imse, args...)
+function gewekediag(chn::AbstractChains; first::Real=0.1, last::Real=0.5,
+                    etype=:imse, section=:parameters, showall=false, args...)
+    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
 
     _, p, m = size(c.value)
     vals = Array{Float64}(undef, p, 2, m)
@@ -31,7 +32,9 @@ function gewekediag(c::AbstractChains; first::Real=0.1, last::Real=0.5,
                             args...
                         )
     end
-    hdr = header(c) * "\nGeweke Diagnostic:\nFirst Window Fraction = $first\n" *
-        "Second Window Fraction = $last\n"
+    section_name = showall ? "" : "\n" * string(section) * "\n"
+    hdr = "Geweke Diagnostic:\nFirst Window Fraction = $first\n" *
+        "Second Window Fraction = $last\n" *
+        section_name
     return ChainSummary(vals, string.(names(c)), ["Z-score", "p-value"], hdr, true)
 end

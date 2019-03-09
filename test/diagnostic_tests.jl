@@ -32,11 +32,6 @@ chn = Chains(val, start = 1, thin = 2)
 end
 
 @testset "function tests" begin
-    # do not test the following functions
-    # - wrtsp
-    # - window2inds (tested above, see getindex)
-    # -
-
     # the following tests only check if the function calls work!
     @test MCMCChains.diag_all(rand(100, 2), :weiss, 1, 1, 1) != nothing
     @test MCMCChains.diag_all(rand(100, 2), :hangartner, 1, 1, 1) != nothing

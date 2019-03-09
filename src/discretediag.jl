@@ -416,9 +416,11 @@ end
 #  return [p1, p2]
 #end
 
-function discretediag(c::AbstractChains; frac::Real=0.3,
-                      method::Symbol=:weiss, nsim::Int=1000)
+function discretediag(chn::AbstractChains; frac::Real=0.3,
+                      method::Symbol=:weiss, section=:parameters,
+                      nsim::Int=1000, showall=false)
 
+    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
     @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
 
     num_iters, num_vars, num_chains = size(c.value)
@@ -441,8 +443,9 @@ function discretediag(c::AbstractChains; frac::Real=0.3,
     #println(V)
     #println(vals)
 
-    hdr = header(c) * "\nChisq Diagnostic:\nEnd Fractions = $frac\n" *
-    "method = $method\n"
+    section_name = showall ? "" : "\n" * string(section) * "\n"
+    hdr = "Chisq Diagnostic:\nEnd Fractions = $frac\n" *
+    "method = $method\n"  * section_name
 
     return ChainSummary(collect(round.(vals, digits = 3)'), string.(names(c))[V],
     convert(Array{AbstractString, 1},
