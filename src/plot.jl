@@ -137,7 +137,7 @@ end
         end
     else
         length(ptypes) > 1 && error(":corner is not compatible with multiple seriestypes")
-        Corner(c, Symbol.(keys(c)[parameters]))
+        Corner(c, names(c)[parameters])
     end
 end
 
@@ -150,5 +150,6 @@ end
     label --> permutedims(corner.parameters)
     compact --> true
     size --> (600, 600)
-    RecipesBase.recipetype(:cornerplot, reduce(hcat, corner.c[:,s,:] for s in corner.parameters))
+    ar = collect(Array(corner.c.value[:, corner.parameters,i]) for i in chains(corner.c))
+    RecipesBase.recipetype(:cornerplot, vcat(ar...))
 end
