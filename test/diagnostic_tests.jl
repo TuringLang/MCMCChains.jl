@@ -29,6 +29,7 @@ chn = Chains(val, start = 1, thin = 2)
     @test all(chn[:,1,2].value .== val[:,1,2])
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
+    @test isa(set_section(chn, Dict(:internals => ["Param1"])), MCMCChains.AbstractChains)
 end
 
 @testset "function tests" begin

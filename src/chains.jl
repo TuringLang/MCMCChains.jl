@@ -200,7 +200,7 @@ function Base.show(io::IO, c::Chains)
     println(io, header(c))
 
     # Grab the value hash.
-    h = hash(c.value)
+    h = hash(c)
 
     if :hashedsummary in keys(c.info)
         s = c.info.hashedsummary.x
@@ -229,6 +229,11 @@ Base.step(c::AbstractChains) = step(c.value[Axis{:iter}].val)
 Base.last(c::AbstractChains) = last(c.value[Axis{:iter}].val)
 
 #################### Auxilliary Functions ####################
+
+function Base.hash(c::Chains)
+    val = hash(c.value) + hash(c.info) + hash(c.name_map) + hash(c.logevidence)
+    return hash(val)
+end
 
 function combine(c::AbstractChains)
   n, p, m = size(c.value)
@@ -426,6 +431,45 @@ function setinfo(c::Chains{A, T, K}, n::NamedTuple) where {A, T, K}
     )
 end
 
+set_section(c::Chains, nt::NamedTuple) = set_section(c, _namedtuple2dict(nt))
+
+"""
+    set_section(c::Chains, nt::Dict)
+
+Changes a chains name mapping to a provided dictionary. This also supports a NamedTuple.
+Any parameters in the chain that are unassigned will be placed into
+the :parameters section.
+"""
+function set_section(c::Chains{A, T, K, L}, d::Dict) where {A,T,K,L}
+    # Add :parameters if it's not there.
+    if !(:parameters in keys(d))
+        d[:parameters] = []
+    end
+
+    # Make sure all the names are in the new name map.
+    nms = Set([])
+    for values in values(d)
+        for val in values
+            push!(nms, val)
+        end
+    end
+    missing_names = setdiff(names(c), nms)
+
+    # Assign everything to :parameters if anything's missing.
+    if length(missing_names) > 0
+        @warn "Section mapping does not contain all parameter names, " *
+            "$missing_names assigned to :parameters."
+        push!(d[:parameters], missing_names...)
+    end
+
+    nt = _dict2namedtuple(d)
+    return Chains{A, T, typeof(nt), L}(
+        c.value,
+        c.logevidence,
+        nt,
+        c.info
+    )
+end
 
 #################### Concatenation ####################
 
