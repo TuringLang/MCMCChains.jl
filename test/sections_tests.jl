@@ -11,18 +11,18 @@ using  MCMCChains, Test
     p = filter(p -> !(p in  pi), cnames)
 
     c = Chains(a3d,
-        Symbol.(cnames),
+        cnames,
             Dict(
-                :parameters => Symbol.(p),
-                :internals => Symbol.(pi)
+                :parameters => p,
+                :internals => pi
                 )
         )
 
     c2 = Chains(a3d,
-        Symbol.(cnames),
+        cnames,
             Dict(
-                :parameters => Symbol.(p),
-                :internals => Symbol.(pi)
+                :parameters => p,
+                :internals => pi
             )
         )
 

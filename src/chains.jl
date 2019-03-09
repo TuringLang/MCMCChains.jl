@@ -17,7 +17,7 @@ end
 
 # Generic chain constructor.
 function Chains(val::AbstractArray{A,3},
-        parameter_names::Vector,
+        parameter_names::Vector{String},
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
@@ -149,14 +149,7 @@ end
 
 
 #################### Indexing ####################
-
-Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
-Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
-Base.getindex(c::Chains, v::Symbol) = c[[v]]
-Base.getindex(c::Chains, v::String) = Array(c.value[:, [v], :])
-Base.getindex(c::Chains, v::Vector{String}) = Array(c.value[:, v, :])
-
-function Base.getindex(c::Chains, v::Vector{Symbol})
+function _sym2index(c::Chains, v::Vector{Symbol}; sort = true)
     v_str = string.(v)
     idx = indexin(v_str, names(c))
     syms = []
@@ -169,9 +162,18 @@ function Base.getindex(c::Chains, v::Vector{Symbol})
             push!(syms, value)
         end
     end
+    return sort ? sort!(syms, lt=MCMCChains.natural) : syms
+end
 
-    sort!(syms, lt=MCMCChains.natural)
-    return Array(c.value[:, syms, :])
+Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
+Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
+Base.getindex(c::Chains, v::Symbol) = c[[v]]
+Base.getindex(c::Chains, v::String) = Array(c[:, [v], :])
+Base.getindex(c::Chains, v::Vector{String}) = Array(c[:, v, :])
+
+function Base.getindex(c::Chains, v::Vector{Symbol})
+    syms = _sym2index(c, v)
+    return c[:, syms, :]
 end
 
 function Base.getindex(c::Chains{A, T, K, L}, i...) where {A, T, K, L}
@@ -192,6 +194,104 @@ end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 
+"""
+    Base.get(c::Chains, v::Symbol; flatten=false)
+    Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
+
+Returns a `NamedTuple` with `v` as the key, and matching paramter
+names as the values.
+
+Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
+
+Example:
+
+```julia
+x = get(c, :param1)
+x = get(c, [:param1, :param2])
+```
+"""
+Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)
+function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
+    pairs = Dict()
+    for v in vs
+        syms = _sym2index(c, [v])
+        len = length(syms)
+        val = ()
+        if len > 1
+            val = ntuple(i -> c.value[:,syms[i],:], length(syms))
+        elseif len == 1
+            val = c.value[:,syms[1],:]
+        else
+            continue
+        end
+
+        if flatten
+            for i in eachindex(syms)
+                pairs[syms[i]] = val[i]
+            end
+        else
+            pairs[v] = val
+        end
+    end
+    return _dict2namedtuple(pairs)
+end
+
+"""
+    get(c::Chains; section::Union{Vector{Symbol}, Symbol; flatten=false}
+
+Returns all parameters in a given section(s) as a `NamedTuple`.
+
+Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
+
+Example:
+
+```julia
+x = get(chn, section = :parameters)
+x = get(chn, section = [:internals, :parameters])
+```
+"""
+function Base.get(c::Chains;
+        section::Union{Vector{Symbol}, Symbol},
+        flatten = false)
+    section = section isa Symbol ? [section] : section
+    not_found = Symbol[]
+    names = Set(String[])
+    for v in section
+        if v in keys(c.name_map)
+            # If the name contains a bracket,
+            # split it so get can group them correctly.
+            nms = flatten ?
+                c.name_map[v] :
+                map(n -> String(split(n, "[")[1]), c.name_map[v])
+            push!(names, nms...)
+        else
+            push!(not_found, v)
+        end
+    end
+
+    if length(not_found) > 0
+        throw(ArgumentError("$not_found not found in chains name map."))
+    end
+
+    return get(c, Symbol.(names))
+end
+
+"""
+    get_params(c::Chains; flatten=false)
+
+Returns all parameters packaged as a `NamedTuple`. Variables with a bracket
+in their name (as in "P[1]") will be grouped into the returned value as P.
+
+Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
+
+Example:
+
+```julia
+x = get_params(chn)
+x.P
+```
+"""
+get_params(c::Chains; flatten = false) = get(c, section = sections(c), flatten=flatten)
 
 #################### Base Methods ####################
 
@@ -289,6 +389,13 @@ end
 function get_sections(c::AbstractChains, section::Union{Symbol, String})
     return get_sections(c, [section])
 end
+
+"""
+    sections(c::AbstractChains)
+
+Retrieve a list of the sections in a chain.
+"""
+sections(c::AbstractChains) = collect(keys(c.name_map))
 
 """
     header(c::Chains; section=missing)

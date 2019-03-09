@@ -5,7 +5,7 @@ import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats
 import LinearAlgebra: diag
 import Serialization: serialize, deserialize
-import Base: sort, range, names, hash
+import Base: sort, range, names, get, hash
 import Statistics: cor
 
 using RecipesBase
@@ -18,7 +18,7 @@ using AxisArrays
 const axes = Base.axes
 
 export Chains, getindex, setindex!, chains, setinfo, chainscat
-export describe, set_section
+export describe, set_section, get_params, sections
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
