@@ -51,10 +51,10 @@ end
     v3 = rand(500, 4, 1)
     v4 = rand(500, 5, 4)
 
-    c1 = Chains(v1, [:a1, :a2, :a3, :a4, :a5])
-    c2 = Chains(v2, [:a1, :a2, :a3, :a4, :a5], start = 501)
-    c3 = Chains(v3, [:z1, :z2, :z3, :z4])
-    c4 = Chains(v4, [:a1, :a2, :a3, :a4, :a5])
+    c1 = Chains(v1, ["a1", "a2", "a3", "a4", "a5"])
+    c2 = Chains(v2, ["a1", "a2", "a3", "a4", "a5"], start = 501)
+    c3 = Chains(v3, ["z1", "z2", "z3", "z4"])
+    c4 = Chains(v4, ["a1", "a2", "a3", "a4", "a5"])
 
     # Test dim 1
     c1_2 = cat(c1, c2, dims = 1)
