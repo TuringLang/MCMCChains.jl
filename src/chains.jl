@@ -149,7 +149,7 @@ end
 
 
 #################### Indexing ####################
-function _sym2index(c::Chains, v::Vector{Symbol}; sort = true)
+function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sort = true)
     v_str = string.(v)
     idx = indexin(v_str, names(c))
     syms = []
@@ -178,10 +178,15 @@ end
 
 function Base.getindex(c::Chains{A, T, K, L}, i...) where {A, T, K, L}
     # Make sure things are in array form to preserve the axes.
-    ind = (i[1],
+    ind = [typeof(i[1]) <: Integer ? (i[1]:i[1]) : i[1],
            typeof(i[2]) <: Union{AbstractArray, Colon} ?  i[2] : [i[2]],
            typeof(i[3]) <: Union{AbstractArray, Colon} ?  i[3] : [i[3]]
-    )
+    ]
+
+    # Check to see if we received a symbol in i[2].
+    if ind[2] != Colon() && typeof(first(ind[2])) <: Symbol
+        ind[2] = _sym2index(c, ind[2])
+    end
 
     newval = getindex(c.value, ind...)
     names = newval.axes[2].val
@@ -576,6 +581,13 @@ function set_section(c::Chains{A, T, K, L}, d::Dict) where {A,T,K,L}
         nt,
         c.info
     )
+end
+
+function _use_showall(c::AbstractChains, section::Symbol)
+    if section == :parameters && !in(:parameters, keys(c.name_map))
+        return true
+    end
+    return false
 end
 
 #################### Concatenation ####################
