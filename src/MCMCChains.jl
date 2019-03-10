@@ -37,7 +37,7 @@ Parameters:
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
 struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractChains
-    value::AxisArray{Union{Missing,A},3}
+    value::AxisArray{A,3}
     logevidence::T
     name_map::K
     info::L
