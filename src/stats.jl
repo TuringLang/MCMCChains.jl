@@ -9,6 +9,9 @@ function autocor(chn::AbstractChains;
     # Allocation of summary vector.
     summaries = Vector{ChainSummary}([])
 
+    # Check that we actually have :parameters.
+    showall = showall ? true : _use_showall(chn, section)
+
     # Separate the chain into sections if showall=false.
     chns = showall ? [chn] : get_sections(chn, section)
 
@@ -58,6 +61,9 @@ function cor(chn::AbstractChains;
     # Allocation of summary vector.
     summaries = Vector{ChainSummary}([])
 
+    # Check that we actually have :parameters.
+    showall = showall ? true : _use_showall(chn, section)
+
     # Separate the chain into sections if showall=false.
     chns = showall ? [chn] : get_sections(chn, section)
 
@@ -84,6 +90,9 @@ function changerate(chn::AbstractChains;
     showall=false, suppress_header=false, section=:parameters)
     # Check for missing values.
     @assert !any(ismissing.(chn.value)) "Change rate comp. doesn't support missing values."
+
+    # Check that we actually have :parameters.
+    showall = showall ? true : _use_showall(chn, section)
 
     # Allocation of summary vector.
     summaries = Vector{ChainSummary}([])
@@ -139,6 +148,10 @@ function describe(io::IO,
                   section=:parameters,
                   args...
                  )
+
+    # Check that we actually have :parameters.
+    showall = showall ? true : _use_showall(chn, section)
+
     # Print the chain header.
     println(io, header(c, section = showall ? missing : section))
 
@@ -186,6 +199,9 @@ function hpd(chn::AbstractChains; alpha::Real=0.05,
     # Allocation summary vector.
     summaries = Vector{ChainSummary}([])
 
+    # Check that we actually have :parameters.
+    showall = showall ? true : _use_showall(chn, section)
+
     # Separate the chain into sections if showall=false.
     chns = showall ? [chn] : get_sections(chn, section)
 
@@ -218,6 +234,9 @@ function quantile(chn::AbstractChains; q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975]
     # Allocation summary vector.
     summaries = Vector{ChainSummary}([])
 
+    # Check that we actually have :parameters.
+    showall = showall ? true : _use_showall(chn, section)
+
     # Separate the chain into sections if showall=false.
     chns = showall ? [chn] : get_sections(chn, section)
 
@@ -249,6 +268,9 @@ function summarystats(chn::AbstractChains; etype=:bm,
     # Allocation summary vector.
     summaries = Vector{ChainSummary}([])
 
+    # Check that we actually have :parameters.
+    showall = showall ? true : _use_showall(chn, section)
+    
     # Summary statistics function array.
     f(x) = [mean(x),
         std(x),
@@ -263,7 +285,7 @@ function summarystats(chn::AbstractChains; etype=:bm,
 
     length(chn) >= 200 || @warn "Chain iterations are < 200, " *
         "MCSE and ESS cannot be computed."
-        
+
     # Separate the chain into sections if showall=false.
     chns = showall ? [chn] : get_sections(chn, section)
 
