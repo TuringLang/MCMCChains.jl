@@ -150,7 +150,7 @@ function describe(io::IO,
                  )
 
     # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
+    showall = showall ? true : _use_showall(c, section)
 
     # Print the chain header.
     println(io, header(c, section = showall ? missing : section))
@@ -270,7 +270,7 @@ function summarystats(chn::AbstractChains; etype=:bm,
 
     # Check that we actually have :parameters.
     showall = showall ? true : _use_showall(chn, section)
-    
+
     # Summary statistics function array.
     f(x) = [mean(x),
         std(x),

@@ -2,7 +2,7 @@ using  MCMCChains, Test
 
 @testset "describe sections" begin
 
-    a3d = reshape(1:3600, 100, 9, 4)
+    a3d = rand(500, 9, 4)
 
     cnames = ["lp__"  , "accept_stat__", "stepsize__" , "treedepth__" ,
         "n_leapfrog__" , "divergent__"  , "energy__", "sigma", "mu" ]
