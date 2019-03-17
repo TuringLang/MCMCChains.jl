@@ -152,6 +152,18 @@ You can access each of the `P[. . .]` variables by indexing, using `x.P[1]`, `x.
 
 Note that `x.P` is a tuple which has to be indexed by the relevant index, while `x.D` is just a vector.
 
+### Saving and Loading Chains
+
+Chains objects can be serialized and deserialized using `read` and `write`.
+
+```julia
+# Save a chain. 
+write("chain-file.jls", chn)
+
+# Read a chain.
+chn2 = read("chain-file.jls", Chains)
+```
+
 ### Convergence Diagnostics functions
 #### Discrete Diagnostic
 Options for method are  `[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]`
