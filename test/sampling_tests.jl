@@ -1,5 +1,5 @@
-using Turing, MCMCChains, KernelDensity, Test, Statistics
-import StatsBase: sample, AbstractWeights
+using Turing, MCMCChains, KernelDensity, StatsBase, Test, Statistics
+import StatsBase: sample
 
 @testset "sampling api" begin
 
