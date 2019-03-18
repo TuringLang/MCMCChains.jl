@@ -1,10 +1,9 @@
-#using Turing, MCMCChains, StatsBase, Random, KernelDensity, Test, Statistics
 using Turing, MCMCChains, Test, Statistics
 import StatsBase: sample, AbstractWeights
 
 @model gdemo(x) = begin
-    s ~ Normal(5, 0.01)
     m ~ Normal(1, 0.01)
+    s ~ Normal(5, 0.01)
 end
 
 model = gdemo([1.5, 2.0])
