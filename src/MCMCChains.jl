@@ -2,7 +2,7 @@ module MCMCChains
 
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
-       quantile, sample, sem, summarystats
+       quantile, sample, sem, summarystats, sample, AbstractWeights
 import LinearAlgebra: diag
 import Serialization: serialize, deserialize
 import Base: sort, range, names, get, hash
@@ -13,12 +13,14 @@ import RecipesBase: plot
 
 using Serialization
 using Distributions
+using KernelDensity
 using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
 
 export Chains, getindex, setindex!, chains, setinfo, chainscat
 export describe, set_section, get_params, sections
+export sample, AbstractWeights
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
@@ -57,6 +59,7 @@ include("mcse.jl")
 #include("modelchains.jl")
 #include("modelstats.jl")
 include("rafterydiag.jl")
+include("sampling.jl")
 include("stats.jl")
 include("plot.jl")
 #include("plot2.jl")
