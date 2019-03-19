@@ -24,3 +24,6 @@ include("sections_tests.jl")
 
 # run tests for missing values
 include("serialization_tests.jl")
+
+# run tests for sampoling api
+include("sampling_tests.jl")
