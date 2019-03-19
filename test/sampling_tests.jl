@@ -17,6 +17,6 @@ using Turing, MCMCChains, KernelDensity, StatsBase, Test, Statistics
   c = kde(reshape(convert(Array{Float64}, chn[:s].value), 500))
   chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
 
-  @test mean(convert(Array{Float64}, chn[:s].value)) ≈ 5.0 atol=0.01
+  @test mean(convert(Array{Float64}, chn[:s].value)) ≈ 5.0 atol=0.1
 
 end
