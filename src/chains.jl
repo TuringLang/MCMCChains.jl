@@ -9,7 +9,7 @@ const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 function Chains(val::AbstractArray{A,3};
         start::Int=1,
         thin::Int=1,
-        evidence = 0.0,
+        evidence = missing,
         info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
     parameter_names = map(i->"Param$i", 1:size(val, 2))
     return Chains(val, parameter_names, start=start, thin=thin)
@@ -21,7 +21,7 @@ function Chains(val::AbstractArray{A,3},
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
-        evidence = 0.0,
+        evidence = missing,
         info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
 
     # If we received an array of pairs, convert it to a dictionary.
@@ -99,7 +99,7 @@ end
 
 # Retrieve a new chain with only a specific section pulled out.
 function Chains(c::Chains{A, T, K, L}, section::Union{Vector, Any};
-                sorted=false) where {A, T<:Real, K, L}
+                sorted=false) where {A, T, K, L}
     section = typeof(section) <: AbstractArray ? section : [section]
 
     # If we received an empty list, return the original chain.
@@ -447,9 +447,11 @@ function header(c::AbstractChains; section=missing)
         push!(section_strings, section_string)
     end
 
+    #
+
     # Return header.
     return string(
-        "Log evidence      = $(c.logevidence)\n",
+        ismissing(c.logevidence) ? "" : "Log evidence      = $(c.logevidence)\n",
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
         "Chains            = $(join(map(string, chains(c)), ", "))\n",
