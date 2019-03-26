@@ -6,3 +6,4 @@ SpecialFunctions 0.7.0
 Distributions 0.16.2
 AxisArrays 0.3.0
 KernelDensity 0.5.1
+DataFrames 0.17.1
