@@ -44,8 +44,8 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 
 ### Optional arguments
 ```julia
-* `append_chains=true`  : Append chains into a single column
-* ` remove_missing_union=true`  : Convert Union{Missing, Real} to Float64
+* `append_chains = true`  : Append chains into a single column
+* `remove_missing_union = true`  : Convert Union{Missing, Real} to Float64
 ```
 
 ### Examples
@@ -53,7 +53,7 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 * `Array(chns)` : Array with chain values are appended
 * `Array(chns[:par])` : Array with selected parameter chain values are appended
 * `Array(chns, [:parameters])`  : Array with only :parameter section
-* `Array(chns, [:parameters, :internals])`  : Array also includes :internals section
+* `Array(chns, [:parameters, :internals])`  : Array includes multiple sections
 * `Array(chns, append_chains=false)`  : Array of Arrays, each chain in its own array
 * `Array(chns, remove_missing_union=false)` : No conversion to remove missing values
 ```
@@ -142,13 +142,13 @@ Returns either a DataFrame or an Array{DataFrame}
 ### Required arguments
 ```julia
 * `chn` : Chains object to convert to an DataFrame
-* `sections = Symbol[]` : Sections form the Chains object to be included
+* `sections = Symbol[]` : Sections from the Chains object to be included
 ```
 
 ### Optional arguments
 ```julia
-* `append_chains=true`  : Append chains into a single column
-* ` remove_missing_union=true`  : Remove Union{Missing, Real} and AxisArray stuff
+* `append_chains = true`  : Append chains into a single column
+* `remove_missing_union = true`  : Remove Union{Missing, Real}
 ```
 
 ### Examples
@@ -156,8 +156,8 @@ Returns either a DataFrame or an Array{DataFrame}
 * `DataFrame(chns)` : DataFrame with chain values are appended
 * `DataFrame(chns[:par])` : DataFrame with single parameter (chain values are appended)
 * `DataFrame(chns, [:parameters])`  : DataFrame with only :parameter section
-* `DataFrame(chns, [:parameters, :internals])`  : DataFrame also includes :internals section
-* `DataFrame(chns, append_chains=false)`  : Array of DataFrame, each chain in its own array
+* `DataFrame(chns, [:parameters, :internals])`  : DataFrame includes both sections
+* `DataFrame(chns, append_chains=false)`  : Array of DataFrames, each chain in its own array
 * `DataFrame(chns, remove_missing_union=false)` : No conversion to remove missing values
 ```
 
