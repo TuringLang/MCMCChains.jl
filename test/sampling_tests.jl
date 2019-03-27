@@ -1,6 +1,6 @@
 using Turing, MCMCChains, KernelDensity, StatsBase, Test, Statistics
 
-@testset "sampling api" begin
+#@testset "sampling api" begin
 
   @model gdemo(x) = begin
       m ~ Normal(1, 0.01)
@@ -14,9 +14,9 @@ using Turing, MCMCChains, KernelDensity, StatsBase, Test, Statistics
   chn_sample = sample(chn, 5)
   @test range(chn_sample) == 1:1:5
 
-  c = kde(reshape(convert(Array{Float64}, chn[:s].value), 500))
+  c = kde(Array(chn[:s]))
   chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
 
-  @test mean(convert(Array{Float64}, chn[:s].value)) ≈ 5.0 atol=0.1
+  @test mean(Array(chn[:s])) ≈ 5.0 atol=0.1
 
-end
+  #end

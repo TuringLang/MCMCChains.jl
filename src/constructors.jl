@@ -120,8 +120,6 @@ function Array(chn::MCMCChains.AbstractChains,
   b
 end
 
-Base.convert(::Type{Array}, chn::MCMCChains.Chains) = convert(Array, chn.value)
-
 """
 
 # DataFrame
