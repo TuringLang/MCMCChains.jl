@@ -27,3 +27,9 @@ include("serialization_tests.jl")
 
 # run tests for sampoling api
 include("sampling_tests.jl")
+
+# run tests for array constructor
+include("arrayconstructor_tests.jl")
+
+# run tests for dataframe constructor
+include("dfconstructor_tests.jl")

@@ -335,6 +335,8 @@ Base.first(c::AbstractChains) = first(c.value[Axis{:iter}].val)
 Base.step(c::AbstractChains) = step(c.value[Axis{:iter}].val)
 Base.last(c::AbstractChains) = last(c.value[Axis{:iter}].val)
 
+Base.convert(::Type{Array}, chn::MCMCChains.Chains) = convert(Array, chn.value)
+
 #################### Auxilliary Functions ####################
 
 function Base.hash(c::Chains)
