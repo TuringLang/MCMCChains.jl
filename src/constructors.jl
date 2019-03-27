@@ -30,7 +30,7 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ```julia
   Array(
     chn::MCMCChains.AbstractChains,
-    sections::Vector{Symbo);
+    sections::Vector{Symbol};
     append_chains::Bool,
     remove_missing_union::Bool
   )
