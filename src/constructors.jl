@@ -39,7 +39,7 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ### Required arguments
 ```julia
 * `chn` : Chains object to convert to an Array
-* `sections = Symbol[]` : Sections form the Chains object to be included
+* `sections = Symbol[]` : Sections from the Chains object to be included
 ```
 
 ### Optional arguments
