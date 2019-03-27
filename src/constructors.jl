@@ -29,7 +29,7 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ### Method
 ```julia
   Array(
-    chn::MCMCChains.AbstractChains, 
+    chn::MCMCChains.AbstractChains,
     sections::Vector{Symbo);
     append_chains::Bool,
     remove_missing_union::Bool
@@ -59,10 +59,10 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ```
 
 """
-function Array(chn::MCMCChains.AbstractChains, 
+function Array(chn::MCMCChains.AbstractChains,
      sections::Vector{Symbol}=Symbol[];
      append_chains=true, remove_missing_union=true)
-     
+
   section_list = length(sections) == 0 ? sort_sections(chn) : sections
   d, p, c = size(chn.value.data)
 
@@ -118,20 +118,21 @@ function Array(chn::MCMCChains.AbstractChains,
     end
   end
   b
-end  
+end
 
+Base.convert(::Type{Array}, chn::MCMCChains.Chains) = convert(Array, chn.value)
 
 """
 
 # DataFrame
 
-DataFrame constructor from an MCMCChains.Chains object. 
+DataFrame constructor from an MCMCChains.Chains object.
 Returns either a DataFrame or an Array{DataFrame}
 
 ### Method
 ```julia
   DataFrame(
-    chn::MCMCChains.AbstractChains, 
+    chn::MCMCChains.AbstractChains,
     sections::Vector{Symbo);
     append_chains::Bool,
     remove_missing_union::Bool
@@ -164,7 +165,7 @@ Returns either a DataFrame or an Array{DataFrame}
 function DataFrame(chn::MCMCChains.AbstractChains,
     sections::Vector{Symbol}=Symbol[];
     append_chains=true, remove_missing_union=true)
-    
+
   section_list = length(sections) == 0 ? sort_sections(chn) : sections
   d, p, c = size(chn.value.data)
 
@@ -176,7 +177,7 @@ function DataFrame(chn::MCMCChains.AbstractChains,
           x = get(chn, Symbol(par))
           d, c = size(x[Symbol(par)])
           if remove_missing_union
-            b = hcat(b, DataFrame(Symbol(par) => reshape(convert(Array{Float64}, 
+            b = hcat(b, DataFrame(Symbol(par) => reshape(convert(Array{Float64},
               x[Symbol(par)]), d*c)[:, 1]))
           else
             b = hcat(b, DataFrame(Symbol(par) => reshape(x[Symbol(par)], d*c)[:, 1]))
@@ -192,7 +193,7 @@ function DataFrame(chn::MCMCChains.AbstractChains,
             x = get(chn, Symbol(par))
             d, c = size(x[Symbol(par)])
             if remove_missing_union
-              b[i] = hcat(b[i], DataFrame(Symbol(par) => convert(Array{Float64}, 
+              b[i] = hcat(b[i], DataFrame(Symbol(par) => convert(Array{Float64},
                 x[Symbol(par)])[:, 1]))
             else
               b[i] = hcat(b[i], DataFrame(Symbol(par) => x[Symbol(par)][:,1]))
