@@ -5,7 +5,7 @@ import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats, sample, AbstractWeights
 import LinearAlgebra: diag
 import Serialization: serialize, deserialize
-import Base: sort, range, names, get, hash
+import Base: sort, range, names, get, hash, convert
 import Statistics: cor
 import Core.Array
 import DataFrames: DataFrame
@@ -23,7 +23,7 @@ const axes = Base.axes
 export Chains, getindex, setindex!, chains, setinfo, chainscat
 export describe, set_section, get_params, sections
 export sample, AbstractWeights
-export Array, DataFrame, sort_sections
+export Array, DataFrame, sort_sections, convert
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
