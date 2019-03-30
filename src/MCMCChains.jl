@@ -23,7 +23,7 @@ const axes = Base.axes
 export Chains, getindex, setindex!, chains, setinfo, chainscat
 export describe, set_section, get_params, sections
 export sample, AbstractWeights
-export Array, DataFrame, sort_sections, convert
+export Array, DataFrame, sort_sections, convert, dfchainsummary
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
@@ -54,6 +54,7 @@ include("utils.jl")
 include("chains.jl")
 include("chainsummary.jl")
 include("constructors.jl")
+include("dfchainsummary.jl")
 include("discretediag.jl")
 include("fileio.jl")
 include("gelmandiag.jl")

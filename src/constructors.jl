@@ -39,11 +39,11 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ### Required arguments
 ```julia
 * `chn` : Chains object to convert to an Array
-* `sections = Symbol[]` : Sections from the Chains object to be included
 ```
 
 ### Optional arguments
 ```julia
+* `sections = Symbol[]` : Sections from the Chains object to be included
 * `append_chains = true`  : Append chains into a single column
 * `remove_missing_union = true`  : Convert Union{Missing, Real} to Float64
 ```
@@ -140,11 +140,11 @@ Returns either a DataFrame or an Array{DataFrame}
 ### Required arguments
 ```julia
 * `chn` : Chains object to convert to an DataFrame
-* `sections = Symbol[]` : Sections from the Chains object to be included
 ```
 
 ### Optional arguments
 ```julia
+* `sections = Symbol[]` : Sections from the Chains object to be included
 * `append_chains = true`  : Append chains into a single column
 * `remove_missing_union = true`  : Remove Union{Missing, Real}
 ```

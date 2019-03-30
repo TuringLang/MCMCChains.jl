@@ -33,3 +33,6 @@ include("arrayconstructor_tests.jl")
 
 # run tests for dataframe constructor
 include("dfconstructor_tests.jl")
+
+# run tests for dataframe constructor
+include("dfchainsummary_tests.jl")
