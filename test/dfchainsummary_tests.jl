@@ -15,7 +15,7 @@ using Turing, MCMCChains, Test
   
   parm_df = dfchainsummary(chns, [:parameters])
 
-  @test 0.9 < parm_df[parm_df.parameters .== :m, :mean][1] < 1.1
+  @test 0.9 < parm_df[:m, :mean][1] < 1.1
   @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess]
   
   all_df = dfchainsummary(chns)
