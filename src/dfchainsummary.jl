@@ -7,6 +7,8 @@ struct ChainDataFrame
     df::DataFrame
 end
 
+Base.size(c::ChainDataFrame) = size(c.df)
+Base.names(c::ChainDataFrame) = names(c.df)
 Base.show(io::IO, c::ChainDataFrame) = show(io, c.df)
 
 Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
