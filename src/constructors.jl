@@ -162,7 +162,8 @@ Returns either a DataFrame or an Array{DataFrame}
 """
 function DataFrame(chn::MCMCChains.AbstractChains,
     sections::Vector{Symbol}=Symbol[];
-    append_chains=true, remove_missing_union=true)
+    append_chains=true, remove_missing_union=true,
+    sorted=true)
 
   section_list = length(sections) == 0 ? sort_sections(chn) : sections
   d, p, c = size(chn.value.data)
@@ -171,7 +172,11 @@ function DataFrame(chn::MCMCChains.AbstractChains,
   if append_chains
     b = DataFrame()
     for section in section_list
-      for par in chn.name_map[section]
+        names = sorted ?
+            sort(chn.name_map[section],
+                by=x->string(x), lt = MCMCChains.natural) :
+            chn.name_map[section]
+      for par in names
           x = get(chn, Symbol(par))
           d, c = size(x[Symbol(par)])
           if remove_missing_union
@@ -187,7 +192,11 @@ function DataFrame(chn::MCMCChains.AbstractChains,
     for i in 1:c
       b[i] = DataFrame()
       for section in section_list
-        for par in chn.name_map[section]
+          names = sorted ?
+              sort(chn.name_map[section],
+                  by=x->string(x), lt = MCMCChains.natural) :
+              chn.name_map[section]
+        for par in names
             x = get(chn, Symbol(par))
             d, c = size(x[Symbol(par)])
             if remove_missing_union
