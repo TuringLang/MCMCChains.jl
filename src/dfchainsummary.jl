@@ -49,7 +49,7 @@ function summarize(chn::Chains, funs...;
     # Build the dataframe.
     df = DataFrame(columns)
     names!(df, colnames)
-    return df
+    return ChainDataFrame(df)
 end
 
 function dfsummarystats(chn::MCMCChains.AbstractChains,
