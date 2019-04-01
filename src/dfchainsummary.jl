@@ -8,30 +8,6 @@ struct ChainDataFrame
     df::DataFrame
 end
 
-Base.show(io::IO, c::ChainDataFrame) = show(io, c.df)
-
-Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
-Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = return c.df[s]
-
-function Base.getindex(c::ChainDataFrame,
-        s1::Vector{Symbol},
-        s2::Union{Symbol, Vector{Symbol}})
-    return c.df[map(x -> x in s1, c.df.parameters), s2]
-end
-
-function Base.getindex(c::ChainDataFrame,
-        s1::Symbol,
-        s2::Union{Symbol, Vector{Symbol}})
-    return c.df[c.df.parameters .== s1, s2]
-end
-
-names(c::ChainDataFrame) = names(c.df)
-size(c::ChainDataFrame, args...) = size(c.df, args...)
-
-struct ChainDataFrame
-    df::DataFrame
-end
-
 Base.size(c::ChainDataFrame) = size(c.df)
 Base.names(c::ChainDataFrame) = names(c.df)
 Base.show(io::IO, c::ChainDataFrame) = show(io, c.df)
