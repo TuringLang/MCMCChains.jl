@@ -3,6 +3,28 @@ using StatsBase: mean, std, sem
 import StatsBase: sem
 #import MCMCChains: mcse
 
+struct ChainDataFrame
+    df::DataFrame
+end
+
+Base.show(io::IO, c::ChainDataFrame) = show(io, c.df)
+
+Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
+Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = return c.df[s]
+
+function Base.getindex(c::ChainDataFrame,
+        s1::Vector{Symbol},
+        s2::Union{Symbol, Vector{Symbol}})
+    return c.df[map(x -> x in s1, c.df.parameters), s2]
+end
+
+function Base.getindex(c::ChainDataFrame,
+        s1::Symbol,
+        s2::Union{Symbol, Vector{Symbol}})
+    return c.df[c.df.parameters .== s1, s2]
+end
+
+
 """
 
 # DataFrame Chain Summary
@@ -43,12 +65,12 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 """
 function dfchainsummary(chn::MCMCChains.AbstractChains,
   sections::Vector{Symbol}=Symbol[]; etype=:bm, args...)
-  
+
   sem(x) = sqrt(var(x) / length(x))
   df_mcse(x) = mcse(x, etype, args...)
 
   df = DataFrame(chn, sections)
-  
+
   # Add summary stats columns
   if size(chn.value, 1) > 200
     sum_df = DataFrame(
@@ -67,6 +89,6 @@ function dfchainsummary(chn::MCMCChains.AbstractChains,
       :naive_se => colwise(sem, df)
     )
   end
-    
-    return sum_df
+
+    return ChainDataFrame(sum_df)
 end
