@@ -1,4 +1,4 @@
-using DataFrames: colwise
+using DataFrames: colwise, names!
 using StatsBase: mean, std, sem
 import StatsBase: sem
 #import MCMCChains: mcse
@@ -26,6 +26,41 @@ function Base.getindex(c::ChainDataFrame,
     return c.df[c.df.parameters .== s1, s2]
 end
 
+function summarize(chn::Chains, funs...;
+    sections::Vector{Symbol}=Symbol[:parameters], func_names=[])
+    if length(funs) == 0
+        return dfsummarystats(chn, sections)
+    end
+
+    # Generate a dataframe to work on.
+    df = DataFrame(chn, sections)
+
+    # If no function names were given, make a new list.
+    func_names = length(func_names) == 0 ?
+        [Symbol(replace(split(string(f), ".", limit=2)[2], "\"" => "")) for f in funs] :
+        Symbol.(func_names)
+
+    # Do all the math, make columns.
+    columns = vcat([names(df)], [colwise(f, df) for f in funs])
+
+    # Make a vector of column names.
+    colnames = vcat([:parameters], func_names)
+
+    # Build the dataframe.
+    df = DataFrame(columns)
+    names!(df, colnames)
+    return df
+end
+
+function dfsummarystats(chn::MCMCChains.AbstractChains,
+    sections::Vector{Symbol}=Symbol[:parameters]; etype=:bm, args...)
+    sem(x) = sqrt(var(x) / length(x))
+    df_mcse(x) = mcse(x, etype, args...)
+    ess(x) = min((std(x) / df_mcse(x))^2, size(x, 1))
+    funs = [mean, std, sem, df_mcse, ess]
+    func_names = [:mean, :std, :naive_se, :mcse, :ess]
+    return summarize(chn, funs...; sections=sections, func_names=func_names)
+end
 
 """
 
