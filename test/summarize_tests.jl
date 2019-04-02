@@ -1,6 +1,6 @@
 using Turing, MCMCChains, Test
 
-#@testset "DataFrame chain summary tests" begin
+@testset "Summarize to DataFrame tests" begin
   
   @model gdemo(x) = begin
       m ~ Normal(1, 0.01)
@@ -21,4 +21,18 @@ using Turing, MCMCChains, Test
   all_sections_df = summarize(chns, sections=[:parameters, :internals])
   @test all_sections_df[:parameters] == [:m, :s, :elapsed, :epsilon, :eval_num, :lf_eps, :lf_num, :lp]
   @test size(all_sections_df) == (8, 6)
-  #end
+
+  two_parms_two_funs_df = summarize(chns[[:m, :s]], mean, std)
+  @test two_parms_two_funs_df[:parameters] == [:m, :s]
+  @test size(two_parms_two_funs_df) == (2, 3)
+
+  three_parms_df = summarize(chns[[:m, :s, :lp]], mean, std, sections=[:parameters, :internals])
+  @test three_parms_df[:parameters] == [:m, :s, :lp]
+  @test size(three_parms_df) == (3, 3)
+
+  three_parms_df_2 = summarize(chns[[:m, :s, :lp]], mean, std,
+    sections=[:parameters, :internals], func_names=["mean", "sd"])
+  @test three_parms_df_2[:parameters] == [:m, :s, :lp]
+  @test size(three_parms_df_2) == (3, 3)
+  
+end
