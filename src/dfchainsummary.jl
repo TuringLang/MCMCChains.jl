@@ -27,18 +27,58 @@ function Base.getindex(c::ChainDataFrame,
     return c.df[c.df.parameters .== s1, s2]
 end
 
+"""
+
+# Summarize a Chains object formatted as a DataFrame
+
+Summarize method for an MCMCChains.Chains object.
+
+### Method
+```julia
+  summarize(
+    chn::MCMCChains.AbstractChains,
+    funs...;
+    sections::Vector{Symbol}=[:parameters],
+    func_names=[],
+    etype=:bm
+  )
+```
+
+### Required arguments
+```julia
+* `chn` : Chains object to convert to a DataFrame-formatted summary
+```
+
+### Optional arguments
+```julia
+* `funs...` : zero or more vector functions, e.g. mean, std, etc.
+* `sections = [:parameters]` : Sections from the Chains object to be included
+* `etype = :bm` : Default for df_mcse
+```
+
+### Examples
+```julia
+* `summarize(chns)` : Complete chain summary
+* `summarize(chns[[:parm1, :parm2]])` : Chain summary of selected parameters
+* `summarize(chns, sections=[:parameters])`  : Chain summary of :parameters section
+* `summarize(chns, sections=[:parameters, :internals])` : Chain summary for multiple sections
+```
+
+"""
 function summarize(chn::Chains, funs...;
-    sections::Vector{Symbol}=Symbol[:parameters], func_names=[])
+    sections::Vector{Symbol}=Symbol[:parameters], 
+    func_names=[], etype=:bm, args...)
+    
     if length(funs) == 0
         return dfsummarystats(chn, sections)
     end
 
     # Generate a dataframe to work on.
     df = DataFrame(chn, sections)
-
+    
     # If no function names were given, make a new list.
     func_names = length(func_names) == 0 ?
-        Symbol.([f for f in funs]) : Symbol.(func_names)
+        handle_funs(funs) : func_names
 
     # Do all the math, make columns.
     columns = vcat([names(df)], [colwise(f, df) for f in funs])
@@ -52,6 +92,11 @@ function summarize(chn::Chains, funs...;
     return ChainDataFrame(df)
 end
 
+function handle_funs(fns)
+  tmp =  [string(f) for f in fns] 
+  Symbol.([split(tmp[i], ".")[end] for i in 1:length(tmp)])
+end
+
 function dfsummarystats(chn::MCMCChains.AbstractChains,
     sections::Vector{Symbol}=Symbol[:parameters]; etype=:bm, args...)
     sem(x) = sqrt(var(x) / length(x))
@@ -60,72 +105,4 @@ function dfsummarystats(chn::MCMCChains.AbstractChains,
     funs = [mean, std, sem, df_mcse, ess]
     func_names = [:mean, :std, :naive_se, :mcse, :ess]
     return summarize(chn, funs...; sections=sections, func_names=func_names)
-end
-
-"""
-
-# DataFrame Chain Summary
-
-Array constructor from an MCMCChains.Chains object. Returns 3 dimensionsal
-array or an Array of 2 dimensional Arrays. If only a single parameter is selected for
-inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), etc.
-
-### Method
-```julia
-  dfchainsummary(
-    chn::MCMCChains.AbstractChains,
-    sections::Vector{Symbol};
-    etype::Symbol,
-    args
-  )
-```
-
-### Required arguments
-```julia
-* `chn` : Chains object to convert to an Array
-```
-
-### Optional arguments
-```julia
-* `sections = Symbol[]` : Sections from the Chains object to be included
-* `etype = :bm`  : Default mcse method
-```
-
-### Examples
-```julia
-* `dfchainsummary(chns)` : Complete chain summary
-* `dfchainsummary(chns[:par])` : Chain summary of :par only
-* `dfchainsummary(chns, [:parameters])`  : Chain summary of :parameter section
-* `dfchainsummary(chns, [:parameters, :internals])`  : Chain summary includes multiple sections
-```
-
-"""
-function dfchainsummary(chn::MCMCChains.AbstractChains,
-  sections::Vector{Symbol}=Symbol[]; etype=:bm, args...)
-
-  sem(x) = sqrt(var(x) / length(x))
-  df_mcse(x) = mcse(x, etype, args...)
-
-  df = DataFrame(chn, sections)
-
-  # Add summary stats columns
-  if size(chn.value, 1) > 200
-    sum_df = DataFrame(
-      :parameters => names(df),
-      :mean => colwise(mean, df),
-      :std => colwise(std, df),
-      :naive_se => colwise(sem, df),
-      :mcse => colwise(df_mcse, df),
-      :ess => repeat([size(df, 1)], length(names(df)))
-    )
-  else
-    sum_df = DataFrame(
-      :parameters => names(df),
-      :mean => colwise(mean, df),
-      :std => colwise(std, df),
-      :naive_se => colwise(sem, df)
-    )
-  end
-    
-  return ChainDataFrame(sum_df)
 end
