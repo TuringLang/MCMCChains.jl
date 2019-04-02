@@ -8,7 +8,7 @@ import Serialization: serialize, deserialize
 import Base: sort, range, names, get, hash, convert
 import Statistics: cor
 import Core.Array
-import DataFrames: DataFrame
+import DataFrames: DataFrame, names
 
 using RecipesBase
 import RecipesBase: plot

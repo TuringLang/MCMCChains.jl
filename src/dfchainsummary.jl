@@ -38,8 +38,7 @@ function summarize(chn::Chains, funs...;
 
     # If no function names were given, make a new list.
     func_names = length(func_names) == 0 ?
-        [Symbol(replace(split(string(f), ".", limit=2)[2], "\"" => "")) for f in funs] :
-        Symbol.(func_names)
+        Symbol.([f for f in funs]) : Symbol.(func_names)
 
     # Do all the math, make columns.
     columns = vcat([names(df)], [colwise(f, df) for f in funs])
