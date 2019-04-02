@@ -244,7 +244,7 @@ function quantile(chn::AbstractChains; q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975]
     show_labels = true
 
     # Quantile weights.
-    #w = [0.0, 0.25, 0.5, 0.75, 1.0]
+    w = [0.025, 0.25, 0.5, 0.75, 0.975]
 
     # Iterate through each chain.
     for c in chns
