@@ -27,9 +27,20 @@ function Base.getindex(c::ChainDataFrame,
 end
 
 function summarize(chn::Chains, funs...;
-    sections::Vector{Symbol}=Symbol[:parameters], func_names=[])
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+        func_names=[],
+        showall=false)
+    # Check that we actually have :parameters.
+    showall = showall ? true : !in(:parameters, keys(chn.name_map))
+
+    # Set sections.
+    sections = showall ? [] : sections
+
+    # If we weren't given any functions, fall back on summary stats.
     if length(funs) == 0
-        return dfsummarystats(chn, sections)
+        return dfsummarystats(chn,
+            sections=sections,
+            showall=showall)
     end
 
     # Generate a dataframe to work on.
@@ -52,16 +63,46 @@ function summarize(chn::Chains, funs...;
     return ChainDataFrame(df)
 end
 
-function dfsummarystats(chn::MCMCChains.AbstractChains,
-    sections::Vector{Symbol}=Symbol[:parameters]; etype=:bm, args...)
+function dfsummarystats(chn::MCMCChains.AbstractChains;
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+    showall=false,
+    etype=:bm, args...)
     sem(x) = sqrt(var(x) / length(x))
     df_mcse(x) = mcse(x, etype, args...)
     ess(x) = min((std(x) / df_mcse(x))^2, size(x, 1))
     funs = [mean, std, sem, df_mcse, ess]
     func_names = [:mean, :std, :naive_se, :mcse, :ess]
-    return summarize(chn, funs...; sections=sections, func_names=func_names)
+    return summarize(chn, funs...; sections=sections, func_names=func_names, showall=showall)
 end
 
+function autocor(chn::AbstractChains;
+        lags::Vector=[1, 5, 10, 50],
+        demean::Bool=true,
+        relative::Bool=true,
+        showall=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    funs = Function[]
+    func_names = String[]
+    for i in lags
+        push!(funs, x -> autocor(x, [i], demean=demean)[1])
+        push!(func_names, "autocor_$i")
+    end
+    return summarize(chn, funs...;func_names=func_names)
+end
+
+function cor(chn::AbstractChains;
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    df = DataFrame(chn, sections)
+    arr = convert(Matrix, df[:, 1:end])
+    cormat = cor(arr)
+    nms = names(df)
+    columns = [nms, [cormat[:, i] for i in 1:size(cormat, 2)]...]
+    colnames = vcat([:parameters], nms...)
+    df_summary = DataFrame(columns)
+    names!(df_summary, colnames)
+    return ChainDataFrame(df_summary)
+end
 """
 
 # DataFrame Chain Summary
