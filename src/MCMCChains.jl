@@ -28,6 +28,7 @@ export dfchainsummary, summarize, dfsummarystats
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
+export autocor
 
 abstract type AbstractChains end
 
