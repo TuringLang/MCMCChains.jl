@@ -8,7 +8,7 @@ import Serialization: serialize, deserialize
 import Base: sort, range, names, get, hash, convert
 import Statistics: cor
 import Core.Array
-import DataFrames: DataFrame
+import DataFrames: DataFrame, names
 
 using RecipesBase
 import RecipesBase: plot
@@ -24,7 +24,7 @@ export Chains, getindex, setindex!, chains, setinfo, chainscat
 export describe, set_section, get_params, sections
 export sample, AbstractWeights
 export Array, DataFrame, sort_sections, convert
-export dfchainsummary, summarize, dfsummarystats
+export summarize, dfsummarystats, ChainDataFrame
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
@@ -56,7 +56,7 @@ include("utils.jl")
 include("chains.jl")
 include("chainsummary.jl")
 include("constructors.jl")
-include("dfchainsummary.jl")
+include("summarize.jl")
 include("discretediag.jl")
 include("fileio.jl")
 include("gelmandiag.jl")
