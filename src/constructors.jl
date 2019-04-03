@@ -60,9 +60,9 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 
 """
 function Array(chn::MCMCChains.AbstractChains,
-     sections::Vector{Symbol}=Symbol[];
+     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
      append_chains=true, remove_missing_union=true)
-
+  sections = sections isa AbstractArray ? sections : [sections]
   section_list = length(sections) == 0 ? sort_sections(chn) : sections
   d, p, c = size(chn.value.data)
 
@@ -161,10 +161,10 @@ Returns either a DataFrame or an Array{DataFrame}
 
 """
 function DataFrame(chn::MCMCChains.AbstractChains,
-    sections::Vector{Symbol}=Symbol[];
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
     append_chains=true, remove_missing_union=true,
     sorted=true)
-
+  sections = sections isa AbstractArray ? sections : [sections]
   section_list = length(sections) == 0 ? sort_sections(chn) : sections
   d, p, c = size(chn.value.data)
 
