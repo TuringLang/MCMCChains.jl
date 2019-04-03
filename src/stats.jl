@@ -1,90 +1,90 @@
 #################### Posterior Statistics ####################
-function autocor(chn::AbstractChains;
-                 lags::Vector=[1, 5, 10, 50],
-                 relative::Bool=true,
-                 showall=false,
-                 suppress_header=false,
-                 section=:parameters)
+# function autocor(chn::AbstractChains;
+#                  lags::Vector=[1, 5, 10, 50],
+#                  relative::Bool=true,
+#                  showall=false,
+#                  suppress_header=false,
+#                  section=:parameters)
+#
+#     # Allocation of summary vector.
+#     summaries = Vector{ChainSummary}([])
+#
+#     # Check that we actually have :parameters.
+#     showall = showall ? true : _use_showall(chn, section)
+#
+#     # Separate the chain into sections if showall=false.
+#     chns = showall ? [chn] : get_sections(chn, section)
+#
+#     # Set showlabels bool.
+#     show_labels = true
+#
+#     # Iterate through each chain.
+#     for c in chns
+#         # If we're only going through one section at a time,
+#         # set a section name.
+#         section_name = showall ? "" : string.(first(keys(c.name_map)))
+#
+#         if relative
+#             lags *= step(c)
+#         elseif any(lags .% step(c) .!= 0)
+#             throw(ArgumentError("lags do not correspond to thinning interval"))
+#         end
+#         labels = map(x -> "Lag " * string(x), lags)
+#
+#         (niter, nvar, nchain) = size(c.value)
+#         vals = zeros(nvar, length(lags), nchain)
+#         for k in 1:nchain
+#             for v in 1:nvar
+#                 # skipping missing values
+#                 # skipping should be done inside of autocor to ensure correct alignment
+#                 # TODO: modify autocor to deal with missing values
+#                 x = convert(Vector{Float64}, collect(skipmissing(c.value[:,v,k])))
+#                 vals[v, :, k] = autocor(x, lags)
+#             end
+#         end
+#
+#         new_summary = ChainSummary(vals,
+#             string.(names(c)),
+#             labels,
+#             "",
+#             true)
+#
+#         push!(summaries, new_summary)
+#     end
+#
+#     h = suppress_header ? "" : header(chn)
+#     return ChainSummaries(h, summaries)
+# end
 
-    # Allocation of summary vector.
-    summaries = Vector{ChainSummary}([])
-
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
-
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-
-        if relative
-            lags *= step(c)
-        elseif any(lags .% step(c) .!= 0)
-            throw(ArgumentError("lags do not correspond to thinning interval"))
-        end
-        labels = map(x -> "Lag " * string(x), lags)
-
-        (niter, nvar, nchain) = size(c.value)
-        vals = zeros(nvar, length(lags), nchain)
-        for k in 1:nchain
-            for v in 1:nvar
-                # skipping missing values
-                # skipping should be done inside of autocor to ensure correct alignment
-                # TODO: modify autocor to deal with missing values
-                x = convert(Vector{Float64}, collect(skipmissing(c.value[:,v,k])))
-                vals[v, :, k] = autocor(x, lags)
-            end
-        end
-
-        new_summary = ChainSummary(vals,
-            string.(names(c)),
-            labels,
-            "",
-            true)
-
-        push!(summaries, new_summary)
-    end
-
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
-end
-
-function cor(chn::AbstractChains;
-    showall=false, suppress_header=false, section=:parameters)
-    # Allocation of summary vector.
-    summaries = Vector{ChainSummary}([])
-
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
-
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-        new_summary = ChainSummary(cor(combine(c)),
-            string.(names(c)),
-            string.(names(c)),
-            section_name)
-        push!(summaries, new_summary)
-    end
-
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
-end
+# function cor(chn::AbstractChains;
+#     showall=false, suppress_header=false, section=:parameters)
+#     # Allocation of summary vector.
+#     summaries = Vector{ChainSummary}([])
+#
+#     # Check that we actually have :parameters.
+#     showall = showall ? true : _use_showall(chn, section)
+#
+#     # Separate the chain into sections if showall=false.
+#     chns = showall ? [chn] : get_sections(chn, section)
+#
+#     # Set showlabels bool.
+#     show_labels = true
+#
+#     # Iterate through each chain.
+#     for c in chns
+#         # If we're only going through one section at a time,
+#         # set a section name.
+#         section_name = showall ? "" : string.(first(keys(c.name_map)))
+#         new_summary = ChainSummary(cor(combine(c)),
+#             string.(names(c)),
+#             string.(names(c)),
+#             section_name)
+#         push!(summaries, new_summary)
+#     end
+#
+#     h = suppress_header ? "" : header(chn)
+#     return ChainSummaries(h, summaries)
+# end
 
 function changerate(chn::AbstractChains;
     showall=false, suppress_header=false, section=:parameters)
