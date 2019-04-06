@@ -86,6 +86,35 @@
 #     return ChainSummaries(h, summaries)
 # end
 
+function autocor(chn::AbstractChains;
+        lags::Vector=[1, 5, 10, 50],
+        demean::Bool=true,
+        relative::Bool=true,
+        showall=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    funs = Function[]
+    func_names = String[]
+    for i in lags
+        push!(funs, x -> autocor(x, [i], demean=demean)[1])
+        push!(func_names, "autocor_$i")
+    end
+    return summarize(chn, funs...;func_names=func_names)
+end
+
+function cor(chn::AbstractChains;
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    df = DataFrame(chn, sections)
+    arr = convert(Matrix, df[:, 1:end])
+    cormat = cor(arr)
+    nms = names(df)
+    columns = [nms, [cormat[:, i] for i in 1:size(cormat, 2)]...]
+    colnames = vcat([:parameters], nms...)
+    df_summary = DataFrame(columns)
+    names!(df_summary, colnames)
+    return ChainDataFrame(df_summary)
+end
+
 function changerate(chn::AbstractChains;
     showall=false, suppress_header=false, section=:parameters)
     # Check for missing values.
@@ -137,6 +166,59 @@ function changerate(chn::AbstractChains;
     h = suppress_header ? "" : header(chn)
     return ChainSummaries(h, summaries)
 end
+
+# function changerate(chn::AbstractChains;
+#     showall=false,
+#     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+#     # Check for missing values.
+#     @assert !any(ismissing.(chn.value)) "Change rate comp. doesn't support missing values."
+#
+#     # Check that we actually have :parameters.
+#     showall = showall ? true : _use_showall(chn, section)
+#
+#     # Allocation of summary vector.
+#     summaries = Vector{ChainSummary}([])
+#
+#     # Separate the chain into sections if showall=false.
+#     chns = showall ? [chn] : get_sections(chn, section)
+#
+#     # Set showlabels bool.
+#     show_labels = true
+#
+#     # Iterate through each chain.
+#     for c in chns
+#         # If we're only going through one section at a time,
+#         # set a section name.
+#         section_name = showall ? "" : string.(first(keys(c.name_map)))
+#
+#         n, p, m = size(c.value)
+#         r = zeros(Float64, p, 1, 1)
+#         r_mv = 0.0
+#         delta = Array{Bool}(undef, p)
+#         for k in 1:m
+#             prev = c.value[1, :, k]
+#             for i in 2:n
+#                 for j in 1:p
+#                     x = c.value[i, j, k]
+#                     dx = x != prev[j]
+#                     r[j] += dx
+#                     delta[j] = dx
+#                     prev[j] = x
+#                 end
+#                 r_mv += any(delta)
+#             end
+#         end
+#         vals = round.([r; r_mv] / (m * (n - 1)), digits = 3)
+#         new_summary = ChainSummary(vals,
+#             [string.(names(c)); "Multivariate"],
+#             ["Change Rate"],
+#             section_name)
+#         push!(summaries, new_summary)
+#     end
+#
+#     h = suppress_header ? "" : header(chn)
+#     return ChainSummaries(h, summaries)
+# end
 
 describe(c::AbstractChains; args...) = describe(stdout, c; args...)
 
