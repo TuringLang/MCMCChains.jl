@@ -1,38 +1,55 @@
-using Turing, MCMCChains, Test
+using MCMCChains, Test
 
 @testset "Array constructor tests" begin
-  
-  @model gdemo(x) = begin
-      m ~ Normal(1, 0.01)
-      s ~ Normal(5, 0.01)
-  end
+    @testset "Smoke tests" begin
+        val = convert(Array{Union{Missing, Float64},3}, rand(1000, 5, 5))
+        chns = Chains(val, ["a", "b", "c", "d", "e"], [:internals => ["d", "e"]])
 
-  model = gdemo([1.5, 2.0])
-  sampler = HMC(1000, 0.01, 5)
+        # Config.
+        main_params = 3
+        internal_params = 2
+        total_params = main_params + internal_params
 
-  chns = [sample(model, sampler, save_state=true) for i in 1:4]
-  chns = chainscat(chns...) 
-  
-  d, p, c = size(chns.value.data)
+        d, p, c = size(chns)
 
-  @test size(Array(chns)) == (d*c, p)
-  @test size(Array(chns, [:parameters])) == (d*c, 2)
-  @test size(Array(chns, [:parameters, :internals])) == (d*c, p)
-  @test size(Array(chns, [:internals])) == (d*c, 6)
-  @test size(Array(chns, append_chains=true)) == (d*c, p)
-  @test size(Array(chns, append_chains=false)) == (4,)
-  @test size(Array(chns, append_chains=false)[1]) == (d, p)
-  @test typeof(Array(chns, append_chains=true)) == Array{Float64, 2}
-  @test size(Array(chns, remove_missing_union=false)) == (d*c, p)
-  @test size(Array(chns, append_chains=false, remove_missing_union=false)) == (4,)
-  @test size(Array(chns, append_chains=false, remove_missing_union=false)[1]) == (d, p)
-  @test typeof(Array(chns, append_chains=true, remove_missing_union=false)) == 
-    Array{Union{Missing, Float64}, 2}
-  @test size(Array(chns[:m])) == (d*c,)
+        @test size(Array(chns)) == (d*c, main_params)
+        @test size(Array(chns, [:parameters])) == (d*c, main_params)
+        @test size(Array(chns, [:parameters])) == size(Array(chns))
+        @test size(Array(chns, [:parameters, :internals])) == (d*c, total_params)
+        @test size(Array(chns, [:parameters, :internals])) ==
+            size(Array(chns, showall=true))
+        @test size(Array(chns, [:internals])) == (d*c, internal_params)
+        @test size(Array(chns, append_chains=true)) == (d*c, main_params)
+        @test size(Array(chns, append_chains=false)) == (5,)
+        @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
+        @test typeof(Array(chns, append_chains=true)) == Array{Float64, 2}
+        @test size(Array(chns, remove_missing_union=false)) == (d*c, main_params)
+        @test size(Array(chns, append_chains=false,
+            remove_missing_union=false)) == (5,)
+        @test size(Array(chns, append_chains=false,
+            remove_missing_union=false)[1]) == (d, main_params)
+        @test typeof(Array(chns, append_chains=true, remove_missing_union=false)) ==
+            Array{Union{Missing, Float64}, 2}
+        @test size(Array(chns[:b])) == (d*c,)
 
-  Array(chns)
-  Array(chns[:s])
-  Array(chns, [:parameters])
-  Array(chns, [:parameters, :internals])
-  
+        Array(chns)
+        Array(chns[:a])
+        Array(chns, [:parameters])
+        Array(chns, [:parameters, :internals])
+    end
+    @testset "Accuracy" begin
+        nchains = 5
+        val = rand(500, 5, nchains)
+        long_val = vcat([val[:,:,i] for i in 1:nchains]...)
+        squished_val = [val[:,:,i] for i in 1:nchains]
+        chn = Chains(val)
+
+        # Test no_append
+        arr1 = Array(chn, append_chains=true)
+        @test all(arr1 .== long_val)
+
+        # Test append
+        arr2 = Array(chn, append_chains=false)
+        @test all(vcat([arr2[i] .== squished_val[i] for i in 1:nchains]...))
+    end
 end

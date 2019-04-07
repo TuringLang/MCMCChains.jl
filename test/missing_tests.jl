@@ -13,16 +13,16 @@ end
 
     # Call describe without missing values.
     describe(devnull, chn; showall=true)
-    s1, s2 = MCMCChains.summarystats(chn).summaries[1], 
-      MCMCChains.quantile(chn).summaries[1]
+    s1, s2 = MCMCChains.summarystats(chn),
+      MCMCChains.quantile(chn)
 
     # Add missing values.
     chn = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
 
     # Call describe with missing values.
     describe(devnull, chn; showall=true)
-    m1, m2 = MCMCChains.summarystats(chn).summaries[1],
-      MCMCChains.quantile(chn).summaries[1]
+    m1, m2 = MCMCChains.summarystats(chn),
+      MCMCChains.quantile(chn)
 
     @test all(s1.value[:,1:4,:] .== m1.value[:,1:4,:])
     @test all(s1.value[:,5,:] .+ 1 .== m1.value[:,5,:])
@@ -37,9 +37,9 @@ end
     # Currently we only check if diag. functions throw an assertion if a value is missing.
     @test_throws AssertionError gelmandiag(chn_m)
 
-    @test all(gewekediag(chn).value .== gewekediag(chn_m).value)
-    @test all(heideldiag(chn).value .== heideldiag(chn_m).value)
-    @test all(rafterydiag(chn).value .== rafterydiag(chn_m).value)
+    @test all(gewekediag(chn).df .== gewekediag(chn_m).df)
+    @test all(heideldiag(chn).df .== heideldiag(chn_m).df)
+    @test all(rafterydiag(chn).df .== rafterydiag(chn_m).df)
 
     @test_throws AssertionError discretediag(chn_m)
 end
