@@ -1,21 +1,21 @@
 function sort_sections(chn::MCMCChains.AbstractChains)
-  smap = keys(chn.name_map)
-  section_list = Vector{Symbol}(undef, length(smap))
-  indx = 1
-  if :parameters in smap
-    section_list[1] = :parameters
-    indx += 1
-  end
-  if :internals in smap
-    section_list[end] = :internals
-  end
-  for par in smap
-    if !(par in [:parameters, :internals])
-      section_list[indx] = par
-      indx += 1
+    smap = keys(chn.name_map)
+    section_list = Vector{Symbol}(undef, length(smap))
+    indx = 1
+    if :parameters in smap
+        section_list[1] = :parameters
+        indx += 1
     end
-  end
-  section_list
+    if :internals in smap
+        section_list[end] = :internals
+    end
+    for par in smap
+        if !(par in [:parameters, :internals])
+            section_list[indx] = par
+            indx += 1
+        end
+    end
+    return section_list
 end
 
 """
@@ -60,64 +60,69 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 
 """
 function Array(chn::MCMCChains.AbstractChains,
-     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
-     append_chains=true, remove_missing_union=true)
-  sections = sections isa AbstractArray ? sections : [sections]
-  section_list = length(sections) == 0 ? sort_sections(chn) : sections
-  d, p, c = size(chn.value.data)
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
+        append_chains=true,
+        remove_missing_union=true,
+        showall=false
+    )
+    sections = _clean_sections(chn, sections)
+    sections = sections isa AbstractArray ? sections : [sections]
+    sections = showall ? [] : sections
+    section_list = length(sections) == 0 ? sort_sections(chn) : sections
+    d, p, c = size(chn.value.data)
 
-  local b
-  if append_chains
-    first_parameter = true
-    for section in section_list
-      for par in chn.name_map[section]
-        x = get(chn, Symbol(par))
-        d, c = size(x[Symbol(par)])
-        if first_parameter
-          if remove_missing_union
-            b = reshape(convert(Array{Float64}, x[Symbol(par)]), d*c)[:, 1]
-          else
-            b = reshape(x[Symbol(par)], d*c)[:, 1]
-          end
-          p == 1 && (b = reshape(b, size(b, 1)))
-          first_parameter = false
-        else
-          if remove_missing_union
-            b = hcat(b, reshape(convert(Array{Float64}, x[Symbol(par)]), d*c)[:, 1])
-          else
-            b = hcat(b, reshape(x[Symbol(par)], d*c)[:, 1])
-          end
-        end
-      end
-    end
-  else
-    b=Vector(undef, c)
-    for i in 1:c
-      first_parameter = true
-      for section in section_list
-        for par in chn.name_map[section]
-          x = get(chn, Symbol(par))
-          d, c = size(x[Symbol(par)])
-          if first_parameter
-            if remove_missing_union
-              b[i] = convert(Array{Real}, x[Symbol(par)][:, i])
-            else
-              b[i] = x[Symbol(par)][:, i]
+    local b
+    if append_chains
+        first_parameter = true
+        for section in section_list
+            for par in chn.name_map[section]
+                x = get(chn, Symbol(par))
+                d, c = size(x[Symbol(par)])
+                if first_parameter
+                    if remove_missing_union
+                        b = reshape(convert(Array{Float64}, x[Symbol(par)]), d*c)[:, 1]
+                    else
+                        b = reshape(x[Symbol(par)], d*c)[:, 1]
+                    end
+                    p == 1 && (b = reshape(b, size(b, 1)))
+                    first_parameter = false
+                else
+                    if remove_missing_union
+                        b = hcat(b, reshape(convert(Array{Float64}, x[Symbol(par)]), d*c)[:, 1])
+                    else
+                        b = hcat(b, reshape(x[Symbol(par)], d*c)[:, 1])
+                    end
+                end
             end
-            p == 1 && (b[i] = reshape(b[i], size(b[i], 1)))
-            first_parameter = false
-          else
-            if remove_missing_union
-              b[i] = hcat(b[i], convert(Array{Real}, x[Symbol(par)][:, i]))
-            else
-              b[i] = hcat(b[i], x[Symbol(par)][:, i])
-            end
-          end
         end
-      end
+    else
+        b=Vector(undef, c)
+        for i in 1:c
+            first_parameter = true
+            for section in section_list
+                for par in chn.name_map[section]
+                    x = get(chn, Symbol(par))
+                    d, c = size(x[Symbol(par)])
+                    if first_parameter
+                        if remove_missing_union
+                            b[i] = convert(Array{Real}, x[Symbol(par)][:, i])
+                        else
+                            b[i] = x[Symbol(par)][:, i]
+                        end
+                        p == 1 && (b[i] = reshape(b[i], size(b[i], 1)))
+                        first_parameter = false
+                    else
+                        if remove_missing_union
+                            b[i] = hcat(b[i], convert(Array{Real}, x[Symbol(par)][:, i]))
+                        else
+                            b[i] = hcat(b[i], x[Symbol(par)][:, i])
+                        end
+                    end
+                end
+            end
+        end
     end
-  end
-  b
+    return b
 end
 
 """
@@ -162,52 +167,56 @@ Returns either a DataFrame or an Array{DataFrame}
 """
 function DataFrame(chn::MCMCChains.AbstractChains,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
-    append_chains=true, remove_missing_union=true,
-    sorted=true)
-  sections = sections isa AbstractArray ? sections : [sections]
-  section_list = length(sections) == 0 ? sort_sections(chn) : sections
-  d, p, c = size(chn.value.data)
+    append_chains=true,
+    remove_missing_union=true,
+    sorted=true,
+    showall=false)
+    sections = _clean_sections(chn, sections)
+    sections = sections isa AbstractArray ? sections : [sections]
+    sections = showall ? [] : sections
+    section_list = length(sections) == 0 ? sort_sections(chn) : sections
+    d, p, c = size(chn.value.data)
 
-  local b
-  if append_chains
-    b = DataFrame()
-    for section in section_list
-        names = sorted ?
-            sort(chn.name_map[section],
-                by=x->string(x), lt = MCMCChains.natural) :
-            chn.name_map[section]
-      for par in names
-          x = get(chn, Symbol(par))
-          d, c = size(x[Symbol(par)])
-          if remove_missing_union
-            b = hcat(b, DataFrame(Symbol(par) => reshape(convert(Array{Float64},
-              x[Symbol(par)]), d*c)[:, 1]))
-          else
-            b = hcat(b, DataFrame(Symbol(par) => reshape(x[Symbol(par)], d*c)[:, 1]))
-          end
-      end
-    end
-  else
-    b = Vector{DataFrame}(undef, c)
-    for i in 1:c
-      b[i] = DataFrame()
-      for section in section_list
-          names = sorted ?
-              sort(chn.name_map[section],
-                  by=x->string(x), lt = MCMCChains.natural) :
-              chn.name_map[section]
-        for par in names
-            x = get(chn, Symbol(par))
-            d, c = size(x[Symbol(par)])
-            if remove_missing_union
-              b[i] = hcat(b[i], DataFrame(Symbol(par) => convert(Array{Float64},
-                x[Symbol(par)])[:, 1]))
-            else
-              b[i] = hcat(b[i], DataFrame(Symbol(par) => x[Symbol(par)][:,1]))
+    local b
+    if append_chains
+        b = DataFrame()
+        for section in section_list
+            names = sorted ?
+                sort(chn.name_map[section],
+                    by=x->string(x), lt = MCMCChains.natural) :
+                chn.name_map[section]
+            for par in names
+                x = get(chn, Symbol(par))
+                d, c = size(x[Symbol(par)])
+                if remove_missing_union
+                    b = hcat(b, DataFrame(Symbol(par) => reshape(convert(Array{Float64},
+                    x[Symbol(par)]), d*c)[:, 1]))
+                else
+                    b = hcat(b, DataFrame(Symbol(par) => reshape(x[Symbol(par)], d*c)[:, 1]))
+                end
             end
         end
-      end
+    else
+        b = Vector{DataFrame}(undef, c)
+        for i in 1:c
+            b[i] = DataFrame()
+            for section in section_list
+                names = sorted ?
+                    sort(chn.name_map[section],
+                        by=x->string(x), lt = MCMCChains.natural) :
+                    chn.name_map[section]
+                for par in names
+                    x = get(chn[:,:,i], Symbol(par))
+                    d, c = size(x[Symbol(par)])
+                    if remove_missing_union
+                        b[i] = hcat(b[i], DataFrame(Symbol(par) => convert(Array{Float64},
+                        x[Symbol(par)])[:, 1]))
+                    else
+                        b[i] = hcat(b[i], DataFrame(Symbol(par) => x[Symbol(par)][:,1]))
+                    end
+                end
+            end
+        end
     end
-  end
-  b
+    return b
 end
