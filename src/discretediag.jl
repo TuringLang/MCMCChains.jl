@@ -416,11 +416,60 @@ end
 #  return [p1, p2]
 #end
 
-function discretediag(chn::AbstractChains; frac::Real=0.3,
-                      method::Symbol=:weiss, section=:parameters,
-                      nsim::Int=1000, showall=false)
+# function discretediag(chn::AbstractChains; frac::Real=0.3,
+#                       method::Symbol=:weiss, section=:parameters,
+#                       nsim::Int=1000, showall=false)
+#
+#     c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+#     @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
+#
+#     num_iters, num_vars, num_chains = size(c.value)
+#
+#     valid_methods = [:hangartner, :weiss, :DARBOOT,
+#         :MCBOOT, :billingsley, :billingsleyBOOT]
+#
+#     if !(method in valid_methods)
+#         methods_str = join([":$f" for f in valid_methods], ", ")
+#         throw(ArgumentError("method must be one of ", methods_str))
+#     end
+#
+#     if !(0.0 < frac < 1.0)
+#         throw(ArgumentError("frac must be in (0,1)"))
+#     end
+#
+#     V, vals = discretediag_sub(c, frac, method, nsim,
+#     size(c.value,1), size(c.value,1))
+#
+#     num_chains = length(chains(c))
+#     separated_vals = [vals[(3 + 3 * (k - 1) + 1):(3 + 3 * (k - 1) + 3), :]
+#         for k in 1:num_chains]
+#
+#     println(V)
+#     println(vals)
+#     println(separated_vals)
+#
+#     section_name = showall ? "" : "\n" * string(section) * "\n"
+#     hdr = "Chisq Diagnostic:\nEnd Fractions = $frac\n" *
+#     "method = $method\n"  * section_name
+#
+#
+#     return ChainSummary(collect(round.(vals, digits = 3)'),
+#         string.(names(c))[V],
+#         convert(Array{AbstractString, 1}, vcat([["stat", "df", "p-value"] for k in
+#             1:(num_chains + 1)]...)),
+#         hdr,
+#         true)
+# end
 
-    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+function discretediag(chn::AbstractChains; frac::Real=0.3,
+                      method::Symbol=:weiss,
+                      sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+                      nsim::Int=1000,
+                      showall=false)
+    c = showall ?
+        sort(chn) :
+        Chains(chn, _clean_sections(chn, sections); sorted=true)
+
     @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
 
     num_iters, num_vars, num_chains = size(c.value)
@@ -440,15 +489,18 @@ function discretediag(chn::AbstractChains; frac::Real=0.3,
     V, vals = discretediag_sub(c, frac, method, nsim,
     size(c.value,1), size(c.value,1))[1:2]
 
-    #println(V)
-    #println(vals)
+    num_chains = length(chains(c))
+    sep_vals = [vals[(3 * (k - 1) + 1):(3 * (k - 1) + 3), :]'
+        for k in 1:(num_chains+1)]
 
-    section_name = showall ? "" : "\n" * string(section) * "\n"
-    hdr = "Chisq Diagnostic:\nEnd Fractions = $frac\n" *
-    "method = $method\n"  * section_name
+    colnames = Symbol.([:parameters, :stat, :df, :p_value])
 
-    return ChainSummary(collect(round.(vals, digits = 3)'), string.(names(c))[V],
-    convert(Array{AbstractString, 1},
-    vcat([["stat", "df", "p-value"]
-    for k in 1:(num_chains + 1)]...)), hdr, true)
+    pnames = Symbol.(names(c))
+    vals = map(x -> round.(x, digits=4), vals)
+    columns = [vcat([pnames], [k[:,i] for i in 1:size(k,2)]) for k in sep_vals]
+    summary_names = ["Chisq Diagnostic - $(k==1 ? "Between Chains" : "Chain $k")"  for k in 1:(num_chains+1)]
+    dfs = [DataFrame(columns[k], colnames) for k in 1:(num_chains+1)]
+    dfs_wrapped = [ChainDataFrame(summary_names[k],
+                   dfs[k]) for k in 1:(num_chains+1)]
+    return dfs_wrapped
 end

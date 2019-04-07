@@ -30,20 +30,22 @@ function heideldiag(chn::AbstractChains;
                     alpha = 0.05,
                     eps = 0.1,
                     etype = :imse,
-                    section = :parameters,
+                    sections::Vector{Symbol}=[:parameters],
                     showall=false,
                     args...
                    )
-    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+    c = showall ?
+       sort(chn) :
+       Chains(chn, _clean_sections(chn, sections); sorted=true)
 
     # Preallocate.
     _, p, m = size(c.value)
-    vals = Array{Float64}(undef, p, 6, m)
+    vals = [Array{Float64}(undef, p, 6) for i in 1:m]
 
 
     # Perform tests.
     for j in 1:p, k in 1:m
-        vals[j, :, k] = heideldiag(
+        vals[k][j, :] = heideldiag(
                             collect(skipmissing(c.value[:, j, k])),
                             alpha=alpha,
                             eps=eps,
@@ -53,15 +55,16 @@ function heideldiag(chn::AbstractChains;
                            )
     end
 
-    # Set header.
-    section_name = showall ? "" : "\n" * string(section) * "\n"
-    hdr = "\nHeidelberger and Welch Diagnostic:\n" *
-        "Target Halfwidth Ratio = $eps\nAlpha = $alpha\n" * section_name
+    colnames = Symbol.(["parameters", "Burn-in", "Stationarity", "p-value", "Mean",
+        "Halfwidth", "Test"])
 
     # Round values.
-    vals = map(x -> round(x, digits=4), vals)
+    pnames = Symbol.(names(c))
+    vals = map(x -> round.(x, digits=4), vals)
+    columns = [vcat([pnames], [vals[k][:,i] for i in 1:6]) for k in 1:m]
 
-    # Make a ChainSummary object.
-    ChainSummary(vals, string.(names(c)), ["Burn-in", "Stationarity", "p-value", "Mean",
-                               "Halfwidth", "Test"], hdr)
+    dfs = [DataFrame(columns[k], colnames) for k in 1:m]
+    dfs_wrapped = [ChainDataFrame("Heidelberger and Welch Diagnostic - Chain $k",
+                   dfs[k]) for k in 1:m]
+    return dfs_wrapped
 end
