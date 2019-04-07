@@ -84,7 +84,7 @@ function Chains(val::AbstractArray{A,3},
 
     # Ensure that we have a hashedsummary key in info.
     if !in(:hashedsummary, keys(info))
-        s = (hash(0), ChainSummaries("", []))
+        s = (hash(0), ChainDataFrame("", DataFrame()))
         info = merge(info, (hashedsummary = Ref(s),))
     end
 
@@ -105,9 +105,9 @@ function Chains(c::Chains{A, T, K, L}, section::Union{Vector, Any};
     # If we received an empty list, return the original chain.
     if isempty(section)
         if sorted
-            return sort(new_chn)
+            return sort(c)
         else
-            return new_chn
+            return c
         end
     end
 
@@ -314,7 +314,7 @@ function Base.show(io::IO, c::Chains)
         if s[1] == h
             show(io, s[2])
         else
-            new_summary = summarystats(c, suppress_header=true)
+            new_summary = summarystats(c)
             c.info.hashedsummary.x = (h, new_summary)
             show(io, new_summary)
         end
@@ -594,6 +594,11 @@ function _use_showall(c::AbstractChains, section::Symbol)
         return true
     end
     return false
+end
+
+function _clean_sections(c::AbstractChains, sections::Vector{Symbol})
+    ks = collect(keys(c.name_map))
+    return ks ∩ sections
 end
 
 #################### Concatenation ####################
