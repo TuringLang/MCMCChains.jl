@@ -5,15 +5,43 @@ import Base.size
 import Base.names
 
 struct ChainDataFrame
+    name::String
     df::DataFrame
 end
 
+ChainDataFrame(df::DataFrame) = ChainDataFrame("", df)
+
 Base.size(c::ChainDataFrame) = size(c.df)
 Base.names(c::ChainDataFrame) = names(c.df)
-Base.show(io::IO, c::ChainDataFrame) = show(io, c.df)
+
+function Base.show(io::IO, c::ChainDataFrame)
+    println(io, c.name)
+    show(io, c.df, summary = false, allrows=true)
+end
 
 Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
-Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = return c.df[s]
+Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = c.df[s]
+
+function Base.show(io::IO, cs::Vector{ChainDataFrame})
+    println(io, summary(cs))
+    for i in cs
+        println(io)
+        println(io, i.name)
+        show(io, i.df, allrows=true, summary=false)
+        println(io)
+    end
+end
+
+# Allows overriding of `display`
+function Base.show(io::IO, ::MIME"text/plain", cs::Vector{ChainDataFrame})
+    show(io, cs)
+end
+
+function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}, m)
+    s = s isa AbstractArray ? s : [s]
+    s_ind = indexin(s, c.df[:, :parameters])
+    return c.df[s_ind, m]
+end
 
 function Base.getindex(c::ChainDataFrame,
         s1::Vector{Symbol},
@@ -26,6 +54,8 @@ function Base.getindex(c::ChainDataFrame,
         s2::Union{Symbol, Vector{Symbol}})
     return c.df[c.df.parameters .== s1, s2]
 end
+
+# Grab the index of
 
 """
 
@@ -68,12 +98,11 @@ Summarize method for an MCMCChains.Chains object.
 function summarize(chn::Chains, funs...;
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         func_names=[],
-        showall=false)
+        append_chains::Bool=true,
+        showall::Bool=false,
+        name::String="")
     # Check that we actually have :parameters.
     showall = showall ? true : !in(:parameters, keys(chn.name_map))
-
-    # Set sections.
-    sections = showall ? [] : sections
 
     # If we weren't given any functions, fall back on summary stats.
     if length(funs) == 0
@@ -83,37 +112,33 @@ function summarize(chn::Chains, funs...;
     end
 
     # Generate a dataframe to work on.
-    df = DataFrame(chn, sections)
+    df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
 
     # If no function names were given, make a new list.
     func_names = length(func_names) == 0 ?
         handle_funs(funs) : Symbol.(func_names)
 
     # Do all the math, make columns.
-    columns = vcat([names(df)], [colwise(f, df) for f in funs])
+    columns = if append_chains
+        vcat([names(df)], [colwise(f, df) for f in funs])
+    else
+        [vcat([names(df[1])], [colwise(f, i) for f in funs]) for i in df]
+    end
 
     # Make a vector of column names.
     colnames = vcat([:parameters], func_names)
 
     # Build the dataframe.
-    df = DataFrame(columns)
-    names!(df, colnames)
-    return ChainDataFrame(df)
+    ret_df = if append_chains
+        ChainDataFrame(name, DataFrame(columns, colnames))
+    else
+        [ChainDataFrame(name, DataFrame(i, colnames)) for i in columns]
+    end
+
+    return ret_df
 end
 
 function handle_funs(fns)
-  tmp =  [string(f) for f in fns]
-  Symbol.([split(tmp[i], ".")[end] for i in 1:length(tmp)])
-end
-
-function dfsummarystats(chn::MCMCChains.AbstractChains;
-    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    showall=false,
-    etype=:bm, args...)
-    sem(x) = sqrt(var(x) / length(x))
-    df_mcse(x) = mcse(x, etype, args...)
-    ess(x) = min((std(x) / df_mcse(x))^2, size(x, 1))
-    funs = [mean, std, sem, df_mcse, ess]
-    func_names = [:mean, :std, :naive_se, :mcse, :ess]
-    return summarize(chn, funs...; sections=sections, func_names=func_names, showall=showall)
+    tmp =  [string(f) for f in fns]
+    Symbol.([split(tmp[i], ".")[end] for i in 1:length(tmp)])
 end
