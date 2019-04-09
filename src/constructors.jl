@@ -68,7 +68,16 @@ function Array(chn::MCMCChains.AbstractChains,
     sections = _clean_sections(chn, sections)
     sections = sections isa AbstractArray ? sections : [sections]
     sections = showall ? [] : sections
-    section_list = length(sections) == 0 ? sort_sections(chn) : sections
+    section_list = length(sections) == 0 ?
+        sort_sections(chn) :
+        sections
+
+    # If we actually have missing values, we can't remove
+    # Union{Missing}.
+    remove_missing_union = remove_missing_union ?
+        all(x -> !ismissing(x), chn.value) :
+        remove_missing_union
+
     d, p, c = size(chn.value.data)
 
     local b
@@ -175,6 +184,13 @@ function DataFrame(chn::MCMCChains.AbstractChains,
     sections = sections isa AbstractArray ? sections : [sections]
     sections = showall ? [] : sections
     section_list = length(sections) == 0 ? sort_sections(chn) : sections
+
+    # If we actually have missing values, we can't remove
+    # Union{Missing}.
+    remove_missing_union = remove_missing_union ?
+        all(x -> !ismissing(x), chn.value) :
+        remove_missing_union
+
     d, p, c = size(chn.value.data)
 
     local b
