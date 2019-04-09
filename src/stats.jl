@@ -15,7 +15,7 @@ function autocor(chn::AbstractChains;
         demean::Bool=true,
         relative::Bool=true,
         showall=false,
-        append_chains = true,
+        append_chains = false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
     funs = Function[]
     func_names = String[]
@@ -193,6 +193,7 @@ Computes the mean, standard deviation, naive standard error, Monte Carlo standar
 function summarystats(chn::MCMCChains.AbstractChains;
         append_chains=true,
         showall=false,
+        ignore_missing=true,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         etype=:bm, args...
     )
@@ -206,7 +207,9 @@ function summarystats(chn::MCMCChains.AbstractChains;
         min((std(x) / df_mcse(x))^2, size(x, 1))
 
     # Store everything.
-    funs = [mean, std, sem, df_mcse, ess]
+    funs = ignore_missing ?
+        [mean, std, sem, df_mcse, ess] .∘ collect .∘ skipmissing :
+        [mean, std, sem, df_mcse, ess]
     func_names = [:mean, :std, :naive_se, :mcse, :ess]
 
     # Summarize.
