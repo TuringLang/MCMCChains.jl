@@ -1,14 +1,4 @@
 using Test
-using Pkg
-
-# add packages
-to_add = [
-    PackageSpec(name="Plots"),
-    PackageSpec(name="StatsPlots"),
-    PackageSpec(name="Turing"),
-]
-
-Pkg.add(to_add)
 
 @testset "MCMCChains" begin
     # run plotting tests
@@ -32,6 +22,6 @@ Pkg.add(to_add)
     # run tests for array constructor
     include("arrayconstructor_tests.jl")
 
-    # run tests for dataframe constructor
+    # run tests for dataframe constructort
     include("dfconstructor_tests.jl")
 end
