@@ -24,8 +24,8 @@ end
     m1, m2 = MCMCChains.summarystats(chn),
       MCMCChains.quantile(chn)
 
-    @test all(s1.value[:,1:4,:] .== m1.value[:,1:4,:])
-    @test all(s1.value[:,5,:] .+ 1 .== m1.value[:,5,:])
+    @test s1[:,2:4] == m1[:,2:4]
+    @test all(s1[:,5] .+ 1 .== m1[:,5])
 end
 
 @testset "diagnostic functions" begin
