@@ -55,8 +55,13 @@ function Base.getindex(c::ChainDataFrame,
     return c.df[c.df.parameters .== s1, s2]
 end
 
-# Grab the index of
 
+Base.lastindex(c::ChainDataFrame, i::Integer) = lastindex(c.df, i)
+
+function Base.convert(::Type{T}, cs::Array{ChainDataFrame,1}) where T<:Array
+    arrs = [convert(T, cs[j].df[:, 2:end]) for j in 1:length(cs)]
+    return cat(arrs..., dims = 3)
+end
 """
 
 # Summarize a Chains object formatted as a DataFrame
@@ -100,6 +105,7 @@ function summarize(chn::Chains, funs...;
         func_names=[],
         append_chains::Bool=true,
         showall::Bool=false,
+        ignore_missing::Bool=true,
         name::String="")
     # Check that we actually have :parameters.
     showall = showall ? true : !in(:parameters, keys(chn.name_map))
@@ -120,9 +126,17 @@ function summarize(chn::Chains, funs...;
 
     # Do all the math, make columns.
     columns = if append_chains
-        vcat([names(df)], [colwise(f, df) for f in funs])
+        if ignore_missing
+            vcat([names(df)], [colwise(f∘skipmissing, df) for f in funs])
+        else
+            vcat([names(df)], [colwise(f, df) for f in funs])
+        end
     else
-        [vcat([names(df[1])], [colwise(f, i) for f in funs]) for i in df]
+        if ignore_missing
+            [vcat([names(df[1])], [colwise(f∘skipmissing, i) for f in funs]) for i in df]
+        else
+            [vcat([names(df[1])], [colwise(f, i) for f in funs]) for i in df]
+        end
     end
 
     # Make a vector of column names.
