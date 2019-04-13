@@ -112,7 +112,7 @@ function summarize(chn::Chains, funs...;
 
     # If we weren't given any functions, fall back on summary stats.
     if length(funs) == 0
-        return dfsummarystats(chn,
+        return summarystats(chn,
             sections=sections,
             showall=showall)
     end
