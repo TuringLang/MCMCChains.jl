@@ -105,7 +105,8 @@ function summarize(chn::Chains, funs...;
         func_names=[],
         append_chains::Bool=true,
         showall::Bool=false,
-        name::String="")
+        name::String="",
+        additional_df=nothing)
     # Check that we actually have :parameters.
     showall = showall ? true : !in(:parameters, keys(chn.name_map))
 
@@ -133,11 +134,25 @@ function summarize(chn::Chains, funs...;
     # Make a vector of column names.
     colnames = vcat([:parameters], func_names)
 
-    # Build the dataframe.
+    # Build the dataframes.
     ret_df = if append_chains
-        ChainDataFrame(name, DataFrame(columns, colnames))
+        DataFrame(columns, colnames)
     else
-        [ChainDataFrame(name, DataFrame(i, colnames)) for i in columns]
+        [DataFrame(i, colnames) for i in columns]
+    end
+
+    if additional_df != nothing
+        if append_chains
+            ret_df = join(ret_df, additional_df, on=:parameters)
+        else
+            ret_df = [join(r, additional_df, on=:parameters) for r in ret_df]
+        end
+    end
+
+    ret_df = if append_chains
+        ChainDataFrame(name, ret_df)
+    else
+        [ChainDataFrame(name, r) for r in ret_df]
     end
 
     return ret_df
