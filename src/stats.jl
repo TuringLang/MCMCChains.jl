@@ -122,7 +122,7 @@ function describe(io::IO,
                   c::AbstractChains;
                   q = [0.025, 0.25, 0.5, 0.75, 0.975],
                   etype=:bm,
-                  showall=false,
+                  showall::Bool=false,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                   args...
                  )
@@ -171,7 +171,7 @@ function quantile(chn::AbstractChains;
     funs = Function[]
     func_names = String[]
     for i in q
-        push!(funs, x -> quantile(x, i))
+        push!(funs, x -> quantile(cskip(x), i))
         push!(func_names, "$(string(100*i))%")
     end
     return summarize(chn, funs...;
@@ -179,7 +179,6 @@ function quantile(chn::AbstractChains;
         showall=showall,
         name = "Quantiles")
 end
-
 
 """
     summarystats(chn;
@@ -191,25 +190,23 @@ end
 Computes the mean, standard deviation, naive standard error, Monte Carlo standard error, and effective sample size for each parameter in the chain. Setting `append_chains=false` will return a vector of dataframes containing the summary statistics for each chain. `args...` is passed to the `msce` function.
 """
 function summarystats(chn::MCMCChains.AbstractChains;
-        append_chains=true,
-        showall=false,
-        ignore_missing=true,
+        append_chains::Bool=true,
+        showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         etype=:bm, args...
     )
+
     # Make some functions.
     sem(x) = sqrt(var(x) / length(x))
     df_mcse(x) = length(x) < 200 ?
         missing :
-        mcse(x, etype, args...)
+        mcse(cskip(x), etype, args...)
     ess(x) = length(x) < 200 ?
         missing :
-        min((std(x) / df_mcse(x))^2, size(x, 1))
+        min((std(x) / df_mcse(x))^2, length(x))
 
     # Store everything.
-    funs = ignore_missing ?
-        [mean, std, sem, df_mcse, ess] .∘ collect .∘ skipmissing :
-        [mean, std, sem, df_mcse, ess]
+    funs = [mean∘cskip, std∘cskip, sem, df_mcse, ess]
     func_names = [:mean, :std, :naive_se, :mcse, :ess]
 
     # Summarize.
