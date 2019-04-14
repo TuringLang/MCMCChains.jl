@@ -23,8 +23,14 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
 @recipe f(c::AbstractChains, s::Symbol) = c, [s]
 
-@recipe function f(c::AbstractChains, i::Int; colordim = :chain, barbounds = (0, Inf), maxlag = nothing, section = :parameters)
+@recipe function f(c::AbstractChains, i::Int;
+    colordim = :chain,
+    barbounds = (0, Inf),
+    maxlag = nothing,
+    section = :parameters,
+    append_chains = false)
     st = get(plotattributes, :seriestype, :traceplot)
+    c = append_chains ? pool_chain(c) : c
 
     if colordim == :parameter
         title --> "Chain $(chains(c)[i])"
@@ -96,8 +102,9 @@ end
 end
 
 @recipe function f(chn::MCMCChains.AbstractChains, parameters::AbstractVector{Symbol};
-        colordim = :chain, section = :parameters)
+        colordim = :chain, section = :parameters, append_chains = false)
     c = Chains(chn, section)
+    c = append_chains ? pool_chain(c) : c
     colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
     ret = indexin(parameters, Symbol.(keys(c)))
     any(y -> y == nothing, ret) && error("Parameter not found")
@@ -109,9 +116,11 @@ end
                    width = 500,
                    height = 250,
                    colordim = :chain,
-                   section = :parameters
+                   section = :parameters,
+                   append_chains = false
                   )
     c = isempty(parameters) ? Chains(chn, section; sorted=true) : sort(chn)
+    c = append_chains ? pool_chain(c) : c
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
     @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
