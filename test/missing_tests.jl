@@ -21,8 +21,8 @@ end
 
     # Call describe with missing values.
     describe(devnull, chn_m; showall=true)
-    m1, m2 = MCMCChains.summarystats(chn),
-      MCMCChains.quantile(chn)
+    m1, m2 = MCMCChains.summarystats(chn_m),
+      MCMCChains.quantile(chn_m)
 
     @test s1[:,2:4] == m1[:,2:4]
 end
