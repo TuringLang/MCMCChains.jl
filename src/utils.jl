@@ -68,3 +68,10 @@ function _ntdictmerge(n::NamedTuple, args::NamedTuple...)
     ndict2 = map(x -> _namedtuple2dict(x), args)
     return _dict2namedtuple(merge(ndict, ndict2...))
 end
+
+"""
+    cskip(x)
+
+Wrapper for `collect(skipmissing(x))`.
+"""
+cskip(x) = collect(skipmissing(x))
