@@ -1,6 +1,7 @@
 @shorthands meanplot
 @shorthands autocorplot
 @shorthands mixeddensity
+@shorthands pooleddensity
 @shorthands traceplot
 @shorthands corner
 
@@ -16,7 +17,8 @@ const translationdict = Dict(
                         :meanplot => _MeanPlot,
                         :density => _DensityPlot,
                         :histogram => _HistogramPlot,
-                        :autocorplot => _AutocorPlot
+                        :autocorplot => _AutocorPlot,
+                        :pooleddensity => _DensityPlot
                       )
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
@@ -25,12 +27,12 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
 @recipe function f(c::AbstractChains, i::Int;
     colordim = :chain,
-    barbounds = (0, Inf),
+    barbounds = (-Inf, Inf),
     maxlag = nothing,
     section = :parameters,
     append_chains = false)
     st = get(plotattributes, :seriestype, :traceplot)
-    c = append_chains || st == :mixeddensity ? pool_chain(c) : c
+    c = append_chains || st == :pooleddensity ? pool_chain(c) : c
 
     if colordim == :parameter
         title --> "Chain $(chains(c)[i])"
@@ -44,7 +46,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
     end
 
-    if st == :mixeddensity
+    if st == :mixeddensity || st == :pooleddensity
         discrete = MCMCChains.indiscretesupport(c, barbounds)
         st = if colordim == :chain
             discrete[i] ? :histogram : :density
@@ -77,6 +79,7 @@ end
     xaxis --> "Sample value"
     yaxis --> "Frequency"
     fillalpha --> 0.7
+    bins --> 25
     [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
 end
 
@@ -121,7 +124,7 @@ end
                   )
     c = isempty(parameters) ? Chains(chn, section; sorted=true) : sort(chn)
     c = append_chains ? pool_chain(c) : c
-    ptypes = get(plotattributes, :seriestype, (:traceplot, :density))
+    ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
     @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
     ntypes = length(ptypes)
