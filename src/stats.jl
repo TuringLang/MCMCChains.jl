@@ -181,6 +181,101 @@ function quantile(chn::AbstractChains;
 end
 
 """
+	ess(chn::AbstractChains;
+		showall=false,
+		sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+		maxlag = 250)
+
+Compute a chain's number of effective samples. More information can be found in the Gelman et al. (2014) book "Bayesian Data Analysis", or in [this article](https://arxiv.org/abs/1903.08008).
+"""
+function ess(chn::AbstractChains;
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+    maxlag = 250
+    )
+	param = showall ? names(chn) : names(chn, sections)
+	n_chain_orig = size(chn, 3)
+
+	# Split the chains.
+	parameter_vec = Vector(undef, length(param))
+	midpoint = Int32(floor(size(chn, 1) / 2))
+	for i in 1:length(param)
+		parameter_vec[i] = []
+		for j in 1:n_chain_orig
+            c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
+            c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
+            push!(parameter_vec[i], c1, c2)
+		end
+	end
+
+    # Misc
+    lags = collect(0:250)
+    m = n_chain_orig * 2
+    n = min(length.(parameter_vec[1])...)
+
+    # Preallocate
+    B = Vector(undef, length(param))
+    W = Vector(undef, length(param))
+    varhat = Vector(undef, length(param))
+
+    for i in 1:length(param)
+		draw = parameter_vec[i]
+		p = param[i]
+        allchain = mean(vcat([d for d in draw]...))
+        eachchain = Vector(undef, m)
+        s = Vector(undef, m)
+        for j in 1:m
+            eachchain[j] = mean(draw[j])
+            s[j] = (1/(n-1)) * sum((draw[j] .- eachchain[j]).^2)
+        end
+        B[i] = (n / (m - 1)) * sum((eachchain .- allchain).^2)
+        W[i] = (1/m) * sum(s.^2)
+        varhat[i] = (n-1)/n * W[i] + (1/n) * B[i]
+    end
+
+	V = Vector(undef, length(param))
+    ρ = Vector(undef, length(param))
+    for p in eachindex(V)
+        V[p] = Vector(undef, length(lags))
+		ρ[p] = Vector(undef, length(lags))
+    end
+
+    for t in eachindex(lags)
+        lag = lags[t]
+        range1 = lag+1:n
+        range2 = 1:(n-lag)
+        for i in 1:length(param)
+            draw = parameter_vec[i]
+			p = param[i]
+            z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
+			z = sum([zi .^ 2 for zi in z])
+            V[i][t] = 1 / (m * (n-lag)) * sum(z)
+			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
+        end
+    end
+
+	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
+	ess = Vector(undef, length(param))
+	for i in 1:length(param)
+		ρ_val = Float64.(ρ[i])
+		T = 0
+		for T in 1:2:last(lags)
+			T = i
+			p1 = ρ_val[T + 1]
+			p2 = ρ_val[T + 2]
+			if sign(p1 + p2) == -1 || i == length(param)
+				break
+			end
+		end
+		ess[i] = n * m / (1 + 2 * sum(ρ_val[1:T]))
+	end
+
+    df = DataFrame(parameters = Symbol.(param), ess = ess)
+	return ChainDataFrame("ESS", df)
+end
+
+
+"""
     summarystats(chn;
         append_chains=true,
         showall=false,
@@ -201,18 +296,21 @@ function summarystats(chn::MCMCChains.AbstractChains;
     df_mcse(x) = length(x) < 200 ?
         missing :
         mcse(cskip(x), etype, args...)
-    ess(x) = length(x) < 200 ?
-        missing :
-        min((std(x) / df_mcse(x))^2, length(x))
 
     # Store everything.
-    funs = [mean∘cskip, std∘cskip, sem, df_mcse, ess]
-    func_names = [:mean, :std, :naive_se, :mcse, :ess]
+    funs = [mean∘cskip, std∘cskip, sem∘cskip, df_mcse]
+    func_names = [:mean, :std, :naive_se, :mcse]
+
+    # Caluclate ESS separately.
+    ess_df = ess(chn, sections=sections, showall=showall).df
 
     # Summarize.
-    return summarize(chn, funs...;
+    summary_df = summarize(chn, funs...;
         sections=sections,
         func_names=func_names,
         showall=showall,
-        name="Summary Statistics")
+        name="Summary Statistics",
+        additional_df = ess_df)
+
+    return summary_df
 end
