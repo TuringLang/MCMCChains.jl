@@ -105,7 +105,6 @@ function summarize(chn::Chains, funs...;
         func_names=[],
         append_chains::Bool=true,
         showall::Bool=false,
-        ignore_missing::Bool=true,
         name::String="")
     # Check that we actually have :parameters.
     showall = showall ? true : !in(:parameters, keys(chn.name_map))
@@ -126,17 +125,9 @@ function summarize(chn::Chains, funs...;
 
     # Do all the math, make columns.
     columns = if append_chains
-        if ignore_missing
-            vcat([names(df)], [colwise(f∘skipmissing, df) for f in funs])
-        else
-            vcat([names(df)], [colwise(f, df) for f in funs])
-        end
+        vcat([names(df)], [colwise(f, df) for f in funs])
     else
-        if ignore_missing
-            [vcat([names(df[1])], [colwise(f∘skipmissing, i) for f in funs]) for i in df]
-        else
-            [vcat([names(df[1])], [colwise(f, i) for f in funs]) for i in df]
-        end
+        [vcat([names(df[1])], [colwise(f, i) for f in funs]) for i in df]
     end
 
     # Make a vector of column names.
