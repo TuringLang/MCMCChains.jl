@@ -25,7 +25,7 @@ export describe, set_section, get_params, sections
 export sample, AbstractWeights
 export Array, DataFrame, sort_sections, convert
 export summarize, summarystats, ChainDataFrame
-export hpd
+export hpd, ess
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
@@ -55,7 +55,6 @@ end
 include("utils.jl")
 
 include("chains.jl")
-include("chainsummary.jl")
 include("constructors.jl")
 include("summarize.jl")
 include("discretediag.jl")
