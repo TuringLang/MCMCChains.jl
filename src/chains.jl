@@ -376,12 +376,32 @@ function chains(c::AbstractChains)
 end
 
 """
-    names(c::AbstractChains)
+    names(c::AbstractChains, sections)
 
 Return the parameter names in a `Chains` object.
 """
 function names(c::AbstractChains)
     return c.value[Axis{:var}].val
+end
+
+"""
+    names(c::AbstractChains, sections::Union{Symbol, Vector{Symbol}})
+
+Return the parameter names in a `Chains` object, given an array of sections.
+"""
+function names(c::AbstractChains,
+    sections::Union{Symbol, Vector{Symbol}})
+    # Check that sections is an array.
+    sections = typeof(sections) <: AbstractArray ?
+        sections :
+        [sections]
+
+    nms = []
+
+    for i in sections
+        push!(nms, c.name_map[i]...)
+    end
+    return nms
 end
 
 """
