@@ -23,6 +23,9 @@ chn = Chains(val)
     ps_density = density(chn, 1)
     @test isa(ps_density, Plots.Plot)
 
+    ps_density = density(chn, 1, append_chains=true)
+    @test isa(ps_density, Plots.Plot)
+
     ps_autocor = autocorplot(chn, 1)
     @test isa(ps_autocor, Plots.Plot)
 
@@ -36,6 +39,9 @@ chn = Chains(val)
 
     # plotting combinations
     ps_trace_mean = plot(chn)
+    @test isa(ps_trace_mean, Plots.Plot)
+
+    ps_trace_mean = plot(chn, append_chains=true)
     @test isa(ps_trace_mean, Plots.Plot)
 
     savefig("demo-plot.png")
