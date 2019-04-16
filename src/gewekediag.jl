@@ -18,13 +18,17 @@ function gewekediag(x::Vector{T}; first::Real=0.1, last::Real=0.5,
 end
 
 function gewekediag(chn::AbstractChains; first::Real=0.1, last::Real=0.5,
-                    etype=:imse, section=:parameters, showall=false, args...)
-    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+                    etype=:imse,
+                    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+                    showall=false, args...)
+    c = showall ?
+        sort(chn) :
+        Chains(chn, _clean_sections(chn, sections); sorted=true)
 
     _, p, m = size(c.value)
-    vals = Array{Float64}(undef, p, 2, m)
+    diags = [vals = Array{Float64}(undef, p, 2) for _ in 1:m]
     for j in 1:p, k in 1:m
-        vals[j, :, k] = gewekediag(
+        diags[k][j,:] = gewekediag(
                             collect(skipmissing(c.value[:, j, k])),
                             first=first,
                             last=last,
@@ -32,9 +36,15 @@ function gewekediag(chn::AbstractChains; first::Real=0.1, last::Real=0.5,
                             args...
                         )
     end
-    section_name = showall ? "" : "\n" * string(section) * "\n"
-    hdr = "Geweke Diagnostic:\nFirst Window Fraction = $first\n" *
-        "Second Window Fraction = $last\n" *
-        section_name
-    return ChainSummary(vals, string.(names(c)), ["Z-score", "p-value"], hdr, true)
+
+    name = "Geweke Diagnostic\nFirst Window Fraction = $first\n" *
+        "Second Window Fraction = $last\n"
+
+    pnames = Symbol.(names(c))
+    colnames = [:parameters, :z_score, :p_value]
+    columns = [[pnames, d[:,1], d[:,2]] for d in diags]
+    dfs = [ChainDataFrame("Geweke Diagnostic - Chain $i",
+                          DataFrame(columns[i], colnames)) for i in 1:m]
+
+    return dfs
 end

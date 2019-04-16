@@ -59,8 +59,9 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
     if st == :autocorplot
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
-        ac = MCMCChains.autocor(c, lags=collect(lags); showall=true).summaries[1]
-        val = colordim == :parameter ? ac.value[:, :, i]' : ac.value[i, :, :]
+        ac = MCMCChains.autocor(c, lags=collect(lags); showall=true)
+        ac_mat = convert(Matrix, ac)
+        val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ supportedplots
         translationdict[st](c, val)

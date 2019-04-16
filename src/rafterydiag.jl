@@ -58,13 +58,15 @@ function rafterydiag(
                      s = 0.95,
                      eps = 0.001,
                      showall=false,
-                     section=:parameters
+                     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
                     )
-    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+    c = showall ?
+        sort(chn) :
+        Chains(chn, _clean_sections(chn, sections); sorted=true)
     _, p, m = size(c.value)
-    vals = Array{Float64}(undef, p, 5, m)
+    vals = [Array{Float64}(undef, p, 5) for i in 1:m]
     for j in 1:p, k in 1:m
-        vals[j, :, k] = rafterydiag(
+        vals[k][j, :] = rafterydiag(
             collect(skipmissing(c.value[:, j, k])),
             q=q,
             r=r,
@@ -74,14 +76,15 @@ function rafterydiag(
         )
     end
 
-    section_name = showall ? "" : "\n" * string(section) * "\n"
-    hdr = "Raftery and Lewis Diagnostic:\n" *
-        "Quantile (q) = $q\nAccuracy (r) = $r\nProbability (s) = $s\n" * section_name
+    colnames = Symbol.(["parameters", "Thinning", "Burn-in", "Total", "Nmin",
+        "Dependence Factor"])
 
-    return ChainSummary(vals,
-                        string.(names(c)),
-                        ["Thinning", "Burn-in", "Total", "Nmin", "Dependence Factor"],
-                        hdr,
-                        true
-    )
+    pnames = Symbol.(names(c))
+    vals = map(x -> round.(x, digits=4), vals)
+    columns = [vcat([pnames], [vals[k][:,i] for i in 1:5]) for k in 1:m]
+
+    dfs = [DataFrame(columns[k], colnames) for k in 1:m]
+    dfs_wrapped = [ChainDataFrame("Raftery and Lewis Diagnostic - Chain $k",
+                   dfs[k]) for k in 1:m]
+    return dfs_wrapped
 end

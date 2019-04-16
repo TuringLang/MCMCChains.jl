@@ -28,14 +28,14 @@ using  MCMCChains, Test
 
     tmpdir = tempdir()
     open(joinpath(tmpdir, "sections_test1.txt"), "w") do io
-        describe(io, c, section=:parameters);
-        describe(io, c, section=:internals);
+        describe(io, c, sections=:parameters);
+        describe(io, c, sections=:internals);
         describe(io, c);
     end
 
     open(joinpath(tmpdir, "sections_test2.txt"), "w") do io
-        describe(io, c2, section=:parameters);
-        describe(io, c2, section=:internals);
+        describe(io, c2, sections=:parameters);
+        describe(io, c2, sections=:internals);
         describe(io, c2);
     end
 

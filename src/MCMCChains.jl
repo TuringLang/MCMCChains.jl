@@ -5,10 +5,10 @@ import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats, sample, AbstractWeights
 import LinearAlgebra: diag
 import Serialization: serialize, deserialize
-import Base: sort, range, names, get, hash, convert
+import Base: sort, range, names, get, hash, convert, show, display
 import Statistics: cor
 import Core.Array
-import DataFrames: DataFrame
+import DataFrames: DataFrame, names
 
 using RecipesBase
 import RecipesBase: plot
@@ -24,10 +24,12 @@ export Chains, getindex, setindex!, chains, setinfo, chainscat
 export describe, set_section, get_params, sections
 export sample, AbstractWeights
 export Array, DataFrame, sort_sections, convert
-export hpd
+export summarize, summarystats, ChainDataFrame
+export hpd, ess
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
+export autocor
 
 abstract type AbstractChains end
 
@@ -53,8 +55,8 @@ end
 include("utils.jl")
 
 include("chains.jl")
-include("chainsummary.jl")
 include("constructors.jl")
+include("summarize.jl")
 include("discretediag.jl")
 include("fileio.jl")
 include("gelmandiag.jl")

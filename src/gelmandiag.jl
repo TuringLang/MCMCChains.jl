@@ -1,8 +1,14 @@
 #################### Gelman, Rubin, and Brooks Diagnostics ####################
 
-function gelmandiag(chn::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
-                    transform::Bool=false, section = :parameters, showall=false)
-    c = showall ? sort(chn) : Chains(chn, section; sorted=true)
+function gelmandiag(chn::AbstractChains;
+        alpha::Real=0.05,
+        mpsrf::Bool=false,
+        transform::Bool=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+        showall=false)
+    c = showall ?
+        sort(chn) :
+        Chains(chn, _clean_sections(chn, sections); sorted=true)
     @assert !any(ismissing.(c.value)) "Gelman diagnostics doesn't support missing values"
 
     n, p, m = size(c.value)
@@ -47,8 +53,8 @@ function gelmandiag(chn::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
         end
         psrf[i, 2] = sqrt(correction * (R_fixed + R_random))
     end
-    psrf_labels = ["PSRF", string(100 * q) * "%"]
-    psrf_names = string.(names(c))
+    psrf_labels = Symbol.([:parameters, :PSRF, Symbol(string(100 * q) * "%")])
+    psrf_names = Symbol.(names(c))
 
     if mpsrf
         x = isposdef(W) ?
@@ -57,7 +63,7 @@ function gelmandiag(chn::AbstractChains; alpha::Real=0.05, mpsrf::Bool=false,
         psrf_names = [psrf_names; "Multivariate"]
     end
 
-    section_name = showall ? "" : string(section) * "\n"
-    hdr = "Gelman, Rubin, and Brooks Diagnostic:\n" * section_name
-    ChainSummary(round.(psrf, digits = 3), psrf_names, psrf_labels, hdr, true)
+    columns = [psrf_names, psrf[:,1], psrf[:,2]]
+    name = "Gelman, Rubin, and Brooks Diagnostic"
+    return ChainDataFrame(name, DataFrame(columns, psrf_labels))
 end

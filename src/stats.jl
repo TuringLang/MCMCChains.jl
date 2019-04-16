@@ -1,188 +1,136 @@
 #################### Posterior Statistics ####################
+"""
+    autocor(chn;
+        lags=[1, 5, 10, 50],
+        demean=true,
+        relative=true
+        showall=false,
+        append_chains=true,
+        sections=[:parameters])
+
+Compute the autocorrelation of each parameter for the chain. Setting `append_chains=false` will return a vector of dataframes containing the autocorrelations for each chain.
+"""
 function autocor(chn::AbstractChains;
-                 lags::Vector=[1, 5, 10, 50],
-                 relative::Bool=true,
-                 showall=false,
-                 suppress_header=false,
-                 section=:parameters)
-
-    # Allocation of summary vector.
-    summaries = Vector{ChainSummary}([])
-
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
-
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-
-        if relative
-            lags *= step(c)
-        elseif any(lags .% step(c) .!= 0)
-            throw(ArgumentError("lags do not correspond to thinning interval"))
-        end
-        labels = map(x -> "Lag " * string(x), lags)
-
-        (niter, nvar, nchain) = size(c.value)
-        vals = zeros(nvar, length(lags), nchain)
-        for k in 1:nchain
-            for v in 1:nvar
-                # skipping missing values
-                # skipping should be done inside of autocor to ensure correct alignment
-                # TODO: modify autocor to deal with missing values
-                x = convert(Vector{Float64}, collect(skipmissing(c.value[:,v,k])))
-                vals[v, :, k] = autocor(x, lags)
-            end
-        end
-
-        new_summary = ChainSummary(vals,
-            string.(names(c)),
-            labels,
-            "",
-            true)
-
-        push!(summaries, new_summary)
+        lags::Vector=[1, 5, 10, 50],
+        demean::Bool=true,
+        relative::Bool=true,
+        showall=false,
+        append_chains = false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    funs = Function[]
+    func_names = String[]
+    for i in lags
+        push!(funs, x -> autocor(x, [i], demean=demean)[1])
+        push!(func_names, "lag $i")
     end
-
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
+    return summarize(chn, funs...;
+        func_names = func_names,
+        showall = showall,
+        append_chains = append_chains,
+        name = "Autocorrelation")
 end
 
+"""
+    cor(chn; showall=false, append_chains=true, sections=[:parameters])
+
+Compute the Pearson correlation matrix for the chain. Setting `append_chains=false` will
+return a vector of dataframes containing a correlation matrix for each chain.
+"""
 function cor(chn::AbstractChains;
-    showall=false, suppress_header=false, section=:parameters)
-    # Allocation of summary vector.
-    summaries = Vector{ChainSummary}([])
+        showall=false,
+        append_chains=true,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
 
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
-
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-        new_summary = ChainSummary(cor(combine(c)),
-            string.(names(c)),
-            string.(names(c)),
-            section_name)
-        push!(summaries, new_summary)
+    # Generate
+    cormat = if append_chains
+        cor(convert(Matrix, df[:, 1:end]))
+    else
+        [cor(convert(Matrix, i[:, 1:end])) for i in df]
     end
-
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
+    nms = append_chains ? names(df) : names(df[1])
+    columns = if append_chains
+        [nms, [cormat[:, i] for i in 1:size(cormat, 2)]...]
+    else
+        [[nms, [cm[:, i] for i in 1:size(cm, 2)]...] for cm in cormat]
+    end
+    colnames = vcat([:parameters], nms...)
+    df_summary = if append_chains
+        ChainDataFrame("Correlation", DataFrame(columns, colnames))
+    else
+        [ChainDataFrame("Correlation", DataFrame(c, colnames)) for c in columns]
+    end
+    return df_summary
 end
 
+"""
+    changerate(chn;
+        append_chains=true,
+        showall=false,
+        sections=[:parameters])
+
+Computes the change rate for the chain. Setting `append_chains=false` will
+return a vector of dataframes containing the change rates for each chain.
+"""
 function changerate(chn::AbstractChains;
-    showall=false, suppress_header=false, section=:parameters)
+    append_chains=true,
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
     # Check for missing values.
     @assert !any(ismissing.(chn.value)) "Change rate comp. doesn't support missing values."
 
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
+    df = DataFrame(chn, append_chains=true, showall=showall)
+    n, p = size(df[1])
+    m = length(chains(chn))
 
-    # Allocation of summary vector.
-    summaries = Vector{ChainSummary}([])
-
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-
-        n, p, m = size(c.value)
-        r = zeros(Float64, p, 1, 1)
-        r_mv = 0.0
-        delta = Array{Bool}(undef, p)
-        for k in 1:m
-            prev = c.value[1, :, k]
-            for i in 2:n
-                for j in 1:p
-                    x = c.value[i, j, k]
-                    dx = x != prev[j]
-                    r[j] += dx
-                    delta[j] = dx
-                    prev[j] = x
-                end
-                r_mv += any(delta)
+    r = zeros(Float64, p, 1, 1)
+    r_mv = 0.0
+    delta = Array{Bool}(undef, p)
+    for k in 1:m
+        dfk = df[k]
+        prev = convert(Vector, dfk[1,:])
+        for i in 2:n
+            for j in 1:p
+                x = dfk[i, j]
+                dx = x != prev[j]
+                r[j] += dx
+                delta[j] = dx
+                prev[j] = x
             end
+            r_mv += any(delta)
         end
-        vals = round.([r; r_mv] / (m * (n - 1)), digits = 3)
-        new_summary = ChainSummary(vals,
-            [string.(names(c)); "Multivariate"],
-            ["Change Rate"],
-            section_name)
-        push!(summaries, new_summary)
     end
-
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
+    vals = round.([r..., r_mv] / (m * (n - 1)), digits = 3)
+    rownames = push!(names(df[1]), :multivariate)
+    return DataFrame(parameters = rownames, change_rate = vals, name="Change Rate")
 end
 
 describe(c::AbstractChains; args...) = describe(stdout, c; args...)
 
+"""
+    describe(io::IO,
+        c::AbstractChains;
+        q = [0.025, 0.25, 0.5, 0.75, 0.975],
+        etype=:bm,
+        showall=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+        args...)
+
+Prints the summary statistics and quantiles for the chain.
+"""
 function describe(io::IO,
                   c::AbstractChains;
                   q = [0.025, 0.25, 0.5, 0.75, 0.975],
                   etype=:bm,
-                  showall=false,
-                  section=:parameters,
+                  showall::Bool=false,
+                  sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                   args...
                  )
-
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(c, section)
-
-    # Print the chain header.
-    println(io, header(c, section = showall ? missing : section))
-
-    # Generate summary statistics.
-    ps_stats = summarystats(c; etype=etype,
-        showall=showall,
-        suppress_header=true,
-        section=section,
-        args...)
-    ps_quantiles = quantile(c,
-        q=q,
-        showall=showall,
-        suppress_header=true,
-        section=section)
-
-    # Get linewidths.
-    stats_linewidth = maximum(map(max_width, ps_stats.summaries))
-    quantiles_linewidth = maximum(map(max_width, ps_quantiles.summaries))
-    linewidth = max(quantiles_linewidth, stats_linewidth)
-
-    # Print stats.
-    printstyled(io, "Empirical Posterior Estimates\n", color=:cyan, bold=true)
-    println(io, repeat("─", linewidth))
-    show(io, ps_stats)
-
-    printstyled(io, "Quantiles\n", color=:cyan, bold=true)
-    println(io, repeat("─", linewidth))
-    show(io, ps_quantiles)
+    dfs = [summarystats(c, showall=showall, args...), quantile(c, showall=showall, q=q)]
+    return dfs
 end
 
-function hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
+function _hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
     n = length(x)
     m = max(1, ceil(Int, alpha * n))
 
@@ -195,131 +143,174 @@ function hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
 end
 
 function hpd(chn::AbstractChains; alpha::Real=0.05,
-    showall=false, suppress_header=false, section=:parameters)
-    # Allocation summary vector.
-    summaries = Vector{ChainSummary}([])
-
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
-
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-
-        pct = first(showoff([100.0 * (1.0 - alpha)]))
-        labels = ["$(pct)% Lower", "$(pct)% Upper"]
-        vals = permutedims(
-            mapslices(x -> hpd(collect(skipmissing(x)), alpha=alpha), c.value, dims = [1, 3]),
-            [2, 1, 3]
-        )
-        new_summary = ChainSummary(convert(Array{Float64,3}, vals),
-            string.(names(c)), labels, section_name)
-        push!(summaries, new_summary)
-    end
-
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
+        append_chains=true,
+        showall=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    labels = [:upper, :lower]
+    u(x) = _hpd(x, alpha=alpha)[1]
+    l(x) = _hpd(x, alpha=alpha)[2]
+    return summarize(chn, u, l; func_names = labels, showall=showall, name="HPD")
 end
 
-function quantile(chn::AbstractChains; q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
-    showall=false, suppress_header=false, section=:parameters)
-    # Allocation summary vector.
-    summaries = Vector{ChainSummary}([])
+"""
+    quantile(chn;
+        q=[0.025, 0.25, 0.5, 0.75, 0.975],
+        append_chains=true,
+        showall=false,
+        sections=[:parameters])
 
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
-
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-
-        # Make labels.
-        labels = map(x -> string(100 * x) * "%", q)
-        vals = Array(hcat([quantile(collect(skipmissing(c.value[:,i,:])), q) for i in names(c)]...)')
-        new_summary = ChainSummary(round.(vals, digits=4), string.(names(c)), labels, section_name, true)
-        push!(summaries, new_summary)
+Computes the quantiles for each parameter in the chain. Setting `append_chains=false` will
+return a vector of dataframes containing the quantiles for each chain.
+"""
+function quantile(chn::AbstractChains;
+        q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
+        append_chains=true,
+        showall=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters])
+    # compute quantiles
+    funs = Function[]
+    func_names = String[]
+    for i in q
+        push!(funs, x -> quantile(cskip(x), i))
+        push!(func_names, "$(string(100*i))%")
     end
-
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
+    return summarize(chn, funs...;
+        func_names=func_names,
+        showall=showall,
+        name = "Quantiles")
 end
 
-function summarystats(chn::AbstractChains; etype=:bm,
-    showall=false, suppress_header=false, section=:parameters, args...)
-    # Allocation summary vector.
-    summaries = Vector{ChainSummary}([])
+"""
+	ess(chn::AbstractChains;
+		showall=false,
+		sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+		maxlag = 250)
 
-    # Check that we actually have :parameters.
-    showall = showall ? true : _use_showall(chn, section)
+Compute a chain's number of effective samples. More information can be found in the Gelman et al. (2014) book "Bayesian Data Analysis", or in [this article](https://arxiv.org/abs/1903.08008).
+"""
+function ess(chn::AbstractChains;
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+    maxlag = 250
+    )
+	param = showall ? names(chn) : names(chn, sections)
+	n_chain_orig = size(chn, 3)
 
-    # Summary statistics function array.
-    f(x) = [mean(x),
-        std(x),
-        sem(x),
-        mcse(x, etype; args...)]
+	# Split the chains.
+	parameter_vec = Vector(undef, length(param))
+	midpoint = Int32(floor(size(chn, 1) / 2))
+	for i in 1:length(param)
+		parameter_vec[i] = []
+		for j in 1:n_chain_orig
+            c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
+            c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
+            push!(parameter_vec[i], c1, c2)
+		end
+	end
 
-    # Summary statistics function if there aren't enough values
-    # to compute MCSE and ESS.
-    f2(x) = [mean(x),
-        std(x),
-        sem(x)]
+    # Misc
+    lags = collect(0:250)
+    m = n_chain_orig * 2
+    n = min(length.(parameter_vec[1])...)
 
-    length(chn) >= 200 || @warn "Chain iterations are < 200, " *
-        "MCSE and ESS cannot be computed."
+    # Preallocate
+    B = Vector(undef, length(param))
+    W = Vector(undef, length(param))
+    varhat = Vector(undef, length(param))
 
-    # Separate the chain into sections if showall=false.
-    chns = showall ? [chn] : get_sections(chn, section)
-
-    # Set showlabels bool.
-    show_labels = true
-
-    # Iterate through each chain.
-    for c in chns
-        # If we're only going through one section at a time,
-        # set a section name.
-        section_name = showall ? "" : string.(first(keys(c.name_map)))
-
-        # Make labels.
-        labels = if show_labels
-            show_labels = false
-            ["Mean", "SD", "Naive SE", "MCSE", "ESS"]
-        else
-            repeat([""], 5)
+    for i in 1:length(param)
+		draw = parameter_vec[i]
+		p = param[i]
+        allchain = mean(vcat([d for d in draw]...))
+        eachchain = Vector(undef, m)
+        s = Vector(undef, m)
+        for j in 1:m
+            eachchain[j] = mean(draw[j])
+            s[j] = (1/(n-1)) * sum((draw[j] .- eachchain[j]).^2)
         end
+        B[i] = (n / (m - 1)) * sum((eachchain .- allchain).^2)
+        W[i] = (1/m) * sum(s.^2)
+        varhat[i] = (n-1)/n * W[i] + (1/n) * B[i]
+    end
 
-        # Make summary statistics and ChainSummary.
-        if length(chn) >= 200
-            vals = hcat([f(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)'
-            stats = [vals  min.((vals[:, 2] ./ vals[:, 4]).^2, size(c.value, 1))]
-            new_summary = ChainSummary(round.(stats, digits=4), string.(names(c)), labels, section_name, true)
-            push!(summaries, new_summary)
-        else
-            vals = hcat([f2(collect(skipmissing(c.value[:,i,:]))) for i in names(c)]...)'
-            new_summary = ChainSummary(round.(Array(vals), digits=4),
-                string.(names(c)),
-                labels[1:3],
-                section_name,
-                true)
-            push!(summaries, new_summary)
+	V = Vector(undef, length(param))
+    ρ = Vector(undef, length(param))
+    for p in eachindex(V)
+        V[p] = Vector(undef, length(lags))
+		ρ[p] = Vector(undef, length(lags))
+    end
+
+    for t in eachindex(lags)
+        lag = lags[t]
+        range1 = lag+1:n
+        range2 = 1:(n-lag)
+        for i in 1:length(param)
+            draw = parameter_vec[i]
+			p = param[i]
+            z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
+			z = sum([zi .^ 2 for zi in z])
+            V[i][t] = 1 / (m * (n-lag)) * sum(z)
+			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
         end
     end
 
-    h = suppress_header ? "" : header(chn)
-    return ChainSummaries(h, summaries)
+	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
+	ess = Vector(undef, length(param))
+	for i in 1:length(param)
+		ρ_val = Float64.(ρ[i])
+		T = 0
+		for T in 1:2:last(lags)
+			T = i
+			p1 = ρ_val[T + 1]
+			p2 = ρ_val[T + 2]
+			if sign(p1 + p2) == -1 || i == length(param)
+				break
+			end
+		end
+		ess[i] = n * m / (1 + 2 * sum(ρ_val[1:T]))
+	end
+
+    df = DataFrame(parameters = Symbol.(param), ess = ess)
+	return ChainDataFrame("ESS", df)
+end
+
+
+"""
+    summarystats(chn;
+        append_chains=true,
+        showall=false,
+        sections=[:parameters],
+        args...)
+
+Computes the mean, standard deviation, naive standard error, Monte Carlo standard error, and effective sample size for each parameter in the chain. Setting `append_chains=false` will return a vector of dataframes containing the summary statistics for each chain. `args...` is passed to the `msce` function.
+"""
+function summarystats(chn::MCMCChains.AbstractChains;
+        append_chains::Bool=true,
+        showall::Bool=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+        etype=:bm, args...
+    )
+
+    # Make some functions.
+    sem(x) = sqrt(var(x) / length(x))
+    df_mcse(x) = length(x) < 200 ?
+        missing :
+        mcse(cskip(x), etype, args...)
+
+    # Store everything.
+    funs = [mean∘cskip, std∘cskip, sem∘cskip, df_mcse]
+    func_names = [:mean, :std, :naive_se, :mcse]
+
+    # Caluclate ESS separately.
+    ess_df = ess(chn, sections=sections, showall=showall).df
+
+    # Summarize.
+    summary_df = summarize(chn, funs...;
+        sections=sections,
+        func_names=func_names,
+        showall=showall,
+        name="Summary Statistics",
+        additional_df = ess_df)
+
+    return summary_df
 end

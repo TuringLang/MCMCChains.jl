@@ -3,7 +3,7 @@ using Test
 
 ## CHAIN TESTS
 # Define the experiment
-n_iter = 500
+n_iter = 4000
 n_name = 3
 n_chain = 2
 
@@ -14,11 +14,15 @@ val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 # construct a Chains object
 chn = Chains(val, start = 1, thin = 2)
 
+# Chains object for discretediag
+val_disc = rand(Int16, 200, n_name, n_chain)
+chn_disc = Chains(val_disc, start = 1, thin = 2)
+
 @testset "basic chains functions" begin
     @test first(chn) == 1
     @test step(chn) == 2
-    @test last(chn) == 999
-    @test size(chn) == (999, 4, 2)
+    @test last(chn) == 7999
+    @test size(chn) == (7999, 4, 2)
     @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
     @test isa(chn[:,1,:], MCMCChains.AbstractChains)
     @test isa(chn[200:300,"Param1",:], MCMCChains.AbstractChains)
@@ -34,15 +38,15 @@ end
 
 @testset "function tests" begin
     # the following tests only check if the function calls work!
-    @test MCMCChains.diag_all(rand(100, 2), :weiss, 1, 1, 1) != nothing
-    @test MCMCChains.diag_all(rand(100, 2), :hangartner, 1, 1, 1) != nothing
-    @test MCMCChains.diag_all(rand(100, 2), :billingsley, 1, 1, 1) != nothing
+    @test MCMCChains.diag_all(rand(50, 2), :weiss, 1, 1, 1) != nothing
+    @test MCMCChains.diag_all(rand(50, 2), :hangartner, 1, 1, 1) != nothing
+    @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
-    @test isa(discretediag(chn[:,4,:]), MCMCChains.ChainSummary)
-    @test isa(gelmandiag(chn[:,1,:]), MCMCChains.ChainSummary)
-    @test isa(gewekediag(chn[:,1,:]), MCMCChains.ChainSummary)
-    @test isa(heideldiag(chn[:,1,:]), MCMCChains.ChainSummary)
-    @test isa(rafterydiag(chn[:,1,:]), MCMCChains.ChainSummary)
+    @test isa(discretediag(chn_disc[:,2,:]), Vector{MCMCChains.ChainDataFrame})
+    @test isa(gelmandiag(chn[:,1,:]), MCMCChains.ChainDataFrame)
+    @test isa(gewekediag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
+    @test isa(heideldiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
+    @test isa(rafterydiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
 end
 
 @testset "concatenation tests" begin
