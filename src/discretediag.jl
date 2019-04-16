@@ -369,98 +369,6 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
 
 end
 
-#function discretediagplot(c::AbstractChains; frac::Real=0.3,
-#                          method::Symbol=:weiss, nsim::Int=1000,
-#                          start_iter::Int=100, step_size::Int=10000)
-#
-#  num_iters, num_vars, num_chains = size(c.value)
-#
-#  valid_methods = [:hangartner, :weiss, :DARBOOT,
-#                   :MCBOOT, :billingsley, :billingsleyBOOT]
-#  if !(method in valid_methods)
-#    methods_str = join([":$f" for f in valid_methods], ", ")
-#    throw(ArgumentError("method must be one of ", methods_str))
-#  end
-#
-#  if !(0.0 < frac < 1.0)
-#    throw(ArgumentError("frac must be in (0,1)"))
-#  end
-#
-#  if (start_iter > num_iters ) || (step_size > num_iters)
-#    throw(ArgumentError("start_iter, step_size must be less than $num_iters"))
-#  end
-#
-#  V, vals, plot_vals_stat, plot_vals_pval =
-#    discretediag_sub(c, frac, method, nsim, start_iter, step_size)
-#
-#  p1 = plot(y=vcat([plot_vals_stat[:,j] for j in 1:length(V)]...),
-#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000,
-#                     outer=[length(V)]),
-#            Geom.line,
-#            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
-#            Guide.ylabel("stat/df",orientation=:vertical),
-#            Scale.color_discrete(), Guide.colorkey(title="Variable"),
-#            color=repeat(c.names[V],
-#                         inner=[length(start_iter:step_size:num_iters)]))
-#
-#  p2 = plot(y=vcat([plot_vals_pval[:,j] for j in 1:length(V)]...),
-#            x=repeat(collect(c.range[start_iter:step_size:num_iters])/1000,
-#                     outer=[length(V)]),
-#            Geom.line,
-#            Guide.xlabel("Iteration (thousands)", orientation=:horizontal),
-#            Guide.ylabel("pval",orientation=:vertical),
-#            Scale.color_discrete(), Guide.colorkey(title="Variable"),
-#            color=repeat(c.names[V],
- #                        inner=[length(start_iter:step_size:num_iters)]))
-#
-#  return [p1, p2]
-#end
-
-# function discretediag(chn::AbstractChains; frac::Real=0.3,
-#                       method::Symbol=:weiss, section=:parameters,
-#                       nsim::Int=1000, showall=false)
-#
-#     c = showall ? sort(chn) : Chains(chn, section; sorted=true)
-#     @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
-#
-#     num_iters, num_vars, num_chains = size(c.value)
-#
-#     valid_methods = [:hangartner, :weiss, :DARBOOT,
-#         :MCBOOT, :billingsley, :billingsleyBOOT]
-#
-#     if !(method in valid_methods)
-#         methods_str = join([":$f" for f in valid_methods], ", ")
-#         throw(ArgumentError("method must be one of ", methods_str))
-#     end
-#
-#     if !(0.0 < frac < 1.0)
-#         throw(ArgumentError("frac must be in (0,1)"))
-#     end
-#
-#     V, vals = discretediag_sub(c, frac, method, nsim,
-#     size(c.value,1), size(c.value,1))
-#
-#     num_chains = length(chains(c))
-#     separated_vals = [vals[(3 + 3 * (k - 1) + 1):(3 + 3 * (k - 1) + 3), :]
-#         for k in 1:num_chains]
-#
-#     println(V)
-#     println(vals)
-#     println(separated_vals)
-#
-#     section_name = showall ? "" : "\n" * string(section) * "\n"
-#     hdr = "Chisq Diagnostic:\nEnd Fractions = $frac\n" *
-#     "method = $method\n"  * section_name
-#
-#
-#     return ChainSummary(collect(round.(vals, digits = 3)'),
-#         string.(names(c))[V],
-#         convert(Array{AbstractString, 1}, vcat([["stat", "df", "p-value"] for k in
-#             1:(num_chains + 1)]...)),
-#         hdr,
-#         true)
-# end
-
 function discretediag(chn::AbstractChains; frac::Real=0.3,
                       method::Symbol=:weiss,
                       sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
@@ -490,6 +398,10 @@ function discretediag(chn::AbstractChains; frac::Real=0.3,
     size(c.value,1), size(c.value,1))[1:2]
 
     num_chains = length(chains(c))
+
+    # discretediag returns an array with dimension (nchains + 1) × 3.
+    # the line below separates out the returned value into chain-specific
+    # arrays.
     sep_vals = [vals[(3 * (k - 1) + 1):(3 * (k - 1) + 3), :]'
         for k in 1:(num_chains+1)]
 
