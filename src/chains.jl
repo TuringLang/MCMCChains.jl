@@ -323,12 +323,8 @@ function Base.show(io::IO, c::Chains)
     end
 end
 
-function Base.size(c::AbstractChains)
-  dim = size(c.value)
-  last(c), dim[2], dim[3]
-end
-
 Base.keys(c::AbstractChains) = names(c)
+Base.size(c::AbstractChains) = size(c.value)
 Base.size(c::AbstractChains, ind) = size(c)[ind]
 Base.length(c::AbstractChains) = length(range(c))
 Base.first(c::AbstractChains) = first(c.value[Axis{:iter}].val)
