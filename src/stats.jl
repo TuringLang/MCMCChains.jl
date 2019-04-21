@@ -202,21 +202,25 @@ function ess(chn::AbstractChains;
 	for i in 1:length(param)
 		parameter_vec[i] = []
 		for j in 1:n_chain_orig
+            # c = vec(cskip(chn[:, param[i], j].value.data))
             c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
             c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
+            # push!(parameter_vec[i], c)
             push!(parameter_vec[i], c1, c2)
 		end
 	end
 
     # Misc
-    lags = collect(0:250)
     m = n_chain_orig * 2
     n = min(length.(parameter_vec[1])...)
+    maxlag = min(maxlag, n-1)
+    lags = collect(0:maxlag)
 
     # Preallocate
     B = Vector(undef, length(param))
     W = Vector(undef, length(param))
     varhat = Vector(undef, length(param))
+    Rhat = Vector(undef, length(param))
 
     for i in 1:length(param)
 		draw = parameter_vec[i]
@@ -229,8 +233,9 @@ function ess(chn::AbstractChains;
             s[j] = (1/(n-1)) * sum((draw[j] .- eachchain[j]).^2)
         end
         B[i] = (n / (m - 1)) * sum((eachchain .- allchain).^2)
-        W[i] = (1/m) * sum(s.^2)
+        W[i] = (1/m) * sum(s)
         varhat[i] = (n-1)/n * W[i] + (1/n) * B[i]
+        Rhat[i] = sqrt(varhat[i] / W[i])
     end
 
 	V = Vector(undef, length(param))
@@ -238,6 +243,12 @@ function ess(chn::AbstractChains;
     for p in eachindex(V)
         V[p] = Vector(undef, length(lags))
 		ρ[p] = Vector(undef, length(lags))
+    end
+
+    # Calculate ρ
+    c_autocor = Vector(undef, length(param))
+    for i in 1:length(param)
+        c_autocor[i] = [0.0]
     end
 
     for t in eachindex(lags)
@@ -250,30 +261,66 @@ function ess(chn::AbstractChains;
             z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
 			z = sum([zi .^ 2 for zi in z])
             V[i][t] = 1 / (m * (n-lag)) * sum(z)
+            autocors = [autocor(draw[j], [lag])[1] for j in 1:m]
+            # ρ[i][t] = 1 - (W[i] - sum(autocors))/varhat[i]
 			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
         end
     end
 
+    # return V
+
 	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
-	ess = Vector(undef, length(param))
+    ess = Vector(undef, length(param))
 	for i in 1:length(param)
 		ρ_val = Float64.(ρ[i])
-		T = 0
-		for T in 1:2:last(lags)
-			T = i
-			p1 = ρ_val[T + 1]
-			p2 = ρ_val[T + 2]
-			if sign(p1 + p2) == -1 || i == length(param)
+        T = 0
+		for t in 1:length(lags)
+			p1 = ρ_val[t + 1]
+			p2 = ρ_val[t + 2]
+            sum_vals = p1 + p2
+			if sign(sum_vals) == -1 || t == length(lags)
 				break
-			end
+            end
+            T = t
 		end
-		ess[i] = n * m / (1 + 2 * sum(ρ_val[1:T]))
+		ess[i] = (n * m) / (1 + 2 * sum(ρ_val[1:T]))
 	end
 
-    df = DataFrame(parameters = Symbol.(param), ess = ess)
+    df = DataFrame(parameters = Symbol.(param), ess = ess, r_hat = Rhat)
 	return ChainDataFrame("ESS", df)
 end
 
+function autocorrelation(x::AbstractVector, k::Integer, v = var(x))
+    x1 = @view(x[1:(end-k)])
+    x2 = @view(x[(1+k):end])
+    V = sum((x1 .- x2).^2) / length(x1)
+    1 - V / (2*v)
+end
+
+function ess_pap(chn::AbstractChains;
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+    maxlag = 250
+    )
+    ess_f(x) = _ess(x)[1] * length(x)
+    return summarize(chn, ess_f)
+end
+
+function _ess(x::AbstractVector, v = var(x))
+    N = length(x)
+    τ_inv = 1 + 2 * autocorrelation(x, 1, v)
+    K = 2
+    while K < N - 2
+        Δ = autocorrelation(x, K, v) + autocorrelation(x, K + 1, v)
+        if Δ < 0
+            break
+        else
+            τ_inv += 2*Δ
+            K += 2
+        end
+    end
+    return min(1 / τ_inv, one(τ_inv)), K
+end
 
 """
     summarystats(chn;
