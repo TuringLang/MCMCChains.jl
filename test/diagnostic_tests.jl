@@ -22,7 +22,8 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test first(chn) == 1
     @test step(chn) == 2
     @test last(chn) == 7999
-    @test size(chn) == (7999, 4, 2)
+    @test size(chn) == (4000, 4, 2)
+    @test size(chn[1:1000, :, :]) == (1000, 4, 2)
     @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
     @test isa(chn[:,1,:], MCMCChains.AbstractChains)
     @test isa(chn[200:300,"Param1",:], MCMCChains.AbstractChains)
