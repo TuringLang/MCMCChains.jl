@@ -13,14 +13,15 @@ ChainDataFrame(df::DataFrame) = ChainDataFrame("", df)
 
 Base.size(c::ChainDataFrame) = size(c.df)
 Base.names(c::ChainDataFrame) = names(c.df)
-
 function Base.show(io::IO, c::ChainDataFrame)
     println(io, c.name)
-    show(io, c.df, summary = false, allrows=true)
+    show(io, c.df, summary = false, allrows=true, allcols=true)
 end
 
 Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
 Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = c.df[s]
+Base.isequal(cs1::Vector{ChainDataFrame}, cs2::Vector{ChainDataFrame}) = isequal.(cs1, cs2)
+Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
 
 function Base.show(io::IO, cs::Vector{ChainDataFrame})
     println(io, summary(cs))
