@@ -613,7 +613,8 @@ function _use_showall(c::AbstractChains, section::Symbol)
     return false
 end
 
-function _clean_sections(c::AbstractChains, sections::Vector{Symbol})
+function _clean_sections(c::AbstractChains, sections::Union{Vector{Symbol}, Symbol})
+    sections = sections isa AbstractArray ? sections : [sections]
     ks = collect(keys(c.name_map))
     return ks ∩ sections
 end
