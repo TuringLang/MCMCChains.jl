@@ -84,7 +84,8 @@ function Chains(val::AbstractArray{A,3},
 
     # Ensure that we have a hashedsummary key in info.
     if !in(:hashedsummary, keys(info))
-        s = (hash(0), ChainDataFrame("", DataFrame()))
+        empty_df_vec = [ChainDataFrame("", DataFrame())]
+        s = (hash(0), empty_df_vec)
         info = merge(info, (hashedsummary = Ref(s),))
     end
 
@@ -314,12 +315,12 @@ function Base.show(io::IO, c::Chains)
         if s[1] == h
             show(io, s[2])
         else
-            new_summary = summarystats(c)
+            new_summary = describe(c)
             c.info.hashedsummary.x = (h, new_summary)
             show(io, new_summary)
         end
     else
-        show(io, summarystats(c, suppress_header=true))
+        show(io, describe(c, suppress_header=true))
     end
 end
 
