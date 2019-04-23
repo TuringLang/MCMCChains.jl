@@ -126,7 +126,8 @@ function describe(io::IO,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                   args...
                  )
-    dfs = [summarystats(c, showall=showall, args...), quantile(c, showall=showall, q=q)]
+    dfs = [summarystats(c, showall=showall, sections=sections, etype=etype, args...),
+           quantile(c, showall=showall, sections=sections, q=q)]
     return dfs
 end
 
@@ -177,6 +178,7 @@ function quantile(chn::AbstractChains;
     return summarize(chn, funs...;
         func_names=func_names,
         showall=showall,
+        sections=sections,
         name = "Quantiles")
 end
 
