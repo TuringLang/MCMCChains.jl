@@ -202,41 +202,43 @@ function ess(chn::AbstractChains;
 	for i in 1:length(param)
 		parameter_vec[i] = []
 		for j in 1:n_chain_orig
-            # c = vec(cskip(chn[:, param[i], j].value.data))
             c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
             c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
-            # push!(parameter_vec[i], c)
             push!(parameter_vec[i], c1, c2)
 		end
 	end
 
-    # Misc
+    # Misc allocations.
     m = n_chain_orig * 2
     n = min(length.(parameter_vec[1])...)
     maxlag = min(maxlag, n-1)
     lags = collect(0:maxlag)
 
-    # Preallocate
+    # Preallocate B, W, varhat, and Rhat vectors for each param.
     B = Vector(undef, length(param))
     W = Vector(undef, length(param))
     varhat = Vector(undef, length(param))
     Rhat = Vector(undef, length(param))
 
+    # calculate B, W, varhat, and Rhat for each param.
     for i in 1:length(param)
 		draw = parameter_vec[i]
 		p = param[i]
         allchain = mean(vcat([d for d in draw]...))
-        eachchain = Vector(undef, m)
-        s = Vector(undef, m)
-        for j in 1:m
-            eachchain[j] = mean(draw[j])
-            s[j] = (1/(n-1)) * sum((draw[j] .- eachchain[j]).^2)
-        end
+        eachchain = [mean(draw[j]) for j in 1:m]
+        s = [sum((draw[j] .- eachchain[j]).^2) / (n-1) for j in 1:m]
         B[i] = (n / (m - 1)) * sum((eachchain .- allchain).^2)
-        W[i] = (1/m) * sum(s)
-        varhat[i] = (n-1)/n * W[i] + (1/n) * B[i]
+        W[i] = sum(s) / m
+        varhat[i] = (n-1)/n * W[i] + (1/n) * (B[i] / n)
         Rhat[i] = sqrt(varhat[i] / W[i])
     end
+
+    # println("W")
+    # println(W)
+    # println("B")
+    # println(B)
+    # println("Varhat")
+    # println(varhat)
 
 	V = Vector(undef, length(param))
     ρ = Vector(undef, length(param))
@@ -261,29 +263,58 @@ function ess(chn::AbstractChains;
             z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
 			z = sum([zi .^ 2 for zi in z])
             V[i][t] = 1 / (m * (n-lag)) * sum(z)
-            autocors = [autocor(draw[j], [lag])[1] for j in 1:m]
-            # ρ[i][t] = 1 - (W[i] - sum(autocors))/varhat[i]
+            autocors = [autocorrelation(draw[j], lag) for j in 1:m]
+            # ρ[i][t] = 1 - (W[i] - mean(autocors))/varhat[i]
 			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
         end
     end
 
-    # return V
+    # println("Rho:")
+    # display(ρ)
+    # println()
 
 	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
+    P = Vector(undef, length(param))
     ess = Vector(undef, length(param))
 	for i in 1:length(param)
+        big_P = 0.0
 		ρ_val = Float64.(ρ[i])
-        T = 0
-		for t in 1:length(lags)
-			p1 = ρ_val[t + 1]
-			p2 = ρ_val[t + 2]
-            sum_vals = p1 + p2
-			if sign(sum_vals) == -1 || t == length(lags)
-				break
+
+        # Big P.
+        P[i] = Float64[ρ_val[1]]
+        k = tprime = 1
+        for tprime in 1:Int(floor((n/2 - 1)))
+            sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
+            if sumvals < 0
+                # println("Stopping at $tprime")
+                break
+            else
+                push!(P[i], sumvals)
+                k = tprime
             end
-            T = t
-		end
-		ess[i] = (n * m) / (1 + 2 * sum(ρ_val[1:T]))
+        end
+        # println("Big P")
+        # println(P[i])
+
+        # Create monotone.
+        # println("\n P monotone")
+        P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
+        # println(P_monotone)
+
+        # T = 0
+		# for t in 1:2:(length(lags)-2)
+		# 	p1 = ρ_val[t + 1]
+		# 	p2 = ρ_val[t + 2]
+        #     sum_vals = p1 + p2
+        #     tau_inv += sum_vals
+		# 	if sign(sum_vals) == -1 || t == length(lags)
+		# 		break
+        #     end
+        #     T = t
+		# end
+        # println(T)
+        ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
+		# ess[i] = (n * m) / (1 + 2 * sum(ρ_val[1:T]))
 	end
 
     df = DataFrame(parameters = Symbol.(param), ess = ess, r_hat = Rhat)
