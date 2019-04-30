@@ -233,13 +233,6 @@ function ess(chn::AbstractChains;
         Rhat[i] = sqrt(varhat[i] / W[i])
     end
 
-    # println("W")
-    # println(W)
-    # println("B")
-    # println(B)
-    # println("Varhat")
-    # println(varhat)
-
 	V = Vector(undef, length(param))
     ρ = Vector(undef, length(param))
     for p in eachindex(V)
@@ -263,15 +256,10 @@ function ess(chn::AbstractChains;
             z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
 			z = sum([zi .^ 2 for zi in z])
             V[i][t] = 1 / (m * (n-lag)) * sum(z)
-            autocors = [autocorrelation(draw[j], lag) for j in 1:m]
-            # ρ[i][t] = 1 - (W[i] - mean(autocors))/varhat[i]
+            autocors = [_autocorrelation(draw[j], lag) for j in 1:m]
 			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
         end
     end
-
-    # println("Rho:")
-    # display(ρ)
-    # println()
 
 	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
     P = Vector(undef, length(param))
@@ -286,71 +274,29 @@ function ess(chn::AbstractChains;
         for tprime in 1:Int(floor((n/2 - 1)))
             sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
             if sumvals < 0
-                # println("Stopping at $tprime")
                 break
             else
                 push!(P[i], sumvals)
                 k = tprime
             end
         end
-        # println("Big P")
-        # println(P[i])
 
         # Create monotone.
-        # println("\n P monotone")
         P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
-        # println(P_monotone)
 
-        # T = 0
-		# for t in 1:2:(length(lags)-2)
-		# 	p1 = ρ_val[t + 1]
-		# 	p2 = ρ_val[t + 2]
-        #     sum_vals = p1 + p2
-        #     tau_inv += sum_vals
-		# 	if sign(sum_vals) == -1 || t == length(lags)
-		# 		break
-        #     end
-        #     T = t
-		# end
-        # println(T)
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
-		# ess[i] = (n * m) / (1 + 2 * sum(ρ_val[1:T]))
 	end
 
     df = DataFrame(parameters = Symbol.(param), ess = ess, r_hat = Rhat)
 	return ChainDataFrame("ESS", df)
 end
 
-function autocorrelation(x::AbstractVector, k::Integer, v = var(x))
+# this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl
+function _autocorrelation(x::AbstractVector, k::Integer, v = var(x))
     x1 = @view(x[1:(end-k)])
     x2 = @view(x[(1+k):end])
     V = sum((x1 .- x2).^2) / length(x1)
     1 - V / (2*v)
-end
-
-function ess_pap(chn::AbstractChains;
-    showall=false,
-    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    maxlag = 250
-    )
-    ess_f(x) = _ess(x)[1] * length(x)
-    return summarize(chn, ess_f)
-end
-
-function _ess(x::AbstractVector, v = var(x))
-    N = length(x)
-    τ_inv = 1 + 2 * autocorrelation(x, 1, v)
-    K = 2
-    while K < N - 2
-        Δ = autocorrelation(x, K, v) + autocorrelation(x, K + 1, v)
-        if Δ < 0
-            break
-        else
-            τ_inv += 2*Δ
-            K += 2
-        end
-    end
-    return min(1 / τ_inv, one(τ_inv)), K
 end
 
 """
