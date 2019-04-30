@@ -22,7 +22,6 @@ using Test
         1:4)
 
     e = ess(chn[1001:2000, :, :])
-    display(e)
 
     @test all([z ≥ 1000 && z ≤ 2000 for z in e[:ess]])
     @test all(isapprox.(e[:r_hat], 1.0, atol=0.1))
