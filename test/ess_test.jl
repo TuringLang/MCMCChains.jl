@@ -1,47 +1,29 @@
 using MCMCChains
+using Turing
+using Random
+using Test
 
-function simulate_ar1(ρ, N; σ = 1.0)
-    x = Vector{Float64}(undef, N)
-    z = σ * randn() / √(1 - ρ^2)
-    for i in 1:N
-        z = ρ*z + randn()*σ
-        x[i] = z
+@testset "ess tests" begin
+    Random.seed!(20)
+
+    dat = [0,1,0,0,0,0,0,0,0,1]
+
+    @model bermodel(y) = begin
+        theta ~ Beta(1,1)
+        for n = 1:length(y)
+            y[n] ~ Bernoulli(theta)
+        end
     end
-    x
+
+    # Make four chains.
+    chn = mapreduce(x->sample(bermodel(dat),
+        NUTS(2000, 1000, 0.65)),
+        chainscat,
+        1:4)
+
+    e = ess(chn[1001:2000, :, :])
+    display(e)
+
+    @test all([z ≥ 1000 && z ≤ 2000 for z in e[:ess]])
+    @test all(isapprox.(e[:r_hat], 1.0, atol=0.1))
 end
-
-ρ = 0.5
-N = 100
-nparams = 3
-ar1_ess_factor(ρ) = 1/(1 + 2*ρ/(1-ρ))
-
-vals = reshape(hcat([simulate_ar1(ρ, N) for _ in 1:nparams]...), (N, nparams, 1))
-chn = Chains(vals)
-e = ess(chn)[2] ./ (ar1_ess_factor(ρ)*N)
-display(ess(chn))
-
-
-# actual = ar1_ess_factor(ρ)*N
-# ######################################
-# chn2 = Chains(randn(1000,10,1));
-# ess(chn2)
-# # @test 9900 ≤ effective_sample_size(vcat(chains...)) ≤ 10100
-# # @test 1 ≤ potential_scale_reduction(chains...) ≤ 1.001
-#
-# # Tamas:
-# # │ Row │ parameters │ getfield(MCMCChains, Symbol("#ess_f#516"))() │
-# # │     │ Symbol     │ Float64                                      │
-# # ├─────┼────────────┼──────────────────────────────────────────────┤
-# # │ 1   │ Param1     │ 25.6979                                      │
-# # │ 2   │ Param2     │ 38.2962                                      │
-# # │ 3   │ Param3     │ 53.374                                       │
-#
-# # Cameron:
-# # │ Row │ parameters │ ess     │ r_hat    │
-# # │     │ Symbol     │ Any     │ Any      │
-# # ├────┼──────────┼───────┼─────────┤
-# # │ 1   │ Param1     │ 9.80762 │ 1.04235  │
-# # │ 2   │ Param2     │ 15.1556 │ 0.997153 │
-# # │ 3   │ Param3     │ 19.7391 │ 1.06333  │
-#
-# MCMCChains.autocorrelation([1,2,3], 1)
