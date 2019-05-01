@@ -1,4 +1,4 @@
-using DataFrames: colwise, names!
+using DataFrames: names!
 using StatsBase: mean, std, sem
 import StatsBase: sem
 import Base.size
@@ -126,9 +126,9 @@ function summarize(chn::Chains, funs...;
 
     # Do all the math, make columns.
     columns = if append_chains
-        vcat([names(df)], [colwise(f, df) for f in funs])
+        vcat([names(df)], [[f(col) for col = eachcol(df)] for f in funs])
     else
-        [vcat([names(df[1])], [colwise(f, i) for f in funs]) for i in df]
+        [vcat([names(df[1])], [[f(col) for col = eachcol(i)] for f in funs]) for i in df]
     end
 
     # Make a vector of column names.
