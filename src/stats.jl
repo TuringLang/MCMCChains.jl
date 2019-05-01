@@ -271,7 +271,7 @@ function ess(chn::AbstractChains;
         # Big P.
         P[i] = Float64[ρ_val[1]]
         k = tprime = 1
-        for tprime in 1:Int(floor((n/2 - 1)))
+        for tprime in 1:Int(floor((length(lags)/2 - 1)))
             sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
             if sumvals < 0
                 break
