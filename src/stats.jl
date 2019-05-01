@@ -229,7 +229,7 @@ function ess(chn::AbstractChains;
         s = [sum((draw[j] .- eachchain[j]).^2) / (n-1) for j in 1:m]
         B[i] = (n / (m - 1)) * sum((eachchain .- allchain).^2)
         W[i] = sum(s) / m
-        varhat[i] = (n-1)/n * W[i] + (1/n) * (B[i] / n)
+        varhat[i] = (n-1)/n * W[i] + (B[i] / n)
         Rhat[i] = sqrt(varhat[i] / W[i])
     end
 
