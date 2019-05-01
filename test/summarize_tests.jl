@@ -16,11 +16,11 @@ using Turing, MCMCChains, Test
   parm_df = summarize(chns, sections=[:parameters])
 
   @test 0.9 < parm_df[:m, :mean][1] < 1.1
-  @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess]
+  @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess, :r_hat]
 
   all_sections_df = summarize(chns, sections=[:parameters, :internals])
   @test all_sections_df[:parameters] == [:elapsed, :epsilon, :eval_num, :lf_eps, :lf_num, :lp, :m, :s]
-  @test size(all_sections_df) == (8, 6)
+  @test size(all_sections_df) == (8, 7)
 
   two_parms_two_funs_df = summarize(chns[[:m, :s]], mean, std)
   @test two_parms_two_funs_df[:parameters] == [:m, :s]
