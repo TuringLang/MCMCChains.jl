@@ -8,7 +8,7 @@ import Serialization: serialize, deserialize
 import Base: sort, range, names, get, hash, convert, show, display
 import Statistics: cor
 import Core.Array
-import DataFrames: DataFrame, names
+import DataFrames: DataFrame, names, eachcol
 
 using RecipesBase
 import RecipesBase: plot
@@ -63,12 +63,9 @@ include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
 include("mcse.jl")
-#include("modelchains.jl")
-#include("modelstats.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
 include("plot.jl")
-#include("plot2.jl")
 
 end # module
