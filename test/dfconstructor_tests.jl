@@ -1,16 +1,10 @@
-using Turing, MCMCChains, Test
+using MCMCChains, Test
 
 @testset "DataFrame constructor tests" begin
-    @model gdemo(x) = begin
-        m ~ Normal(1, 0.01)
-        s ~ Normal(5, 0.01)
-    end
-
-    model = gdemo([1.5, 2.0])
-    sampler = HMC(1000, 0.01, 5)
-
-    chns = [sample(model, sampler, save_state=true) for i in 1:4]
-    chn = chainscat(chns...)
+    val = rand(1000, 8, 4)
+    chn = Chains(val,
+                ["a", "b", "c", "d", "e", "f", "g", "h"],
+                Dict(:internals => ["c", "d", "e", "f", "g", "h"]))
 
     df = DataFrame(chn, showall=true)
     @test size(df) == (4000, 8)
@@ -21,10 +15,10 @@ using Turing, MCMCChains, Test
     df2 = DataFrame(chn, [:internals, :parameters])
     @test size(df2) == (4000, 8)
 
-    df3 = DataFrame(chn[:s])
+    df3 = DataFrame(chn[:a])
     @test size(df3) == (4000, 1)
 
-    df4 = DataFrame(chn[:lp])
+    df4 = DataFrame(chn[:b])
     @test size(df4) == (4000, 1)
 
     df5 = DataFrame(chn, [:parameters], append_chains=false)
