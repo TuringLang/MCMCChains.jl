@@ -497,7 +497,7 @@ function indiscretesupport(c::AbstractChains,
 end
 
 function link(c::AbstractChains)
-  cc = copy(c.value)
+  cc = copy(c.value.data)
   for j in 1:length(c.names)
     x = cc[:, j, :]
     if minimum(x) > 0.0
