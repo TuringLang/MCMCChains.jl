@@ -15,7 +15,7 @@ function gelmandiag(chn::AbstractChains;
     m >= 2 ||
     throw(ArgumentError("less than 2 chains supplied to gelman diagnostic"))
 
-    psi = transform ? link(c) : c.value
+    psi = transform ? link(c) : c.value.data
 
     S2 = mapslices(cov, psi, dims = [1, 2])
     W = dropdims(mapslices(mean, S2, dims = [3]), dims = 3)
