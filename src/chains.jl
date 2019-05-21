@@ -281,7 +281,7 @@ function Base.get(c::Chains;
         throw(ArgumentError("$not_found not found in chains name map."))
     end
 
-    return get(c, Symbol.(names))
+    return get(c, Symbol.(names), flatten = flatten)
 end
 
 """
