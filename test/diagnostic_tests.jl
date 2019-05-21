@@ -44,10 +44,10 @@ end
     @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
     @test isa(discretediag(chn_disc[:,2,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(gelmandiag(chn[:,1:1,:]), MCMCChains.ChainDataFrame)
-    @test isa(gewekediag(chn[:,1:1,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(heideldiag(chn[:,1:1,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(rafterydiag(chn[:,1:1,:]), Vector{MCMCChains.ChainDataFrame})
+    @test isa(gelmandiag(chn[:,1,:]), MCMCChains.ChainDataFrame)
+    @test isa(gewekediag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
+    @test isa(heideldiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
+    @test isa(rafterydiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
 end
 
 @testset "concatenation tests" begin
