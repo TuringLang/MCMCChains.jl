@@ -7,6 +7,34 @@ import Base.names
 struct ChainDataFrame
     name::String
     df::DataFrame
+
+    function ChainDataFrame(name::String, df::DataFrame; digits=missing)
+        if !ismissing(digits)
+            if isa(digits, Int)
+                nrow = size(df, 1)
+                ncol = size(df, 2)
+                for i in 1:nrow
+                    for j in 1:ncol
+                        if applicable(round, df[i,j])
+                            df[i, j] = round(df[i,j], digits=1)
+                        end
+                    end
+                end
+            elseif isa(digits, NamedTuple) || isa(digits, Dict)
+                cols = keys(digits)
+                nrow = size(df, 1)
+                for c in cols
+                    if c in names(df)
+                        for r in 1:nrow
+                            df[r,c] = round(df[r,c], digits=digits[c])
+                        end
+                    end
+                end
+            end
+        end
+
+        return new(name, df)
+    end
 end
 
 ChainDataFrame(df::DataFrame) = ChainDataFrame("", df)
@@ -107,7 +135,8 @@ function summarize(chn::Chains, funs...;
         append_chains::Bool=true,
         showall::Bool=false,
         name::String="",
-        additional_df=nothing)
+        additional_df=nothing,
+        digits=missing)
     # Check that we actually have :parameters.
     showall = showall ? true : !in(:parameters, keys(chn.name_map))
 
@@ -153,9 +182,9 @@ function summarize(chn::Chains, funs...;
     end
 
     ret_df = if append_chains
-        ChainDataFrame(name, ret_df)
+        ChainDataFrame(name, ret_df, digits=digits)
     else
-        [ChainDataFrame(name, r) for r in ret_df]
+        [ChainDataFrame(name, r, digits=digits) for r in ret_df]
     end
 
     return ret_df
