@@ -13,8 +13,8 @@ Compute the autocorrelation of each parameter for the chain. Setting `append_cha
 
 The `digits` keyword may be a(n)
 - `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, sd=3)`. This would round the `mean` column to 2 digits and the `sd` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, sd => 3)` would set `mean` to two digits and `sd` to three digits.
+- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
+- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function autocor(chn::AbstractChains;
         lags::Vector=[1, 5, 10, 50],
@@ -47,8 +47,8 @@ return a vector of dataframes containing a correlation matrix for each chain.
 
 The `digits` keyword may be a(n)
 - `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, sd=3)`. This would round the `mean` column to 2 digits and the `sd` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, sd => 3)` would set `mean` to two digits and `sd` to three digits.
+- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
+- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function cor(chn::AbstractChains;
         showall=false,
@@ -92,8 +92,8 @@ return a vector of dataframes containing the change rates for each chain.
 
 The `digits` keyword may be a(n)
 - `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, sd=3)`. This would round the `mean` column to 2 digits and the `sd` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, sd => 3)` would set `mean` to two digits and `sd` to three digits.
+- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
+- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function changerate(chn::AbstractChains;
     append_chains=true,
@@ -149,8 +149,8 @@ Prints the summary statistics and quantiles for the chain.
 
 The `digits` keyword may be a(n)
 - `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, sd=3)`. This would round the `mean` column to 2 digits and the `sd` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, sd => 3)` would set `mean` to two digits and `sd` to three digits.
+- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
+- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function describe(io::IO,
                   c::AbstractChains;
@@ -215,8 +215,8 @@ return a vector of dataframes containing the quantiles for each chain.
 
 The `digits` keyword may be a(n)
 - `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, sd=3)`. This would round the `mean` column to 2 digits and the `sd` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, sd => 3)` would set `mean` to two digits and `sd` to three digits.
+- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
+- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function quantile(chn::AbstractChains;
         q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
@@ -250,8 +250,8 @@ Compute a chain's number of effective samples. More information can be found in 
 
 The `digits` keyword may be a(n)
 - `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, sd=3)`. This would round the `mean` column to 2 digits and the `sd` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, sd => 3)` would set `mean` to two digits and `sd` to three digits.
+- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
+- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function ess(chn::AbstractChains;
     showall=false,
@@ -377,8 +377,8 @@ Computes the mean, standard deviation, naive standard error, Monte Carlo standar
 
 The `digits` keyword may be a(n)
 - `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, sd=3)`. This would round the `mean` column to 2 digits and the `sd` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, sd => 3)` would set `mean` to two digits and `sd` to three digits.
+- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
+- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function summarystats(chn::MCMCChains.AbstractChains;
         append_chains::Bool=true,

@@ -10,13 +10,13 @@ struct ChainDataFrame
 
     function ChainDataFrame(name::String, df::DataFrame; digits=missing)
         if !ismissing(digits)
-            if isa(digits, Int)
+            if isa(digits, Integer)
                 nrow = size(df, 1)
                 ncol = size(df, 2)
                 for i in 1:nrow
                     for j in 1:ncol
                         if applicable(round, df[i,j])
-                            df[i, j] = round(df[i,j], digits=1)
+                            df[i, j] = round(df[i,j], digits=digits)
                         end
                     end
                 end
