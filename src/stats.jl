@@ -413,3 +413,59 @@ function summarystats(chn::MCMCChains.AbstractChains;
 
     return summary_df
 end
+
+"""
+    mean(chn::MCMCChains.AbstractChains;
+            append_chains::Bool=true,
+            showall::Bool=false,
+            sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+            digits=missing,
+            args...)
+    mean(chn::MCMCChains.AbstractChains, ss::Vector{Symbol})
+    mean(chn::MCMCChains.AbstractChains, s::Symbol)
+    mean(chn::MCMCChains.AbstractChains, s::String)
+    mean(chn::MCMCChains.AbstractChains, ss::Vector{String})
+
+Calculates the mean of a `Chains` object, or a specific parameter.
+"""
+function Statistics.mean(chn::MCMCChains.AbstractChains;
+        append_chains::Bool=true,
+        showall::Bool=false,
+        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+        digits=missing,
+        args...
+    )
+    # Store everything.
+    funs = [mean∘cskip]
+    func_names = [:mean]
+
+    # Summarize.
+    summary_df = summarize(chn, funs...;
+        sections=sections,
+        func_names=func_names,
+        showall=showall,
+        name="Mean",
+        digits=digits)
+
+    return summary_df
+end
+
+Statistics.mean(chn::MCMCChains.AbstractChains, ss::Vector{Symbol}) =
+    mean(chn[:, ss, :])
+Statistics.mean(chn::MCMCChains.AbstractChains, s::String) =
+    mean(chn, Symbol(s))
+Statistics.mean(chn::MCMCChains.AbstractChains, ss::Vector{String}) =
+    mean(chn, Symbol.(ss))
+function Statistics.mean(chn::MCMCChains.AbstractChains, s::Symbol)
+    syms = _sym2index(chn, [s])
+
+    if length(syms) == 0
+        throw(ArgumentError("Symbol :$s not found in chain."))
+    end
+
+    if length(syms) > 1
+        return mean(chn[:, syms, :])
+    else
+        return mean(chn[:,syms,:].value.data)
+    end
+end

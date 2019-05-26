@@ -1,12 +1,13 @@
 module MCMCChains
 
+import Statistics
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats, sample, AbstractWeights
 import LinearAlgebra: diag
 import Serialization: serialize, deserialize
 import Base: sort, range, names, get, hash, convert, show, display
-import Statistics: cor
+import Statistics: cor, mean
 import Core.Array
 import DataFrames: DataFrame, names, eachcol
 
@@ -26,6 +27,7 @@ export sample, AbstractWeights
 export Array, DataFrame, sort_sections, convert
 export summarize, summarystats, ChainDataFrame
 export hpd, ess
+export mean
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
