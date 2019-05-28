@@ -35,6 +35,10 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
     @test isa(set_section(chn, Dict(:internals => ["Param1"])), MCMCChains.AbstractChains)
+    @test mean(chn) isa MCMCChains.ChainDataFrame
+    @test mean(chn, ["Param1", "Param2"]) isa MCMCChains.ChainDataFrame
+    @test 1.05 >= mean(chn, :Param1) >= 0.95
+    @test 1.05 >= mean(chn, "Param1") >= 0.95
 end
 
 @testset "function tests" begin

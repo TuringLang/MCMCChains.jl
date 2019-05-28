@@ -6,18 +6,44 @@
 const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 
 # Set default parameter names if not given.
-function Chains(val::AbstractArray{A,3};
+# function Chains(val::AbstractArray{A,3};
+#         start::Int=1,
+#         thin::Int=1,
+#         evidence = missing,
+#         info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
+#
+#     return Chains(val, parameter_names, start=start, thin=thin)
+# end
+
+#
+function Chains(val::AbstractArray{A,1},
+        parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
+        name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
-    parameter_names = map(i->"Param$i", 1:size(val, 2))
-    return Chains(val, parameter_names, start=start, thin=thin)
+        info=NamedTuple()
+) where {A<:Union{Real, Union{Missing, Real}}}
+    Chains(val[:,:,:], parameter_names, name_map, start=start,
+           thin=thin, evidence=evidence, info=info)
+end
+
+# Set default parameter names if not given.
+function Chains(val::AbstractArray{A,2},
+        parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
+        name_map = copy(DEFAULT_MAP);
+        start::Int=1,
+        thin::Int=1,
+        evidence = missing,
+        info=NamedTuple()
+) where {A<:Union{Real, Union{Missing, Real}}}
+    Chains(val[:,:,:], parameter_names, name_map, start=start,
+           thin=thin, evidence=evidence, info=info)
 end
 
 # Generic chain constructor.
 function Chains(val::AbstractArray{A,3},
-        parameter_names::Vector{String},
+        parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
