@@ -322,7 +322,7 @@ function ess(chn::AbstractChains;
             z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
 			z = sum([zi .^ 2 for zi in z])
             V[i][t] = 1 / (m * (n-lag)) * sum(z)
-            autocors = [_autocorrelation(draw[j], lag) for j in 1:m]
+            # autocors = [_autocorrelation(draw[j], lag) for j in 1:m]
 			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
         end
     end
@@ -331,26 +331,40 @@ function ess(chn::AbstractChains;
     P = Vector(undef, length(param))
     ess = Vector(undef, length(param))
 	for i in 1:length(param)
-        big_P = 0.0
         ρ_val = Float64.(ρ[i])
 
-        # Big P.
-        P[i] = Float64[]
+        # Create big P.
+        P[i] = Float64[ρ_val[1], ρ_val[2]]
+
         k = tprime = 1
         for tprime in 1:Int(floor((length(lags)/2 - 1)))
-            sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
+            rho_hat_even = ρ_val[2*tprime]
+            rho_hat_odd = ρ_val[2*tprime+1]
+            sumvals = rho_hat_even + rho_hat_odd
             if sumvals < 0
                 break
             else
-                push!(P[i], sumvals)
+                push!(P[i], rho_hat_even)
+                push!(P[i], rho_hat_odd)
                 k = tprime
             end
         end
 
         # Create monotone.
-        P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
+        # P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
+        # println(sum(P_monotone))
 
-        ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
+        # Geyer's initial monotone sequence, sourced from
+        # https://github.com/stan-dev/stan/blob/develop/src/stan/analyze/mcmc/compute_effective_sample_size.hpp
+        P_m = P[i]
+        for t in 3:(length(P_m)-2)
+            if P_m[t+1] + P_m[t+2] > P_m[t-1] + P_m[t]
+                P_m[t+1] = (P_m[t-1] + P_m[t]) / 2
+                P_m[t+2] = P_m[t+1]
+            end
+        end
+
+        ess[i] = (n*m) / (-1 + 2*sum(P_m))
 	end
 
     df = DataFrame(parameters = Symbol.(param), ess = ess, r_hat = Rhat)
