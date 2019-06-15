@@ -332,10 +332,10 @@ function ess(chn::AbstractChains;
     ess = Vector(undef, length(param))
 	for i in 1:length(param)
         big_P = 0.0
-		ρ_val = Float64.(ρ[i])
+        ρ_val = Float64.(ρ[i])
 
         # Big P.
-        P[i] = Float64[ρ_val[1]]
+        P[i] = Float64[]
         k = tprime = 1
         for tprime in 1:Int(floor((length(lags)/2 - 1)))
             sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
