@@ -120,7 +120,7 @@ b 0.0001 0.2290 0.4972 0.7365 0.9998
 c 0.0004 0.2739 0.5137 0.7498 0.9997
 ```
 
-Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals` section by calling `describe(chn, section=:internals)` or all variables with `describe(chn, showall=true)`. Most MCMCChains functions like `plot` or `gelmandiag` support the `section` and `showall` keyword arguments.
+Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals` section by calling `describe(chn, sections=:internals)` or all variables with `describe(chn, showall=true)`. Most MCMCChains functions like `plot` or `gelmandiag` support the `section` and `showall` keyword arguments.
 
 ### The `get` Function
 
