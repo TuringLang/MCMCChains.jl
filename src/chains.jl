@@ -14,17 +14,31 @@ const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 #
 #     return Chains(val, parameter_names, start=start, thin=thin)
 # end
-
 #
+# Constructor to handle a vector of vectors.
+function Chains(val::Vector{Vector{A}},
+				parameter_names::Vector{String} = map(i->"Param$i", 1:length(first(val))),
+        name_map = copy(DEFAULT_MAP);
+        start::Int=1,
+        thin::Int=1,
+        evidence = missing,
+        info::NamedTuple=NamedTuple()
+) where {A<:Union{Real, Union{Missing, Real}}}
+	println("It's working")
+	return Chains(Array(hcat(val...)'), parameter_names, name_map, start=start,
+           thin=thin, evidence=evidence, info=info)
+end
+
+# Constructor to handle a 1D array.
 function Chains(val::AbstractArray{A,1},
         parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info=NamedTuple()
+        info::NamedTuple=NamedTuple()
 ) where {A<:Union{Real, Union{Missing, Real}}}
-    Chains(val[:,:,:], parameter_names, name_map, start=start,
+	return Chains(val[:,:,:], parameter_names, name_map, start=start,
            thin=thin, evidence=evidence, info=info)
 end
 
@@ -35,7 +49,7 @@ function Chains(val::AbstractArray{A,2},
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info=NamedTuple()
+        info::NamedTuple=NamedTuple()
 ) where {A<:Union{Real, Union{Missing, Real}}}
     Chains(val[:,:,:], parameter_names, name_map, start=start,
            thin=thin, evidence=evidence, info=info)
@@ -48,7 +62,7 @@ function Chains(val::AbstractArray{A,3},
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
+        info::NamedTuple=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
 
     # If we received an array of pairs, convert it to a dictionary.
     if typeof(name_map) <: Array
