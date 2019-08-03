@@ -39,6 +39,8 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test mean(chn, ["Param1", "Param2"]) isa MCMCChains.ChainDataFrame
     @test 1.05 >= mean(chn, :Param1) >= 0.95
     @test 1.05 >= mean(chn, "Param1") >= 0.95
+    @test names(set_names(chn, Dict("Param1" => "PARAM1"))) ==
+        ["PARAM1", "Param2", "Param3", "Param4"]
 end
 
 @testset "function tests" begin
