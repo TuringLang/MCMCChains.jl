@@ -5,32 +5,23 @@
 # Default name map.
 const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 
-# Set default parameter names if not given.
-# function Chains(val::AbstractArray{A,3};
-#         start::Int=1,
-#         thin::Int=1,
-#         evidence = missing,
-#         info=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
-#
-#     return Chains(val, parameter_names, start=start, thin=thin)
-# end
-#
 # Constructor to handle a vector of vectors.
-function Chains(val::Vector{Vector{A}},
-				parameter_names::Vector{String} = map(i->"Param$i", 1:length(first(val))),
+function Chains(
+        val::Vector{Vector{A}},
+		parameter_names::Vector{String} = map(i->"Param$i", 1:length(first(val))),
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
         evidence = missing,
         info::NamedTuple=NamedTuple()
 ) where {A<:Union{Real, Union{Missing, Real}}}
-	println("It's working")
 	return Chains(Array(hcat(val...)'), parameter_names, name_map, start=start,
            thin=thin, evidence=evidence, info=info)
 end
 
 # Constructor to handle a 1D array.
-function Chains(val::AbstractArray{A,1},
+function Chains(
+        val::AbstractArray{A,1},
         parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
@@ -43,7 +34,8 @@ function Chains(val::AbstractArray{A,1},
 end
 
 # Set default parameter names if not given.
-function Chains(val::AbstractArray{A,2},
+function Chains(
+        val::AbstractArray{A,2},
         parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
@@ -56,7 +48,8 @@ function Chains(val::AbstractArray{A,2},
 end
 
 # Generic chain constructor.
-function Chains(val::AbstractArray{A,3},
+function Chains(
+        val::AbstractArray{A,3},
         parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
         name_map = copy(DEFAULT_MAP);
         start::Int=1,
@@ -740,4 +733,26 @@ function pool_chain(c::Chains{A, T, K, L}) where {A, T, K, L}
     val = c.value.data
     concat = vcat([val[:,:,j] for j in 1:size(val,3)]...)
     return Chains(cat(concat, dims=3), names(c), c.name_map; info=c.info)
+end
+
+function set_names(c::Chains{A, T, K, L}, d::Dict) where {A, T, K, L}
+    # Set new parameter names.
+    params = names(c)
+    new_params = replace(params, d...)
+
+    # Iterate through each pair in the name map to
+    # create a new one.
+    new_map = Dict()
+    for (section, parameters) in pairs(c.name_map)
+        new_map[section] = replace(parameters, d...)
+    end
+
+    # Return a new chains object.
+    return Chains(
+        c.value.data,
+        new_params,
+        new_map;
+        info=c.info,
+        evidence=c.logevidence,
+    )
 end
