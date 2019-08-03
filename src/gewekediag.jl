@@ -20,10 +20,12 @@ end
 function gewekediag(chn::AbstractChains; first::Real=0.1, last::Real=0.5,
                     etype=:imse,
                     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                    showall=false, args...)
+                    showall=false,
+                    sorted=true, 
+                    args...)
     c = showall ?
-        sort(chn) :
-        Chains(chn, _clean_sections(chn, sections); sorted=true)
+        sorted ? sort(chn) : chn :
+        Chains(chn, _clean_sections(chn, sections); sorted=sorted)
 
     _, p, m = size(c.value)
     diags = [vals = Array{Float64}(undef, p, 2) for _ in 1:m]

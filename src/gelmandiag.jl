@@ -5,10 +5,11 @@ function gelmandiag(chn::AbstractChains;
         mpsrf::Bool=false,
         transform::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        showall=false)
+        showall=false,
+        sorted=true)
     c = showall ?
-        sort(chn) :
-        Chains(chn, _clean_sections(chn, sections); sorted=true)
+        sorted ? sort(chn) : chn :
+        Chains(chn, _clean_sections(chn, sections); sorted=sorted)
     @assert !any(ismissing.(c.value)) "Gelman diagnostics doesn't support missing values"
 
     n, p, m = size(c.value)
