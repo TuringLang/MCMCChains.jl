@@ -56,6 +56,14 @@ end
     @test isa(rafterydiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
 end
 
+@testset "sorting" begin
+    chn_sorted = Chains(rand(100,3,1), ["2", "1", "3"])
+    chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"], sorted=false)
+
+    @test names(chn_sorted) == ["1", "2", "3"]
+    @test names(chn_unsorted) == ["2", "1", "3"]
+end
+
 @testset "concatenation tests" begin
     v1 = rand(500, 5, 1)
     v2 = rand(500, 5, 1)

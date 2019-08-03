@@ -27,10 +27,11 @@ function Chains(
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info::NamedTuple=NamedTuple()
+        info::NamedTuple=NamedTuple(),
+        sorted::Bool=true
 ) where {A<:Union{Real, Union{Missing, Real}}}
 	return Chains(val[:,:,:], parameter_names, name_map, start=start,
-           thin=thin, evidence=evidence, info=info)
+           thin=thin, evidence=evidence, info=info, sorted=sorted)
 end
 
 # Set default parameter names if not given.
@@ -41,10 +42,11 @@ function Chains(
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info::NamedTuple=NamedTuple()
+        info::NamedTuple=NamedTuple(),
+        sorted::Bool=true
 ) where {A<:Union{Real, Union{Missing, Real}}}
     Chains(val[:,:,:], parameter_names, name_map, start=start,
-           thin=thin, evidence=evidence, info=info)
+           thin=thin, evidence=evidence, info=info, sorted=sorted)
 end
 
 # Generic chain constructor.
@@ -55,7 +57,8 @@ function Chains(
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info::NamedTuple=NamedTuple()) where {A<:Union{Real, Union{Missing, Real}}}
+        info::NamedTuple=NamedTuple(),
+        sorted::Bool=true) where {A<:Union{Real, Union{Missing, Real}}}
 
     # If we received an array of pairs, convert it to a dictionary.
     if typeof(name_map) <: Array
@@ -125,15 +128,21 @@ function Chains(
     # Construct the AxisArray.
     axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
     arr = AxisArray(val, axs...)
-    return sort(
-        Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
-            arr, evidence, name_map_tupl, info)
-    )
+
+    if sorted
+        return sort(
+            Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
+                arr, evidence, name_map_tupl, info)
+        )
+    else 
+        return Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
+                arr, evidence, name_map_tupl, info)
+    end
 end
 
 # Retrieve a new chain with only a specific section pulled out.
 function Chains(c::Chains{A, T, K, L}, section::Union{Vector, Any};
-                sorted=false) where {A, T, K, L}
+                sorted::Bool=false) where {A, T, K, L}
     section = typeof(section) <: AbstractArray ? section : [section]
 
     # If we received an empty list, return the original chain.
@@ -183,7 +192,7 @@ end
 
 
 #################### Indexing ####################
-function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sort = true)
+function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sorted::Bool = true)
     v_str = string.(v)
     idx = indexin(v_str, names(c))
     syms = []
@@ -196,7 +205,7 @@ function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sort = 
             push!(syms, value)
         end
     end
-    return sort ? sort!(syms, lt=MCMCChains.natural) : syms
+    return sorted ? sort!(syms, lt=MCMCChains.natural) : syms
 end
 
 Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
@@ -635,7 +644,7 @@ function set_section(c::Chains{A, T, K, L}, d::Dict) where {A,T,K,L}
         c.value,
         c.logevidence,
         nt,
-        c.info
+        c.info,
     )
 end
 
@@ -735,7 +744,7 @@ function pool_chain(c::Chains{A, T, K, L}) where {A, T, K, L}
     return Chains(cat(concat, dims=3), names(c), c.name_map; info=c.info)
 end
 
-function set_names(c::Chains{A, T, K, L}, d::Dict) where {A, T, K, L}
+function set_names(c::Chains{A, T, K, L}, d::Dict; sorted::Bool=true) where {A, T, K, L}
     # Set new parameter names.
     params = names(c)
     new_params = replace(params, d...)
@@ -754,5 +763,6 @@ function set_names(c::Chains{A, T, K, L}, d::Dict) where {A, T, K, L}
         new_map;
         info=c.info,
         evidence=c.logevidence,
+        sorted=sorted,
     )
 end
