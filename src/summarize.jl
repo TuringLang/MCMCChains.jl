@@ -87,6 +87,7 @@ end
 
 Base.lastindex(c::ChainDataFrame, i::Integer) = lastindex(c.df, i)
 
+Base.convert(::Type{Array{ChainDataFrame,1}}, cs::Array{ChainDataFrame,1}) = cs
 function Base.convert(::Type{T}, cs::Array{ChainDataFrame,1}) where T<:Array
     arrs = [convert(T, cs[j].df[:, 2:end]) for j in 1:length(cs)]
     return cat(arrs..., dims = 3)
