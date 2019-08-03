@@ -106,8 +106,8 @@ end
 end
 
 @recipe function f(chn::MCMCChains.AbstractChains, parameters::AbstractVector{Symbol};
-        colordim = :chain, section = :parameters, append_chains = false)
-    c = Chains(chn, section)
+        colordim = :chain, section = :parameters, append_chains = false, sorted=true)
+    c = Chains(chn, section, sorted=sorted)
     c = append_chains ? pool_chain(c) : c
     colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
     ret = indexin(parameters, Symbol.(keys(c)))
@@ -121,9 +121,12 @@ end
                    height = 250,
                    colordim = :chain,
                    section = :parameters,
-                   append_chains = false
+                   append_chains = false,
+                   sorted=true
                   )
-    c = isempty(parameters) ? Chains(chn, section; sorted=true) : sort(chn)
+    c = isempty(parameters) ? 
+        Chains(chn, section; sorted=sorted) : 
+        sorted ? sort(chn) : chn
     c = append_chains ? pool_chain(c) : c
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)

@@ -32,11 +32,12 @@ function heideldiag(chn::AbstractChains;
                     etype = :imse,
                     sections::Vector{Symbol}=[:parameters],
                     showall=false,
+                    sorted=true,
                     args...
                    )
     c = showall ?
-       sort(chn) :
-       Chains(chn, _clean_sections(chn, sections); sorted=true)
+       sorted ? sort(chn) : chn :
+       Chains(chn, _clean_sections(chn, sections); sorted=sorted)
 
     # Preallocate.
     _, p, m = size(c.value)

@@ -58,11 +58,12 @@ function rafterydiag(
                      s = 0.95,
                      eps = 0.001,
                      showall=false,
+                     sorted=true,
                      sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
                     )
     c = showall ?
-        sort(chn) :
-        Chains(chn, _clean_sections(chn, sections); sorted=true)
+        sorted ? sort(chn) : chn :
+        Chains(chn, _clean_sections(chn, sections); sorted=sorted)
     _, p, m = size(c.value)
     vals = [Array{Float64}(undef, p, 5) for i in 1:m]
     for j in 1:p, k in 1:m
