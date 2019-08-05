@@ -63,7 +63,8 @@ function Array(chn::MCMCChains.AbstractChains,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
         append_chains=true,
         remove_missing_union=true,
-        showall=false
+        showall=false,
+        sorted=false
     )
     sections = _clean_sections(chn, sections)
     sections = sections isa AbstractArray ? sections : [sections]
@@ -178,7 +179,7 @@ function DataFrame(chn::MCMCChains.AbstractChains,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
     append_chains=true,
     remove_missing_union=true,
-    sorted=true,
+    sorted=false,
     showall=false)
     sections = _clean_sections(chn, sections)
     sections = sections isa AbstractArray ? sections : [sections]

@@ -386,6 +386,7 @@ function summarystats(chn::MCMCChains.AbstractChains;
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         etype=:bm,
         digits=missing,
+        sorted=false,
         args...
     )
 

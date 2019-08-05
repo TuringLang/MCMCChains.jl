@@ -13,7 +13,8 @@ function Chains(
         start::Int=1,
         thin::Int=1,
         evidence = missing,
-        info::NamedTuple=NamedTuple()
+        info::NamedTuple=NamedTuple(),
+        sorted::Bool=true
 ) where {A<:Union{Real, Union{Missing, Real}}}
 	return Chains(Array(hcat(val...)'), parameter_names, name_map, start=start,
            thin=thin, evidence=evidence, info=info)
@@ -584,8 +585,16 @@ function sort(c::Chains{A, T, K, L}) where {A, T, K, L}
     for i in eachindex(sorted)
         new_v[:, i, :] = v[:, sorted[i][1], :]
     end
+
+    # Sort the name map too:
+    name_dict = Dict()
+    for (name, values) in pairs(c.name_map)
+        name_dict[name] = sort(values, by=x -> string(x), lt=MCMCChains.natural)
+    end
+    new_name_map = _dict2namedtuple(name_dict)
+
     aa = AxisArray(new_v, new_axes...)
-    return MCMCChains.Chains{A, T, K, L}(aa, c.logevidence, c.name_map, c.info)
+    return MCMCChains.Chains{A, T, K, L}(aa, c.logevidence, new_name_map, c.info)
 end
 
 """
