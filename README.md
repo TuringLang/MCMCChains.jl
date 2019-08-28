@@ -180,6 +180,21 @@ heideldiag(c::AbstractChains; alpha=0.05, eps=0.1, etype=:imse)
 rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ```
 
+### Model Selection
+#### Deviance Information Criterion (DIC)
+```julia
+chn ... # sampling results
+lpfun = function f(chain::Chains) # function to compute the logpdf values
+    niter, nparams, nchains = size(chain)
+    lp = zeros(niter + nchains) # resulting logpdf values
+    for i = 1:nparams
+        lp += map(p -> logpdf( ... , x), Array(chain[:,i,:]))
+    end
+    return lp
+end
+DIC, pD = dic(chn, lpfun)
+```
+
 ### Plotting
 ```julia
 # construct a plot
