@@ -68,6 +68,7 @@ include("mcse.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
+include("modelstats.jl")
 include("plot.jl")
 
 end # module

@@ -33,4 +33,7 @@ using Test
 
     # run tests for dataframe constructor
     include("summarize_tests.jl")
+
+    # run tests for posterior stats
+    include("modelstats_test.jl")
 end
