@@ -339,11 +339,11 @@ function ess(chn::AbstractChains;
         k = tprime = 1
         for tprime in 1:Int(floor((length(lags)/2 - 1)))
             sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
+            push!(P[i], sumvals)
+            k = tprime
+            
             if sumvals < 0
                 break
-            else
-                push!(P[i], sumvals)
-                k = tprime
             end
         end
 
