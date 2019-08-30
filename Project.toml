@@ -5,6 +5,9 @@ license = "MIT"
 desc = " Chain types and utility functions for MCMC simulations."
 version = "0.3.13"
 
+[compat]
+julia = "1"
+
 [deps]
 AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
