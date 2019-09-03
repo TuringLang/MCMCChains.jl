@@ -47,7 +47,7 @@ function Base.show(io::IO, c::ChainDataFrame)
 end
 
 Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
-Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = c.df[s]
+Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = c.df[:, s]
 Base.isequal(cs1::Vector{ChainDataFrame}, cs2::Vector{ChainDataFrame}) = isequal.(cs1, cs2)
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
 
@@ -75,13 +75,13 @@ end
 function Base.getindex(c::ChainDataFrame,
         s1::Vector{Symbol},
         s2::Union{Symbol, Vector{Symbol}})
-    return c.df[map(x -> x in s1, c.df.parameters), s2]
+    return c.df[map(x -> x in s1, c.df[:, :parameters]), s2]
 end
 
 function Base.getindex(c::ChainDataFrame,
         s1::Symbol,
         s2::Union{Symbol, Vector{Symbol}})
-    return c.df[c.df.parameters .== s1, s2]
+    return c.df[c.df[:, :parameters] .== s1, s2]
 end
 
 

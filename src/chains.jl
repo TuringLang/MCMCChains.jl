@@ -54,18 +54,20 @@ end
 function Chains(
         val::AbstractArray{A,3},
         parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
-        name_map = copy(DEFAULT_MAP);
+        name_map_original = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
         evidence = missing,
         info::NamedTuple=NamedTuple(),
         sorted::Bool=true) where {A<:Union{Real, Union{Missing, Real}}}
-
     # If we received an array of pairs, convert it to a dictionary.
-    if typeof(name_map) <: Array
-        name_map = Dict(name_map)
-    elseif typeof(name_map) <: NamedTuple
-        name_map = _namedtuple2dict(name_map)
+    name_map = if typeof(name_map_original) <: Dict
+        # Copying can avoid state mutation.
+        deepcopy(name_map_original)
+    elseif typeof(name_map_original) <: Array
+        Dict(deepcopy(name_map_original))
+    elseif typeof(name_map_original) <: NamedTuple
+        _namedtuple2dict(name_map_original)
     end
 
     # Make sure that we have a :parameters index.
