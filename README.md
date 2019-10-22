@@ -75,6 +75,21 @@ chn = Chains(val, ["a", "b", "c", "d", "e"])
 
 By default, parameters will be given the name `Parami`, where `i` is the parameter number.
 
+### Rename Parameters
+Parameter names can be changed with the function `set_names`, which accepts a `Chain` object and a `Dict` containing the mapping between
+old and new column names. Note that `set_names` creates a new `Chain` object because mutation is not supported.
+
+```julia
+chn = Chains(
+	rand(100, 5, 5),
+	["one", "two", "three", "four", "five"],
+	Dict(:internals => ["four", "five"])
+)
+
+# Set "one" and "five" to uppercase.
+new_chain = set_names(chn,  Dict(["one" => "ONE", "five" => "FIVE"]))
+```
+
 ### Sections
 
 Chains parameters are sorted into sections, which are types of parameters. By default, every chain contains a section called `:parameters`, which is where all values are assigned unless assigned elsewhere. Chains can be assigned a named map during construction:
@@ -229,7 +244,7 @@ corner(c::AbstractChains, [:A, :B])
 Chains objects can be serialized and deserialized using `read` and `write`.
 
 ```julia
-# Save a chain. 
+# Save a chain.
 write("chain-file.jls", chn)
 
 # Read a chain.
@@ -257,7 +272,7 @@ Array(chns, append_chains=false)
 # A final option is:
 Array(chns, remove_missing_union=false)
 
-# This will not convert the Array columns from a 
+# This will not convert the Array columns from a
 `Union{Missing, Real}` to a `Vector{Real}`.
 ```
 
@@ -288,7 +303,7 @@ c = kde(Array(chn[:s]))
 chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
 
 # As above, but supports replacing and ordering.
-sample([rng], a, [wv::AbstractWeights], n::Integer; replace=true, 
+sample([rng], a, [wv::AbstractWeights], n::Integer; replace=true,
   ordered=false)
 ```
 
