@@ -12,8 +12,8 @@ ProjDir = mktempdir()
     end
 
     model = gdemo([1.5, 2.0])
-    sampler = HMC(500, 0.01, 5)
-    chn1 = sample(model, sampler, save_state=true)
+    sampler = HMC(0.01, 5)
+    chn1 = sample(model, sampler, 500, save_state=true)
 
     write(joinpath(ProjDir, "chn1.jls"), chn1)
     chn2 = read(joinpath(ProjDir, "chn1.jls"), MCMCChains.Chains)
