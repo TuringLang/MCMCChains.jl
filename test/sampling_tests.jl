@@ -1,6 +1,6 @@
 using Turing, MCMCChains, KernelDensity, StatsBase, Test, Statistics
 
-#@testset "sampling api" begin
+@testset "sampling api" begin
 
   @model gdemo(x) = begin
       m ~ Normal(1, 0.01)
@@ -8,8 +8,8 @@ using Turing, MCMCChains, KernelDensity, StatsBase, Test, Statistics
   end
 
   model = gdemo([1.5, 2.0])
-  sampler = HMC(500, 0.01, 5)
-  chn = sample(model, sampler, save_state=true);
+  sampler = HMC(0.01, 5)
+  chn = sample(model, sampler, 500, save_state=true);
 
   chn_sample = sample(chn, 5)
   @test range(chn_sample) == 1:1:5
@@ -19,4 +19,4 @@ using Turing, MCMCChains, KernelDensity, StatsBase, Test, Statistics
 
   @test mean(Array(chn[:s])) ≈ 5.0 atol=0.1
 
-  #end
+end
