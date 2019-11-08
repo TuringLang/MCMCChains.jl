@@ -203,7 +203,7 @@ function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sorted:
         value = v_str[i]
         if idx[i] == nothing
             append!(syms,
-                collect(Iterators.filter(k -> occursin(value*"[", string(k)), names(c))))
+                collect(Iterators.filter(k -> startswith(value*"[", string(k)), names(c))))
         else
             push!(syms, value)
         end
