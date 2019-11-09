@@ -684,8 +684,6 @@ end
 function cat1(c1::AbstractChains, args::AbstractChains...)
     rng = range(c1)
     for c in args
-        last(rng) + step(rng) == first(c) ||
-            throw(ArgumentError("noncontiguous chain iterations"))
         step(rng) == step(c) ||
             throw(ArgumentError("chain thinning differs"))
         rng = first(rng):step(rng):last(c)
@@ -701,7 +699,7 @@ function cat1(c1::AbstractChains, args::AbstractChains...)
 
     name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
 
-    value = cat(c1.value, map(c -> c.value, args)..., dims=1)
+    value = cat(c1[names(c1)].value.data, map(c -> c[names(c1)].value.data, args)..., dims=1)
     Chains(value, nms, name_map, start=first(rng), thin=step(rng),
         info = c1.info)
 end
