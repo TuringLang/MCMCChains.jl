@@ -30,8 +30,8 @@ ProjDir = mktempdir()
         open(f->read(f, String), joinpath(ProjDir, "chn2.txt"))
 
     # Test whether sampler state made it through serialization/deserialization.
-    chn3 = Turing.Utilities.resume(chn2, 100)
-    @test range(chn3) == 1:1:600
+    chn3 = Turing.Inference.resume(chn2, 100)
+    @test range(chn3) == 1:1:100
 end
 
 rm(ProjDir, force=true, recursive=true)
