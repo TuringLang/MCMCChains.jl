@@ -16,7 +16,7 @@ function Chains(
         info::NamedTuple=NamedTuple(),
         sorted::Bool=true
 ) where {A<:Union{Real, Union{Missing, Real}}}
-	return Chains(Array(hcat(val...)'), parameter_names, name_map, start=start,
+	return Chains(copy(reduce(hcat, val)'), parameter_names, name_map, start=start,
            thin=thin, evidence=evidence, info=info)
 end
 
@@ -137,7 +137,7 @@ function Chains(
             Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
                 arr, evidence, name_map_tupl, info)
         )
-    else 
+    else
         return Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
                 arr, evidence, name_map_tupl, info)
     end
