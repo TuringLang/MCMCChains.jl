@@ -124,27 +124,36 @@ end
                    append_chains = false,
                    sorted=true
                   )
-    c = isempty(parameters) ? 
-        Chains(chn, section; sorted=sorted) : 
+    c = isempty(parameters) ?
+        Chains(chn, section; sorted=sorted) :
         sorted ? sort(chn) : chn
     c = append_chains ? pool_chain(c) : c
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
-    ptypes = ptypes isa AbstractVector || ptypes isa Tuple ? ptypes : (ptypes,)
-    @assert all(map(ptype -> ptype ∈ supportedplots, ptypes))
+    ptypes = ptypes isa Symbol ? (ptypes,) : ptypes
+    @assert all(ptype -> ptype ∈ supportedplots, ptypes)
     ntypes = length(ptypes)
     nrows, nvars, nchains = size(c)
     isempty(parameters) && (parameters = colordim == :chain ? (1:nvars) : (1:nchains))
     N = length(parameters)
 
-    if !(:corner ∈ ptypes)
-        layout := (N, ntypes)
+    if :corner ∉ ptypes
         size --> (ntypes*width, N*height)
-        indices = reshape(1:N*ntypes, ntypes, N)'
         legend --> false
-        for (j, ptype) in enumerate(ptypes)
-            for (i, par) in enumerate(parameters)
+
+        multiple_plots = N * ntypes > 1
+        if multiple_plots
+            layout := (N, ntypes)
+        end
+
+        i = 0
+        for par in parameters
+            for ptype in ptypes
+                i += 1
+
                 @series begin
-                    subplot := indices[i, j]
+                    if multiple_plots
+                        subplot := i
+                    end
                     colordim := colordim
                     seriestype := ptype
                     c, par
@@ -152,7 +161,7 @@ end
             end
         end
     else
-        length(ptypes) > 1 && error(":corner is not compatible with multiple seriestypes")
+        ntypes > 1 && error(":corner is not compatible with multiple seriestypes")
         Corner(c, names(c)[parameters])
     end
 end
