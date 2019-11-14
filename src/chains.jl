@@ -714,10 +714,10 @@ chainscat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=3
 Base.hcat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=2)
 Base.vcat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=1)
 
-function pool_chain(c::Chains{A, T, K, L}) where {A, T, K, L}
-    val = c.value.data
-    concat = vcat([val[:,:,j] for j in 1:size(val,3)]...)
-    return Chains(cat(concat, dims=3), names(c), c.name_map; info=c.info)
+function pool_chain(c::Chains)
+    data = c.value.data
+    pool_data = reshape(permutedims(data, [1, 3, 2]), :, size(data, 2), 1)
+    return Chains(pool_data, names(c), c.name_map; info=c.info)
 end
 
 function set_names(c::Chains{A, T, K, L}, d::Dict; sorted::Bool=true) where {A, T, K, L}
