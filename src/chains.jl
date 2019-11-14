@@ -6,60 +6,27 @@
 const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 
 # Constructor to handle a vector of vectors.
-function Chains(
-        val::Vector{Vector{A}},
-		parameter_names::Vector{String} = map(i->"Param$i", 1:length(first(val))),
-        name_map = copy(DEFAULT_MAP);
-        start::Int=1,
-        thin::Int=1,
-        evidence = missing,
-        info::NamedTuple=NamedTuple(),
-        sorted::Bool=true
-) where {A<:Union{Real, Union{Missing, Real}}}
-	return Chains(Array(hcat(val...)'), parameter_names, name_map, start=start,
-           thin=thin, evidence=evidence, info=info)
-end
+Chains(val::Vector{Vector{<:Union{Real, Union{Missing, Real}}}}, args...; kwargs...) =
+	Chains(copy(reduce(hcat, val)'), args...; kwargs...)
 
 # Constructor to handle a 1D array.
-function Chains(
-        val::AbstractArray{A,1},
-        parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
-        name_map = copy(DEFAULT_MAP);
-        start::Int=1,
-        thin::Int=1,
-        evidence = missing,
-        info::NamedTuple=NamedTuple(),
-        sorted::Bool=true
-) where {A<:Union{Real, Union{Missing, Real}}}
-	return Chains(val[:,:,:], parameter_names, name_map, start=start,
-           thin=thin, evidence=evidence, info=info, sorted=sorted)
-end
+Chains(val::AbstractVector{<:Union{Real, Union{Missing, Real}}}, args...; kwargs...) =
+	Chains(reshape(val, :, 1, 1), args...; kwargs...)
 
-# Set default parameter names if not given.
-function Chains(
-        val::AbstractArray{A,2},
-        parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
-        name_map = copy(DEFAULT_MAP);
-        start::Int=1,
-        thin::Int=1,
-        evidence = missing,
-        info::NamedTuple=NamedTuple(),
-        sorted::Bool=true
-) where {A<:Union{Real, Union{Missing, Real}}}
-    Chains(val[:,:,:], parameter_names, name_map, start=start,
-           thin=thin, evidence=evidence, info=info, sorted=sorted)
-end
+# Constructor to handle a 2D array
+Chains(val::AbstractMatrix{<:Union{Real, Union{Missing, Real}}}, args...; kwargs...) =
+	Chains(reshape(val, size(val, 1), size(val, 2), 1), args...; kwargs...)
 
 # Generic chain constructor.
 function Chains(
-        val::AbstractArray{A,3},
+        val::AbstractArray{<:Union{Real, Union{Missing, Real}},3},
         parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
         name_map_original = copy(DEFAULT_MAP);
         start::Int=1,
         thin::Int=1,
         evidence = missing,
         info::NamedTuple=NamedTuple(),
-        sorted::Bool=true) where {A<:Union{Real, Union{Missing, Real}}}
+        sorted::Bool=true)
     # If we received an array of pairs, convert it to a dictionary.
     name_map = if typeof(name_map_original) <: Dict
         # Copying can avoid state mutation.
@@ -134,11 +101,11 @@ function Chains(
 
     if sorted
         return sort(
-            Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
+            Chains{eltype(val), typeof(evidence), typeof(name_map_tupl), typeof(info)}(
                 arr, evidence, name_map_tupl, info)
         )
     else
-        return Chains{A, typeof(evidence), typeof(name_map_tupl), typeof(info)}(
+        return Chains{eltype(val), typeof(evidence), typeof(name_map_tupl), typeof(info)}(
                 arr, evidence, name_map_tupl, info)
     end
 end
