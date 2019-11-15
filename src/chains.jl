@@ -111,52 +111,33 @@ function Chains(
 end
 
 # Retrieve a new chain with only a specific section pulled out.
-function Chains(c::Chains{A, T, K, L}, section::Union{Vector, Any};
-                sorted::Bool=false) where {A, T, K, L}
-    section = typeof(section) <: AbstractArray ? section : [section]
+Chains(::Chains, ::Tuple{}; kwargs...) = throw(ArgumentError("no section specified"))
+Chains(c::Chains, section; kwargs...) = Chains(c, (section,); kwargs...)
+function Chains(c::Chains, section::AbstractArray; kwargs...)
+	Chains(c, ntuple(i -> section[i], length(section)); kwargs...)
+end
+function Chains(c::Chains, section::NTuple{<:Any,Symbol}; sorted::Bool=false)
+    # Make sure the section exists first.
+	section ⊆ keys(c.name_map) ||
+		throw(ArgumentError("$section is not a subset of the chain's name map"))
 
-    # If we received an empty list, return the original chain.
-    if isempty(section)
-        if sorted
-            return sort(c)
-        else
-            return c
-        end
-    end
-
-    # Gather the names from the relevant sections.
-    names = []
-    if isa(section, Vector)
-        for s in section
-            # Make sure the section exists first.
-            in(s, keys(c.name_map)) ||
-                throw(ArgumentError("$section not found in Chains name map."))
-
-            names = vcat(names, c.name_map[s])
-        end
-    else
-        in(s, keys(c.name_map)) ||
-            throw(ArgumentError("$section not found in Chains name map."))
-
-        names = c.name_map[s]
-    end
+	# Create the new section map.
+    name_map = NamedTuple{section}(getindex.(Ref(c.name_map), section))
 
     # Extract wanted values.
-    new_vals = c.value[:, names, :]
-
-    # Create the new section map.
-    new_section_map = _dict2namedtuple(Dict([s => c.name_map[s] for s in section]))
+    value = c.value[:, mapreduce(collect, vcat, name_map), :]
 
     # Create the new chain.
-    new_chn = Chains{A, T, typeof(new_section_map), L}(new_vals,
+    chain = Chains{eltype(c.value),typeof(c.logevidence),typeof(name_map),typeof(c.info)}(
+		value,
         c.logevidence,
-        new_section_map,
+        name_map,
         c.info)
 
     if sorted
-        return sort(new_chn)
+        return sort(chain)
     else
-        return new_chn
+        return chain
     end
 end
 
