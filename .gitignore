@@ -7,3 +7,4 @@ tmp/
 
 *.jld
 .ipynb_checkpoints
+Manifest.toml
