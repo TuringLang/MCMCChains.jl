@@ -1,5 +1,7 @@
 module MCMCChains
 
+using AbstractMCMC
+
 import Statistics
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
@@ -32,8 +34,6 @@ export mean
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export autocor
-
-abstract type AbstractChains end
 
 """
     Chains type
