@@ -240,132 +240,6 @@ function quantile(chn::AbstractChains;
 end
 
 """
-	ess(chn::AbstractChains;
-		showall=false,
-		sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-		maxlag = 250,
-        digits=missing)
-
-Compute a chain's number of effective samples. More information can be found in the Gelman et al. (2014) book "Bayesian Data Analysis", or in [this article](https://arxiv.org/abs/1903.08008).
-
-The `digits` keyword may be a(n)
-- `Integer`, which sets rounds all numerical columns to the value)
-- `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
-- `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
-"""
-function ess(chn::AbstractChains;
-    showall=false,
-    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    maxlag = 250,
-    digits=missing
-)
-	param = showall ? names(chn) : names(chn, sections)
-	n_chain_orig = size(chn, 3)
-
-	# Split the chains.
-	parameter_vec = Vector(undef, length(param))
-	midpoint = Int32(floor(size(chn, 1) / 2))
-	for i in 1:length(param)
-		parameter_vec[i] = []
-		for j in 1:n_chain_orig
-            c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
-            c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
-            push!(parameter_vec[i], c1, c2)
-		end
-	end
-
-    # Misc allocations.
-    m = n_chain_orig * 2
-    n = min(length.(parameter_vec[1])...)
-    maxlag = min(maxlag, n-1)
-    lags = collect(0:maxlag)
-
-    # Preallocate B, W, varhat, and Rhat vectors for each param.
-    B = Vector(undef, length(param))
-    W = Vector(undef, length(param))
-    varhat = Vector(undef, length(param))
-    Rhat = Vector(undef, length(param))
-
-    # calculate B, W, varhat, and Rhat for each param.
-    for i in 1:length(param)
-		draw = parameter_vec[i]
-		p = param[i]
-        allchain = mean(vcat([d for d in draw]...))
-        eachchain = [mean(draw[j]) for j in 1:m]
-        s = [sum((draw[j] .- eachchain[j]).^2) / (n-1) for j in 1:m]
-        B[i] = (n / (m - 1)) * sum((eachchain .- allchain).^2)
-        W[i] = sum(s) / m
-        varhat[i] = (n-1)/n * W[i] + (B[i] / n)
-        Rhat[i] = sqrt(varhat[i] / W[i])
-    end
-
-	V = Vector(undef, length(param))
-    ρ = Vector(undef, length(param))
-    for p in eachindex(V)
-        V[p] = Vector(undef, length(lags))
-		ρ[p] = Vector(undef, length(lags))
-    end
-
-    # Calculate ρ
-    c_autocor = Vector(undef, length(param))
-    for i in 1:length(param)
-        c_autocor[i] = [0.0]
-    end
-
-    for t in eachindex(lags)
-        lag = lags[t]
-        range1 = lag+1:n
-        range2 = 1:(n-lag)
-        for i in 1:length(param)
-            draw = parameter_vec[i]
-			p = param[i]
-            z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
-			z = sum([zi .^ 2 for zi in z])
-            V[i][t] = 1 / (m * (n-lag)) * sum(z)
-            autocors = [_autocorrelation(draw[j], lag) for j in 1:m]
-			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
-        end
-    end
-
-	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
-    P = Vector(undef, length(param))
-    ess = Vector(undef, length(param))
-	for i in 1:length(param)
-        big_P = 0.0
-		ρ_val = Float64.(ρ[i])
-
-        # Big P.
-        P[i] = Float64[ρ_val[1]]
-        k = tprime = 1
-        for tprime in 1:Int(floor((length(lags)/2 - 1)))
-            sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
-            push!(P[i], sumvals)
-            k = tprime
-            
-            if sumvals < 0
-                break
-            end
-        end
-
-        # Create monotone.
-        P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
-
-        ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
-	end
-
-    df = DataFrame(parameters = Symbol.(param), ess = ess, r_hat = Rhat)
-	return ChainDataFrame("ESS", df, digits=digits)
-end
-
-# this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl
-function _autocorrelation(x::AbstractVector, k::Integer, v = var(x), kwargs...)
-    x1 = @view(x[1:(end-k)])
-    x2 = @view(x[(1+k):end])
-    V = sum((x1 .- x2).^2) / length(x1)
-    1 - V / (2*v)
-end
-
-"""
     summarystats(chn;
         append_chains=true,
         showall=false,
@@ -401,7 +275,9 @@ function summarystats(chn::MCMCChains.AbstractChains;
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Caluclate ESS separately.
-    ess_df = ess(chn, sections=sections, showall=showall).df
+    ess_df = ChainDataFrame("ESS",
+                            ess(chn; parameters = showall ? names(chn) : names(chn, sections));
+                            digits = digits).df
 
     # Summarize.
     summary_df = summarize(chn, funs...;

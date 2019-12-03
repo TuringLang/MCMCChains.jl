@@ -1,5 +1,6 @@
 module MCMCChains
 
+using AbstractFFTs
 using AbstractMCMC
 
 import Statistics
@@ -17,11 +18,15 @@ using RecipesBase
 import RecipesBase: plot
 
 using Serialization
+using StatsBase
 using Distributions
 using KernelDensity
 using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
+
+using LinearAlgebra
+using Statistics
 
 export Chains, getindex, setindex!, chains, setinfo, chainscat
 export describe, set_section, get_params, sections, set_names
@@ -34,6 +39,8 @@ export mean
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export autocor
+
+export ESSMethod, FFTESSMethod, BDAESSMethod
 
 """
     Chains type
@@ -58,6 +65,7 @@ include("utils.jl")
 
 include("chains.jl")
 include("constructors.jl")
+include("ess.jl")
 include("summarize.jl")
 include("discretediag.jl")
 include("fileio.jl")

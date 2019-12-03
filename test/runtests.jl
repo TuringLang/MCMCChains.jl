@@ -1,6 +1,9 @@
 using Test
 
 @testset "MCMCChains" begin
+    # run tests for effective sample size
+    include("ess_tests.jl")
+
     # run plotting tests
     include("plot_test.jl")
 
@@ -22,16 +25,13 @@ using Test
     # run tests for array constructor
     include("arrayconstructor_tests.jl")
 
-    # run tests for sampoling api
-    include("sampling_tests.jl")
-
     # run tests for array constructor
     include("arrayconstructor_tests.jl")
 
     # run tests for dataframe constructor
     include("dfconstructor_tests.jl")
 
-    # run tests for dataframe constructor
+    # run tests for summaries
     include("summarize_tests.jl")
 
     # run tests for posterior stats
