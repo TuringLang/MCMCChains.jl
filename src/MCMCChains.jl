@@ -2,6 +2,7 @@ module MCMCChains
 
 using AbstractFFTs
 using AbstractMCMC
+using Compat
 
 import Statistics
 import Showoff: showoff
