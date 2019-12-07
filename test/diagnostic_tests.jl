@@ -56,6 +56,16 @@ end
     @test isa(rafterydiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
 end
 
+@testset "vector of vectors" begin
+    val = [rand(20) for _ in 1:10]
+
+    chn = Chains(val)
+    chn2 = Chains(reduce(hcat, val)')
+
+    @test chains(chn) == chains(chn2)
+    @test names(chn) == names(chn2)
+end
+
 @testset "sorting" begin
     chn_sorted = Chains(rand(100,3,1), ["2", "1", "3"])
     chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"], sorted=false)
