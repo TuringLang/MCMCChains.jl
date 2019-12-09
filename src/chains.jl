@@ -6,20 +6,20 @@
 const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
 
 # Constructor to handle a vector of vectors.
-Chains(val::Vector{Vector{<:Union{Real, Union{Missing, Real}}}}, args...; kwargs...) =
+Chains(val::AbstractVector{<:AbstractVector{<:Union{Missing, Real}}}, args...; kwargs...) =
 	Chains(copy(reduce(hcat, val)'), args...; kwargs...)
 
 # Constructor to handle a 1D array.
-Chains(val::AbstractVector{<:Union{Real, Union{Missing, Real}}}, args...; kwargs...) =
+Chains(val::AbstractVector{<:Union{Missing, Real}}, args...; kwargs...) =
 	Chains(reshape(val, :, 1, 1), args...; kwargs...)
 
 # Constructor to handle a 2D array
-Chains(val::AbstractMatrix{<:Union{Real, Union{Missing, Real}}}, args...; kwargs...) =
+Chains(val::AbstractMatrix{<:Union{Missing, Real}}, args...; kwargs...) =
 	Chains(reshape(val, size(val, 1), size(val, 2), 1), args...; kwargs...)
 
 # Generic chain constructor.
 function Chains(
-        val::AbstractArray{<:Union{Real, Union{Missing, Real}},3},
+        val::AbstractArray{<:Union{Missing, Real},3},
         parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
         name_map_original = copy(DEFAULT_MAP);
         start::Int=1,
