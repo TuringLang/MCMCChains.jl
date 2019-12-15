@@ -26,7 +26,7 @@ function Chains(
         thin::Int=1,
         evidence = missing,
         info::NamedTuple=NamedTuple(),
-        sorted::Bool=true)
+        sorted::Bool=false)
     # If we received an array of pairs, convert it to a dictionary.
     name_map = if typeof(name_map_original) <: Dict
         # Copying can avoid state mutation.
@@ -143,7 +143,7 @@ end
 
 
 #################### Indexing ####################
-function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sorted::Bool = true)
+function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sorted::Bool = false)
     v_str = string.(v)
     idx = indexin(v_str, names(c))
     syms = []
