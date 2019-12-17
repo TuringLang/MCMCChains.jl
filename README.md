@@ -41,20 +41,24 @@ Summarize parameters | Summarize chains
 ### Chains type
 ```julia
 # construction of a Chains object with no names
-Chains(val::AbstractArray{A,3};
-        start::Int=1,
-        thin::Int=1,
-        evidence = 0.0,
-        info=NamedTuple())
+Chains(
+    val::AbstractArray{A,3};
+    start::Int=1,
+    thin::Int=1,
+    evidence = 0.0,
+    info=NamedTuple(),
+)
 
 # construction of a chains object with new names
-Chains(val::AbstractArray{A,3},
-        parameter_names::Vector{String},
-        name_map = copy(DEFAULT_MAP);
-        start::Int=1,
-        thin::Int=1,
-        evidence = 0.0,
-        info=NamedTuple())
+Chains(
+    val::AbstractArray{A,3},
+    parameter_names::Vector{String},
+    name_map = copy(DEFAULT_MAP);
+    start::Int=1,
+    thin::Int=1,
+    evidence = 0.0,
+    info=NamedTuple(),
+)
 
 # Indexing a Chains object
 chn = Chains(...)
