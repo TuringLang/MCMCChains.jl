@@ -622,14 +622,19 @@ end
 
 #################### Concatenation ####################
 
-function Base.cat(c1::AbstractChains, args::AbstractChains...; dims::Integer = 3)
-  dims == 1 ? cat1(c1, args...) :
-  dims == 2 ? cat2(c1, args...) :
-  dims == 3 ? cat3(c1, args...) :
-    throw(ArgumentError("cannot concatenate along dimension $dim"))
+function Base.cat(c::Chains...; dims = 1)
+    if dims == 1
+        return cat1(c...)
+    elseif dims == 2
+        return cat2(c...)
+    elseif dims == 3
+        return cat3(c...)
+    else
+        throw(ArgumentError("cannot concatenate along dimension $dims"))
+    end
 end
 
-function cat1(c1::AbstractChains, args::AbstractChains...)
+function cat1(c1::Chains, args::Chains...)
     rng = range(c1)
     for c in args
         step(rng) == step(c) ||
@@ -652,7 +657,7 @@ function cat1(c1::AbstractChains, args::AbstractChains...)
         info = c1.info)
 end
 
-function cat2(c1::AbstractChains, args::AbstractChains...)
+function cat2(c1::Chains, args::Chains...)
   rng = range(c1)
   all(c -> range(c) == rng, args) ||
     throw(ArgumentError("chain ranges differ"))
@@ -677,7 +682,7 @@ function cat2(c1::AbstractChains, args::AbstractChains...)
       info = c1.info)
 end
 
-function cat3(c1::AbstractChains, args::AbstractChains...)
+function cat3(c1::Chains, args::Chains...)
   rng = range(c1)
   all(c -> range(c) == rng, args) ||
     throw(ArgumentError("chain ranges differ"))
@@ -691,17 +696,13 @@ function cat3(c1::AbstractChains, args::AbstractChains...)
       info = c1.info)
 end
 
-chainscat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=3)
-Base.hcat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=2)
-Base.vcat(c1::AbstractChains, args::AbstractChains...) = cat(c1, args..., dims=1)
-
 function pool_chain(c::Chains)
     data = c.value.data
     pool_data = reshape(permutedims(data, [1, 3, 2]), :, size(data, 2), 1)
     return Chains(pool_data, names(c), c.name_map; info=c.info)
 end
 
-function set_names(c::Chains{A, T, K, L}, d::Dict; sorted::Bool=true) where {A, T, K, L}
+function set_names(c::Chains, d::Dict; sorted::Bool=true)
     # Set new parameter names.
     params = names(c)
     new_params = replace(params, d...)
