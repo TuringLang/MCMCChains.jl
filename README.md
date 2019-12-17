@@ -51,7 +51,7 @@ Chains(
 
 # construction of a chains object with new names
 Chains(
-    val::AbstractArray{A,3};
+    val::AbstractArray{A,3},
     parameter_names::Vector{String},
     name_map = copy(DEFAULT_MAP);
     start::Int=1,
