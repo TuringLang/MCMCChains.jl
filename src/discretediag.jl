@@ -283,8 +283,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
         stat = t * sum(chi_stat)
         bstats = zeros(Float64, nsim)
         for b in 1:nsim
-          Y = hcat([simulate_NDARMA(t, 1, 0, phat, [phia, 1-phia])
-                for j in 1:d]...)
+          Y = reduce(hcat, [simulate_NDARMA(t, 1, 0, phat, [phia, 1-phia]) for j in 1:d])
           s = hangartner_inner(Y, m)[1]
           bstats[b] = s
         end
@@ -294,7 +293,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
       elseif method == :MCBOOT
         bstats = zeros(Float64, nsim)
         for b in 1:nsim
-          Y = hcat([simulate_MC(t, mP) for j in 1:d]...)
+          Y = reduce(hcat, [simulate_MC(t, mP) for j in 1:d])
           s = hangartner_inner(Y, m)[1]
           bstats[b] = s
         end
@@ -311,7 +310,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
         stat = hot_stat
         bstats = zeros(Float64, nsim)
         for b in 1:nsim
-          Y = hcat([simulate_MC(t, mP) for j in 1:d]...)
+          Y = reduce(hcat, [simulate_MC(t, mP) for j in 1:d])
           (s,sd) = bd_inner(Y, m)[1:2]
           bstats[b] = s/sd
         end
