@@ -31,12 +31,12 @@ end
 
 The weiss procedure to assess convergence in MCMC output computes X^2/c and evaluates a p-value from the X^2 distribution with (|R| − 1)(s − 1) degrees of freedom.
 """
-function weiss(X::AbstractMatrix{U}) where {U<:Any}
+function weiss(X::AbstractMatrix)
   ## number of iterations, number of chains
   n, d = size(X)
 
   ## mapping of values to integers
-  v_dict = Dict{U, Int}()
+  v_dict = Dict{eltype(X), Int}()
 
   ## max unique categories
   mc = map(c -> length(unique(X[:,c])), 1:d)
@@ -210,14 +210,14 @@ function simulate_MC(N::Int, P::Matrix{Float64})
   return X
 end
 
-function diag_all(X::AbstractMatrix{U}, method::Symbol,
-                  nsim::Int, start_iter::Int, step_size::Int) where {U<:Any}
+function diag_all(X::AbstractMatrix, method::Symbol,
+                  nsim::Int, start_iter::Int, step_size::Int)
 
   ## number of iterations, number of chains
   n, d = size(X)
 
   ## mapping of values to integers
-  v_dict = Dict{U, Int}()
+  v_dict = Dict{eltype(X), Int}()
 
   ## max unique categories
   mc = map(c -> length(unique(X[:,c])), 1:d)

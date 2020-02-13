@@ -170,7 +170,7 @@ function Base.getindex(c::Chains, v::Vector{Symbol})
     return c[:, syms, :]
 end
 
-function Base.getindex(c::Chains{A, T, K, L}, i...) where {A, T, K, L}
+function Base.getindex(c::Chains, i...)
     # Make sure things are in array form to preserve the axes.
     ind = [typeof(i[1]) <: Integer ? (i[1]:i[1]) : i[1],
            typeof(i[2]) <: Union{AbstractArray, Colon} ?  i[2] : [i[2]],
@@ -185,10 +185,8 @@ function Base.getindex(c::Chains{A, T, K, L}, i...) where {A, T, K, L}
     newval = getindex(c.value, ind...)
     names = newval.axes[2].val
     new_name_map = _trim_name_map(names, c.name_map)
-    return Chains{A, T, typeof(new_name_map), L}(newval,
-        c.logevidence,
-        new_name_map,
-        c.info)
+    return Chains{eltype(c.value),typeof(c.logevidence),typeof(new_name_map),
+        typeof(c.info)}(newval, c.logevidence, new_name_map, c.info)
 end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
@@ -525,7 +523,7 @@ end
 
 Returns a new column-sorted version of `c`, using natural sort order.
 """
-function sort(c::Chains{A, T, K, L}) where {A, T, K, L}
+function Base.sort(c::Chains)
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
@@ -544,7 +542,8 @@ function sort(c::Chains{A, T, K, L}) where {A, T, K, L}
     new_name_map = _dict2namedtuple(name_dict)
 
     aa = AxisArray(new_v, new_axes...)
-    return MCMCChains.Chains{A, T, K, L}(aa, c.logevidence, new_name_map, c.info)
+    return Chains{eltype(c.value),typeof(c.logevidence),typeof(new_name_map),
+        typeof(c.info)}(aa, c.logevidence, new_name_map, c.info)
 end
 
 """
@@ -558,13 +557,9 @@ Example:
 new_chn = setinfo(chn, NamedTuple{(:a, :b)}((1, 2)))
 ```
 """
-function setinfo(c::Chains{A, T, K}, n::NamedTuple) where {A, T, K}
-    return Chains{A, T, K, typeof(n)}(
-        c.value,
-        c.logevidence,
-        c.name_map,
-        n
-    )
+function setinfo(c::Chains, n::NamedTuple)
+    return Chains{eltype(c.value),typeof(c.logevidence),typeof(c.name_map),typeof(n)}(
+        c.value, c.logevidence, c.name_map, n)
 end
 
 set_section(c::Chains, nt::NamedTuple) = set_section(c, _namedtuple2dict(nt))
@@ -576,7 +571,7 @@ Changes a chains name mapping to a provided dictionary. This also supports a Nam
 Any parameters in the chain that are unassigned will be placed into
 the :parameters section.
 """
-function set_section(c::Chains{A, T, K, L}, d::Dict) where {A,T,K,L}
+function set_section(c::Chains, d::Dict)
     # Add :parameters if it's not there.
     if !(:parameters in keys(d))
         d[:parameters] = []
@@ -599,12 +594,8 @@ function set_section(c::Chains{A, T, K, L}, d::Dict) where {A,T,K,L}
     end
 
     nt = _dict2namedtuple(d)
-    return Chains{A, T, typeof(nt), L}(
-        c.value,
-        c.logevidence,
-        nt,
-        c.info,
-    )
+    return Chains{eltype(c.value),typeof(c.logevidence),typeof(nt),typeof(c.info)}(
+        c.value, c.logevidence, nt, c.info)
 end
 
 function _use_showall(c::AbstractChains, section::Symbol)

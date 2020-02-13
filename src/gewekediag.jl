@@ -1,7 +1,7 @@
 #################### Geweke Diagnostic ####################
 
-function gewekediag(x::Vector{T}; first::Real=0.1, last::Real=0.5,
-                             etype=:imse, args...) where {T<:Real}
+function gewekediag(x::Vector{<:Real}; first::Real=0.1, last::Real=0.5,
+                             etype=:imse, args...)
   if !(0.0 < first < 1.0)
     throw(ArgumentError("first is not in (0, 1)"))
   elseif !(0.0 < last < 1.0)
