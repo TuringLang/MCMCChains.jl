@@ -175,7 +175,7 @@ function describe(io::IO,
     return dfs
 end
 
-function _hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
+function _hpd(x::Vector{<:Real}; alpha::Real=0.05)
     n = length(x)
     m = max(1, ceil(Int, alpha * n))
 
