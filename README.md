@@ -296,23 +296,30 @@ See also ?MCMCChains.DataFrame and ?MCMCChains.Array for more help.
 
 ### Sampling Chains
 
-MCMCChains overloads several `sample()` methods as defined in StatsBase:
+MCMCChains overloads several `sample` methods as defined in StatsBase:
 
 ```julia
 # Sampling `n` samples from the chain `a`. Optionally
 # weighting the samples using `wv`.
 sample([rng], a, [wv::AbstractWeights], n::Integer)
 
-# E.g. creating 10000 weighted samples:
-c = kde(Array(chn[:s]))
-chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
-
 # As above, but supports replacing and ordering.
 sample([rng], a, [wv::AbstractWeights], n::Integer; replace=true,
   ordered=false)
 ```
 
-See also ?MCMCChains.sample for additional help.
+See also `?sample` for additional help. Alternatively, you can construct
+and sample from a kernel density estimator using the KernelDensity package:
+
+```julia
+using KernelDensity
+
+# Construct a kernel density estimator
+c = kde(Array(chn[:s]))
+
+# Generate 10000 weighted samples from the grid points
+chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
+```
 
 ## License Notice
 Note that this package heavily uses and adapts code from the Mamba.jl package licensed under MIT License, see License.md.

@@ -5,20 +5,20 @@ using AbstractMCMC
 import Statistics
 import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
-       quantile, sample, sem, summarystats, sample, AbstractWeights
+       quantile, sample, sem, summarystats, AbstractWeights
 import LinearAlgebra: diag
 import Serialization: serialize, deserialize
 import Base: sort, range, names, get, hash, convert, show, display
 import Statistics: cor, mean
 import Core.Array
 import DataFrames: DataFrame, names, eachcol
+using Random
 
 using RecipesBase
 import RecipesBase: plot
 
 using Serialization
 using Distributions
-using KernelDensity
 using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
