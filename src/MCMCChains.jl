@@ -4,7 +4,7 @@ using AxisArrays
 const axes = Base.axes
 
 using AbstractMCMC
-using Compat
+using DataFrames: eachcol
 import DataFrames: DataFrame
 using Distributions
 using RecipesBase
@@ -46,9 +46,7 @@ struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractChains
     info::L
 end
 
-# imports
 include("utils.jl")
-
 include("chains.jl")
 include("constructors.jl")
 include("summarize.jl")
