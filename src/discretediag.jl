@@ -327,7 +327,7 @@ function diag_all(X::AbstractMatrix, method::Symbol,
   return result
 end
 
-function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
+function discretediag_sub(c::Chains, frac::Real, method::Symbol,
                           nsim::Int, start_iter::Int, step_size::Int)
 
   num_iters, num_vars, num_chains = size(c.value)
@@ -368,7 +368,7 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
 
 end
 
-function discretediag(chn::AbstractChains; frac::Real=0.3,
+function discretediag(chn::Chains; frac::Real=0.3,
                       method::Symbol=:weiss,
                       sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                       nsim::Int=1000,

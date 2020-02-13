@@ -17,7 +17,7 @@ function gewekediag(x::Vector{<:Real}; first::Real=0.1, last::Real=0.5,
   [round(z, digits = 3), round(1.0 - erf(abs(z) / sqrt(2.0)), digits = 4)]
 end
 
-function gewekediag(chn::AbstractChains; first::Real=0.1, last::Real=0.5,
+function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
                     etype=:imse,
                     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                     showall=false,

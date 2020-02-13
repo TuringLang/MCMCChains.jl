@@ -176,27 +176,27 @@ Note that `x.P` is a tuple which has to be indexed by the relevant index, while 
 Options for method are  `[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]`
 
 ```julia
-discretediag(c::AbstractChains; frac=0.3, method=:weiss, nsim=1000)
+discretediag(c::Chains; frac=0.3, method=:weiss, nsim=1000)
 ```
 
 #### Gelman, Rubin, and Brooks Diagnostics
 ```julia
-gelmandiag(c::AbstractChains; alpha=0.05, mpsrf=false, transform=false)
+gelmandiag(c::Chains; alpha=0.05, mpsrf=false, transform=false)
 ```
 
 #### Geweke Diagnostic
 ```julia
-gewekediag(c::AbstractChains; first=0.1, last=0.5, etype=:imse)
+gewekediag(c::Chains; first=0.1, last=0.5, etype=:imse)
 ```
 
 #### Heidelberger and Welch Diagnostics
 ```julia
-heideldiag(c::AbstractChains; alpha=0.05, eps=0.1, etype=:imse)
+heideldiag(c::Chains; alpha=0.05, eps=0.1, etype=:imse)
 ```
 
 #### Raftery and Lewis Diagnostic
 ```julia
-rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
+rafterydiag(c::Chains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ```
 
 ### Model Selection
@@ -217,30 +217,31 @@ DIC, pD = dic(chn, lpfun)
 ### Plotting
 ```julia
 # construct a plot
-plot(c::AbstractChains, seriestype = (:traceplot, :mixeddensity))
+plot(c::Chains, seriestype = (:traceplot, :mixeddensity))
 
 # construct trace plots
-plot(c::AbstractChains, seriestype = :traceplot)
+plot(c::Chains, seriestype = :traceplot)
+
 # or for all seriestypes use the alternative shorthand syntax
-traceplot(c::AbstractChains)
+traceplot(c::Chains)
 
 # construct running average plots
-meanplot(c::AbstractChains)
+meanplot(c::Chains)
 
 # construct density plots
-density(c::AbstractChains)
+density(c::Chains)
 
 # construct histogram plots
-histogram(c::AbstractChains)
+histogram(c::Chains)
 
 # construct mixed density plots
-mixeddensity(c::AbstractChains)
+mixeddensity(c::Chains)
 
 # construct autocorrelation plots
-autocorplot(c::AbstractChains)
+autocorplot(c::Chains)
 
 # make a cornerplot (requires StatPlots) of parameters in a Chain:
-corner(c::AbstractChains, [:A, :B])
+corner(c::Chains, [:A, :B])
 ```
 
 ### Saving and Loading Chains

@@ -1,12 +1,12 @@
 #################### File I/O ####################
 
-function Base.read(name::AbstractString, ::Type{T}) where {T<:AbstractChains}
+function Base.read(name::AbstractString, ::Type{T}) where {T<:Chains}
   c = open(deserialize, name, "r")
   isa(c, T) || throw(TypeError(:open, "read(\"$name\", $T)", T, c))
   return c
 end
 
-function Base.write(name::AbstractString, c::AbstractChains)
+function Base.write(name::AbstractString, c::Chains)
   open(file -> serialize(file, c), name, "w")
 end
 

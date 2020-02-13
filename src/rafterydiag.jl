@@ -52,7 +52,7 @@ function rafterydiag(
 end
 
 function rafterydiag(
-                     chn::AbstractChains;
+                     chn::Chains;
                      q = 0.025,
                      r = 0.005,
                      s = 0.95,

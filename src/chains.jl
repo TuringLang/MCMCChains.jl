@@ -156,7 +156,7 @@ function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sorted:
             push!(syms, value)
         end
     end
-    return sorted ? sort!(syms, lt=MCMCChains.natural) : syms
+    return sorted ? sort!(syms, lt=natural) : syms
 end
 
 Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
@@ -315,15 +315,15 @@ function Base.show(io::IO, c::Chains)
     end
 end
 
-Base.keys(c::AbstractChains) = names(c)
-Base.size(c::AbstractChains) = size(c.value)
-Base.size(c::AbstractChains, ind) = size(c)[ind]
-Base.length(c::AbstractChains) = length(range(c))
-Base.first(c::AbstractChains) = first(c.value[Axis{:iter}].val)
-Base.step(c::AbstractChains) = step(c.value[Axis{:iter}].val)
-Base.last(c::AbstractChains) = last(c.value[Axis{:iter}].val)
+Base.keys(c::Chains) = names(c)
+Base.size(c::Chains) = size(c.value)
+Base.size(c::Chains, ind) = size(c)[ind]
+Base.length(c::Chains) = length(range(c))
+Base.first(c::Chains) = first(c.value[Axis{:iter}].val)
+Base.step(c::Chains) = step(c.value[Axis{:iter}].val)
+Base.last(c::Chains) = last(c.value[Axis{:iter}].val)
 
-Base.convert(::Type{Array}, chn::MCMCChains.Chains) = convert(Array, chn.value)
+Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
 #################### Auxilliary Functions ####################
 
@@ -332,7 +332,7 @@ function Base.hash(c::Chains)
     return hash(val)
 end
 
-function combine(c::AbstractChains)
+function combine(c::Chains)
   n, p, m = size(c.value)
   value = Array{Float64}(undef, n * m, p)
   for j in 1:p
@@ -346,39 +346,38 @@ function combine(c::AbstractChains)
 end
 
 """
-    range(c::AbstractChains)
+    range(c::Chains)
 
 Returns the range used in a `Chains` object.
 """
-function range(c::AbstractChains)
+function Base.range(c::Chains)
     return c.value[Axis{:iter}].val
 end
 
 """
-    chains(c::AbstractChains)
+    chains(c::Chains)
 
-Returns the names or symbols of each chain in an `AbstractChains` object.
+Returns the names or symbols of each chain in a `Chains` object.
 """
-function chains(c::AbstractChains)
+function chains(c::Chains)
     return c.value[Axis{:chain}].val
 end
 
 """
-    names(c::AbstractChains, sections)
+    names(c::Chains, sections)
 
 Return the parameter names in a `Chains` object.
 """
-function names(c::AbstractChains)
+function Base.names(c::Chains)
     return c.value[Axis{:var}].val
 end
 
 """
-    names(c::AbstractChains, sections::Union{Symbol, Vector{Symbol}})
+    names(c::Chains, sections::Union{Symbol, Vector{Symbol}})
 
 Return the parameter names in a `Chains` object, given an array of sections.
 """
-function names(c::AbstractChains,
-    sections::Union{Symbol, Vector{Symbol}})
+function Base.names(c::Chains, sections::Union{Symbol, Vector{Symbol}})
     # Check that sections is an array.
     sections = typeof(sections) <: AbstractArray ?
         sections :
@@ -393,26 +392,26 @@ function names(c::AbstractChains,
 end
 
 """
-    get_sections(c::AbstractChains, sections::Vector = [])
+    get_sections(c::Chains, sections::Vector = [])
 
 Returns multiple `Chains` objects, each containing only a single section.
 """
-function get_sections(c::AbstractChains, sections::Vector = [])
+function get_sections(c::Chains, sections::Vector = [])
     sections = length(sections) == 0 ? collect(keys(c.name_map)) : sections
     return [Chains(c, section) for section in sections]
 end
 
 # Return a new chain for each section.
-function get_sections(c::AbstractChains, section::Union{Symbol, String})
+function get_sections(c::Chains, section::Union{Symbol, String})
     return get_sections(c, [section])
 end
 
 """
-    sections(c::AbstractChains)
+    sections(c::Chains)
 
 Retrieve a list of the sections in a chain.
 """
-sections(c::AbstractChains) = collect(keys(c.name_map))
+sections(c::Chains) = collect(keys(c.name_map))
 
 """
     header(c::Chains; section=missing)
@@ -431,7 +430,7 @@ header(chn)
 header(chn, section = :parameter)
 ```
 """
-function header(c::AbstractChains; section=missing)
+function header(c::Chains; section=missing)
     rng = range(c)
 
     # Function to make section strings.
@@ -470,7 +469,7 @@ function header(c::AbstractChains; section=missing)
     )
 end
 
-function indiscretesupport(c::AbstractChains,
+function indiscretesupport(c::Chains,
                            bounds::Tuple{Real, Real}=(0, Inf))
   nrows, nvars, nchains = size(c.value)
   result = Array{Bool}(undef, nvars * (nrows > 0))
@@ -487,7 +486,7 @@ function indiscretesupport(c::AbstractChains,
   result
 end
 
-function link(c::AbstractChains)
+function link(c::Chains)
   cc = copy(c.value.data)
   for j in 1:length(c.names)
     x = cc[:, j, :]
@@ -527,7 +526,7 @@ function Base.sort(c::Chains)
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
-    sorted = sort(unsorted, by = x -> string(x[2]), lt=MCMCChains.natural)
+    sorted = sort(unsorted, by = x -> string(x[2]), lt=natural)
     new_axes = (v.axes[1], Axis{:var}([n for (_, n) in sorted]), v.axes[3])
     new_v = copy(v.data)
     for i in eachindex(sorted)
@@ -537,7 +536,7 @@ function Base.sort(c::Chains)
     # Sort the name map too:
     name_dict = Dict()
     for (name, values) in pairs(c.name_map)
-        name_dict[name] = sort(values, by=x -> string(x), lt=MCMCChains.natural)
+        name_dict[name] = sort(values, by=x -> string(x), lt=natural)
     end
     new_name_map = _dict2namedtuple(name_dict)
 
@@ -598,14 +597,14 @@ function set_section(c::Chains, d::Dict)
         c.value, c.logevidence, nt, c.info)
 end
 
-function _use_showall(c::AbstractChains, section::Symbol)
+function _use_showall(c::Chains, section::Symbol)
     if section == :parameters && !in(:parameters, keys(c.name_map))
         return true
     end
     return false
 end
 
-function _clean_sections(c::AbstractChains, sections::Union{Vector{Symbol}, Symbol})
+function _clean_sections(c::Chains, sections::Union{Vector{Symbol}, Symbol})
     sections = sections isa AbstractArray ? sections : [sections]
     ks = collect(keys(c.name_map))
     return ks ∩ sections
@@ -613,13 +612,13 @@ end
 
 #################### Concatenation ####################
 
-function Base.cat(c::Chains...; dims = 1)
+function Base.cat(c::Chains, cs::Chains...; dims = 1)
     if dims == 1
-        return cat1(c...)
+        return cat1(c, cs...)
     elseif dims == 2
-        return cat2(c...)
+        return cat2(c, cs...)
     elseif dims == 3
-        return cat3(c...)
+        return cat3(c, cs...)
     else
         throw(ArgumentError("cannot concatenate along dimension $dims"))
     end

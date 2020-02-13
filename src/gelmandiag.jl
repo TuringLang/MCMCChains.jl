@@ -1,6 +1,6 @@
 #################### Gelman, Rubin, and Brooks Diagnostics ####################
 
-function gelmandiag(chn::AbstractChains;
+function gelmandiag(chn::Chains;
         alpha::Real=0.05,
         mpsrf::Bool=false,
         transform::Bool=false,

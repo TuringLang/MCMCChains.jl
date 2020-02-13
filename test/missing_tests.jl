@@ -1,4 +1,5 @@
 using MCMCChains
+using StatsBase
 using Test
 
 # Tests for missing values.
@@ -13,16 +14,14 @@ end
 
     # Call describe without missing values.
     describe(devnull, chn; showall=true)
-    s1, s2 = MCMCChains.summarystats(chn),
-      MCMCChains.quantile(chn)
+    s1, s2 = summarystats(chn), quantile(chn)
 
     # Add missing values.
     chn_m = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
 
     # Call describe with missing values.
     describe(devnull, chn_m; showall=true)
-    m1, m2 = MCMCChains.summarystats(chn_m),
-      MCMCChains.quantile(chn_m)
+    m1, m2 = summarystats(chn_m), quantile(chn_m)
 
     @test s1[:,2:4] == m1[:,2:4]
 end

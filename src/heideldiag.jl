@@ -26,7 +26,7 @@ function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
   [i + start - 2, converged, round(pvalue, digits = 4), ybar, halfwidth, passed]
 end
 
-function heideldiag(chn::AbstractChains;
+function heideldiag(chn::Chains;
                     alpha = 0.05,
                     eps = 0.1,
                     etype = :imse,

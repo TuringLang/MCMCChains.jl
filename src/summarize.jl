@@ -96,12 +96,12 @@ end
 
 # Summarize a Chains object formatted as a DataFrame
 
-Summarize method for an MCMCChains.Chains object.
+Summarize method for a Chains object.
 
 ### Method
 ```julia
   summarize(
-    chn::MCMCChains.AbstractChains,
+    chn::Chains,
     funs...;
     sections::Vector{Symbol}=[:parameters],
     func_names=[],

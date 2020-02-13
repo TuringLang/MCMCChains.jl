@@ -1,4 +1,4 @@
-function sort_sections(chn::MCMCChains.AbstractChains)
+function sort_sections(chn::Chains)
     smap = keys(chn.name_map)
     section_list = Vector{Symbol}(undef, length(smap))
     indx = 1
@@ -22,14 +22,14 @@ end
 
 # Array
 
-Array constructor from an MCMCChains.Chains object. Returns 3 dimensionsal
+Array constructor from a Chains object. Returns 3 dimensionsal
 array or an Array of 2 dimensional Arrays. If only a single parameter is selected for
 inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), etc.
 
 ### Method
 ```julia
   Array(
-    chn::MCMCChains.AbstractChains,
+    chn::Chains,
     sections::Vector{Symbol};
     append_chains::Bool,
     remove_missing_union::Bool
@@ -59,7 +59,7 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ```
 
 """
-function Array(chn::MCMCChains.AbstractChains,
+function Array(chn::Chains,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
         append_chains=true,
         remove_missing_union=true,
@@ -139,13 +139,13 @@ end
 
 # DataFrame
 
-DataFrame constructor from an MCMCChains.Chains object.
+DataFrame constructor from a Chains object.
 Returns either a DataFrame or an Array{DataFrame}
 
 ### Method
 ```julia
   DataFrame(
-    chn::MCMCChains.AbstractChains,
+    chn::Chains,
     sections::Vector{Symbo);
     append_chains::Bool,
     remove_missing_union::Bool
@@ -175,7 +175,7 @@ Returns either a DataFrame or an Array{DataFrame}
 ```
 
 """
-function DataFrame(chn::MCMCChains.AbstractChains,
+function DataFrame(chn::Chains,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
     append_chains=true,
     remove_missing_union=true,
@@ -200,7 +200,7 @@ function DataFrame(chn::MCMCChains.AbstractChains,
         for section in section_list
             names = sorted ?
                 sort(chn.name_map[section],
-                    by=x->string(x), lt = MCMCChains.natural) :
+                    by=x->string(x), lt = natural) :
                 chn.name_map[section]
             for par in names
                 x = get(chn, Symbol(par))
@@ -220,7 +220,7 @@ function DataFrame(chn::MCMCChains.AbstractChains,
             for section in section_list
                 names = sorted ?
                     sort(chn.name_map[section],
-                        by=x->string(x), lt = MCMCChains.natural) :
+                        by=x->string(x), lt = natural) :
                     chn.name_map[section]
                 for par in names
                     x = get(chn[:,:,i], Symbol(par))
