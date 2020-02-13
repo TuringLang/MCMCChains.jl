@@ -391,7 +391,6 @@ function summarystats(chn::Chains;
     )
 
     # Make some functions.
-    sem(x) = sqrt(var(x) / length(x))
     df_mcse(x) = length(x) < 200 ?
         missing :
         mcse(cskip(x), etype, args...)
