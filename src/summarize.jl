@@ -1,9 +1,3 @@
-using DataFrames: names!
-using StatsBase: mean, std, sem
-import StatsBase: sem
-import Base.size
-import Base.names
-
 struct ChainDataFrame
     name::String
     df::DataFrame

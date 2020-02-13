@@ -428,7 +428,7 @@ end
 
 Calculates the mean of a `Chains` object, or a specific parameter.
 """
-function Statistics.mean(chn::Chains;
+function mean(chn::Chains;
         append_chains::Bool=true,
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
@@ -450,13 +450,10 @@ function Statistics.mean(chn::Chains;
     return summary_df
 end
 
-Statistics.mean(chn::Chains, ss::Vector{Symbol}) =
-    mean(chn[:, ss, :])
-Statistics.mean(chn::Chains, s::String) =
-    mean(chn, Symbol(s))
-Statistics.mean(chn::Chains, ss::Vector{String}) =
-    mean(chn, Symbol.(ss))
-function Statistics.mean(chn::Chains, s::Symbol)
+mean(chn::Chains, ss::Vector{Symbol}) = mean(chn[:, ss, :])
+mean(chn::Chains, s::String) = mean(chn, Symbol(s))
+mean(chn::Chains, ss::Vector{String}) = mean(chn, Symbol.(ss))
+function mean(chn::Chains, s::Symbol)
     syms = _sym2index(chn, [s])
 
     if length(syms) == 0

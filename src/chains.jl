@@ -51,7 +51,7 @@ function Chains(
     # Construct axis names and ranges.
     names = [:iter, :var, :chain]
     axvals = [
-        Base.range(start, step=thin, length=size(val, 1)),
+        range(start, step=thin, length=size(val, 1)),
         parameter_names,
         collect(1:size(val, 3)),
     ]

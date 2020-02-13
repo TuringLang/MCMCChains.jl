@@ -278,7 +278,7 @@ Array(chns, append_chains=false)
 Array(chns, remove_missing_union=false)
 
 # This will not convert the Array columns from a
-`Union{Missing, Real}` to a `Vector{Real}`.
+# `Union{Missing, Real}` to a `Vector{Real}`.
 ```
 
 Similarly, for DataFrames:
@@ -292,7 +292,7 @@ DataFrame(chns, append_chains=false)
 DataFrame(chns, remove_missing_union=false)
 ```
 
-See also ?MCMCChains.DataFrame and ?MCMCChains.Array for more help.
+See also `?DataFrame` and `?Array` for more help.
 
 ### Sampling Chains
 

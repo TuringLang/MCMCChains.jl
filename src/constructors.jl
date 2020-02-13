@@ -59,7 +59,7 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ```
 
 """
-function Array(chn::Chains,
+function Base.Array(chn::Chains,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
         append_chains=true,
         remove_missing_union=true,

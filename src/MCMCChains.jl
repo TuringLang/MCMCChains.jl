@@ -1,38 +1,31 @@
 module MCMCChains
 
-using AbstractMCMC
-
-import Statistics
-import StatsBase: autocor, autocov, countmap, counts, describe, predict,
-       quantile, sample, sem, summarystats, AbstractWeights
-import LinearAlgebra: diag
-import Serialization: serialize, deserialize
-import Base: sort, range, names, get, hash, convert, show, display
-import Statistics: cor, mean
-import Core.Array
-import DataFrames: DataFrame, names, eachcol
-using Random
-
-using RecipesBase
-import RecipesBase: plot
-
-using Serialization
-using Distributions
-using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
 
-export Chains, getindex, setindex!, chains, setinfo, chainscat
-export describe, set_section, get_params, sections, set_names
-export sample, AbstractWeights
-export Array, DataFrame, sort_sections, convert
-export summarize, summarystats, ChainDataFrame
-export hpd, ess
+using AbstractMCMC
+import DataFrames: DataFrame
+using Distributions
+using RecipesBase
+using SpecialFunctions
+using StatsBase: autocov, counts, sem, AbstractWeights
+import StatsBase: autocor, describe, quantile, sample, summarystats
+
+using LinearAlgebra: diag
+import Serialization: serialize, deserialize
+import Random
+import Statistics: std, cor, mean
+
+export Chains, chains, chainscat
+export set_section, get_params, sections, sort_sections, setinfo, set_names
 export mean
+export autocor, describe, sample, summarystats, AbstractWeights
+export ChainDataFrame, DataFrame
+export summarize
 
 # export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
-export autocor
+export hpd, ess
 
 """
     Chains type
