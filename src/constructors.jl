@@ -189,7 +189,7 @@ function DataFrame(chn::Chains,
     # If we actually have missing values, we can't remove
     # Union{Missing}.
     remove_missing_union = remove_missing_union ?
-        all(x -> !ismissing(x), chn.value) :
+        all(!ismissing, chn.value) :
         remove_missing_union
 
     d, p, c = size(chn.value.data)
