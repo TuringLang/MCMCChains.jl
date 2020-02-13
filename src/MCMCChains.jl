@@ -4,6 +4,7 @@ using AxisArrays
 const axes = Base.axes
 
 using AbstractMCMC
+using Compat
 import DataFrames: DataFrame
 using Distributions
 using RecipesBase
