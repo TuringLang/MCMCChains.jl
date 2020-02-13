@@ -1,7 +1,7 @@
 ########################### Chisq Diagnostic ###########################
 
-function update_hangartner_temp_vars!(u::Matrix{Int64}, X::Matrix{Int64},
-                                      t::Int64)
+function update_hangartner_temp_vars!(u::Matrix{Int}, X::Matrix{Int},
+                                      t::Int)
   d = size(X,2)
 
   for j in 1:d
@@ -14,8 +14,8 @@ function hangartner_inner(Y::AbstractMatrix, m::Int)
   n, d = size(Y)
 
   # Count for each category in each chain
-  u = zeros(Int64, m, d)
-  v = zeros(Int64, m, d)
+  u = zeros(Int, m, d)
+  v = zeros(Int, m, d)
 
   for t in 1:n
     # fill out temp vars
@@ -78,7 +78,7 @@ function weiss(X::AbstractMatrix)
   return ( stat, m_tot, pval, ca)
 end
 
-function weiss_sub(u::Matrix{Int64}, v::Matrix{Int64}, t::Int)
+function weiss_sub(u::Matrix{Int}, v::Matrix{Int}, t::Int)
   m, d = size(u)
   nt = 0.0
   dt = 0.0
@@ -119,9 +119,9 @@ function weiss_sub(u::Matrix{Int64}, v::Matrix{Int64}, t::Int)
   return (phia, chi_stat, m_tot)
 end
 
-function update_billingsley_temp_vars!(f::Array{Int64,3},
-                                       X::Matrix{Int64},
-                                       t::Int64)
+function update_billingsley_temp_vars!(f::Array{Int,3},
+                                       X::Matrix{Int},
+                                       t::Int)
   d = size(X,2)
   for j in 1:d
     if t > 1
@@ -130,7 +130,7 @@ function update_billingsley_temp_vars!(f::Array{Int64,3},
   end
 end
 
-function billingsley_sub(f::Array{Int64,3})
+function billingsley_sub(f::Array{Int,3})
   df = 0.0
   stat = 0.0
 
@@ -177,7 +177,7 @@ end
 function bd_inner(Y::AbstractMatrix, m::Int)
   num_iters, num_chains = size(Y)
   # Transition matrix for each chain
-  f = zeros(Int64, m, m, num_chains)
+  f = zeros(Int, m, m, num_chains)
 
   for t in 1:num_iters
     # fill out temp vars
@@ -188,7 +188,7 @@ end
 
 function simulate_NDARMA(N::Int, p::Int, q::Int, prob::Vector{Float64},
                          phi::Vector{Float64})
-  X = zeros(Int64, N)
+  X = zeros(Int, N)
   X[1:p] = rand(Categorical(prob), p)
   d1 = Multinomial(1, phi)
   d2 = Categorical(prob)
@@ -201,7 +201,7 @@ function simulate_NDARMA(N::Int, p::Int, q::Int, prob::Vector{Float64},
 end
 
 function simulate_MC(N::Int, P::Matrix{Float64})
-  X = zeros(Int64, N)
+  X = zeros(Int, N)
   n, m = size(P)
   X[1] = sample(1:n)
   for i in 2:N
@@ -337,9 +337,9 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
   plot_vals_pval = zeros(length(start_iter:step_size:num_iters), num_vars)
 
   ## Between-chain diagnostic
-  X = zeros(Int64, num_iters, num_chains)
+  X = zeros(Int, num_iters, num_chains)
   for j in 1:length(num_vars)
-    X = convert(Array{Int64, 2}, c.value[:,j,:])
+    X = convert(Array{Int, 2}, c.value[:,j,:])
     result = diag_all(X, method, nsim, start_iter, step_size)
     plot_vals_stat[:,j] = result[1, :] ./ result[2, :]
     plot_vals_pval[:,j] = result[3, :]
@@ -347,14 +347,14 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
   end
 
   ## Within-chain diagnostic
-  x = zeros(Int64, num_iters)
-  Y = zeros(Int64, num_iters, 2)
+  x = zeros(Int, num_iters)
+  Y = zeros(Int, num_iters, 2)
   for j in 1:num_vars
     for k in 1:num_chains
-      x = convert(Array{Int64, 1}, c.value[:,j,k])
+      x = convert(Array{Int, 1}, c.value[:,j,k])
 
-      idx1 = 1:round(Int64, frac * num_iters)
-      idx2 = round(Int64, num_iters - frac * num_iters + 1):num_iters
+      idx1 = 1:round(Int, frac * num_iters)
+      idx2 = round(Int, num_iters - frac * num_iters + 1):num_iters
       x1 = x[idx1]
       x2 = x[idx2]
       n_min = min(length(x1), length(x2))
