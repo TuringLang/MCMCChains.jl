@@ -11,24 +11,23 @@ The following simple example illustrates how to use Chain to visually summarize 
 using MCMCChains
 using StatsPlots
 
-theme(:ggplot2);
+theme(:ggplot2)
 
 # Define the experiment
-n_iter = 500;
-n_name = 3;
-n_chain = 2;
+n_iter = 500
+n_name = 3
+n_chain = 2
 
 # experiment results
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]';
-val = hcat(val, rand(1:2, n_iter, 1, n_chain));
+val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
+val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 
 # construct a Chains object
-chn = Chains(val);
+chn = Chains(val)
 
 # visualize the MCMC simulation results
 p1 = plot(chn)
 p2 = plot(chn, colordim = :parameter)
-
 ```
 This code results in the visualizations shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
