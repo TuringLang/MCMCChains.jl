@@ -3,7 +3,6 @@ module MCMCChains
 using AbstractMCMC
 
 import Statistics
-import Showoff: showoff
 import StatsBase: autocor, autocov, countmap, counts, describe, predict,
        quantile, sample, sem, summarystats, AbstractWeights
 import LinearAlgebra: diag
