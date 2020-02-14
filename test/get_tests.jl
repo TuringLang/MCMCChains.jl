@@ -1,19 +1,27 @@
 using MCMCChains
-using Turing
+using Distributions
+using Random
 using Test
 
-@testset "get tests" begin
-    @model model(x) = begin
-        m = Vector{Real}(undef, 10)
-        [m[i] ~ Normal(i, 0.1) for i in 1:10]
-        s ~ InverseGamma(2,3)
-        x ~ Normal(0, s)
-    end
+Random.seed!(20)
 
+@testset "get tests" begin
+    # Consider the model
+    # ```math
+    # m ~ Normal([1, 2, ..., 10], 0.1^2)
+    # s ~ IG(2, 3)
+    # x ~ Normal(0, s)
+    # ```
+    # for variable ``x``. Given observation ``x = 2``, sample one chain with 1000 samples
+    # from the posterior
+    # ```math
+    # m ~ Normal([1, 2, ..., 10], 0.1^2)
+    # s ∼ IG(2.5, 5)
+    # ```
     n_samples = 1000
-    model = model(2.0)
-    sampler = MH(n_samples)
-    chn = sample(model, sampler)
+    vals = hcat(rand(MvNormal(1:10, 0.1), n_samples)',
+                rand(InverseGamma(2.5, 5), n_samples))
+    chn = Chains(vals, [("m[$i]" for i in 1:10)..., "s"])
 
     get1 = get(chn, :m)
     get2 = get(chn, [:m, :s])
@@ -25,10 +33,7 @@ using Test
     @test length(get2.s) == n_samples
     @test collect(keys(get2)) == [:m, :s]
 
-    getsection = get(chn, section = :internals)
-    @test length(keys(getsection)) == 2
-
     getall = get_params(chn)
-    @test getall == get(chn, section=[:internals, :parameters])
-    @test length(keys(getall)) == 4
+    @test getall == get(chn, section = [:parameters])
+    @test length(keys(getall)) == 2
 end
