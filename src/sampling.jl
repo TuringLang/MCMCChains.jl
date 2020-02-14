@@ -4,7 +4,7 @@ function sample(chn::Chains, wv::AbstractWeights, n)
 end
 
 function sample(
-    rng::AbstractRNG,
+    rng::Random.AbstractRNG,
     chn::Chains,
     n;
     replace = true,
@@ -16,7 +16,7 @@ function sample(
 end
 
 function sample(
-    rng::AbstractRNG,
+    rng::Random.AbstractRNG,
     chn::Chains,
     wv::AbstractWeights,
     n

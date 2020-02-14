@@ -175,7 +175,7 @@ Returns either a DataFrame or an Array{DataFrame}
 ```
 
 """
-function DataFrame(chn::Chains,
+function DataFrames.DataFrame(chn::Chains,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
     append_chains=true,
     remove_missing_union=true,

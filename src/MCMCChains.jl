@@ -3,9 +3,10 @@ module MCMCChains
 using AxisArrays
 const axes = Base.axes
 
-using AbstractMCMC
-using DataFrames: eachcol
-import DataFrames: DataFrame
+import AbstractMCMC
+using AbstractMCMC: chainscat
+import DataFrames
+using DataFrames: eachcol, DataFrame
 using Distributions
 using RecipesBase
 using SpecialFunctions
@@ -29,7 +30,7 @@ export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export hpd, ess
 
 """
-    Chains type
+    Chains
 
 Parameters:
 
@@ -39,7 +40,7 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractChains
+struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractMCMC.AbstractChains
     value::AxisArray{A,3}
     logevidence::T
     name_map::K

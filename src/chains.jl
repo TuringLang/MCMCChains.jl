@@ -614,9 +614,9 @@ end
 
 function Base.cat(c::Chains, cs::Chains...; dims = 1)
     if dims == 1
-        return cat1(c, cs...)
+        return vcat(c, cs...)
     elseif dims == 2
-        return cat2(c, cs...)
+        return hcat(c, cs...)
     elseif dims == 3
         return cat3(c, cs...)
     else
@@ -624,7 +624,7 @@ function Base.cat(c::Chains, cs::Chains...; dims = 1)
     end
 end
 
-function cat1(c1::Chains, args::Chains...)
+function Base.vcat(c1::Chains, args::Chains...)
     rng = range(c1)
     for c in args
         step(rng) == step(c) ||
@@ -647,7 +647,7 @@ function cat1(c1::Chains, args::Chains...)
         info = c1.info)
 end
 
-function cat2(c1::Chains, args::Chains...)
+function Base.hcat(c1::Chains, args::Chains...)
   rng = range(c1)
   all(c -> range(c) == rng, args) ||
     throw(ArgumentError("chain ranges differ"))
