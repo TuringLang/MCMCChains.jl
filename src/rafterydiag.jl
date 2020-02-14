@@ -1,13 +1,13 @@
 #################### Raftery and Lewis Diagnostic ####################
 
 function rafterydiag(
-                     x::Vector{T};
+                     x::Vector{<:Real};
                      q = 0.025,
                      r = 0.005,
                      s = 0.95,
                      eps = 0.001,
                      range = 1:length(x)
-                    ) where {T<:Real}
+                    )
 
     nx = length(x)
     phi = sqrt(2.0) * erfinv(s)
@@ -52,7 +52,7 @@ function rafterydiag(
 end
 
 function rafterydiag(
-                     chn::AbstractChains;
+                     chn::Chains;
                      q = 0.025,
                      r = 0.005,
                      s = 0.95,

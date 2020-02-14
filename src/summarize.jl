@@ -1,9 +1,3 @@
-using DataFrames: names!
-using StatsBase: mean, std, sem
-import StatsBase: sem
-import Base.size
-import Base.names
-
 struct ChainDataFrame
     name::String
     df::DataFrame
@@ -96,12 +90,12 @@ end
 
 # Summarize a Chains object formatted as a DataFrame
 
-Summarize method for an MCMCChains.Chains object.
+Summarize method for a Chains object.
 
 ### Method
 ```julia
   summarize(
-    chn::MCMCChains.AbstractChains,
+    chn::Chains,
     funs...;
     sections::Vector{Symbol}=[:parameters],
     func_names=[],

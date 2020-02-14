@@ -16,7 +16,7 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function autocor(chn::AbstractChains;
+function autocor(chn::Chains;
         lags::Vector=[1, 5, 10, 50],
         demean::Bool=true,
         relative::Bool=true,
@@ -50,7 +50,7 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function cor(chn::AbstractChains;
+function cor(chn::Chains;
         showall=false,
         append_chains=true,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
@@ -95,7 +95,7 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function changerate(chn::AbstractChains;
+function changerate(chn::Chains;
     append_chains=true,
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
@@ -133,11 +133,11 @@ function changerate(chn::AbstractChains;
         digits=digits)
 end
 
-describe(c::AbstractChains; args...) = describe(stdout, c; args...)
+describe(c::Chains; args...) = describe(stdout, c; args...)
 
 """
     describe(io::IO,
-        c::AbstractChains;
+        c::Chains;
         q = [0.025, 0.25, 0.5, 0.75, 0.975],
         etype=:bm,
         showall=false,
@@ -153,7 +153,7 @@ The `digits` keyword may be a(n)
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function describe(io::IO,
-                  c::AbstractChains;
+                  c::Chains;
                   q = [0.025, 0.25, 0.5, 0.75, 0.975],
                   etype=:bm,
                   showall::Bool=false,
@@ -175,7 +175,7 @@ function describe(io::IO,
     return dfs
 end
 
-function _hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
+function _hpd(x::Vector{<:Real}; alpha::Real=0.05)
     n = length(x)
     m = max(1, ceil(Int, alpha * n))
 
@@ -187,7 +187,7 @@ function _hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
     return [a[i], b[i]]
 end
 
-function hpd(chn::AbstractChains; alpha::Real=0.05,
+function hpd(chn::Chains; alpha::Real=0.05,
         append_chains=true,
         showall=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
@@ -218,7 +218,7 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function quantile(chn::AbstractChains;
+function quantile(chn::Chains;
         q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
         append_chains=true,
         showall=false,
@@ -240,7 +240,7 @@ function quantile(chn::AbstractChains;
 end
 
 """
-	ess(chn::AbstractChains;
+	ess(chn::Chains;
 		showall=false,
 		sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
 		maxlag = 250,
@@ -253,7 +253,7 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function ess(chn::AbstractChains;
+function ess(chn::Chains;
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
     maxlag = 250,
@@ -380,7 +380,7 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function summarystats(chn::MCMCChains.AbstractChains;
+function summarystats(chn::Chains;
         append_chains::Bool=true,
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
@@ -391,7 +391,6 @@ function summarystats(chn::MCMCChains.AbstractChains;
     )
 
     # Make some functions.
-    sem(x) = sqrt(var(x) / length(x))
     df_mcse(x) = length(x) < 200 ?
         missing :
         mcse(cskip(x), etype, args...)
@@ -416,20 +415,20 @@ function summarystats(chn::MCMCChains.AbstractChains;
 end
 
 """
-    mean(chn::MCMCChains.AbstractChains;
+    mean(chn::Chains;
             append_chains::Bool=true,
             showall::Bool=false,
             sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
             digits=missing,
             args...)
-    mean(chn::MCMCChains.AbstractChains, ss::Vector{Symbol})
-    mean(chn::MCMCChains.AbstractChains, s::Symbol)
-    mean(chn::MCMCChains.AbstractChains, s::String)
-    mean(chn::MCMCChains.AbstractChains, ss::Vector{String})
+    mean(chn::Chains, ss::Vector{Symbol})
+    mean(chn::Chains, s::Symbol)
+    mean(chn::Chains, s::String)
+    mean(chn::Chains, ss::Vector{String})
 
 Calculates the mean of a `Chains` object, or a specific parameter.
 """
-function Statistics.mean(chn::MCMCChains.AbstractChains;
+function mean(chn::Chains;
         append_chains::Bool=true,
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
@@ -451,13 +450,10 @@ function Statistics.mean(chn::MCMCChains.AbstractChains;
     return summary_df
 end
 
-Statistics.mean(chn::MCMCChains.AbstractChains, ss::Vector{Symbol}) =
-    mean(chn[:, ss, :])
-Statistics.mean(chn::MCMCChains.AbstractChains, s::String) =
-    mean(chn, Symbol(s))
-Statistics.mean(chn::MCMCChains.AbstractChains, ss::Vector{String}) =
-    mean(chn, Symbol.(ss))
-function Statistics.mean(chn::MCMCChains.AbstractChains, s::Symbol)
+mean(chn::Chains, ss::Vector{Symbol}) = mean(chn[:, ss, :])
+mean(chn::Chains, s::String) = mean(chn, Symbol(s))
+mean(chn::Chains, ss::Vector{String}) = mean(chn, Symbol.(ss))
+function mean(chn::Chains, s::Symbol)
     syms = _sym2index(chn, [s])
 
     if length(syms) == 0

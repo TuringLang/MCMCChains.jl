@@ -1,4 +1,5 @@
 using MCMCChains
+using AbstractMCMC
 using Test
 
 ## CHAIN TESTS
@@ -25,18 +26,18 @@ chn_disc = Chains(val_disc, start = 1, thin = 2, sorted=true)
     @test size(chn) == (4000, 4, 2)
     @test size(chn[1:1000, :, :]) == (1000, 4, 2)
     @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
-    @test isa(chn[:,1,:], MCMCChains.AbstractChains)
-    @test isa(chn[200:300,"Param1",:], MCMCChains.AbstractChains)
-    @test isa(chn[200:300,["Param1", "Param3"],:], MCMCChains.AbstractChains)
-    @test isa(chn[200:300,"Param1",1], MCMCChains.AbstractChains)
+    @test isa(chn[:,1,:], AbstractChains)
+    @test isa(chn[200:300,"Param1",:], AbstractChains)
+    @test isa(chn[200:300,["Param1", "Param3"],:], AbstractChains)
+    @test isa(chn[200:300,"Param1",1], AbstractChains)
     @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
     @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
     @test all(chn[:,1,2].value .== val[:,1,2])
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
-    @test isa(set_section(chn, Dict(:internals => ["Param1"])), MCMCChains.AbstractChains)
-    @test mean(chn) isa MCMCChains.ChainDataFrame
-    @test mean(chn, ["Param1", "Param2"]) isa MCMCChains.ChainDataFrame
+    @test isa(set_section(chn, Dict(:internals => ["Param1"])), AbstractChains)
+    @test mean(chn) isa ChainDataFrame
+    @test mean(chn, ["Param1", "Param2"]) isa ChainDataFrame
     @test 1.05 >= mean(chn, :Param1) >= 0.95
     @test 1.05 >= mean(chn, "Param1") >= 0.95
     @test names(set_names(chn, Dict("Param1" => "PARAM1"))) ==
@@ -49,11 +50,11 @@ end
     @test MCMCChains.diag_all(rand(50, 2), :hangartner, 1, 1, 1) != nothing
     @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
-    @test isa(discretediag(chn_disc[:,2,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(gelmandiag(chn[:,1,:]), MCMCChains.ChainDataFrame)
-    @test isa(gewekediag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(heideldiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(rafterydiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
+    @test isa(discretediag(chn_disc[:,2,:]), Vector{ChainDataFrame})
+    @test isa(gelmandiag(chn[:,1,:]), ChainDataFrame)
+    @test isa(gewekediag(chn[:,1,:]), Vector{ChainDataFrame})
+    @test isa(heideldiag(chn[:,1,:]), Vector{ChainDataFrame})
+    @test isa(rafterydiag(chn[:,1,:]), Vector{ChainDataFrame})
 end
 
 @testset "vector of vectors" begin

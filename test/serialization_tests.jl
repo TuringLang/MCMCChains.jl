@@ -16,7 +16,7 @@ ProjDir = mktempdir()
     chn1 = sample(model, sampler, 500, save_state=true)
 
     write(joinpath(ProjDir, "chn1.jls"), chn1)
-    chn2 = read(joinpath(ProjDir, "chn1.jls"), MCMCChains.Chains)
+    chn2 = read(joinpath(ProjDir, "chn1.jls"), Chains)
 
     open(joinpath(ProjDir, "chn1.txt"), "w") do io
         describe(io, chn1);

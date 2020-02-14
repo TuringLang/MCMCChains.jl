@@ -1,7 +1,7 @@
 #################### Heidelberger and Welch Diagnostic ####################
 
-function heideldiag(x::Vector{T}; alpha::Real=0.05, eps::Real=0.1,
-                             etype=:imse, start::Integer=1, args...) where {T<:Real}
+function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
+                             etype=:imse, start::Integer=1, args...)
   n = length(x)
   delta = trunc(Int, 0.10 * n)
   y = x[trunc(Int, n / 2):end]
@@ -26,7 +26,7 @@ function heideldiag(x::Vector{T}; alpha::Real=0.05, eps::Real=0.1,
   [i + start - 2, converged, round(pvalue, digits = 4), ybar, halfwidth, passed]
 end
 
-function heideldiag(chn::AbstractChains;
+function heideldiag(chn::Chains;
                     alpha = 0.05,
                     eps = 0.1,
                     etype = :imse,
