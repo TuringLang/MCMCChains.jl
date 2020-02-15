@@ -1,5 +1,5 @@
 using MCMCChains
-using AbstractMCMC
+using AbstractMCMC: AbstractChains
 using Test
 
 ## CHAIN TESTS
