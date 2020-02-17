@@ -612,19 +612,20 @@ end
 
 #################### Concatenation ####################
 
-function Base.cat(c::Chains, cs::Chains...; dims = 1)
-    if dims == 1
-        return vcat(c, cs...)
-    elseif dims == 2
-        return hcat(c, cs...)
-    elseif dims == 3
-        return cat3(c, cs...)
-    else
-        throw(ArgumentError("cannot concatenate along dimension $dims"))
-    end
-end
+Base.cat(c::Chains, cs::Chains...; dims = Val(1)) = _cat(dims, c, cs...)
+Base.cat(c::T, cs::T...; dims = Val(1)) where T<:Chains = _cat(dims, c, cs...)
 
-function Base.vcat(c1::Chains, args::Chains...)
+Base.vcat(c::Chains, cs::Chains...) = _cat(Val(1), c, cs...)
+Base.vcat(c::T, cs::T...) where T<:Chains = _cat(Val(1), c, cs...)
+
+Base.hcat(c::Chains, cs::Chains...) = _cat(Val(2), c, cs...)
+Base.hcat(c::T, cs::T...) where T<:Chains = _cat(Val(2), c, cs...)
+
+AbstractMCMC.chainscat(c::Chains, cs::Chains...) = _cat(Val(3), c, cs...)
+
+_cat(dim::Int, cs::Chains...) = _cat(Val(dim), cs...)
+
+function _cat(::Val{1}, c1::Chains, args::Chains...)
     rng = range(c1)
     for c in args
         step(rng) == step(c) ||
@@ -647,7 +648,7 @@ function Base.vcat(c1::Chains, args::Chains...)
         info = c1.info)
 end
 
-function Base.hcat(c1::Chains, args::Chains...)
+function _cat(::Val{2}, c1::Chains, args::Chains...)
   rng = range(c1)
   all(c -> range(c) == rng, args) ||
     throw(ArgumentError("chain ranges differ"))
@@ -672,7 +673,7 @@ function Base.hcat(c1::Chains, args::Chains...)
       info = c1.info)
 end
 
-function cat3(c1::Chains, args::Chains...)
+function _cat(::Val{3}, c1::Chains, args::Chains...)
   rng = range(c1)
   all(c -> range(c) == rng, args) ||
     throw(ArgumentError("chain ranges differ"))
