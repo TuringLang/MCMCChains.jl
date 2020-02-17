@@ -662,11 +662,11 @@ function _cat(::Val{2}, c1::Chains, args::Chains...)
       throw(ArgumentError("non-unique parameter names"))
   end
 
-  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
-
   chns = chains(c1)
   all(c -> chains(c) == chns, args) ||
     throw(ArgumentError("sets of chains differ"))
+
+  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
 
   value = cat(c1.value, map(c -> c.value, args)..., dims=2)
   Chains(value, nms, name_map, start=first(rng), thin=step(rng),
