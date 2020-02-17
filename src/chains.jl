@@ -679,6 +679,8 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
     throw(ArgumentError("chain ranges differ"))
 
   nms = names(c1)
+  all(c -> names(c) == nms, args) ||
+      throw(ArgumentError("chain names differ"))
 
   name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
 
