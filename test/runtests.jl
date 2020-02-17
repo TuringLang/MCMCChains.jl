@@ -33,4 +33,7 @@ using Test
 
     # run tests for posterior stats
     include("modelstats_test.jl")
+
+    # run tests for concatenation
+    include("concatenation_tests.jl")
 end
