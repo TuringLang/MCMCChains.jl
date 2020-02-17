@@ -1,7 +1,7 @@
 using Test
 
-@testset "Plotting" begin include("plot_test.jl") end
 @testset "Diagnostics" begin include("diagnostic_tests.jl") end
+@testset "Plotting" begin include("plot_test.jl") end
 @testset "Missing values" begin include("missing_tests.jl") end
 @testset "Sections" begin include("sections_tests.jl") end
 @testset "Accessing parameters" begin include("get_tests.jl") end
