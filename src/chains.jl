@@ -48,14 +48,6 @@ function Chains(
         filter!(x -> x ∈ parameter_names, name_map[section])
     end
 
-    # Construct axis names and ranges.
-    names = [:iter, :var, :chain]
-    axvals = [
-        range(start, step=thin, length=size(val, 1)),
-        parameter_names,
-        collect(1:size(val, 3)),
-    ]
-
     if length(keys(name_map)) == 1
         name_map[first(keys(name_map))] = parameter_names
     else
@@ -96,8 +88,10 @@ function Chains(
     end
 
     # Construct the AxisArray.
-    axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
-    arr = AxisArray(val, axs...)
+    arr = AxisArray(val;
+                    iter = range(start, step=thin, length=size(val, 1)),
+                    var = parameter_names,
+                    chain = 1:size(val, 3))
 
     if sorted
         return sort(
