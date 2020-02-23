@@ -48,14 +48,6 @@ function Chains(
         filter!(x -> x ∈ parameter_names, name_map[section])
     end
 
-    # Construct axis names and ranges.
-    names = [:iter, :var, :chain]
-    axvals = [
-        range(start, step=thin, length=size(val, 1)),
-        parameter_names,
-        collect(1:size(val, 3)),
-    ]
-
     if length(keys(name_map)) == 1
         name_map[first(keys(name_map))] = parameter_names
     else
@@ -96,8 +88,10 @@ function Chains(
     end
 
     # Construct the AxisArray.
-    axs = ntuple(i -> Axis{names[i]}(axvals[i]), 3)
-    arr = AxisArray(val, axs...)
+    arr = AxisArray(val;
+                    iter = range(start, step=thin, length=size(val, 1)),
+                    var = parameter_names,
+                    chain = 1:size(val, 3))
 
     if sorted
         return sort(
@@ -612,78 +606,76 @@ end
 
 #################### Concatenation ####################
 
-function Base.cat(c::Chains, cs::Chains...; dims = 1)
-    if dims == 1
-        return vcat(c, cs...)
-    elseif dims == 2
-        return hcat(c, cs...)
-    elseif dims == 3
-        return cat3(c, cs...)
-    else
-        throw(ArgumentError("cannot concatenate along dimension $dims"))
-    end
-end
+Base.cat(c::Chains, cs::Chains...; dims = Val(1)) = _cat(dims, c, cs...)
+Base.cat(c::T, cs::T...; dims = Val(1)) where T<:Chains = _cat(dims, c, cs...)
 
-function Base.vcat(c1::Chains, args::Chains...)
-    rng = range(c1)
-    for c in args
-        step(rng) == step(c) ||
-            throw(ArgumentError("chain thinning differs"))
-        rng = first(rng):step(rng):last(c)
-    end
+Base.vcat(c::Chains, cs::Chains...) = _cat(Val(1), c, cs...)
+Base.vcat(c::T, cs::T...) where T<:Chains = _cat(Val(1), c, cs...)
 
+Base.hcat(c::Chains, cs::Chains...) = _cat(Val(2), c, cs...)
+Base.hcat(c::T, cs::T...) where T<:Chains = _cat(Val(2), c, cs...)
+
+AbstractMCMC.chainscat(c::Chains, cs::Chains...) = _cat(Val(3), c, cs...)
+
+_cat(dim::Int, cs::Chains...) = _cat(Val(dim), cs...)
+
+function _cat(::Val{1}, c1::Chains, args::Chains...)
+    # check inputs
+    thin = step(c1)
+    all(c -> step(c) == thin, args) || throw(ArgumentError("chain thinning differs"))
     nms = names(c1)
-    all(c -> names(c) == nms, args) ||
-        throw(ArgumentError("chain names differ"))
-
+    all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
     chns = chains(c1)
-    all(c -> chains(c1) == chns, args) ||
-        throw(ArgumentError("sets of chains differ"))
+    all(c -> chains(c) == chns, args) || throw(ArgumentError("sets of chains differ"))
 
-    name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
+    # concatenate all chains
+    data = mapreduce(c -> c.value.data, vcat, args; init = c1.value.data)
+    value = AxisArray(data;
+                      iter = range(first(c1); length = size(data, 1), step = thin),
+                      var = nms,
+                      chain = chns)
 
-    value = cat(c1[names(c1)].value.data, map(c -> c[names(c1)].value.data, args)..., dims=1)
-    Chains(value, nms, name_map, start=first(rng), thin=step(rng),
-        info = c1.info)
+    return Chains(value, missing, c1.name_map, c1.info)
 end
 
-function Base.hcat(c1::Chains, args::Chains...)
-  rng = range(c1)
-  all(c -> range(c) == rng, args) ||
-    throw(ArgumentError("chain ranges differ"))
+function _cat(::Val{2}, c1::Chains, args::Chains...)
+    # check inputs
+    rng = range(c1)
+    all(c -> range(c) == rng, args) || throw(ArgumentError("chain ranges differ"))
+    chns = chains(c1)
+    all(c -> chains(c) == chns, args) || throw(ArgumentError("sets of chains differ"))
 
-  nms = names(c1)
-  n = length(nms)
-  for c in args
-    nms = union(nms, names(c))
-    n += length(names(c))
-    n == length(nms) ||
-      throw(ArgumentError("non-unique parameter names"))
-  end
+    # combine names and sections of parameters
+    nms = names(c1)
+    n = length(nms)
+    for c in args
+        nms = union(nms, names(c))
+        n += length(names(c))
+        n == length(nms) || throw(ArgumentError("non-unique parameter names"))
+    end
 
-  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
+    name_map = mapreduce(c -> c.name_map, merge_union, args; init = c1.name_map)
 
-  chns = chains(c1)
-  all(c -> chains(c) == chns, args) ||
-    throw(ArgumentError("sets of chains differ"))
+    # concatenate all chains
+    data = mapreduce(c -> c.value.data, hcat, args; init = c1.value.data)
+    value = AxisArray(data; iter = rng, var = nms, chain = chns)
 
-  value = cat(c1.value, map(c -> c.value, args)..., dims=2)
-  Chains(value, nms, name_map, start=first(rng), thin=step(rng),
-      info = c1.info)
+    return Chains(value, missing, name_map, c1.info)
 end
 
-function cat3(c1::Chains, args::Chains...)
-  rng = range(c1)
-  all(c -> range(c) == rng, args) ||
-    throw(ArgumentError("chain ranges differ"))
+function _cat(::Val{3}, c1::Chains, args::Chains...)
+    # check inputs
+    rng = range(c1)
+    all(c -> range(c) == rng, args) || throw(ArgumentError("chain ranges differ"))
+    nms = names(c1)
+    all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
 
-  nms = names(c1)
+    # concatenate all chains
+    data = mapreduce(c -> c.value.data, (x, y) -> cat(x, y; dims = 3), args;
+                     init = c1.value.data)
+    value = AxisArray(data; iter = rng, var = nms, chain = 1:size(data, 3))
 
-  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
-
-  value = cat(c1.value.data, map(c -> c.value.data, args)..., dims=3)
-  Chains(value, nms, name_map, start=first(rng), thin=step(rng),
-      info = c1.info)
+    return Chains(value, missing, c1.name_map, c1.info)
 end
 
 function pool_chain(c::Chains)

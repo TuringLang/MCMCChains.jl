@@ -9,10 +9,8 @@ function sample(
     n;
     replace = true,
     ordered = false
-) 
-    indxs = sample(rng, range(chn), n; replace = replace, ordered = ordered)
-
-    return Chains(chn.value[indxs, :, :], names(chn), chn.name_map; info = chn.info)
+)
+    return subset(chn, sample(rng, range(chn), n; replace = replace, ordered = ordered))
 end
 
 function sample(
@@ -21,7 +19,13 @@ function sample(
     wv::AbstractWeights,
     n
 ) 
-    indxs = sample(rng, range(chn), wv, n)
+    return subset(chn, sample(rng, range(chn), wv, n))
+end
 
-    return Chains(chn.value[indxs, :, :], names(chn), chn.name_map, info = chn.info)
+# return subset of samples
+function subset(chn::Chains, samples)
+    data = AxisArray(chn.value[samples, :, :].data;
+                     iter = 1:length(samples), var = names(chn), chain = chains(chn))
+
+    return Chains(data, missing, chn.name_map, chn.info)
 end
