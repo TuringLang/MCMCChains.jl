@@ -1,6 +1,7 @@
 using MCMCChains
 using StatsBase
 using Test
+using Random
 
 # Tests for missing values.
 function testdiff(cdf1, cdf2)
@@ -16,6 +17,7 @@ end
 end
 
 @testset "stats" begin
+    Random.seed!(1234)
     chn = Chains(randn(1000, 2, 2))
 
     # Call describe without missing values.
