@@ -14,26 +14,32 @@ chn = Chains(val)
 @testset "Plotting tests" begin
 
     # plotting singe plotting types
+    println("traceplot")
     ps_trace = traceplot(chn, 1)
     @test isa(ps_trace, Plots.Plot)
 
+    println("meanplot")
     ps_mean = meanplot(chn, 1)
     @test isa(ps_mean, Plots.Plot)
 
+    println("density")
     ps_density = density(chn, 1)
     @test isa(ps_density, Plots.Plot)
 
     ps_density = density(chn, 1, append_chains=true)
     @test isa(ps_density, Plots.Plot)
 
+    println("autocorplot")
     ps_autocor = autocorplot(chn, 1)
     @test isa(ps_autocor, Plots.Plot)
 
     #ps_contour = plot(chn, :contour)
 
+    println("histogram")
     ps_hist = histogram(chn, 1)
     @test isa(ps_hist, Plots.Plot)
 
+    println("mixeddensity")
     ps_mixed = mixeddensity(chn, 1)
     @test isa(ps_mixed, Plots.Plot)
 
