@@ -65,22 +65,41 @@ end
 
 # adapted from https://github.com/JuliaLang/julia/blob/3fdfb6734bb6ed7fc805a484183077dd7924b7c0/base/namedtuple.jl#L222
 function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
-    names = Base.merge_names(an, bn)
-    types = merge_union_types(names, typeof(a), typeof(b))
+    if @generated
+        names = Base.merge_names(an, bn)
+        types = merge_union_types(names, a, b)
 
-    values = map(names) do n
-        if Base.sym_in(n, an)
-            if Base.sym_in(n, bn)
-                union(getfield(a, n), getfield(b, n))
+        values = map(names) do n
+            if Base.sym_in(n, an)
+                if Base.sym_in(n, bn)
+                    :(union(getfield(a, $(QuoteNode(n))), getfield(b, $(QuoteNode(n)))))
+                else
+                    :(getfield(a, $(QuoteNode(n))))
+                end
             else
-                getfield(a, n)
+                :(getfield(b, $(QuoteNode(n))))
             end
-        else
-            getfield(b, n)
         end
-    end
+        
+        return :(NamedTuple{$names,$types}(($(values...),)))
+    else
+        names = Base.merge_names(an, bn)
+        types = merge_union_types(names, typeof(a), typeof(b))
 
-    return NamedTuple{names,types}(values)
+        values = map(names) do n
+            if Base.sym_in(n, an)
+                if Base.sym_in(n, bn)
+                    union(getfield(a, n), getfield(b, n))
+                else
+                    getfield(a, n)
+                end
+            else
+                getfield(b, n)
+            end
+        end
+        
+        return NamedTuple{names,types}(values)
+    end
 end
 
 # adapted from https://github.com/JuliaLang/julia/blob/3fdfb6734bb6ed7fc805a484183077dd7924b7c0/base/namedtuple.jl#L192
