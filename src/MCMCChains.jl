@@ -61,7 +61,7 @@ include("mcse.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
-# include("modelstats.jl")
+include("modelstats.jl")
 include("plot.jl")
 
 function __init__()
