@@ -56,15 +56,15 @@ function heideldiag(chn::Chains;
                            )
     end
 
-    colnames = Symbol.(["parameters", "Burn-in", "Stationarity", "p-value", "Mean",
-        "Halfwidth", "Test"])
+    colnames = tuple(Symbol.(["parameters", "Burn-in", "Stationarity", "p-value", "Mean",
+        "Halfwidth", "Test"])...)
 
     # Round values.
     pnames = Symbol.(names(c))
     vals = map(x -> round.(x, digits=4), vals)
     columns = [vcat([pnames], [vals[k][:,i] for i in 1:6]) for k in 1:m]
 
-    dfs = [DataFrame(columns[k], colnames) for k in 1:m]
+    dfs = [NamedTuple{colnames}(tuple(columns[k]...)) for k in 1:m]
     dfs_wrapped = [ChainDataFrame("Heidelberger and Welch Diagnostic - Chain $k",
                    dfs[k]) for k in 1:m]
     return dfs_wrapped

@@ -405,13 +405,13 @@ function discretediag(chn::Chains; frac::Real=0.3,
     sep_vals = [vals[(3 * (k - 1) + 1):(3 * (k - 1) + 3), :]'
         for k in 1:(num_chains+1)]
 
-    colnames = Symbol.([:parameters, :stat, :df, :p_value])
+    colnames = (:parameters, :stat, :df, :p_value)
 
     pnames = Symbol.(names(c))
     vals = map(x -> round.(x, digits=4), vals)
     columns = [vcat([pnames], [k[:,i] for i in 1:size(k,2)]) for k in sep_vals]
     summary_names = ["Chisq Diagnostic - $(k==1 ? "Between Chains" : "Chain $k")"  for k in 1:(num_chains+1)]
-    dfs = [DataFrame(columns[k], colnames) for k in 1:(num_chains+1)]
+    dfs = [NamedTuple{colnames}(tuple(columns[k]...)) for k in 1:(num_chains+1)]
     dfs_wrapped = [ChainDataFrame(summary_names[k],
                    dfs[k]) for k in 1:(num_chains+1)]
     return dfs_wrapped

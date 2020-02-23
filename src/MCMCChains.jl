@@ -4,28 +4,29 @@ using AxisArrays
 const axes = Base.axes
 
 import AbstractMCMC
-using AbstractMCMC: chainscat
-import DataFrames
-using DataFrames: eachcol, DataFrame
+import AbstractMCMC: chainscat
+# import DataFrames
+# import DataFrames: eachcol, DataFrame
 using Distributions
 using RecipesBase
 using SpecialFunctions
-using StatsBase: autocov, counts, sem, AbstractWeights
-import StatsBase: autocor, describe, quantile, sample, summarystats
+using Formatting
+import StatsBase: autocov, counts, sem, AbstractWeights,
+    autocor, describe, quantile, sample, summarystats, cov
+using Requires
 
 using LinearAlgebra: diag
 import Serialization: serialize, deserialize
 import Random
-import Statistics: std, cor, mean
+import Statistics: std, cor, mean, var
 
 export Chains, chains, chainscat
 export set_section, get_params, sections, sort_sections, setinfo, set_names
-export mean
-export autocor, describe, sample, summarystats, AbstractWeights
+export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame, DataFrame
 export summarize
 
-# export diagnostics functions
+# Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export hpd, ess
 
@@ -60,7 +61,11 @@ include("mcse.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
-include("modelstats.jl")
+# include("modelstats.jl")
 include("plot.jl")
+
+function __init__()
+    @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" include("dataframes-compat.jl")
+end
 
 end # module

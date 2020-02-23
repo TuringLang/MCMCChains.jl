@@ -66,5 +66,6 @@ function gelmandiag(chn::Chains;
 
     columns = [psrf_names, psrf[:,1], psrf[:,2]]
     name = "Gelman, Rubin, and Brooks Diagnostic"
-    return ChainDataFrame(name, DataFrame(columns, psrf_labels))
+    nt = NamedTuple{tuple(psrf_labels...)}(tuple(columns...))
+    return ChainDataFrame(name, nt)
 end
