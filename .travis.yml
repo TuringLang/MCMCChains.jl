@@ -11,8 +11,14 @@ os:
 
 julia:
   - 1.0
+  - 1.1
+  - 1.2
   - 1.3
   - nightly
+
+# deactivate plot display
+env:
+  - GKSwstype=nul
 
 matrix:
   allow_failures:
