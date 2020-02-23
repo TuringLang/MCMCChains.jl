@@ -130,7 +130,7 @@ function Base.getindex(
     ks = ks isa AbstractArray ? ks : [ks]
     ind = indexin(s, c.nt[:parameters])
 
-    not_found = map(isnothing, ind)
+    not_found = map(x === nothing, ind)
 
     any(not_found) && error("Cannot find parameters $(s[not_found]) in chain")
 

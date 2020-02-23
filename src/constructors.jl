@@ -62,29 +62,16 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 function Base.Array(chn::Chains,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
         append_chains=true,
-        remove_missing_union=true,
         showall=false,
         sorted=false
     )
     sections = showall ? keys(chn.name_map) : sections
     chn = Chains(chn, sections)
 
-    remove_missing_union = remove_missing_union ?
-        all(x -> !ismissing(x), chn.value) :
-        remove_missing_union
-
     arr = if append_chains
-        if remove_missing_union
-            vcat([convert(Array{Real}, chn.value.data[:,:,i]) for i in 1:size(chn, 3)]...)
-        else
-            vcat([chn.value.data[:,:,i] for i in 1:size(chn, 3)]...)
-        end
+        mapreduce(i -> chn.value.data[:,:,i], vcat, 1:size(chn, 3))
     else
-        if remove_missing_union
-            [convert(Array{Real}, chn.value.data[:,:,i]) for i in 1:size(chn, 3)]
-        else
-            [chn.value.data[:,:,i] for i in 1:size(chn, 3)]
-        end
+        map(i -> chn.value.data[:,:,i], 1:size(chn, 3))
     end
 
     arr = if append_chains
