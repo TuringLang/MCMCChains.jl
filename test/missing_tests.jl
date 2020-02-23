@@ -6,7 +6,7 @@ using Test
 function testdiff(cdf1, cdf2)
     m1 = convert(Array, cdf1)
     m2 = convert(Array, cdf2)
-    diff = round.(m1 - m2, digits=6)
+    diff = round.(m1 - m2, digits=4)
     return all(isapprox.(diff, 0.0))
 end
 
