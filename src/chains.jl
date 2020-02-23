@@ -620,67 +620,62 @@ AbstractMCMC.chainscat(c::Chains, cs::Chains...) = _cat(Val(3), c, cs...)
 _cat(dim::Int, cs::Chains...) = _cat(Val(dim), cs...)
 
 function _cat(::Val{1}, c1::Chains, args::Chains...)
-    rng = range(c1)
-    for c in args
-        step(rng) == step(c) ||
-            throw(ArgumentError("chain thinning differs"))
-        rng = first(rng):step(rng):last(c)
-    end
-
+    # check inputs
+    thin = step(c1)
+    all(c -> step(c) == thin, args) || throw(ArgumentError("chain thinning differs"))
     nms = names(c1)
-    all(c -> names(c) == nms, args) ||
-        throw(ArgumentError("chain names differ"))
-
+    all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
     chns = chains(c1)
-    all(c -> chains(c) == chns, args) ||
-        throw(ArgumentError("sets of chains differ"))
+    all(c -> chains(c) == chns, args) || throw(ArgumentError("sets of chains differ"))
 
-    name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
+    # concatenate all chains
+    data = mapreduce(c -> c.value.data, vcat, args; init = c1.value.data)
+    value = AxisArray(data;
+                      iter = range(first(c1); length = size(data, 1), step = thin),
+                      var = nms,
+                      chain = chns)
 
-    value = cat(c1[names(c1)].value.data, map(c -> c[names(c1)].value.data, args)..., dims=1)
-    Chains(value, nms, name_map, start=first(rng), thin=step(rng),
-        info = c1.info)
+    return Chains(value, missing, c1.name_map, c1.info)
 end
 
 function _cat(::Val{2}, c1::Chains, args::Chains...)
-  rng = range(c1)
-  all(c -> range(c) == rng, args) ||
-    throw(ArgumentError("chain ranges differ"))
+    # check inputs
+    rng = range(c1)
+    all(c -> range(c) == rng, args) || throw(ArgumentError("chain ranges differ"))
+    chns = chains(c1)
+    all(c -> chains(c) == chns, args) || throw(ArgumentError("sets of chains differ"))
 
-  nms = names(c1)
-  n = length(nms)
-  for c in args
-    nms = union(nms, names(c))
-    n += length(names(c))
-    n == length(nms) ||
-      throw(ArgumentError("non-unique parameter names"))
-  end
+    # combine names and sections of parameters
+    nms = names(c1)
+    n = length(nms)
+    for c in args
+        nms = union(nms, names(c))
+        n += length(names(c))
+        n == length(nms) || throw(ArgumentError("non-unique parameter names"))
+    end
 
-  chns = chains(c1)
-  all(c -> chains(c) == chns, args) ||
-    throw(ArgumentError("sets of chains differ"))
+    name_map = mapreduce(c -> c.name_map, merge_union, args; init = c1.name_map)
 
-  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
+    # concatenate all chains
+    data = mapreduce(c -> c.value.data, hcat, args; init = c1.value.data)
+    value = AxisArray(data; iter = rng, var = nms, chain = chns)
 
-  value = cat(c1.value, map(c -> c.value, args)..., dims=2)
-  Chains(value, nms, name_map, start=first(rng), thin=step(rng),
-      info = c1.info)
+    return Chains(value, missing, name_map, c1.info)
 end
 
 function _cat(::Val{3}, c1::Chains, args::Chains...)
-  rng = range(c1)
-  all(c -> range(c) == rng, args) ||
-    throw(ArgumentError("chain ranges differ"))
+    # check inputs
+    rng = range(c1)
+    all(c -> range(c) == rng, args) || throw(ArgumentError("chain ranges differ"))
+    nms = names(c1)
+    all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
 
-  nms = names(c1)
-  all(c -> names(c) == nms, args) ||
-      throw(ArgumentError("chain names differ"))
+    # concatenate all chains
+    data = mapreduce(c -> c.value.data, (x, y) -> cat(x, y; dims = 3), args;
+                     init = c1.value.data)
+    value = AxisArray(data; iter = rng, var = nms, chain = 1:size(data, 3))
 
-  name_map = _ntdictmerge(c1.name_map, map(c -> c.name_map, args)...)
-
-  value = cat(c1.value.data, map(c -> c.value.data, args)..., dims=3)
-  Chains(value, nms, name_map, start=first(rng), thin=step(rng),
-      info = c1.info)
+    return Chains(value, missing, c1.name_map, c1.info)
 end
 
 function pool_chain(c::Chains)

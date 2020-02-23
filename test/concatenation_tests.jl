@@ -1,6 +1,11 @@
 using MCMCChains
 using Test
 
+@testset "merge_union" begin
+    @test @inferred(MCMCChains.merge_union((a = [1], b = [3.0]), (c = [3], a = [2.5]))) ==
+        (a = [1.0, 2.5], b = [3.0], c = [3])
+end
+
 @testset "vcat" begin
     chn = Chains(rand(10, 5, 2), ["a", "b", "c", "d", "e"], Dict(:internal => ["d", "e"]))
     chn1 = Chains(rand(5, 5, 2), ["a", "b", "c", "d", "e"], Dict(:internal => ["a", "b"]))
@@ -43,7 +48,8 @@ using Test
     @test size(chn3) == (15, 5, 2)
     @test names(chn3) == names(chn)
     @test range(chn3) == 1:15
-    @test chn3.name_map == (internal = ["a", "b"], parameters = ["c", "e", "d"])
+    # just take the name map of first argument
+    @test chn3.name_map == (internal = ["d", "e"], parameters = ["c", "b", "a"])
     
     chn3a = cat(chn, chn1)
     @test chn3a.value == chn3.value
@@ -81,7 +87,7 @@ end
     @test size(chn2) == (10, 5, 2)
     @test names(chn2) == vcat(names(chn), names(chn1))
     @test range(chn2) == 1:10
-    @test chn2.name_map == (internal = ["d"], parameters = ["e", "c", "b", "a"])
+    @test chn2.name_map == (internal = ["c", "d"], parameters = ["b", "a", "e"])
     
     chn2a = cat(chn, chn1; dims = Val(2))
     @test chn2a.value == chn2.value
@@ -111,7 +117,8 @@ end
     @test size(chn2) == (10, 3, 5)
     @test names(chn2) == names(chn)
     @test range(chn2) == 1:10
-    @test chn2.name_map == (internal = ["a"], parameters = ["c", "b"])
+    # just keep the name map of the first argument
+    @test chn2.name_map == (internal = ["c"], parameters = ["b", "a"])
     
     chn2a = cat(chn, chn1; dims = Val(3))
     @test chn2a.value == chn2.value

@@ -63,10 +63,44 @@ function _namedtuple2dict(n::NamedTuple)
     return Dict(pairs(n))
 end
 
-function _ntdictmerge(n::NamedTuple, args::NamedTuple...)
-    ndict = _namedtuple2dict(n)
-    ndict2 = map(x -> _namedtuple2dict(x), args)
-    return _dict2namedtuple(merge(ndict, ndict2...))
+# adapted from https://github.com/JuliaLang/julia/blob/3fdfb6734bb6ed7fc805a484183077dd7924b7c0/base/namedtuple.jl#L222
+function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
+    names = Base.merge_names(an, bn)
+    types = merge_union_types(names, typeof(a), typeof(b))
+
+    values = map(names) do n
+        if Base.sym_in(n, an)
+            if Base.sym_in(n, bn)
+                union(getfield(a, n), getfield(b, n))
+            else
+                getfield(a, n)
+            end
+        else
+            getfield(b, n)
+        end
+    end
+
+    return NamedTuple{names,types}(values)
+end
+
+# adapted from https://github.com/JuliaLang/julia/blob/3fdfb6734bb6ed7fc805a484183077dd7924b7c0/base/namedtuple.jl#L192
+Base.@pure function merge_union_types(names::Tuple{Vararg{Symbol}}, a::Type{<:NamedTuple}, b::Type{<:NamedTuple})
+    an = Base._nt_names(a)
+    bn = Base._nt_names(b)
+
+    types = map(names) do n
+        if Base.sym_in(n, an)
+            if Base.sym_in(n, bn)
+                promote_type(fieldtype(a, n), fieldtype(b, n))
+            else
+                fieldtype(a, n)
+            end
+        else
+            fieldtype(b, n)
+        end
+    end
+
+    return Tuple{types...}
 end
 
 """
