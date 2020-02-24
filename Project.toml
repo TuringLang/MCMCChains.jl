@@ -8,7 +8,6 @@ version = "3.0.0"
 [deps]
 AbstractMCMC = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
 AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -23,7 +22,6 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 [compat]
 AbstractMCMC = "0.4"
 AxisArrays = "^0.3, 0.4"
-DataFrames = "^0.19, 0.20"
 Distributions = "^0.21, 0.22"
 Formatting = "0.4"
 RecipesBase = "^0.7, 0.8"
@@ -36,6 +34,7 @@ julia = "^1"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 
 [targets]
 test = ["KernelDensity", "StatsPlots", "Test"]
