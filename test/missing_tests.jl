@@ -7,8 +7,7 @@ using Random
 function testdiff(cdf1, cdf2)
     m1 = convert(Array, cdf1)
     m2 = convert(Array, cdf2)
-    diff = round.(m1 - m2, digits=2)
-    return all(isapprox.(diff, 0.0))
+    return all(((x, y),) -> isapprox(x, y; atol=1e-2), zip(m1, m2))
 end
 
 @testset "utils" begin
@@ -35,6 +34,7 @@ end
 end
 
 @testset "diagnostic functions" begin
+    Random.seed!(1234)
     nchains = 2
     chn = Chains(randn(5000, 2, nchains))
 
