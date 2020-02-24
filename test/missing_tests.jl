@@ -1,8 +1,15 @@
 using MCMCChains
 using StatsBase
 using Test
+using Random
 
 # Tests for missing values.
+function testdiff(cdf1, cdf2)
+    m1 = convert(Array, cdf1)
+    m2 = convert(Array, cdf2)
+    diff = round.(m1 - m2, digits=2)
+    return all(isapprox.(diff, 0.0))
+end
 
 @testset "utils" begin
     x = [1, missing, 3, 2]
@@ -10,6 +17,7 @@ using Test
 end
 
 @testset "stats" begin
+    Random.seed!(1234)
     chn = Chains(randn(1000, 2, 2))
 
     # Call describe without missing values.
@@ -23,7 +31,7 @@ end
     describe(devnull, chn_m; showall=true)
     m1, m2 = summarystats(chn_m), quantile(chn_m)
 
-    @test s1[:,2:4] == m1[:,2:4]
+    @test testdiff(s1, m1)
 end
 
 @testset "diagnostic functions" begin
@@ -44,9 +52,9 @@ end
     rf_2 = rafterydiag(chn_m)
 
     @testset "diagnostics missing tests" for i in 1:nchains
-        @test all(gw_1[i].df == gw_2[i].df)
-        @test all(hd_1[i].df == hd_2[i].df)
-        @test all(rf_1[i].df == rf_2[i].df)
+        @test testdiff(gw_1, gw_2)
+        @test testdiff(hd_1, hd_2)
+        @test testdiff(rf_1, rf_2)
     end
 
     @test_throws AssertionError discretediag(chn_m)

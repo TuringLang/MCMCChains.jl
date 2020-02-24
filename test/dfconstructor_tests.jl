@@ -1,4 +1,5 @@
 using MCMCChains, Test
+using DataFrames
 
 @testset "DataFrame constructor tests" begin
     val = rand(1000, 8, 4)

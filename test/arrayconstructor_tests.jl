@@ -23,13 +23,9 @@ using MCMCChains, Test
         @test size(Array(chns, append_chains=false)) == (5,)
         @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
         @test typeof(Array(chns, append_chains=true)) == Array{Float64, 2}
-        @test size(Array(chns, remove_missing_union=false)) == (d*c, main_params)
-        @test size(Array(chns, append_chains=false,
-            remove_missing_union=false)) == (5,)
-        @test size(Array(chns, append_chains=false,
-            remove_missing_union=false)[1]) == (d, main_params)
-        @test typeof(Array(chns, append_chains=true, remove_missing_union=false)) ==
-            Array{Union{Missing, Float64}, 2}
+        @test size(Array(chns)) == (d*c, main_params)
+        @test size(Array(chns, append_chains=false)) == (5,)
+        @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
         @test size(Array(chns[:b])) == (d*c,)
 
         Array(chns)

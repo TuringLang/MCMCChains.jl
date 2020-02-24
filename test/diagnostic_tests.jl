@@ -50,11 +50,11 @@ end
     @test MCMCChains.diag_all(rand(50, 2), :hangartner, 1, 1, 1) != nothing
     @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
-    @test isa(discretediag(chn_disc[:,2,:]), Vector{ChainDataFrame})
-    @test isa(gelmandiag(chn[:,1,:]), ChainDataFrame)
-    @test isa(gewekediag(chn[:,1,:]), Vector{ChainDataFrame})
-    @test isa(heideldiag(chn[:,1,:]), Vector{ChainDataFrame})
-    @test isa(rafterydiag(chn[:,1,:]), Vector{ChainDataFrame})
+    @test eltype(discretediag(chn_disc[:,2,:])) <: ChainDataFrame
+    @test typeof(gelmandiag(chn[:,1,:])) <: ChainDataFrame
+    @test eltype(gewekediag(chn[:,1,:])) <: ChainDataFrame
+    @test eltype(heideldiag(chn[:,1,:])) <: ChainDataFrame
+    @test eltype(rafterydiag(chn[:,1,:])) <: ChainDataFrame
 end
 
 @testset "vector of vectors" begin

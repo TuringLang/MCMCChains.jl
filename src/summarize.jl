@@ -1,57 +1,101 @@
-struct ChainDataFrame
+struct ChainDataFrame{NT<:NamedTuple}
     name::String
-    df::DataFrame
+    nt::NT
+    n_rows::Int
+    n_cols::Int
+    digits::Int
 
-    function ChainDataFrame(name::String, df::DataFrame; digits=missing)
-        if !ismissing(digits)
-            if isa(digits, Integer)
-                nrow = size(df, 1)
-                ncol = size(df, 2)
-                for i in 1:nrow
-                    for j in 1:ncol
-                        if applicable(round, df[i,j])
-                            df[i, j] = round(df[i,j], digits=digits)
-                        end
-                    end
-                end
-            elseif isa(digits, NamedTuple) || isa(digits, Dict)
-                cols = keys(digits)
-                nrow = size(df, 1)
-                for c in cols
-                    if c in names(df)
-                        for r in 1:nrow
-                            df[r,c] = round(df[r,c], digits=digits[c])
-                        end
-                    end
-                end
+    function ChainDataFrame(name::String, nt::NamedTuple; digits::Int=4)
+        ks = collect(keys(nt))
+
+        lengths = length(nt[ks[1]])
+
+        for i in 2:length(ks)
+            if length(nt[ks[i]]) != lengths
+                error("Lengths must be equal.")
             end
         end
 
-        return new(name, df)
+        return new{typeof(nt)}(name, nt, lengths, length(ks), digits)
     end
 end
 
-ChainDataFrame(df::DataFrame) = ChainDataFrame("", df)
+ChainDataFrame(nt::NamedTuple) = ChainDataFrame("", nt)
 
-Base.size(c::ChainDataFrame) = size(c.df)
-Base.names(c::ChainDataFrame) = names(c.df)
+Base.size(c::ChainDataFrame) = (c.n_rows, c.n_cols)
+Base.names(c::ChainDataFrame) = collect(keys(c.nt))
+
 function Base.show(io::IO, c::ChainDataFrame)
     println(io, c.name)
-    show(io, c.df, summary = false, allrows=true, allcols=true)
+
+    # Preallocations
+    n_cols = c.n_cols
+    n_rows = c.n_rows
+    column_names = collect(keys(c.nt))
+    digits = c.digits
+    f_format_str = "%.$(digits)f"
+    i_format_str = "%n"
+
+    # Create printed array.
+    arr = Array{String, 2}(undef, n_rows + 1, n_cols)
+
+    # Add headers
+    arr[1, :] = string.(column_names)
+
+    # Add values to array, accumulate string lengths.
+    lengths = length.(arr[1,:])
+    for i in 1:n_cols
+        k = column_names[i]
+        values = c.nt[k]
+        etype = eltype(values)
+
+        if etype <: Real
+            arr[2:end, i] = sprintf1.(f_format_str, values)
+        elseif etype <: Integer
+            arr[2:end, i] = sprintf1.(i_format_str, values)
+        else 
+            arr[2:end, i] = string.(values)
+        end
+        lengths[i] = max(maximum(length.(arr[2:end, i])), lengths[i])
+    end
+
+    # Do it array style.
+    bufs = [IOBuffer() for _ in 1:(n_rows+2)]
+
+    for i in 1:n_cols
+        for j in 1:(n_rows+2)
+            # Print the headers
+            if j == 1
+                print(bufs[j],  "  ", lpad(arr[j,i], lengths[i]))
+            end
+
+            # Print sep row.
+            if j == 2
+                print(bufs[j], "  ", repeat("─", lengths[i]))
+            end
+
+            # Print values.
+            if j > 2
+                bufs[j]
+                print(bufs[j], "  ", lpad(arr[j-1,i], lengths[i]))
+            end
+        end
+    end
+
+    for j in 1:length(bufs)
+        s = String(take!(bufs[j]))
+        println(io, s)
+    end
 end
 
-Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
-Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = c.df[:, s]
 Base.isequal(cs1::Vector{ChainDataFrame}, cs2::Vector{ChainDataFrame}) = isequal.(cs1, cs2)
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
 
-function Base.show(io::IO, cs::Vector{ChainDataFrame})
+function Base.show(io::IO, cs::Vector{C}) where C<:ChainDataFrame
     println(io, summary(cs))
     for i in cs
         println(io)
-        println(io, i.name)
-        show(io, i.df, allrows=true, summary=false)
-        println(io)
+        show(io, i)
     end
 end
 
@@ -60,30 +104,78 @@ function Base.show(io::IO, ::MIME"text/plain", cs::Vector{ChainDataFrame})
     show(io, cs)
 end
 
-function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}, m)
+# Index functions
+function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, g::Union{Colon, Integer, UnitRange})
+    convert(Array, getindex(c, c.nt[:parameters][s], collect(keys(c.nt))[g]))
+end
+
+function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}, g::Colon)
+    getindex(c, c.nt[:parameters], collect(keys(c.nt)))
+end
+
+function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}})
+    getindex(c, s, collect(keys(c.nt)))
+end
+
+function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, ks::Union{Symbol, Vector{Symbol}})
+    getindex(c, c.nt[:parameters][s], ks)
+end
+
+function Base.getindex(
+    c::ChainDataFrame, 
+    s::Union{String, Vector{String}, Symbol, Vector{Symbol}}, 
+    ks::Union{Symbol, Vector{Symbol}}
+)
     s = s isa AbstractArray ? s : [s]
-    s_ind = indexin(s, c.df[:, :parameters])
-    return c.df[s_ind, m]
+    ks = ks isa AbstractArray ? ks : [ks]
+    ind = indexin(s, c.nt[:parameters])
+
+    not_found = map(x -> x === nothing, ind)
+
+    any(not_found) && error("Cannot find parameters $(s[not_found]) in chain")
+
+    # If there are multiple columns, return a new CDF.
+    if length(ks) > 1
+        if !(:parameters in ks)
+            ks = vcat(:parameters, ks)
+        end
+        nt = NamedTuple{tuple(ks...)}(tuple([c.nt[k][ind] for k in ks]...))
+        return ChainDataFrame(c.name, nt, digits=c.digits)
+    else
+        # Otherwise, return a vector if there's multiple parameters
+        # or just a scalar if there's one parameter.
+        if length(s) == 1
+            return c.nt[ks[1]][ind][1]
+        else
+            return c.nt[ks[1]][ind]
+        end
+    end
 end
 
-function Base.getindex(c::ChainDataFrame,
-        s1::Vector{Symbol},
-        s2::Union{Symbol, Vector{Symbol}})
-    return c.df[map(x -> x in s1, c.df[:, :parameters]), s2]
+function Base.lastindex(c::ChainDataFrame, i::Integer)
+    if i == 1
+        return c.n_rows
+    elseif i ==2
+        return c.n_cols
+    else
+        error("No such dimension")
+    end
 end
 
-function Base.getindex(c::ChainDataFrame,
-        s1::Symbol,
-        s2::Union{Symbol, Vector{Symbol}})
-    return c.df[c.df[:, :parameters] .== s1, s2]
+function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
+    arr = Array{Float64, 2}(undef, c.n_rows, c.n_cols)
+    ks = collect(keys(c.nt))
+    
+    for i in 2:c.n_cols
+        arr[:, i] = c.nt[ks[i]]
+    end
+
+    return arr
 end
-
-
-Base.lastindex(c::ChainDataFrame, i::Integer) = lastindex(c.df, i)
 
 Base.convert(::Type{Array{ChainDataFrame,1}}, cs::Array{ChainDataFrame,1}) = cs
-function Base.convert(::Type{T}, cs::Array{ChainDataFrame,1}) where T<:Array
-    arrs = [convert(T, cs[j].df[:, 2:end]) for j in 1:length(cs)]
+function Base.convert(::Type{Array}, cs::Array{C,1}) where C<:ChainDataFrame
+    arrs = [convert(Array, cs[j]) for j in 1:length(cs)]
     return cat(arrs..., dims = 3)
 end
 """
@@ -131,7 +223,8 @@ function summarize(chn::Chains, funs...;
         showall::Bool=false,
         name::String="",
         additional_df=nothing,
-        digits=missing)
+        digits::Int=4,
+        sorted::Bool=false)
     # Check that we actually have :parameters.
     showall = showall ? true : !in(:parameters, keys(chn.name_map))
 
@@ -143,7 +236,8 @@ function summarize(chn::Chains, funs...;
     end
 
     # Generate a dataframe to work on.
-    df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
+    chn = Chains(chn, sections, sorted=sorted)
+    # df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
 
     # If no function names were given, make a new list.
     func_names = length(func_names) == 0 ?
@@ -151,11 +245,14 @@ function summarize(chn::Chains, funs...;
 
     # Do all the math, make columns.
     columns = if append_chains
-        vcat([names(df)],
-             [[f(col) for col = eachcol(df, false)] for f in funs])
+        vcat([names(chn)],
+             [[f(chn.value.data[:,col,:]) for col in 1:size(chn, 2)] for f in funs])
     else
-        [vcat([names(df[1])],
-              [[f(col) for col = eachcol(i, false)] for f in funs]) for i in df]
+        [vcat([names(chn)],
+             [[f(chn.value.data[:,col,i]) for col in 1:size(chn, 2)] for f in funs])
+             for i in 1:size(chn, 3)]
+        # [vcat([names(chn[1])],
+        #       [[f(col) for col = eachcol(i, false)] for f in funs]) for i in df]
     end
 
     # Make a vector of column names.
@@ -163,26 +260,28 @@ function summarize(chn::Chains, funs...;
 
     # Build the dataframes.
     ret_df = if append_chains
-        DataFrame(columns, colnames)
+        NamedTuple{tuple(colnames...)}(tuple(columns...))
     else
-        [DataFrame(i, colnames) for i in columns]
+        [NamedTuple{tuple(colnames...)}(tuple(columns[i]...)) 
+        for i in 1:size(chn, 3)]
     end
+
 
     if additional_df != nothing
         if append_chains
-            ret_df = join(ret_df, additional_df, on=:parameters)
+            ret_df = merge(ret_df, additional_df.nt)
+            # ret_df = join(ret_df, additional_df, on=:parameters)
         else
-            ret_df = [join(r, additional_df, on=:parameters) for r in ret_df]
+            ret_df = [merge(r, additional_df.nt) for r in ret_df]
         end
     end
 
-    ret_df = if append_chains
-        ChainDataFrame(name, ret_df, digits=digits)
+    if append_chains
+        return ChainDataFrame(name, ret_df, digits=digits)
     else
-        [ChainDataFrame(name, r, digits=digits) for r in ret_df]
+        rdf = [ChainDataFrame(name * " (Chain $i)", r, digits=digits) for (i,r) in enumerate(ret_df)]
+        return map(x -> x, rdf)
     end
-
-    return ret_df
 end
 
 function handle_funs(fns)

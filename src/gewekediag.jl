@@ -43,10 +43,10 @@ function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
         "Second Window Fraction = $last\n"
 
     pnames = Symbol.(names(c))
-    colnames = [:parameters, :z_score, :p_value]
+    colnames = (:parameters, :z_score, :p_value)
     columns = [[pnames, d[:,1], d[:,2]] for d in diags]
     dfs = [ChainDataFrame("Geweke Diagnostic - Chain $i",
-                          DataFrame(columns[i], colnames)) for i in 1:m]
+                          NamedTuple{colnames}(tuple(columns[i]...))) for i in 1:m]
 
     return dfs
 end

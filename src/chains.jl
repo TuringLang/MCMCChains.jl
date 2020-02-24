@@ -80,13 +80,6 @@ function Chains(
     # Make the name_map NamedTuple.
     name_map_tupl = _dict2namedtuple(name_map)
 
-    # Ensure that we have a hashedsummary key in info.
-    if !in(:hashedsummary, keys(info))
-        empty_df_vec = [ChainDataFrame("", DataFrame())]
-        s = (hash(0), empty_df_vec)
-        info = merge(info, (hashedsummary = Ref(s),))
-    end
-
     # Construct the AxisArray.
     arr = AxisArray(val;
                     iter = range(start, step=thin, length=size(val, 1)),
@@ -292,21 +285,8 @@ function Base.show(io::IO, c::Chains)
     print(io, "Object of type Chains, with data of type $(summary(c.value.data))\n\n")
     println(io, header(c))
 
-    # Grab the value hash.
-    h = hash(c)
-
-    if :hashedsummary in keys(c.info)
-        s = c.info.hashedsummary.x
-        if s[1] == h
-            show(io, s[2])
-        else
-            new_summary = describe(c)
-            c.info.hashedsummary.x = (h, new_summary)
-            show(io, new_summary)
-        end
-    else
-        show(io, describe(c, suppress_header=true))
-    end
+    # Show summary stats.
+    show(io, describe(c))
 end
 
 Base.keys(c::Chains) = names(c)
@@ -320,24 +300,6 @@ Base.last(c::Chains) = last(c.value[Axis{:iter}].val)
 Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
 #################### Auxilliary Functions ####################
-
-function Base.hash(c::Chains)
-    val = hash(c.value) + hash(c.info) + hash(c.name_map) + hash(c.logevidence)
-    return hash(val)
-end
-
-function combine(c::Chains)
-  n, p, m = size(c.value)
-  value = Array{Float64}(undef, n * m, p)
-  for j in 1:p
-    idx = 1
-    for i in 1:n, k in 1:m
-      value[idx, j] = c.value[i, j, k]
-      idx += 1
-    end
-  end
-  value
-end
 
 """
     range(c::Chains)

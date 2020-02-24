@@ -6,7 +6,7 @@
         relative=true
         showall=false,
         append_chains=true,
-        digits=missing,
+        digits::Int=4,
         sections=[:parameters])
 
 Compute the autocorrelation of each parameter for the chain. Setting `append_chains=false` will return a vector of dataframes containing the autocorrelations for each chain.
@@ -23,7 +23,7 @@ function autocor(chn::Chains;
         showall=false,
         append_chains = false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
+        digits::Int=4,
         kwargs...)
     funs = Function[]
     func_names = String[]
@@ -40,7 +40,7 @@ function autocor(chn::Chains;
 end
 
 """
-    cor(chn; showall=false, append_chains=true, sections=[:parameters], digits=missing)
+    cor(chn; showall=false, append_chains=true, sections=[:parameters], digits::Int=4)
 
 Compute the Pearson correlation matrix for the chain. Setting `append_chains=false` will
 return a vector of dataframes containing a correlation matrix for each chain.
@@ -54,7 +54,7 @@ function cor(chn::Chains;
         showall=false,
         append_chains=true,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
+        digits::Int=4,
         kwargs...)
     df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
 
@@ -85,7 +85,7 @@ end
         append_chains=true,
         showall=false,
         sections=[:parameters],
-        digits=missing)
+        digits::Int=4)
 
 Computes the change rate for the chain. Setting `append_chains=false` will
 return a vector of dataframes containing the change rates for each chain.
@@ -99,7 +99,7 @@ function changerate(chn::Chains;
     append_chains=true,
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    digits=missing,
+    digits::Int=4,
     kwargs...)
     # Check for missing values.
     @assert !any(ismissing.(chn.value)) "Change rate comp. doesn't support missing values."
@@ -142,7 +142,7 @@ describe(c::Chains; args...) = describe(stdout, c; args...)
         etype=:bm,
         showall=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
+        digits::Int=4,
         args...)
 
 Prints the summary statistics and quantiles for the chain.
@@ -158,10 +158,10 @@ function describe(io::IO,
                   etype=:bm,
                   showall::Bool=false,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                  digits=missing,
+                  digits::Int=4,
                   args...
                  )
-    dfs = [summarystats(c,
+    dfs = vcat(summarystats(c,
                 showall=showall,
                 sections=sections,
                 etype=etype,
@@ -171,7 +171,7 @@ function describe(io::IO,
                 showall=showall,
                 sections=sections,
                 q=q,
-                digits=digits)]
+                digits=digits))
     return dfs
 end
 
@@ -208,7 +208,7 @@ end
         append_chains=true,
         showall=false,
         sections=[:parameters],
-        digits=missing)
+        digits::Int=4)
 
 Computes the quantiles for each parameter in the chain. Setting `append_chains=false` will
 return a vector of dataframes containing the quantiles for each chain.
@@ -223,7 +223,7 @@ function quantile(chn::Chains;
         append_chains=true,
         showall=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing)
+        digits::Int=4)
     # compute quantiles
     funs = Function[]
     func_names = String[]
@@ -244,7 +244,7 @@ end
 		showall=false,
 		sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
 		maxlag = 250,
-        digits=missing)
+        digits::Int=4)
 
 Compute a chain's number of effective samples. More information can be found in the Gelman et al. (2014) book "Bayesian Data Analysis", or in [this article](https://arxiv.org/abs/1903.08008).
 
@@ -257,26 +257,27 @@ function ess(chn::Chains;
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
     maxlag = 250,
-    digits=missing
+    digits::Int=4
 )
 	param = showall ? names(chn) : names(chn, sections)
 	n_chain_orig = size(chn, 3)
 
 	# Split the chains.
 	parameter_vec = Vector(undef, length(param))
-	midpoint = Int32(floor(size(chn, 1) / 2))
+    midpoint = Int32(floor(size(chn, 1) / 2))
+    n = size(chn, 1)
 	for i in 1:length(param)
 		parameter_vec[i] = []
 		for j in 1:n_chain_orig
             c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
             c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
+            n = min(n, length(c1), length(c2))
             push!(parameter_vec[i], c1, c2)
 		end
 	end
 
     # Misc allocations.
     m = n_chain_orig * 2
-    n = min(length.(parameter_vec[1])...)
     maxlag = min(maxlag, n-1)
     lags = collect(0:maxlag)
 
@@ -284,7 +285,7 @@ function ess(chn::Chains;
     B = Vector(undef, length(param))
     W = Vector(undef, length(param))
     varhat = Vector(undef, length(param))
-    Rhat = Vector(undef, length(param))
+    Rhat = Vector{Float64}(undef, length(param))
 
     # calculate B, W, varhat, and Rhat for each param.
     for i in 1:length(param)
@@ -329,7 +330,7 @@ function ess(chn::Chains;
 
 	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
     P = Vector(undef, length(param))
-    ess = Vector(undef, length(param))
+    ess = Vector{Float64}(undef, length(param))
 	for i in 1:length(param)
         big_P = 0.0
 		ρ_val = Float64.(ρ[i])
@@ -353,8 +354,8 @@ function ess(chn::Chains;
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
 	end
 
-    df = DataFrame(parameters = Symbol.(param), ess = ess, r_hat = Rhat)
-	return ChainDataFrame("ESS", df, digits=digits)
+    df = (parameters = Symbol.(param), ess = ess, r_hat = Rhat)
+	return ChainDataFrame("ESS", df; digits=digits)
 end
 
 # this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl
@@ -370,7 +371,7 @@ end
         append_chains=true,
         showall=false,
         sections=[:parameters],
-        digits=missing,
+        digits::Int=4,
         args...)
 
 Computes the mean, standard deviation, naive standard error, Monte Carlo standard error, and effective sample size for each parameter in the chain. Setting `append_chains=false` will return a vector of dataframes containing the summary statistics for each chain. `args...` is passed to the `msce` function.
@@ -385,7 +386,7 @@ function summarystats(chn::Chains;
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         etype=:bm,
-        digits=missing,
+        digits::Int=4,
         sorted=false,
         args...
     )
@@ -400,7 +401,7 @@ function summarystats(chn::Chains;
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Caluclate ESS separately.
-    ess_df = ess(chn, sections=sections, showall=showall).df
+    ess_df = ess(chn, sections=sections, showall=showall)
 
     # Summarize.
     summary_df = summarize(chn, funs...;
@@ -409,7 +410,9 @@ function summarystats(chn::Chains;
         showall=showall,
         name="Summary Statistics",
         additional_df = ess_df,
-        digits=digits)
+        digits=digits,
+        append_chains=append_chains, 
+        sorted=sorted)
 
     return summary_df
 end
@@ -419,7 +422,7 @@ end
             append_chains::Bool=true,
             showall::Bool=false,
             sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-            digits=missing,
+            digits::Int=4,
             args...)
     mean(chn::Chains, ss::Vector{Symbol})
     mean(chn::Chains, s::Symbol)
@@ -432,7 +435,7 @@ function mean(chn::Chains;
         append_chains::Bool=true,
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
+        digits::Int=4,
         args...
     )
     # Store everything.

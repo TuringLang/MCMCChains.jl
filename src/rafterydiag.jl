@@ -77,14 +77,14 @@ function rafterydiag(
         )
     end
 
-    colnames = Symbol.(["parameters", "Thinning", "Burn-in", "Total", "Nmin",
-        "Dependence Factor"])
+    colnames = tuple(Symbol.(["parameters", "Thinning", "Burn-in", "Total", "Nmin",
+        "Dependence Factor"])...)
 
     pnames = Symbol.(names(c))
     vals = map(x -> round.(x, digits=4), vals)
     columns = [vcat([pnames], [vals[k][:,i] for i in 1:5]) for k in 1:m]
 
-    dfs = [DataFrame(columns[k], colnames) for k in 1:m]
+    dfs = [NamedTuple{colnames}(tuple(columns[k]...)) for k in 1:m]
     dfs_wrapped = [ChainDataFrame("Raftery and Lewis Diagnostic - Chain $k",
                    dfs[k]) for k in 1:m]
     return dfs_wrapped
