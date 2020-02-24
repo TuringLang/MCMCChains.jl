@@ -5,8 +5,6 @@ const axes = Base.axes
 
 import AbstractMCMC
 import AbstractMCMC: chainscat
-# import DataFrames
-# import DataFrames: eachcol, DataFrame
 using Distributions
 using RecipesBase
 using SpecialFunctions
