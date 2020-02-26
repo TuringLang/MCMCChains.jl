@@ -230,10 +230,9 @@ function quantile(chn::Chains;
         sorted=false)
     # compute quantiles
     funs = Function[]
-    func_names = String[]
+    func_names = @. Symbol(100 * q, :%)
     for i in q
         push!(funs, x -> quantile(cskip(x), i))
-        push!(func_names, "$(string(100*i))%")
     end
 
     return summarize(chn, funs...;
