@@ -15,7 +15,7 @@ using Statistics: std
     @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess, :r_hat]
 
     all_sections_df = summarize(chns, sections=[:parameters, :internals])
-    @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
+    @test all_sections_df[:,:parameters] == ["a", "b", "c", "d", "e", "f", "g", "h"]
     @test size(all_sections_df) == (8, 7)
 
     two_parms_two_funs_df = summarize(chns[[:a, :b]], mean, std)

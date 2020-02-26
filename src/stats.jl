@@ -159,6 +159,7 @@ function describe(io::IO,
                   showall::Bool=false,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                   digits::Int=4,
+                  sorted=false,
                   args...
                  )
     dfs = vcat(summarystats(c,
@@ -166,12 +167,14 @@ function describe(io::IO,
                 sections=sections,
                 etype=etype,
                 digits=digits,
+                sorted=sorted,
                 args...),
            quantile(c,
                 showall=showall,
                 sections=sections,
                 q=q,
-                digits=digits))
+                digits=digits,
+                sorted=sorted))
     return dfs
 end
 
@@ -223,7 +226,8 @@ function quantile(chn::Chains;
         append_chains=true,
         showall=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits::Int=4)
+        digits::Int=4,
+        sorted=false)
     # compute quantiles
     funs = Function[]
     func_names = String[]
@@ -231,12 +235,15 @@ function quantile(chn::Chains;
         push!(funs, x -> quantile(cskip(x), i))
         push!(func_names, "$(string(100*i))%")
     end
+
     return summarize(chn, funs...;
+        sections=sections,
         func_names=func_names,
         showall=showall,
-        sections=sections,
-        name = "Quantiles",
-        digits=digits)
+        name="Quantiles",
+        digits=digits,
+        append_chains=append_chains, 
+        sorted=sorted)
 end
 
 """
@@ -257,7 +264,8 @@ function ess(chn::Chains;
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
     maxlag = 250,
-    digits::Int=4
+    digits::Int=4,
+    sorted=false
 )
 	param = showall ? names(chn) : names(chn, sections)
 	n_chain_orig = size(chn, 3)
@@ -401,7 +409,7 @@ function summarystats(chn::Chains;
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Caluclate ESS separately.
-    ess_df = ess(chn, sections=sections, showall=showall)
+    ess_df = ess(chn, sections=sections, showall=showall, sorted=sorted)
 
     # Summarize.
     summary_df = summarize(chn, funs...;
