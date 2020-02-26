@@ -218,7 +218,7 @@ Summarize method for a Chains object.
 """
 function summarize(chn::Chains, funs...;
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        func_names=[],
+        func_names::AbstractVector{Symbol} = Symbol[],
         append_chains::Bool=true,
         showall::Bool=false,
         name::String="",
@@ -240,8 +240,7 @@ function summarize(chn::Chains, funs...;
     # df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
 
     # If no function names were given, make a new list.
-    func_names = length(func_names) == 0 ?
-        handle_funs(funs) : Symbol.(func_names)
+    fnames = isempty(func_names) ? collect(nameof.(funs)) : func_names
 
     # Do all the math, make columns.
     columns = if append_chains
@@ -256,7 +255,7 @@ function summarize(chn::Chains, funs...;
     end
 
     # Make a vector of column names.
-    colnames = vcat([:parameters], func_names)
+    colnames = vcat(:parameters, fnames)
 
     # Build the dataframes.
     ret_df = if append_chains
@@ -281,9 +280,4 @@ function summarize(chn::Chains, funs...;
         rdf = [ChainDataFrame(name * " (Chain $i)", r, digits=digits) for (i,r) in enumerate(ret_df)]
         return map(x -> x, rdf)
     end
-end
-
-function handle_funs(fns)
-    tmp =  [string(f) for f in fns]
-    Symbol.([split(tmp[i], ".")[end] for i in 1:length(tmp)])
 end

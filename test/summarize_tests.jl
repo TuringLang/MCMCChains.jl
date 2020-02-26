@@ -27,7 +27,7 @@ using Statistics: std
     @test size(three_parms_df) == (3, 3)
 
     three_parms_df_2 = summarize(chns[[:a, :b, :g]], mean, std,
-    sections=[:parameters, :internals], func_names=["mean", "sd"])
+    sections=[:parameters, :internals], func_names=[:mean, :sd])
     @test three_parms_df_2[:, :parameters] == ["a", "b", "g"]
     @test size(three_parms_df_2) == (3, 3)
 end
