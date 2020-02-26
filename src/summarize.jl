@@ -128,7 +128,7 @@ function Base.getindex(
 )
     s = s isa AbstractArray ? s : [s]
     ks = ks isa AbstractArray ? ks : [ks]
-    ind = indexin(s, c.nt[:parameters])
+    ind = indexin(Symbol.(s), Symbol.(c.nt[:parameters]))
 
     not_found = map(x -> x === nothing, ind)
 

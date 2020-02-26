@@ -159,6 +159,7 @@ function describe(io::IO,
                   showall::Bool=false,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                   digits::Int=4,
+                  sorted=false,
                   args...
                  )
     dfs = vcat(summarystats(c,
@@ -166,12 +167,14 @@ function describe(io::IO,
                 sections=sections,
                 etype=etype,
                 digits=digits,
+                sorted=sorted,
                 args...),
            quantile(c,
                 showall=showall,
                 sections=sections,
                 q=q,
-                digits=digits))
+                digits=digits,
+                sorted=sorted))
     return dfs
 end
 
