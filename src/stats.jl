@@ -26,10 +26,9 @@ function autocor(chn::Chains;
         digits::Int=4,
         kwargs...)
     funs = Function[]
-    func_names = String[]
+    func_names = @. Symbol("lag ", lags)
     for i in lags
         push!(funs, x -> autocor(x, [i], demean=demean)[1])
-        push!(func_names, "lag $i")
     end
     return summarize(chn, funs...;
         func_names = func_names,
