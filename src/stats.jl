@@ -26,10 +26,9 @@ function autocor(chn::Chains;
         digits::Int=4,
         kwargs...)
     funs = Function[]
-    func_names = String[]
+    func_names = @. Symbol("lag ", lags)
     for i in lags
         push!(funs, x -> autocor(x, [i], demean=demean)[1])
-        push!(func_names, "lag $i")
     end
     return summarize(chn, funs...;
         func_names = func_names,
@@ -230,10 +229,9 @@ function quantile(chn::Chains;
         sorted=false)
     # compute quantiles
     funs = Function[]
-    func_names = String[]
+    func_names = @. Symbol(100 * q, :%)
     for i in q
         push!(funs, x -> quantile(cskip(x), i))
-        push!(func_names, "$(string(100*i))%")
     end
 
     return summarize(chn, funs...;
@@ -362,7 +360,7 @@ function ess(chn::Chains;
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
 	end
 
-    df = (parameters = Symbol.(param), ess = ess, r_hat = Rhat)
+    df = (parameters = string.(param), ess = ess, r_hat = Rhat)
 	return ChainDataFrame("ESS", df; digits=digits)
 end
 

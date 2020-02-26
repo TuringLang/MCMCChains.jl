@@ -218,7 +218,7 @@ Summarize method for a Chains object.
 """
 function summarize(chn::Chains, funs...;
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        func_names=[],
+        func_names::AbstractVector{Symbol} = Symbol[],
         append_chains::Bool=true,
         showall::Bool=false,
         name::String="",
@@ -240,8 +240,7 @@ function summarize(chn::Chains, funs...;
     # df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
 
     # If no function names were given, make a new list.
-    func_names = length(func_names) == 0 ?
-        handle_funs(funs) : Symbol.(func_names)
+    fnames = isempty(func_names) ? collect(nameof.(funs)) : func_names
 
     # Do all the math, make columns.
     columns = if append_chains
@@ -256,7 +255,7 @@ function summarize(chn::Chains, funs...;
     end
 
     # Make a vector of column names.
-    colnames = vcat([:parameters], func_names)
+    colnames = vcat(:parameters, fnames)
 
     # Build the dataframes.
     ret_df = if append_chains
@@ -269,9 +268,9 @@ function summarize(chn::Chains, funs...;
 
     if additional_df != nothing
         if append_chains
-            ret_df = merge_cdf(ret_df, additional_df.nt)
+            ret_df = merge_union(ret_df, additional_df.nt)
         else
-            ret_df = [merge_cdf(r, additional_df.nt) for r in ret_df]
+            ret_df = [merge_union(r, additional_df.nt) for r in ret_df]
         end
     end
 
@@ -280,38 +279,5 @@ function summarize(chn::Chains, funs...;
     else
         rdf = [ChainDataFrame(name * " (Chain $i)", r, digits=digits) for (i,r) in enumerate(ret_df)]
         return map(x -> x, rdf)
-    end
-end
-
-function handle_funs(fns)
-    tmp =  [string(f) for f in fns]
-    Symbol.([split(tmp[i], ".")[end] for i in 1:length(tmp)])
-end
-
-"""
-Collects the keys of a named tuple and maintains parameter name ordering. Used
-when an additional namedtuple is passed to `summarize` to be joined.
-"""
-function merge_cdf(n1::NamedTuple, n2::NamedTuple)
-    ks1 = collect(keys(n1))
-    ks2 = collect(keys(n2))
-    ks = tuple(unique(vcat(ks1, ks2))...)
-    if :parameters in ks1 && :parameters in ks2
-        p1 = Symbol.(n1.parameters)
-        p2 = Symbol.(n2.parameters)
-        inds = indexin(p1, p2)
-
-        vals = []
-        for k in ks
-            if k in ks1
-                push!(vals, n1[k])
-            else
-                push!(vals, n2[k][inds])
-            end
-        end
-
-        return NamedTuple{ks}(tuple(vals...))
-    else 
-        return merge(n1, n2)
     end
 end
