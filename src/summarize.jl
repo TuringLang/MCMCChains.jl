@@ -269,9 +269,9 @@ function summarize(chn::Chains, funs...;
 
     if additional_df != nothing
         if append_chains
-            ret_df = merge_cdf(ret_df, additional_df.nt)
+            ret_df = merge_union(ret_df, additional_df.nt)
         else
-            ret_df = [merge_cdf(r, additional_df.nt) for r in ret_df]
+            ret_df = [merge_union(r, additional_df.nt) for r in ret_df]
         end
     end
 
@@ -286,32 +286,4 @@ end
 function handle_funs(fns)
     tmp =  [string(f) for f in fns]
     Symbol.([split(tmp[i], ".")[end] for i in 1:length(tmp)])
-end
-
-"""
-Collects the keys of a named tuple and maintains parameter name ordering. Used
-when an additional namedtuple is passed to `summarize` to be joined.
-"""
-function merge_cdf(n1::NamedTuple, n2::NamedTuple)
-    ks1 = collect(keys(n1))
-    ks2 = collect(keys(n2))
-    ks = tuple(unique(vcat(ks1, ks2))...)
-    if :parameters in ks1 && :parameters in ks2
-        p1 = Symbol.(n1.parameters)
-        p2 = Symbol.(n2.parameters)
-        inds = indexin(p1, p2)
-
-        vals = []
-        for k in ks
-            if k in ks1
-                push!(vals, n1[k])
-            else
-                push!(vals, n2[k][inds])
-            end
-        end
-
-        return NamedTuple{ks}(tuple(vals...))
-    else 
-        return merge(n1, n2)
-    end
 end

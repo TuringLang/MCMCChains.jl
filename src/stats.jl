@@ -362,7 +362,7 @@ function ess(chn::Chains;
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
 	end
 
-    df = (parameters = Symbol.(param), ess = ess, r_hat = Rhat)
+    df = (parameters = string.(param), ess = ess, r_hat = Rhat)
 	return ChainDataFrame("ESS", df; digits=digits)
 end
 
