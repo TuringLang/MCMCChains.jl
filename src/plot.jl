@@ -58,8 +58,8 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     end
 
     if st == :autocorplot
-        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
-        ac = autocor(c, lags=collect(lags); showall=true)
+        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)        
+        ac = autocor(c, lags=lags; showall=true)
         ac_mat = convert(Array, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)

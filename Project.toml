@@ -3,7 +3,7 @@ uuid = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
 keywords = ["markov chain monte carlo", "probablistic programming"]
 license = "MIT"
 desc = " Chain types and utility functions for MCMC simulations."
-version = "3.0.2"
+version = "3.0.3"
 
 [deps]
 AbstractMCMC = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
@@ -33,8 +33,10 @@ julia = "^1"
 [extras]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [targets]
-test = ["KernelDensity", "StatsPlots", "Test", "DataFrames"]
+test = ["DataFrames", "KernelDensity", "Logging", "StatsPlots", "Test", "UnicodePlots"]

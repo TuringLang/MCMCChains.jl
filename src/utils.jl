@@ -122,6 +122,18 @@ Base.@pure function merge_union_types(names::Tuple{Vararg{Symbol}}, a::Type{<:Na
     return Tuple{types...}
 end
 
+# promote element types of the tail of a NamedTuple
+function promote_eltype_namedtuple_tail(::NamedTuple{k,v}) where {k,v}
+    return promote_eltype_tuple_type(Base.tuple_type_tail(v))
+end
+
+# promote element types of a tuple
+promote_eltype_tuple_type(::Type{Tuple{}}) = Any
+promote_eltype_tuple_type(::Type{Tuple{T}}) where T = T
+function promote_eltype_tuple_type(t::Type{<:Tuple})
+    Base.promote_eltype(Base.tuple_type_head(t), promote_eltype_tuple_type(Base.tuple_type_tail(t)))
+end
+
 """
     cskip(x)
 

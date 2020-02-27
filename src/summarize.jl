@@ -163,11 +163,11 @@ function Base.lastindex(c::ChainDataFrame, i::Integer)
 end
 
 function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
-    arr = Array{Float64, 2}(undef, c.n_rows, c.n_cols)
-    ks = collect(keys(c.nt))
+    T = promote_eltype_namedtuple_tail(c.nt)
+    arr = Array{T, 2}(undef, c.n_rows, c.n_cols - 1)
     
-    for i in 2:c.n_cols
-        arr[:, i] = c.nt[ks[i]]
+    for (i, k) in enumerate(Iterators.drop(keys(c.nt), 1))
+        arr[:, i] = c.nt[k]
     end
 
     return arr
@@ -175,9 +175,11 @@ end
 
 Base.convert(::Type{Array{ChainDataFrame,1}}, cs::Array{ChainDataFrame,1}) = cs
 function Base.convert(::Type{Array}, cs::Array{C,1}) where C<:ChainDataFrame
-    arrs = [convert(Array, cs[j]) for j in 1:length(cs)]
-    return cat(arrs..., dims = 3)
+    return mapreduce((x, y) -> cat(x, y; dims = Val(3)), cs) do c
+        reshape(convert(Array, c), Val(3))
+    end
 end
+
 """
 
 # Summarize a Chains object formatted as a DataFrame
