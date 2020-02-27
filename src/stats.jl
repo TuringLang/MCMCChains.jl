@@ -33,6 +33,7 @@ function autocor(chn::Chains;
     return summarize(chn, funs...;
         func_names = func_names,
         showall = showall,
+        sections = sections,
         append_chains = append_chains,
         name = "Autocorrelation",
         digits=digits)
@@ -200,6 +201,7 @@ function hpd(chn::Chains; alpha::Real=0.05,
     return summarize(chn, u, l;
         func_names = labels,
         showall=showall,
+        sections=sections,
         name="HPD",
         digits=digits)
 end
@@ -235,9 +237,9 @@ function quantile(chn::Chains;
     end
 
     return summarize(chn, funs...;
-        sections=sections,
         func_names=func_names,
         showall=showall,
+        sections=sections,
         name="Quantiles",
         digits=digits,
         append_chains=append_chains, 
@@ -411,9 +413,9 @@ function summarystats(chn::Chains;
 
     # Summarize.
     summary_df = summarize(chn, funs...;
-        sections=sections,
         func_names=func_names,
         showall=showall,
+        sections=sections,
         name="Summary Statistics",
         additional_df = ess_df,
         digits=digits,
@@ -450,9 +452,9 @@ function mean(chn::Chains;
 
     # Summarize.
     summary_df = summarize(chn, funs...;
-        sections=sections,
         func_names=func_names,
         showall=showall,
+        sections=sections,
         name="Mean",
         digits=digits)
 
