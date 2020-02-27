@@ -17,7 +17,7 @@ The `digits` keyword may be a(n)
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function autocor(chn::Chains;
-        lags::Vector=[1, 5, 10, 50],
+        lags::AbstractVector{<:Integer}=[1, 5, 10, 50],
         demean::Bool=true,
         relative::Bool=true,
         showall=false,
@@ -285,7 +285,7 @@ function ess(chn::Chains;
     # Misc allocations.
     m = n_chain_orig * 2
     maxlag = min(maxlag, n-1)
-    lags = collect(0:maxlag)
+    lags = 0:maxlag
 
     # Preallocate B, W, varhat, and Rhat vectors for each param.
     B = Vector(undef, length(param))
