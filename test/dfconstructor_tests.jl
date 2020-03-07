@@ -39,3 +39,16 @@ using DataFrames
     @test size(df8) == (4, )
     @test size(df8[1]) == (1000, 8)
 end
+@testset "ChainDataFrame converter" begin
+    val = rand(1000, 5, 4)
+    chain = Chains(val)
+
+    cdfs = describe(chain)
+
+    dfs = DataFrame(cdfs)
+    df1 = DataFrame(cdfs[1])
+    df2 = DataFrame(cdfs[2])
+
+    @test dfs[1] == df1
+    @test dfs[2] == df2
+end

@@ -102,3 +102,11 @@ function DataFrames.DataFrame(chn::Chains,
     end
     return b
 end
+
+DataFrames.DataFrame(cdfs::Vector{<:ChainDataFrame}) = map(DataFrame, cdfs)
+function DataFrames.DataFrame(cdf::ChainDataFrame)
+    colnames = collect(keys(cdf.nt))
+    cols = collect(values(cdf.nt))
+
+    return DataFrame(cols, colnames)
+end
