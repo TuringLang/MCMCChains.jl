@@ -72,3 +72,10 @@ function Tables.schema(t::TableOrChains)
     types = DataType[Int; Int; get.(Ref(t.coltypes), nms[3:end], Ref(eltype(t.data.value)))]
     return Tables.Schema(nms, types)
 end
+
+IteratorInterfaceExtensions.isiterable(::TableOrChains) = true
+function IteratorInterfaceExtensions.getiterator(t::TableOrChains)
+    return Tables.datavaluerows(Tables.columntable(t))
+end
+
+TableTraits.isiterabletable(::TableOrChains) = true
