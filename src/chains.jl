@@ -438,7 +438,7 @@ end
 
 function link(c::Chains)
   cc = copy(c.value.data)
-  for j in 1:length(c.names)
+  for j in axes(cc, 2)
     x = cc[:, j, :]
     if minimum(x) > 0.0
       cc[:, j, :] = maximum(x) < 1.0 ? logit.(x) : log.(x)
