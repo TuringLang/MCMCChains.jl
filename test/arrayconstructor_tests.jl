@@ -2,8 +2,9 @@ using MCMCChains, Test
 
 @testset "Array constructor tests" begin
     @testset "Smoke tests" begin
-        val = convert(Array{Union{Missing, Float64},3}, rand(1000, 5, 5))
+        val = convert(Array{Union{Missing,Real},3}, rand(1000, 5, 5))
         chns = Chains(val, ["a", "b", "c", "d", "e"], [:internals => ["d", "e"]])
+        chns_a = chns[:a]
 
         # Config.
         main_params = 3
@@ -12,6 +13,42 @@ using MCMCChains, Test
 
         d, p, c = size(chns)
 
+        # return type
+        @test Array(chns) isa Matrix{Float64}
+        @test Array(MCMCChains.concretize(chns)) isa Matrix{Float64}
+        @test MCMCChains.concretize(Array(chns)) isa Matrix{Float64}
+
+        @test Array(chns; append_chains = true) isa Matrix{Float64}
+        @test Array(MCMCChains.concretize(chns); append_chains = true) isa Matrix{Float64}
+        @test MCMCChains.concretize(Array(chns; append_chains = true)) isa Matrix{Float64}
+
+        @test Array(chns; append_chains = false) isa Vector{Matrix{Float64}}
+        @test Array(MCMCChains.concretize(chns); append_chains = false) isa
+            Vector{Matrix{Float64}}
+        @test MCMCChains.concretize(Array(chns; append_chains = false)) isa
+            Vector{Matrix{Float64}}
+
+        @test Array(chns_a; append_chains = false) isa Vector{Vector{Float64}}
+        @test Array(MCMCChains.concretize(chns_a); append_chains = false) isa
+            Vector{Vector{Float64}}
+        @test MCMCChains.concretize(Array(chns_a; append_chains = false)) isa
+            Vector{Vector{Float64}}
+
+        @test Array(chns; remove_missing_union = false) isa Matrix{Union{Missing,Real}}
+        @test Array(chns; append_chains = true, remove_missing_union = false) isa
+            Matrix{Union{Missing,Real}}
+        @test Array(chns; append_chains = false, remove_missing_union = false) isa
+            Vector{Matrix{Union{Missing,Real}}}
+        @test Array(chns_a; append_chains = false, remove_missing_union = false) isa
+            Vector{Vector{Union{Missing,Real}}}
+
+        # type inference
+        @inferred MCMCChains.to_matrix(chns)
+        @inferred MCMCChains.to_vector(chns)
+        @inferred MCMCChains.to_vector_of_vectors(chns_a)
+        @inferred MCMCChains.to_vector_of_matrices(chns)
+
+        # sizes
         @test size(Array(chns)) == (d*c, main_params)
         @test size(Array(chns, [:parameters])) == (d*c, main_params)
         @test size(Array(chns, [:parameters])) == size(Array(chns))
@@ -22,7 +59,6 @@ using MCMCChains, Test
         @test size(Array(chns, append_chains=true)) == (d*c, main_params)
         @test size(Array(chns, append_chains=false)) == (5,)
         @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
-        @test typeof(Array(chns, append_chains=true)) == Array{Float64, 2}
         @test size(Array(chns)) == (d*c, main_params)
         @test size(Array(chns, append_chains=false)) == (5,)
         @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
