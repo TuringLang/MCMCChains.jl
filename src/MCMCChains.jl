@@ -21,7 +21,7 @@ import Statistics: std, cor, mean, var
 export Chains, chains, chainscat
 export set_section, get_params, sections, sort_sections, setinfo, set_names
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
-export ChainDataFrame, DataFrame
+export ChainDataFrame
 export summarize
 
 # Export diagnostics functions
