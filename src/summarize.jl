@@ -6,17 +6,10 @@ struct ChainDataFrame{NT<:NamedTuple}
     digits::Int
 
     function ChainDataFrame(name::String, nt::NamedTuple; digits::Int=4)
-        ks = collect(keys(nt))
+        lengths = length(first(nt))
+        all(x -> length(x) == lengths, nt) || error("Lengths must be equal.")
 
-        lengths = length(nt[ks[1]])
-
-        for i in 2:length(ks)
-            if length(nt[ks[i]]) != lengths
-                error("Lengths must be equal.")
-            end
-        end
-
-        return new{typeof(nt)}(name, nt, lengths, length(ks), digits)
+        return new{typeof(nt)}(name, nt, lengths, length(nt), digits)
     end
 end
 
@@ -182,7 +175,7 @@ end
 
 """
 
-# Summarize a Chains object formatted as a DataFrame
+# Summarize a Chains object formatted as a ChainsDataFrame
 
 Summarize method for a Chains object.
 
@@ -199,7 +192,7 @@ Summarize method for a Chains object.
 
 ### Required arguments
 ```julia
-* `chn` : Chains object to convert to a DataFrame-formatted summary
+* `chn` : Chains object to convert to a ChainsDataFrame-formatted summary
 ```
 
 ### Optional arguments
@@ -218,7 +211,7 @@ Summarize method for a Chains object.
 ```
 
 """
-function summarize(chn::Chains, funs...;
+function summarize(chains::Chains, funs...;
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         func_names::AbstractVector{Symbol} = Symbol[],
         append_chains::Bool=true,
@@ -228,58 +221,54 @@ function summarize(chn::Chains, funs...;
         digits::Int=4,
         sorted::Bool=false)
     # Check that we actually have :parameters.
-    showall = showall ? true : !in(:parameters, keys(chn.name_map))
-
+    showall = showall || !in(:parameters, keys(chains.name_map))
+    
     # If we weren't given any functions, fall back on summary stats.
     if length(funs) == 0
-        return summarystats(chn,
+        return summarystats(chains,
             sections=sections,
             showall=showall)
     end
+    
+    # Generate a chain to work on.
+    chn = Chains(chains, sections, sorted=sorted)
 
-    # Generate a dataframe to work on.
-    chn = Chains(chn, sections, sorted=sorted)
-    # df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
+    # Obtain data and names of parameters.
+    data = chn.value.data
+    names_of_params = names(chn)
 
     # If no function names were given, make a new list.
     fnames = isempty(func_names) ? collect(nameof.(funs)) : func_names
 
-    # Do all the math, make columns.
-    columns = if append_chains
-        vcat([names(chn)],
-             [[f(chn.value.data[:,col,:]) for col in 1:size(chn, 2)] for f in funs])
-    else
-        [vcat([names(chn)],
-             [[f(chn.value.data[:,col,i]) for col in 1:size(chn, 2)] for f in funs])
-             for i in 1:size(chn, 3)]
-        # [vcat([names(chn[1])],
-        #       [[f(col) for col = eachcol(i, false)] for f in funs]) for i in df]
-    end
-
-    # Make a vector of column names.
-    colnames = vcat(:parameters, fnames)
-
-    # Build the dataframes.
-    ret_df = if append_chains
-        NamedTuple{tuple(colnames...)}(tuple(columns...))
-    else
-        [NamedTuple{tuple(colnames...)}(tuple(columns[i]...)) 
-        for i in 1:size(chn, 3)]
-    end
-
-
-    if additional_df != nothing
-        if append_chains
-            ret_df = merge_union(ret_df, additional_df.nt)
-        else
-            ret_df = [merge_union(r, additional_df.nt) for r in ret_df]
-        end
-    end
+    # Obtain the additional named tuple.
+    additional_nt = additional_df === nothing ? NamedTuple() : additional_df.nt
 
     if append_chains
-        return ChainDataFrame(name, ret_df, digits=digits)
+        # Evaluate the functions.
+        fvals = [[f(data[:,col,:]) for col in axes(data, 2)] for f in funs]
+
+        # Build the ChainDataFrame.
+        nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
+        df = ChainDataFrame(name, nt; digits=digits)
+
+        return df
     else
-        rdf = [ChainDataFrame(name * " (Chain $i)", r, digits=digits) for (i,r) in enumerate(ret_df)]
-        return map(x -> x, rdf)
+        # Evaluate the functions.
+        vector_of_fvals = [
+            [[f(data[:, col, i]) for col in axes(data, 2)] for f in funs]
+            for i in axes(data, 3)
+        ]
+
+        # Build the ChainDataFrames.
+        vector_of_nt = [
+            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
+            for fvals in vector_of_fvals
+        ]
+        vector_of_df = [
+            ChainDataFrame(name * " (Chain $i)", nt; digits=digits)
+            for (i, nt) in enumerate(vector_of_nt)
+        ]
+
+        return vector_of_df
     end
 end

@@ -59,6 +59,7 @@ function rafterydiag(
                      eps = 0.001,
                      showall=false,
                      sorted=true,
+                     digits=4,
                      sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
                     )
     c = showall ?
@@ -77,15 +78,22 @@ function rafterydiag(
         )
     end
 
-    colnames = tuple(Symbol.(["parameters", "Thinning", "Burn-in", "Total", "Nmin",
-        "Dependence Factor"])...)
+    # Retrieve columns.
+    columns = [[vals[k][:, i] for i in 1:5] for k in 1:m]
 
-    pnames = Symbol.(names(c))
-    vals = map(x -> round.(x, digits=4), vals)
-    columns = [vcat([pnames], [vals[k][:,i] for i in 1:5]) for k in 1:m]
+    # Obtain names of parameters.
+    names_of_params = names(chn)
 
-    dfs = [NamedTuple{colnames}(tuple(columns[k]...)) for k in 1:m]
-    dfs_wrapped = [ChainDataFrame("Raftery and Lewis Diagnostic - Chain $k",
-                   dfs[k]) for k in 1:m]
-    return dfs_wrapped
+    # Compute data frames.
+    vector_of_df = [
+        ChainDataFrame(
+            "Raftery and Lewis Diagnostic - Chain $i",
+            (parameters = names_of_params, Thinning = column[1], var"Burn-in" = column[2],
+             Total = column[3], Nmin = column[4], var"Dependence Factor" = column[5]);
+            digits = digits
+        )
+        for (i, column) in enumerate(columns)
+    ]
+
+    return vector_of_df
 end

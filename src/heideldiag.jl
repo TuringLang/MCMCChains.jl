@@ -33,6 +33,7 @@ function heideldiag(chn::Chains;
                     sections::Vector{Symbol}=[:parameters],
                     showall=false,
                     sorted=true,
+                    digits=4,
                     args...
                    )
     c = showall ?
@@ -56,16 +57,23 @@ function heideldiag(chn::Chains;
                            )
     end
 
-    colnames = tuple(Symbol.(["parameters", "Burn-in", "Stationarity", "p-value", "Mean",
-        "Halfwidth", "Test"])...)
+    # Retrieve columns.
+    columns = [[vals[k][:, i] for i in 1:6] for k in 1:m]
 
-    # Round values.
-    pnames = Symbol.(names(c))
-    vals = map(x -> round.(x, digits=4), vals)
-    columns = [vcat([pnames], [vals[k][:,i] for i in 1:6]) for k in 1:m]
+    # Obtain names of parameters.
+    names_of_params = names(chn)
 
-    dfs = [NamedTuple{colnames}(tuple(columns[k]...)) for k in 1:m]
-    dfs_wrapped = [ChainDataFrame("Heidelberger and Welch Diagnostic - Chain $k",
-                   dfs[k]) for k in 1:m]
-    return dfs_wrapped
+    # Compute data frames.
+    vector_of_df = [
+        ChainDataFrame(
+            "Heidelberger and Welch Diagnostic - Chain $i",
+            (parameters = names_of_params, var"Burn-in" = column[1],
+             Stationarity = column[2], var"p-value" = column[3], Mean = column[4],
+             Halfwidth = column[5], Test = column[6]);
+             digits = digits
+        )
+        for (i, column) in enumerate(columns)
+    ]
+
+    return vector_of_df
 end
