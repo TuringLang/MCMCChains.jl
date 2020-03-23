@@ -58,21 +58,21 @@ function heideldiag(chn::Chains;
     end
 
     # Retrieve columns.
-    columns = [[vals[k][:, i] for i in 1:6] for k in 1:m]
+    data = [[vals[k][:, i] for i in 1:6] for k in 1:m]
 
     # Obtain names of parameters.
     names_of_params = names(chn)
 
     # Compute data frames.
+    colnames = (Symbol("Burn-in"), :Stationarity, Symbol("p-value"), :Mean, :Halfwidth,
+        :Test)
     vector_of_df = [
         ChainDataFrame(
             "Heidelberger and Welch Diagnostic - Chain $i",
-            (parameters = names_of_params, var"Burn-in" = column[1],
-             Stationarity = column[2], var"p-value" = column[3], Mean = column[4],
-             Halfwidth = column[5], Test = column[6]);
-             digits = digits
+            (parameters = names_of_params, zip(colnames, columns)...);
+            digits = digits
         )
-        for (i, column) in enumerate(columns)
+        for (i, columns) in enumerate(data)
     ]
 
     return vector_of_df

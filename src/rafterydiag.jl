@@ -79,20 +79,20 @@ function rafterydiag(
     end
 
     # Retrieve columns.
-    columns = [[vals[k][:, i] for i in 1:5] for k in 1:m]
+    data = [[vals[k][:, i] for i in 1:5] for k in 1:m]
 
     # Obtain names of parameters.
     names_of_params = names(chn)
 
     # Compute data frames.
+    colnames = (:Thinning, Symbol("Burn-in"), :Total, :Nmin, Symbol("Dependence Factor"))
     vector_of_df = [
         ChainDataFrame(
             "Raftery and Lewis Diagnostic - Chain $i",
-            (parameters = names_of_params, Thinning = column[1], var"Burn-in" = column[2],
-             Total = column[3], Nmin = column[4], var"Dependence Factor" = column[5]);
+            (parameters = names_of_params, zip(colnames, columns)...);
             digits = digits
         )
-        for (i, column) in enumerate(columns)
+        for (i, columns) in enumerate(data)
     ]
 
     return vector_of_df
