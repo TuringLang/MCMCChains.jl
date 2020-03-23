@@ -39,11 +39,11 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractMCMC.AbstractChains
-    value::AxisArray{A,3}
-    logevidence::T
+struct Chains{T,V<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
+    value::V
+    logevidence::L
     name_map::K
-    info::L
+    info::I
 end
 
 include("utils.jl")
