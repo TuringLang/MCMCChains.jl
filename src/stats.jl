@@ -391,8 +391,8 @@ function ess(chn::Chains;
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
 	end
 
-    df = (parameters = string.(param), ess = ess, r_hat = Rhat)
-	return ChainDataFrame("ESS", df; digits=digits)
+    nt = (parameters = param, ess = ess, rhat = Rhat)
+	return ChainDataFrame("ESS", nt; digits=digits)
 end
 
 # this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl
