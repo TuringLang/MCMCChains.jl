@@ -59,32 +59,51 @@ inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), e
 ```
 
 """
-function Base.Array(chn::Chains,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
-        append_chains=true,
-        showall=false,
-        sorted=false
-    )
-    sections = showall ? keys(chn.name_map) : sections
-    chn = Chains(chn, sections)
-
-    arr = if append_chains
-        mapreduce(i -> chn.value.data[:,:,i], vcat, 1:size(chn, 3))
+function Base.Array(chain::Chains,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
+    append_chains = true,
+    remove_missing_union = true,
+    showall = false,
+    sorted = false
+)
+    sections = showall ? keys(chain.name_map) : sections
+    if remove_missing_union
+        chn = concretize(Chains(chain, sections))
     else
-        map(i -> chn.value.data[:,:,i], 1:size(chn, 3))
+        chn = Chains(chain, sections)
     end
 
-    arr = if append_chains
-        reshape(arr, (size(arr, 1), size(arr, 2)))
+    nparams = size(chn, 2)
+    if append_chains
+        if nparams == 1
+            return to_vector(chn)
+        else
+            return to_matrix(chn)
+        end
     else
-        arr
-    end
-
-    if size(arr, 2) == 1
-        return map(identity, arr[:,1])
-    else
-        return map(identity, arr)
+        if nparams == 1
+            return to_vector_of_vectors(chn)
+        else
+            return to_vector_of_matrices(chn)
+        end
     end
 end
 
+function to_matrix(chain::Chains)
+    return Matrix(reshape(permutedims(chain.value.data, (1, 3, 2)), :, size(chain, 2)))
+end
+
+function to_vector(chain::Chains)
+    return Vector(vec(chain.value.data))
+end
+
+function to_vector_of_vectors(chain::Chains)
+    data = chain.value.data
+    return [Vector(vec(data[:, :, i])) for i in axes(data, 3)]
+end
+
+function to_vector_of_matrices(chain::Chains)
+    data = chain.value.data
+    return [Matrix(data[:, :, i]) for i in axes(data, 3)]
+end
 

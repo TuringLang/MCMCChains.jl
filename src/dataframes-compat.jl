@@ -40,23 +40,23 @@ Returns either a DataFrame or an Array{DataFrame}
 ```
 
 """
-function DataFrames.DataFrame(chn::Chains,
+function DataFrames.DataFrame(chain::Chains,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
     append_chains=true,
     remove_missing_union=true,
     sorted=false,
-    showall=false)
-    sections = _clean_sections(chn, sections)
+    showall=false
+)
+    sections = _clean_sections(chain, sections)
     sections = sections isa AbstractArray ? sections : [sections]
     sections = showall ? [] : sections
-    section_list = length(sections) == 0 ? sort_sections(chn) : sections
+    section_list = length(sections) == 0 ? sort_sections(chain) : sections
 
-    # If we actually have missing values, we can't remove
-    # Union{Missing}.
-    remove_missing_union = remove_missing_union ?
-        all(!ismissing, chn.value) :
-        remove_missing_union
-
+    if remove_missing_union
+        chn = concretize(Chains(chain, section_list))
+    else
+        chn = Chains(chain, section_list)
+    end
     d, p, c = size(chn.value.data)
 
     local b
@@ -70,12 +70,7 @@ function DataFrames.DataFrame(chn::Chains,
             for par in names
                 x = get(chn, Symbol(par))
                 d, c = size(x[Symbol(par)])
-                if remove_missing_union
-                    b = hcat(b, DataFrame(Symbol(par) => reshape(convert(Array{Float64},
-                    x[Symbol(par)]), d*c)[:, 1]))
-                else
-                    b = hcat(b, DataFrame(Symbol(par) => reshape(x[Symbol(par)], d*c)[:, 1]))
-                end
+                b = hcat(b, DataFrame(Symbol(par) => reshape(x[Symbol(par)], d*c)[:, 1]))
             end
         end
     else
@@ -90,12 +85,7 @@ function DataFrames.DataFrame(chn::Chains,
                 for par in names
                     x = get(chn[:,:,i], Symbol(par))
                     d, c = size(x[Symbol(par)])
-                    if remove_missing_union
-                        b[i] = hcat(b[i], DataFrame(Symbol(par) => convert(Array{Float64},
-                        x[Symbol(par)])[:, 1]))
-                    else
-                        b[i] = hcat(b[i], DataFrame(Symbol(par) => x[Symbol(par)][:,1]))
-                    end
+                    b[i] = hcat(b[i], DataFrame(Symbol(par) => x[Symbol(par)][:,1]))
                 end
             end
         end
@@ -109,4 +99,12 @@ function DataFrames.DataFrame(cdf::ChainDataFrame)
     cols = collect(values(cdf.nt))
 
     return DataFrame(cols, colnames)
+end
+
+function concretize(df::AbstractDataFrame)
+    if all(isconcretetype_recursive ∘ typeof, eachcol(df))
+        df
+    else
+        mapcols(concretize, df)
+    end
 end
