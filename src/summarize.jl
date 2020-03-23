@@ -233,8 +233,7 @@ function summarize(chains::Chains, funs...;
     # Generate a chain to work on.
     chn = Chains(chains, sections, sorted=sorted)
 
-    # Obtain data and names of parameters.
-    data = chn.value.data
+    # Obtain names of parameters.
     names_of_params = names(chn)
 
     # If no function names were given, make a new list.
@@ -245,7 +244,8 @@ function summarize(chains::Chains, funs...;
 
     if append_chains
         # Evaluate the functions.
-        fvals = [[f(data[:,col,:]) for col in axes(data, 2)] for f in funs]
+        data = to_matrix(chn)
+        fvals = [[f(data[:, i]) for i in axes(data, 2)] for f in funs]
 
         # Build the ChainDataFrame.
         nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
@@ -254,10 +254,8 @@ function summarize(chains::Chains, funs...;
         return df
     else
         # Evaluate the functions.
-        vector_of_fvals = [
-            [[f(data[:, col, i]) for col in axes(data, 2)] for f in funs]
-            for i in axes(data, 3)
-        ]
+        data = to_vector_of_matrices(chn)
+        vector_of_fvals = [[[f(x[:, i]) for i in axes(x, 2)] for f in funs] for x in data]
 
         # Build the ChainDataFrames.
         vector_of_nt = [

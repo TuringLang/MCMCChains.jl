@@ -216,7 +216,7 @@ function describe(io::IO,
     return dfs
 end
 
-function _hpd(x::Vector{<:Real}; alpha::Real=0.05)
+function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
     n = length(x)
     m = max(1, ceil(Int, alpha * n))
 
@@ -228,20 +228,11 @@ function _hpd(x::Vector{<:Real}; alpha::Real=0.05)
     return [a[i], b[i]]
 end
 
-function hpd(chn::Chains; alpha::Real=0.05,
-        append_chains=true,
-        showall=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=nothing)
+function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
     labels = [:upper, :lower]
     u(x) = _hpd(x, alpha=alpha)[1]
     l(x) = _hpd(x, alpha=alpha)[2]
-    return summarize(chn, u, l;
-        func_names = labels,
-        showall=showall,
-        sections=sections,
-        name="HPD",
-        digits=digits)
+    return summarize(chn, u, l; name = "HPD", func_names = labels, kwargs...)
 end
 
 """

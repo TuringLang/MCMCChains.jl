@@ -66,6 +66,9 @@ end
 
     @test MCMCChains.changerate(chn) isa ChainDataFrame
     @test MCMCChains.changerate(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @test hpd(chn) isa ChainDataFrame
+    @test hpd(chn; append_chains = false) isa Vector{<:ChainDataFrame}
 end
 
 @testset "vector of vectors" begin
