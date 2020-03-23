@@ -50,34 +50,44 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function cor(chn::Chains;
+function cor(chain::Chains;
         showall=false,
         append_chains=true,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+        sections::Union{Symbol, Vector{Symbol}}=:parameters,
         digits::Int=4,
-        kwargs...)
-    df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
+        kwargs...
+)
+    # Obtain interesting subset of the chain.
+    chn = showall ? chain : Chains(chain, sections)
 
-    # Generate
-    cormat = if append_chains
-        cor(convert(Matrix, df[:, 1:end]))
+    # Obstain names of parameters.
+    names_of_params = Symbol.(names(chn))
+
+    if append_chains
+        df = chaindataframe_cor("Correlation", names_of_params, to_matrix(chn);
+                                digits = digits)
+        return df
     else
-        [cor(convert(Matrix, i[:, 1:end])) for i in df]
+        vector_of_df = [
+            chaindataframe_cor(
+                "Correlation - Chain $i", names_of_params, data; digits = digits
+            )
+            for (i, data) in enumerate(to_vector_of_matrices(chn))
+        ]
+        return vector_of_df
     end
-    nms = append_chains ? names(df) : names(df[1])
-    columns = if append_chains
-        [nms, [cormat[:, i] for i in 1:size(cormat, 2)]...]
-    else
-        [[nms, [cm[:, i] for i in 1:size(cm, 2)]...] for cm in cormat]
-    end
-    colnames = vcat([:parameters], nms...)
-    df_summary = if append_chains
-        ChainDataFrame("Correlation", DataFrame(columns, colnames), digits=digits)
-    else
-        [ChainDataFrame("Correlation", DataFrame(c, colnames), digits=digits)
-            for c in columns]
-    end
-    return df_summary
+end
+
+function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwargs...)
+    # Compute the correlation matrix.
+    cormat = cor(chains)
+
+    # Summarize the results in a named tuple.
+    nt = (; parameters = names_of_params,
+          zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...)
+
+    # Create a ChainDataFrame.
+    return ChainDataFrame(name, nt; kwargs...)
 end
 
 """
@@ -95,42 +105,70 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function changerate(chn::Chains;
+function changerate(chains::Chains{<:Real};
     append_chains=true,
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
     digits::Int=4,
-    kwargs...)
-    # Check for missing values.
-    @assert !any(ismissing.(chn.value)) "Change rate comp. doesn't support missing values."
+    kwargs...
+)
+    # Obtain interesting subset of the chains.
+    chn = showall ? chains : Chains(chains, sections)
 
-    df = DataFrame(chn, append_chains=true, showall=showall)
-    n, p = size(df[1])
-    m = length(chains(chn))
+    # Obstain names of parameters.
+    names_of_params = Symbol.(names(chn))
 
-    r = zeros(Float64, p, 1, 1)
-    r_mv = 0.0
-    delta = Array{Bool}(undef, p)
-    for k in 1:m
-        dfk = df[k]
-        prev = convert(Vector, dfk[1,:])
-        for i in 2:n
-            for j in 1:p
-                x = dfk[i, j]
-                dx = x != prev[j]
-                r[j] += dx
-                delta[j] = dx
-                prev[j] = x
-            end
-            r_mv += any(delta)
-        end
+    if append_chains
+        df = chaindataframe_changerate("Change Rate", names_of_params, chn.value.data)
+        return df
+    else
+        vector_of_df = [
+            chaindataframe_changerate(
+                "Change Rate - Chain $i", names_of_params, data; digits = digits
+            )
+            for (i, data) in enumerate(to_vector_of_matrices(chn))
+        ]
+        return vector_of_df
     end
-    vals = round.([r..., r_mv] / (m * (n - 1)), digits = 3)
-    rownames = push!(names(df[1]), :multivariate)
-    return DataFrame(parameters = rownames,
-        change_rate = vals,
-        name="Change Rate",
-        digits=digits)
+end
+
+function chaindataframe_changerate(name, names_of_params, chains; kwargs...)
+    # Compute the change rates.
+    changerates, mvchangerate = chains
+
+    # Summarize the results in a named tuple.
+    nt = (; zip(names_of_params, changerates)..., multivariate = mvchangerate)
+
+    # Create a ChainDataFrame.
+    return ChainDataFrame(name, nt; kwargs...)
+end
+
+changerate(chains::AbstractMatrix{<:Real}) = changerate(reshape(chains, Val(3)))
+function changerate(chains::AbstractArray{<:Real,3})
+    niters, nparams, nchains = size(chains)
+
+    changerates = zeros(nparams)
+    mvchangerate = 0.0
+
+    for chain in 1:nchains, iter in 2:niters
+        isanychanged = false
+
+        for param in 1:nparams
+            # update if the sample is different from the one in the previous iteration
+            if chains[iter-1, param, chain] != chains[iter, param, chain]
+                changerates[param] += 1
+                isanychanged = true
+            end
+        end
+
+        mvchangerate += isanychanged
+    end
+
+    factor = nchains * (niters - 1)
+    changerates ./= factor
+    mvchangerate /= factor
+
+    changerates, mvchangerate
 end
 
 describe(c::Chains; args...) = describe(stdout, c; args...)
@@ -178,7 +216,7 @@ function describe(io::IO,
     return dfs
 end
 
-function _hpd(x::Vector{<:Real}; alpha::Real=0.05)
+function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
     n = length(x)
     m = max(1, ceil(Int, alpha * n))
 
@@ -190,20 +228,11 @@ function _hpd(x::Vector{<:Real}; alpha::Real=0.05)
     return [a[i], b[i]]
 end
 
-function hpd(chn::Chains; alpha::Real=0.05,
-        append_chains=true,
-        showall=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=nothing)
+function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
     labels = [:upper, :lower]
     u(x) = _hpd(x, alpha=alpha)[1]
     l(x) = _hpd(x, alpha=alpha)[2]
-    return summarize(chn, u, l;
-        func_names = labels,
-        showall=showall,
-        sections=sections,
-        name="HPD",
-        digits=digits)
+    return summarize(chn, u, l; name = "HPD", func_names = labels, kwargs...)
 end
 
 """

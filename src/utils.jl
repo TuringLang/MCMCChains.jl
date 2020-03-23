@@ -140,3 +140,31 @@ end
 Wrapper for `collect(skipmissing(x))`.
 """
 cskip(x) = collect(skipmissing(x))
+
+# check if `T` and recursive `eltype` of `T` are concrete types
+function isconcretetype_recursive(T)
+    return isconcretetype(T) && (eltype(T) === T || isconcretetype_recursive(eltype(T)))
+end
+
+"""
+    concretize(x)
+
+Return a container whose elements are as concrete as possible by, e.g., replacing
+element types of `Real` or `Union{Missing,Float64}` with `Float64`, if appropriate.
+
+Note that this function is only type stable if the containers are already concretely
+typed. In this case the input `x` is returned, and hence input and output share the
+same underlying data. In general, however, the input and the output do not share the same
+data.
+"""
+concretize(x) = x
+concretize(x::AbstractArray) = isconcretetype_recursive(typeof(x)) ? x : map(concretize, x)
+
+function concretize(x::Chains)
+    value = x.value
+    if isconcretetype_recursive(value)
+        return x
+    else
+        return Chains(concretize(value), x.logevidence, x.name_map, x.info)
+    end
+end
