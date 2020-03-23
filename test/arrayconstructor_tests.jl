@@ -42,11 +42,11 @@ using MCMCChains, Test
         @test Array(chns_a; append_chains = false, remove_missing_union = false) isa
             Vector{Vector{Union{Missing,Real}}}
 
-        # type inference
-        @inferred MCMCChains.to_matrix(chns)
-        @inferred MCMCChains.to_vector(chns)
-        @inferred MCMCChains.to_vector_of_vectors(chns_a)
-        @inferred MCMCChains.to_vector_of_matrices(chns)
+        # type inference (needs concretely typed Chains)
+        @test_broken @inferred MCMCChains.to_matrix(chns)
+        @test_broken @inferred MCMCChains.to_vector(chns)
+        @test_broken @inferred MCMCChains.to_vector_of_vectors(chns_a)
+        @test_broken @inferred MCMCChains.to_vector_of_matrices(chns)
 
         # sizes
         @test size(Array(chns)) == (d*c, main_params)
