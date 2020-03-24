@@ -61,7 +61,7 @@ Tables.columns(cdf::ChainDataFrame) = cdf
 Tables.columnnames(cdf::ChainDataFrame) = keys(cdf.nt)
 
 function Tables.getcolumn(cdf::ChainDataFrame, i::Int)
-    return Tables.getcolumn(cdf, keys(cdf.nt)[1])
+    return Tables.getcolumn(cdf, keys(cdf.nt)[i])
 end
 Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = getproperty(cdf.nt, nm)
 
