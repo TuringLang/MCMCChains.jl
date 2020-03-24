@@ -1,4 +1,6 @@
 using Tables
+using TableTraits
+using IteratorInterfaceExtensions
 
 @testset "Tables interface tests" begin
 
@@ -57,4 +59,20 @@ using Tables
             @test Tables.matrix(chn[:, :, 1])[:, 3:end] ≈ chn[:, :, 1].value
             @test Tables.matrix(chn[:, :, 2])[:, 3:end] ≈ chn[:, :, 2].value
         end
+
+        @testset "TableTraits interface" begin
+            val = rand(1000, 8, 4)
+            colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
+            internal_colnames = ["c", "d", "e", "f", "g", "h"]
+            chn = Chains(val, colnames, Dict(:internals => internal_colnames))
+            @test IteratorInterfaceExtensions.isiterable(chn)
+            @test TableTraits.isiterabletable(chn)
+            nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(chn), 1))[1]
+            @test nt ==
+                  (; (k => Tables.getcolumn(chn, k)[1] for k in Tables.columnnames(chn))...)
+            nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(chn), 2))[2]
+            @test nt ==
+                  (; (k => Tables.getcolumn(chn, k)[2] for k in Tables.columnnames(chn))...)
+        end
     end
+end
