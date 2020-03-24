@@ -22,13 +22,14 @@ function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
                     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                     showall=false,
                     sorted=true, 
+                    digits=4,
                     args...)
     c = showall ?
         sorted ? sort(chn) : chn :
         Chains(chn, _clean_sections(chn, sections); sorted=sorted)
 
     _, p, m = size(c.value)
-    diags = [vals = Array{Float64}(undef, p, 2) for _ in 1:m]
+    diags = [Array{Float64}(undef, p, 2) for _ in 1:m]
     for j in 1:p, k in 1:m
         diags[k][j,:] = gewekediag(
                             collect(skipmissing(c.value[:, j, k])),
@@ -39,14 +40,18 @@ function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
                         )
     end
 
-    name = "Geweke Diagnostic\nFirst Window Fraction = $first\n" *
-        "Second Window Fraction = $last\n"
+    # Obtain names of parameters.
+    names_of_params = names(chn)
 
-    pnames = Symbol.(names(c))
-    colnames = (:parameters, :z_score, :p_value)
-    columns = [[pnames, d[:,1], d[:,2]] for d in diags]
-    dfs = [ChainDataFrame("Geweke Diagnostic - Chain $i",
-                          NamedTuple{colnames}(tuple(columns[i]...))) for i in 1:m]
+    # Compute data frames.
+    vector_of_df = [
+        ChainDataFrame(
+            "Geweke Diagnostic - Chain $i",
+            (parameters = names_of_params, z_score = d[:, 1], p_value = d[:, 2]);
+            digits = digits
+        )
+        for (i, d) in enumerate(diags)
+    ]
 
-    return dfs
+    return vector_of_df
 end

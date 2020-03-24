@@ -86,14 +86,13 @@ function Chains(
                     var = parameter_names,
                     chain = 1:size(val, 3))
 
+    # Create the new chain.
+    chains = Chains(arr, evidence, name_map_tupl, info)
+
     if sorted
-        return sort(
-            Chains{eltype(val), typeof(evidence), typeof(name_map_tupl), typeof(info)}(
-                arr, evidence, name_map_tupl, info)
-        )
+        return sort(chains)
     else
-        return Chains{eltype(val), typeof(evidence), typeof(name_map_tupl), typeof(info)}(
-                arr, evidence, name_map_tupl, info)
+        return chains
     end
 end
 
@@ -115,11 +114,7 @@ function Chains(c::Chains, section::NTuple{<:Any,Symbol}; sorted::Bool=false)
     value = c.value[:, mapreduce(collect, vcat, name_map), :]
 
     # Create the new chain.
-    chain = Chains{eltype(c.value),typeof(c.logevidence),typeof(name_map),typeof(c.info)}(
-		value,
-        c.logevidence,
-        name_map,
-        c.info)
+    chain = Chains(value, c.logevidence, name_map, c.info)
 
     if sorted
         return sort(chain)
@@ -172,8 +167,7 @@ function Base.getindex(c::Chains, i...)
     newval = getindex(c.value, ind...)
     names = newval.axes[2].val
     new_name_map = _trim_name_map(names, c.name_map)
-    return Chains{eltype(c.value),typeof(c.logevidence),typeof(new_name_map),
-        typeof(c.info)}(newval, c.logevidence, new_name_map, c.info)
+    return Chains(newval, c.logevidence, new_name_map, c.info)
 end
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
@@ -497,8 +491,7 @@ function Base.sort(c::Chains)
     new_name_map = _dict2namedtuple(name_dict)
 
     aa = AxisArray(new_v, new_axes...)
-    return Chains{eltype(c.value),typeof(c.logevidence),typeof(new_name_map),
-        typeof(c.info)}(aa, c.logevidence, new_name_map, c.info)
+    return Chains(aa, c.logevidence, new_name_map, c.info)
 end
 
 """
@@ -513,8 +506,7 @@ new_chn = setinfo(chn, NamedTuple{(:a, :b)}((1, 2)))
 ```
 """
 function setinfo(c::Chains, n::NamedTuple)
-    return Chains{eltype(c.value),typeof(c.logevidence),typeof(c.name_map),typeof(n)}(
-        c.value, c.logevidence, c.name_map, n)
+    return Chains(c.value, c.logevidence, c.name_map, n)
 end
 
 set_section(c::Chains, nt::NamedTuple) = set_section(c, _namedtuple2dict(nt))
@@ -549,8 +541,7 @@ function set_section(c::Chains, d::Dict)
     end
 
     nt = _dict2namedtuple(d)
-    return Chains{eltype(c.value),typeof(c.logevidence),typeof(nt),typeof(c.info)}(
-        c.value, c.logevidence, nt, c.info)
+    return Chains(c.value, c.logevidence, nt, c.info)
 end
 
 function _use_showall(c::Chains, section::Symbol)

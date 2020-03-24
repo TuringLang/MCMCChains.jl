@@ -57,6 +57,20 @@ end
     @test eltype(rafterydiag(chn[:,1,:])) <: ChainDataFrame
 end
 
+@testset "stats tests" begin
+    @test autocor(chn) isa Vector{<:ChainDataFrame}
+    @test autocor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @test MCMCChains.cor(chn) isa ChainDataFrame
+    @test MCMCChains.cor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @test MCMCChains.changerate(chn) isa ChainDataFrame
+    @test MCMCChains.changerate(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @test hpd(chn) isa ChainDataFrame
+    @test hpd(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+end
+
 @testset "vector of vectors" begin
     val = [rand(20) for _ in 1:10]
 

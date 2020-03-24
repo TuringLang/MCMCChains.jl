@@ -37,7 +37,7 @@ import IteratorInterfaceExtensions: isiterable, getiterator
 export Chains, chains, chainscat
 export set_section, get_params, sections, sort_sections, setinfo, set_names
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
-export ChainDataFrame, DataFrame
+export ChainDataFrame
 export summarize
 export TableChains
 
@@ -56,11 +56,11 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractMCMC.AbstractChains
-    value::AxisArray{A,3}
-    logevidence::T
+struct Chains{T,L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
+    value::AxisArray{T,3}
+    logevidence::L
     name_map::K
-    info::L
+    info::I
 end
 
 include("utils.jl")

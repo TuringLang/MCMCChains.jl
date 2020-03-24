@@ -39,6 +39,29 @@ using DataFrames
     @test size(df8) == (4, )
     @test size(df8[1]) == (1000, 8)
 end
+
+@testset "concretize of DataFrame" begin
+    val = rand(10, 4, 4)
+    chn = Chains(val, ["a", "b", "c", "d"])
+
+    df = DataFrame(chn)
+    @test MCMCChains.concretize(df) === df
+
+    val2 = convert(Array{Union{Missing,Real}}, val)
+    chn2 = Chains(val2, ["a", "b", "c", "d"])
+
+    df2 = DataFrame(chn2)
+    @test all(x -> eltype(x) === Float64, eachcol(df2))
+    @test df2 == df
+
+    df3 = DataFrame(chn2; remove_missing_union = false)
+    @test all(x -> eltype(x) === Union{Missing,Real}, eachcol(df3))
+    
+    df4 = MCMCChains.concretize(df2)
+    @test all(x -> eltype(x) === Float64, eachcol(df4))
+    @test df4 == df
+end
+
 @testset "ChainDataFrame converter" begin
     val = rand(1000, 5, 4)
     chain = Chains(val)
