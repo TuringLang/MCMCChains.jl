@@ -5,11 +5,12 @@ using IteratorInterfaceExtensions
 @testset "Tables interface tests" begin
 
     @testset "Chains" begin
+        val = rand(1000, 8, 4)
+        colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
+        internal_colnames = ["c", "d", "e", "f", "g", "h"]
+        chn = Chains(val, colnames, Dict(:internals => internal_colnames))
+
         @testset "Tables interface" begin
-            val = rand(1000, 8, 4)
-            colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
-            internal_colnames = ["c", "d", "e", "f", "g", "h"]
-            chn = Chains(val, colnames, Dict(:internals => internal_colnames))
             @test Tables.istable(typeof(chn))
             @test Tables.columnaccess(typeof(chn))
             @test Tables.columns(chn) === chn
@@ -61,10 +62,6 @@ using IteratorInterfaceExtensions
         end
 
         @testset "TableTraits interface" begin
-            val = rand(1000, 8, 4)
-            colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
-            internal_colnames = ["c", "d", "e", "f", "g", "h"]
-            chn = Chains(val, colnames, Dict(:internals => internal_colnames))
             @test IteratorInterfaceExtensions.isiterable(chn)
             @test TableTraits.isiterabletable(chn)
             nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(chn), 1))[1]
