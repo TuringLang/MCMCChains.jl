@@ -64,8 +64,7 @@ function DataFrames.DataFrame(chain::Chains,
         b = DataFrame()
         for section in section_list
             names = sorted ?
-                sort(chn.name_map[section],
-                    by=x->string(x), lt = natural) :
+                sort(chn.name_map[section], by = string, lt = natural) :
                 chn.name_map[section]
             for par in names
                 x = get(chn, Symbol(par))
@@ -79,8 +78,7 @@ function DataFrames.DataFrame(chain::Chains,
             b[i] = DataFrame()
             for section in section_list
                 names = sorted ?
-                    sort(chn.name_map[section],
-                        by=x->string(x), lt = natural) :
+                    sort(chn.name_map[section], by = string, lt = natural) :
                     chn.name_map[section]
                 for par in names
                     x = get(chn[:,:,i], Symbol(par))
