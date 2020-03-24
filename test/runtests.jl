@@ -33,10 +33,6 @@ using Test
     println("Array")
     @time include("arrayconstructor_tests.jl")
 
-    # run tests for dataframe constructor
-    println("Dataframe")
-    @time include("dfconstructor_tests.jl")
-
     # run tests for tables interfaces
     println("Tables interfaces")
     @time include("tables_tests.jl")
