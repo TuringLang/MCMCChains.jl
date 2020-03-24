@@ -110,18 +110,29 @@ function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}})
     getindex(c, s, collect(keys(c.nt)))
 end
 
-function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, ks::Union{Symbol, Vector{Symbol}})
+function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, ks)
     getindex(c, c.nt[:parameters][s], ks)
 end
 
+# dispatches involing `String` and `AbstractVector{String}`
+Base.getindex(c::ChainDataFrame, s::String, ks) = getindex(c, Symbol(s), ks)
+function Base.getindex(c::ChainDataFrame, s::AbstractVector{String}, ks)
+    return getindex(c, Symbol.(s), ks)
+end
+
+# dispatch for `Symbol`
+Base.getindex(c::ChainDataFrame, s::Symbol, ks) = getindex(c, [s], ks)
+
+function Base.getindex(c::ChainDataFrame, s::AbstractVector{Symbol}, ks::Symbol)
+    return getindex(c, s, [ks])
+end
+
 function Base.getindex(
-    c::ChainDataFrame, 
-    s::Union{String, Vector{String}, Symbol, Vector{Symbol}}, 
-    ks::Union{Symbol, Vector{Symbol}}
+    c::ChainDataFrame,
+    s::AbstractVector{Symbol},
+    ks::AbstractVector{Symbol}
 )
-    s = s isa AbstractArray ? s : [s]
-    ks = ks isa AbstractArray ? ks : [ks]
-    ind = indexin(Symbol.(s), Symbol.(c.nt[:parameters]))
+    ind = indexin(s, c.nt[:parameters])
 
     not_found = map(x -> x === nothing, ind)
 

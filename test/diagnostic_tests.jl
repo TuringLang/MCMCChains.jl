@@ -25,23 +25,23 @@ chn_disc = Chains(val_disc, start = 1, thin = 2, sorted=true)
     @test last(chn) == 7999
     @test size(chn) == (4000, 4, 2)
     @test size(chn[1:1000, :, :]) == (1000, 4, 2)
-    @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
+    @test keys(chn) == [:param1, :param2, :param3, :param4]
     @test isa(chn[:,1,:], AbstractChains)
-    @test isa(chn[200:300,"Param1",:], AbstractChains)
-    @test isa(chn[200:300,["Param1", "Param3"],:], AbstractChains)
-    @test isa(chn[200:300,"Param1",1], AbstractChains)
+    @test isa(chn[200:300, "param1", :], AbstractChains)
+    @test isa(chn[200:300, ["param1", "param3"], :], AbstractChains)
+    @test isa(chn[200:300, "param1", 1], AbstractChains)
     @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
     @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
     @test all(chn[:,1,2].value .== val[:,1,2])
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
-    @test isa(set_section(chn, Dict(:internals => ["Param1"])), AbstractChains)
+    @test isa(set_section(chn, Dict(:internals => ["param1"])), AbstractChains)
     @test mean(chn) isa ChainDataFrame
-    @test mean(chn, ["Param1", "Param2"]) isa ChainDataFrame
-    @test 1.05 >= mean(chn, :Param1) >= 0.95
-    @test 1.05 >= mean(chn, "Param1") >= 0.95
-    @test names(set_names(chn, Dict("Param1" => "PARAM1"))) ==
-        ["PARAM1", "Param2", "Param3", "Param4"]
+    @test mean(chn, ["param1", "param"]) isa ChainDataFrame
+    @test 1.05 >= mean(chn, "param1") >= 0.95
+    @test 1.05 >= mean(chn, "param1") >= 0.95
+    @test names(set_names(chn, Dict("param1" => "PARAM1"))) ==
+        [:PARAM1, :param2, :param3, :param4]
 end
 
 @testset "function tests" begin
@@ -85,6 +85,6 @@ end
     chn_sorted = Chains(rand(100,3,1), ["2", "1", "3"], sorted=true)
     chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"], sorted=false)
 
-    @test names(chn_sorted) == ["1", "2", "3"]
-    @test names(chn_unsorted) == ["2", "1", "3"]
+    @test names(chn_sorted) == Symbol.([1, 2, 3])
+    @test names(chn_unsorted) == Symbol.([2, 1, 3])
 end

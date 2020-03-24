@@ -36,11 +36,11 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
     if colordim == :parameter
         title --> "Chain $(chains(c)[i])"
-        label --> names(c)
+        label --> string.(names(c))
         val = c.value[:, :, i]
     elseif colordim == :chain
-        title --> names(c)[i]
-        label --> map(k -> "Chain $(chains(c)[k])", 1:size(c)[3])
+        title --> string(names(c)[i])
+        label --> map(k -> "Chain $(chains(c)[k])", 1:size(c, 3))
         val = c.value[:, i, :]
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))

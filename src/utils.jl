@@ -1,3 +1,17 @@
+@generated function initnamemap(namemap::NamedTuple{names}) where names
+    if :parameters in names
+        :((; $((:($name = Symbol.(namemap.$name)) for name in names)...)))
+    else
+        :((; parameters = Symbol[],
+          $((:($name = Symbol.(namemap.$name)) for name in names)...)))
+    end
+end
+
+# fallback
+function initnamemap(namemap)
+    (; parameters = Symbol[], (Symbol(key) => Symbol.(values) for (key, values) in namemap)...)
+end
+
 #################### Mathematical Operators ####################
 function cummean(x::AbstractArray)
     return mapslices(cummean, x, dims = 1)
