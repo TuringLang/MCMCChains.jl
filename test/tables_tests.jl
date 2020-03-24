@@ -72,4 +72,48 @@ using IteratorInterfaceExtensions
                   (; (k => Tables.getcolumn(chn, k)[2] for k in Tables.columnnames(chn))...)
         end
     end
+
+    @testset "ChainDataFrames" begin
+        val = rand(1000, 8, 4)
+        colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
+        internal_colnames = ["c", "d", "e", "f", "g", "h"]
+        chn = Chains(val, colnames, Dict(:internals => internal_colnames))
+        cdf = describe(chn)[1]
+
+        @testset "Tables interface" begin
+            @test Tables.istable(typeof(cdf))
+            @test Tables.columnaccess(typeof(cdf))
+            @test Tables.columns(cdf) === cdf
+            @test Tables.columnnames(cdf) == keys(cdf.nt)
+            @testset for k in keys(cdf.nt)
+                @test Tables.getcolumn(cdf, k) == getproperty(cdf.nt, k)
+            end
+            @test Tables.getcolumn(cdf, 1) == Tables.getcolumn(cdf, keys(cdf.nt)[1])
+            @test Tables.getcolumn(cdf, 2) == Tables.getcolumn(cdf, keys(cdf.nt)[2])
+            @test_throws Exception Tables.getcolumn(cdf, :blah)
+            @test_throws Exception Tables.getcolumn(cdf, length(keys(cdf.nt)) + 1)
+            @test Tables.rowaccess(typeof(cdf))
+            @test Tables.rows(cdf) === cdf
+            @test length(Tables.rowtable(cdf)) == length(values(cdf.nt)[1])
+            @test Tables.columntable(cdf) == cdf.nt
+            nt = Tables.rowtable(cdf)[1]
+            @test nt == (; (k => getproperty(cdf.nt, k)[1] for k in keys(cdf.nt))...)
+            @test nt == collect(Iterators.take(Tables.namedtupleiterator(cdf), 1))[1]
+            nt = Tables.rowtable(cdf)[2]
+            @test nt == (; (k => getproperty(cdf.nt, k)[2] for k in keys(cdf.nt))...)
+            @test nt == collect(Iterators.take(Tables.namedtupleiterator(cdf), 2))[2]
+            @test Tables.schema(cdf) isa Tables.Schema
+            @test Tables.schema(cdf).names === keys(cdf.nt)
+            @test Tables.schema(cdf).types === eltype.(values(cdf.nt))
+        end
+
+        @testset "TableTraits interface" begin
+            @test IteratorInterfaceExtensions.isiterable(cdf)
+            @test TableTraits.isiterabletable(cdf)
+            nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 1))[1]
+            @test nt == (; (k => getproperty(cdf.nt, k)[1] for k in keys(cdf.nt))...)
+            nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 2))[2]
+            @test nt == (; (k => getproperty(cdf.nt, k)[2] for k in keys(cdf.nt))...)
+        end
+    end
 end
