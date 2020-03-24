@@ -39,7 +39,6 @@ export set_section, get_params, sections, sort_sections, setinfo, set_names
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
-export TableChains
 
 # Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
