@@ -37,6 +37,10 @@ using Test
     println("Dataframe")
     @time include("dfconstructor_tests.jl")
 
+    # run tests for tables interfaces
+    println("Tables interfaces")
+    @time include("tables_tests.jl")
+
     # run tests for dataframe summary
     println("Summary")
     @time include("summarize_tests.jl")
