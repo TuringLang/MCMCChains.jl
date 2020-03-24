@@ -15,7 +15,7 @@ using IteratorInterfaceExtensions
             @test Tables.columnaccess(typeof(chn))
             @test Tables.columns(chn) === chn
             @test Tables.columnnames(chn) ==
-                  [:Iteration, :Chain, :a, :b, :c, :d, :e, :f, :g, :h]
+                  (:Iteration, :Chain, :a, :b, :c, :d, :e, :f, :g, :h)
             @test Tables.getcolumn(chn, :Iteration) == [1:1000; 1:1000; 1:1000; 1:1000]
             @test Tables.getcolumn(chn, :Chain) ==
                   [fill(1, 1000); fill(2, 1000); fill(3, 1000); fill(4, 1000)]

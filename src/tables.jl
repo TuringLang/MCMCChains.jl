@@ -8,9 +8,7 @@ Tables.columnaccess(::Type{<:Chains}) = true
 
 Tables.columns(chn::Chains) = chn
 
-function Tables.columnnames(chn::Chains)
-    return Symbol[:Iteration; :Chain; Symbol.(names(chn))]
-end
+Tables.columnnames(chn::Chains) = (:Iteration, :Chain, Symbol.(names(chn))...)
 
 function Tables.getcolumn(chn::Chains, i::Int)
     return Tables.getcolumn(chn, Tables.columnnames(chn)[i])
@@ -60,7 +58,7 @@ Tables.columnaccess(::Type{<:ChainDataFrame}) = true
 
 Tables.columns(cdf::ChainDataFrame) = cdf
 
-Tables.columnnames(cdf::ChainDataFrame) = collect(keys(cdf.nt))
+Tables.columnnames(cdf::ChainDataFrame) = keys(cdf.nt)
 
 function Tables.getcolumn(cdf::ChainDataFrame, i::Int)
     return Tables.getcolumn(cdf, keys(cdf.nt)[1])
