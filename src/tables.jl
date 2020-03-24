@@ -1,5 +1,6 @@
 # Tables and TableTraits interface
 
+## Chains
 
 Tables.istable(::Type{<:Chains}) = true
 
@@ -52,3 +53,39 @@ function IteratorInterfaceExtensions.getiterator(chn::Chains)
 end
 
 TableTraits.isiterabletable(::Chains) = true
+
+## ChainDataFrame
+
+Tables.istable(::Type{<:ChainDataFrame}) = true
+
+Tables.columnaccess(::Type{<:ChainDataFrame}) = true
+
+Tables.columns(cdf::ChainDataFrame) = cdf
+
+Tables.columnnames(cdf::ChainDataFrame) = collect(keys(cdf.nt))
+
+function Tables.getcolumn(cdf::ChainDataFrame, i::Integer)
+    return Tables.getcolumn(cdf, keys(cdf.nt)[1])
+end
+Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = getproperty(cdf.nt, nm)
+
+Tables.rowaccess(::Type{<:ChainDataFrame}) = true
+
+Tables.rows(cdf::ChainDataFrame) = cdf
+
+Tables.rowtable(cdf::ChainDataFrame) = Tables.rowtable(Tables.columntable(cdf))
+
+function Tables.namedtupleiterator(cdf::ChainDataFrame)
+    return Tables.namedtupleiterator(Tables.columntable(cdf))
+end
+
+function Tables.schema(cdf::ChainDataFrame)
+    return Tables.Schema(keys(cdf.nt), eltype.(values(cdf.nt)))
+end
+
+IteratorInterfaceExtensions.isiterable(::ChainDataFrame) = true
+function IteratorInterfaceExtensions.getiterator(cdf::ChainDataFrame)
+    return Tables.datavaluerows(Tables.columntable(cdf))
+end
+
+TableTraits.isiterabletable(::ChainDataFrame) = true
