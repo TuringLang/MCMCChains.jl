@@ -12,7 +12,7 @@ function Tables.columnnames(chn::Chains)
     return Symbol[:Iteration; :Chain; Symbol.(names(chn))]
 end
 
-function Tables.getcolumn(chn::Chains, i::Integer)
+function Tables.getcolumn(chn::Chains, i::Int)
     return Tables.getcolumn(chn, Tables.columnnames(chn)[i])
 end
 function Tables.getcolumn(chn::Chains, nm::Symbol)
@@ -64,7 +64,7 @@ Tables.columns(cdf::ChainDataFrame) = cdf
 
 Tables.columnnames(cdf::ChainDataFrame) = collect(keys(cdf.nt))
 
-function Tables.getcolumn(cdf::ChainDataFrame, i::Integer)
+function Tables.getcolumn(cdf::ChainDataFrame, i::Int)
     return Tables.getcolumn(cdf, keys(cdf.nt)[1])
 end
 Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = getproperty(cdf.nt, nm)
