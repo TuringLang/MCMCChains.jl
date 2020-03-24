@@ -1,6 +1,7 @@
 using Tables
 using TableTraits
 using IteratorInterfaceExtensions
+using DataFrames
 
 @testset "Tables interface tests" begin
 
@@ -71,6 +72,13 @@ using IteratorInterfaceExtensions
             @test nt ==
                   (; (k => Tables.getcolumn(chn, k)[2] for k in Tables.columnnames(chn))...)
         end
+
+        @testset "DataFrames.DataFrame constructor" begin
+            @inferred DataFrame(chn)
+            @test DataFrame(chn) isa DataFrame
+            df = DataFrame(chn)
+            @test Tables.columntable(df) == Tables.columntable(chn)
+        end
     end
 
     @testset "ChainDataFrames" begin
@@ -114,6 +122,13 @@ using IteratorInterfaceExtensions
             @test nt == (; (k => getproperty(cdf.nt, k)[1] for k in keys(cdf.nt))...)
             nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 2))[2]
             @test nt == (; (k => getproperty(cdf.nt, k)[2] for k in keys(cdf.nt))...)
+        end
+
+        @testset "DataFrames.DataFrame constructor" begin
+            @inferred DataFrame(cdf)
+            df = DataFrame(cdf)
+            @test df isa DataFrame
+            @test Tables.columntable(df) == cdf.nt
         end
     end
 end
