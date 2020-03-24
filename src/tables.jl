@@ -1,81 +1,54 @@
-_as_vec(::Type{T}, x::T) where {T} = T[x]
-_as_vec(::Type{T}, x::NTuple{N,T}) where {N,T} = T[x...]
-_as_vec(::Type{T}, x::AbstractArray{T}) where {T} = vec(x)
+# Tables and TableTraits interface
 
-struct TableChains{T<:Chains,S<:Vector{Symbol},C<:Vector{<:Integer},M}
-    data::T
-    sections::S
-    chains::C
-    coltypes::M
+
+Tables.istable(::Type{<:Chains}) = true
+
+Tables.columnaccess(::Type{<:Chains}) = true
+
+Tables.columns(chn::Chains) = chn
+
+function Tables.columnnames(chn::Chains)
+    return Symbol[:Iteration; :Chain; Symbol.(names(chn))]
 end
 
-function TableChains(
-    data::Chains;
-    sections = sections(data),
-    chains = chains(data),
-    coltypes = NamedTuple(),
-)
-    sections = _clean_sections(data, _as_vec(Symbol, sections))
-    chains = _as_vec(Int, chains) ∩ collect(MCMCChains.chains(data))
-    return TableChains{typeof.((data, sections, chains, coltypes))...}(
-        data,
-        sections,
-        chains,
-        coltypes,
-    )
+function Tables.getcolumn(chn::Chains, i::Integer)
+    return Tables.getcolumn(chn, Tables.columnnames(chn)[i])
 end
-@inline TableChains(t::TableChains) = t
-
-const TableOrChains = Union{Chains,TableChains}
-
-Tables.istable(::Type{<:TableOrChains}) = true
-
-Tables.columnaccess(::Type{<:TableOrChains}) = true
-
-Tables.columns(t::TableOrChains) = TableChains(t)
-
-function Tables.columnnames(t::TableOrChains)
-    t = TableChains(t)
-    return Symbol[:Iteration; :Chain; Symbol.(names(t.data, t.sections))]
-end
-
-function Tables.getcolumn(t::TableOrChains, nm::Symbol)
-    t = TableChains(t)
+function Tables.getcolumn(chn::Chains, nm::Symbol)
+    chainids = chains(chn)
     if nm == :Iteration
-        niter = size(t.data, 1)
-        nchains = length(t.chains)
-        return repeat(1:niter, nchains)
+        niter = size(chn, 1)
+        return repeat(1:niter, length(chainids))
     elseif nm == :Chain
-        niter = size(t.data, 1)
-        return vcat((fill(c, niter) for c in t.chains)...)
+        niter = size(chn, 1)
+        return vcat((fill(c, niter) for c in chainids)...)
     else
-        val = getindex(t.data, :, nm, t.chains).value
-        T = get(t.coltypes, nm, nothing)
-        T === nothing && return vec(val)
-        return vec(convert(Array{T}, val))
+        nchains = length(chainids)
+        val = getindex(chn, :, nm, 1:nchains).value
+        return vec(val)
     end
 end
 
-Tables.rowaccess(::Type{<:TableOrChains}) = true
+Tables.rowaccess(::Type{<:Chains}) = true
 
-Tables.rows(t::TableOrChains) = TableChains(t)
+Tables.rows(chn::Chains) = chn
 
-Tables.rowtable(t::TableOrChains) = Tables.rowtable(Tables.columntable(t))
+Tables.rowtable(chn::Chains) = Tables.rowtable(Tables.columntable(chn))
 
-function Tables.namedtupleiterator(t::TableOrChains)
-    return Tables.namedtupleiterator(Tables.columntable(t))
+function Tables.namedtupleiterator(chn::Chains)
+    return Tables.namedtupleiterator(Tables.columntable(chn))
 end
 
-function Tables.schema(t::TableOrChains)
-    t = TableChains(t)
-    nms = Tables.columnnames(t)
-    types = DataType[Int; Int; get.(Ref(t.coltypes), nms[3:end], Ref(eltype(t.data.value)))]
+function Tables.schema(chn::Chains)
+    nms = Tables.columnnames(chn)
+    T = eltype(chn.value)
+    types = (Int, Int, ntuple(_ -> T, size(chn, 2))...)
     return Tables.Schema(nms, types)
 end
 
-IteratorInterfaceExtensions.isiterable(::TableOrChains) = true
-function IteratorInterfaceExtensions.getiterator(t::TableOrChains)
-    return Tables.datavaluerows(Tables.columntable(t))
+IteratorInterfaceExtensions.isiterable(::Chains) = true
+function IteratorInterfaceExtensions.getiterator(chn::Chains)
+    return Tables.datavaluerows(Tables.columntable(chn))
 end
 
-TableTraits.isiterabletable(::TableOrChains) = true
+TableTraits.isiterabletable(::Chains) = true
