@@ -83,8 +83,6 @@ function Chains(c::Chains, section::AbstractArray; kwargs...)
 	Chains(c, ntuple(i -> section[i], length(section)); kwargs...)
 end
 function Chains(c::Chains, section::NTuple{<:Any,Symbol}; sorted::Bool=false)
-    @show section, keys(c.name_map)
-
     # Make sure the section exists first.
 	section ⊆ keys(c.name_map) ||
 		throw(ArgumentError("$section is not a subset of the chain's name map"))
@@ -148,9 +146,13 @@ function Base.getindex(c::Chains, i...)
            typeof(i[3]) <: Union{AbstractArray, Colon} ?  i[3] : [i[3]]
     ]
 
-    # Check to see if we received a symbol in i[2].
-    if ind[2] != Colon() && typeof(first(ind[2])) <: Symbol
-        ind[2] = _sym2index(c, ind[2])
+    # Check to see if we received a symbol or a string in i[2].
+    if !isa(ind[2], Colon)
+        if eltype(ind[2]) <: Symbol
+            ind[2] = _sym2index(c, ind[2])
+        else
+            ind[2] = _sym2index(c, Symbol.(ind[2]))
+        end
     end
 
     newval = getindex(c.value, ind...)
@@ -529,7 +531,6 @@ function set_section(chains::Chains, namemap)
             push!(_namemap.parameters, name)
         end
     end
-    @show _namemap
 
     return Chains(chains.value, chains.logevidence, _namemap, chains.info)
 end
