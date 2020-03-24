@@ -16,17 +16,15 @@ function Tables.getcolumn(chn::Chains, i::Int)
     return Tables.getcolumn(chn, Tables.columnnames(chn)[i])
 end
 function Tables.getcolumn(chn::Chains, nm::Symbol)
-    chainids = chains(chn)
     if nm == :Iteration
-        niter = size(chn, 1)
-        return repeat(1:niter, length(chainids))
+        niter, _, nchains = size(chn)
+        return repeat(Base.OneTo(niter), nchains)
     elseif nm == :Chain
+        chainids = chains(chn)
         niter = size(chn, 1)
-        return vcat((fill(c, niter) for c in chainids)...)
+        return vcat(fill.(chainids, niter)...)
     else
-        nchains = length(chainids)
-        val = getindex(chn, :, nm, 1:nchains).value
-        return vec(val)
+        return vec(getindex(chn, nm).value)
     end
 end
 
