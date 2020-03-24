@@ -8,11 +8,10 @@ using Statistics: std
                 Dict(:internals => ["c", "d", "e", "f", "g", "h"]),
                 sorted=true)
 
-
     parm_df = summarize(chns, sections=[:parameters])
 
     @test 0.48 < parm_df[:a, :mean][1] < 0.52
-    @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess, :r_hat]
+    @test names(parm_df) == [:parameters, :mean, :std, :naivese, :mcse, :ess, :rhat]
 
     all_sections_df = summarize(chns, sections=[:parameters, :internals])
     @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
