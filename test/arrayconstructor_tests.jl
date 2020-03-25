@@ -90,9 +90,9 @@ using MCMCChains, Test
         @test eltype(MCMCChains.concretize(z)) === Union{Float64,Missing}
 
         zz = [Any[0.5, 1, missing] for _ in 1:3]
-        @test eltype(MCMCChains.concretize(zz)) === Vector{Vector{Union{Float64,Missing}}}
+        @test eltype(MCMCChains.concretize(zz)) === Vector{Union{Float64,Missing}}
 
         zzz = Any[Any[0.5, 1, missing] for _ in 1:3]
-        @test eltype(MCMCChains.concretize(zzz)) === Vector{Vector{Union{Float64,Missing}}}
+        @test eltype(MCMCChains.concretize(zzz)) === Vector{Union{Float64,Missing}}
     end
 end
