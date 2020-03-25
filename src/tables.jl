@@ -3,9 +3,11 @@
 ## Chains
 
 function _check_columnnames(chn::Chains)
-    colnames = Symbol.(names(chn))
-    for nm in (:iteration, :chain)
-        nm in colnames && error("'$(nm)' is a reserved column name. Rename the parameter.")
+    for name in names(chn)
+        symname = Symbol(name)
+        if symnname === :iteration || symnname === :chain
+            error("'$(name)' is a reserved column name. Please rename the parameter.")
+        end
     end
 end
 
