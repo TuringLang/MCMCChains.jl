@@ -15,12 +15,13 @@ function Tables.getcolumn(chn::Chains, i::Int)
 end
 function Tables.getcolumn(chn::Chains, nm::Symbol)
     if nm == :Iteration
-        niter, _, nchains = size(chn)
-        return repeat(Base.OneTo(niter), nchains)
+        iterations = range(chn)
+        nchains = size(chn, 3)
+        return repeat(iterations, nchains)
     elseif nm == :Chain
         chainids = chains(chn)
         niter = size(chn, 1)
-        return vcat(fill.(chainids, niter)...)
+        return repeat(chainids; inner = niter)
     else
         return vec(getindex(chn, nm).value)
     end
@@ -60,8 +61,7 @@ Tables.columns(cdf::ChainDataFrame) = cdf
 
 Tables.columnnames(cdf::ChainDataFrame) = keys(cdf.nt)
 
-function Tables.getcolumn(cdf::ChainDataFrame, i::Int)
-    return Tables.getcolumn(cdf, keys(cdf.nt)[i])
+Tables.getcolumn(cdf::ChainDataFrame, i::Int) = cdf.nt[i]
 end
 Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = getproperty(cdf.nt, nm)
 
