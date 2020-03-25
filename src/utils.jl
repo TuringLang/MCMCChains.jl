@@ -158,7 +158,19 @@ same underlying data. In general, however, the input and the output do not share
 data.
 """
 concretize(x) = x
-concretize(x::AbstractArray) = isconcretetype_recursive(typeof(x)) ? x : map(concretize, x)
+function concretize(x::AbstractArray)
+    if isconcretetype_recursive(typeof(x))
+        return x
+    else
+        xnew = map(concretize, x)
+        T = mapreduce(typeof, promote_type, xnew)
+        if T <: eltype(xnew)
+            return convert(AbstractArray{T}, xnew)
+        else
+            return xnew
+        end
+    end
+end
 
 function concretize(x::Chains)
     value = x.value
