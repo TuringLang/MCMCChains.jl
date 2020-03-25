@@ -2,11 +2,21 @@
 
 ## Chains
 
+function _check_columnnames(chn::Chains)
+    colnames = Symbol.(names(chn))
+    for nm in (:iteration, :chain)
+        nm in colnames && error("'$(nm)' is a reserved column name. Rename the parameter.")
+    end
+end
+
 Tables.istable(::Type{<:Chains}) = true
 
 Tables.columnaccess(::Type{<:Chains}) = true
 
-Tables.columns(chn::Chains) = chn
+function Tables.columns(chn::Chains)
+    _check_columnnames(chn)
+    return chn
+end
 
 Tables.columnnames(chn::Chains) = (:iteration, :chain, Symbol.(names(chn))...)
 
@@ -29,7 +39,10 @@ end
 
 Tables.rowaccess(::Type{<:Chains}) = true
 
-Tables.rows(chn::Chains) = chn
+function Tables.rows(chn::Chains)
+    _check_columnnames(chn)
+    return chn
+end
 
 Tables.rowtable(chn::Chains) = Tables.rowtable(Tables.columntable(chn))
 
@@ -38,6 +51,7 @@ function Tables.namedtupleiterator(chn::Chains)
 end
 
 function Tables.schema(chn::Chains)
+    _check_columnnames(chn)
     nms = Tables.columnnames(chn)
     T = eltype(chn.value)
     types = (Int, Int, ntuple(_ -> T, size(chn, 2))...)
