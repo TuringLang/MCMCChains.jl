@@ -37,7 +37,9 @@ Summarize parameters | Summarize chains
 ![p1](https://user-images.githubusercontent.com/7974003/45822242-f0009180-bce2-11e8-8fa0-a97c8732400f.png)  |  ![p2](https://user-images.githubusercontent.com/7974003/45822249-f131be80-bce2-11e8-8dd3-42db7d58abd9.png)
 
 ## Manual
+
 ### Chains type
+
 ```julia
 # construction of a Chains object with no names
 Chains(
@@ -48,11 +50,10 @@ Chains(
     info=NamedTuple(),
 )
 
-# construction of a chains object with new names
 Chains(
     val::AbstractArray{A,3},
-    parameter_names::Vector{String},
-    name_map = copy(DEFAULT_MAP);
+    parameter_names::AbstractVector,
+    name_map = (parameters = parameter_names,);
     start::Int=1,
     thin::Int=1,
     evidence = 0.0,
@@ -76,7 +77,7 @@ val = rand(500,5, 2)
 chn = Chains(val, ["a", "b", "c", "d", "e"])
 ```
 
-By default, parameters will be given the name `Parami`, where `i` is the parameter number.
+By default, parameters will be given the name `:parami`, where `i` is the parameter number.
 
 ### Rename Parameters
 
@@ -97,7 +98,9 @@ new_chain = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
 
 ### Sections
 
-Chains parameters are sorted into sections, which are types of parameters. By default, every chain contains a section called `:parameters`, which is where all values are assigned unless assigned elsewhere. Chains can be assigned a named map during construction:
+Chains parameters are sorted into sections that represent groups of parameters. By default,
+every chain contains a `:parameters` section, to which all unassigned parameters are
+assigned to. Chains can be assigned a named map during construction:
 
 ```julia
 chn = Chains(val,
@@ -105,7 +108,7 @@ chn = Chains(val,
   Dict(:internals => ["d", "e"]))
 ```
 
-Or through the `set_section` function, which returns a new `Chains` object (as `Chains` objects cannot be modified in place due to section map immutability):
+The `set_section` function returns a new `Chains` object:
 
 ```julia
 chn2 = set_section(chn, Dict(:internals => ["d", "e"]))
