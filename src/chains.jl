@@ -2,9 +2,6 @@
 
 ## Constructors ##
 
-# Default name map.
-const DEFAULT_MAP = Dict{Symbol, Vector{Symbol}}(:parameters => Symbol[])
-
 # Constructor to handle a vector of vectors.
 Chains(val::AbstractVector{<:AbstractVector{<:Union{Missing, Real}}}, args...; kwargs...) =
 	Chains(copy(reduce(hcat, val)'), args...; kwargs...)
