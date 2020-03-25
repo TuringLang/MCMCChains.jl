@@ -12,27 +12,14 @@ using Formatting
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
 using Requires
-using Tables
-using TableTraits
-using IteratorInterfaceExtensions
+import Tables
+import TableTraits
+import IteratorInterfaceExtensions
 
 using LinearAlgebra: diag
 import Serialization: serialize, deserialize
 import Random
 import Statistics: std, cor, mean, var
-import Tables:
-    istable,
-    columnaccess,
-    columns,
-    columnnames,
-    getcolumn,
-    rowaccess,
-    rows,
-    rowtable,
-    namedtupleiterator,
-    schema
-import TableTraits: isiterabletable
-import IteratorInterfaceExtensions: isiterable, getiterator
 
 export Chains, chains, chainscat
 export set_section, get_params, sections, sort_sections, setinfo, set_names
