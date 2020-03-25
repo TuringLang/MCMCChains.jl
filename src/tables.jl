@@ -59,7 +59,7 @@ Tables.columnaccess(::Type{<:ChainDataFrame}) = true
 
 Tables.columns(cdf::ChainDataFrame) = cdf
 
-Tables.columnnames(cdf::ChainDataFrame) = keys(cdf.nt)
+Tables.columnnames(::ChainDataFrame{<:NamedTuple{names}}) where {names} = names
 
 Tables.getcolumn(cdf::ChainDataFrame, i::Int) = cdf.nt[i]
 Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = cdf.nt[nm]
@@ -74,8 +74,8 @@ function Tables.namedtupleiterator(cdf::ChainDataFrame)
     return Tables.namedtupleiterator(Tables.columntable(cdf))
 end
 
-function Tables.schema(cdf::ChainDataFrame)
-    return Tables.Schema(keys(cdf.nt), eltype.(values(cdf.nt)))
+function Tables.schema(::ChainDataFrame{NamedTuple{names,T}}) where {names,T}
+    return Tables.Schema(names, eltype.(T.parameters))
 end
 
 IteratorInterfaceExtensions.isiterable(::ChainDataFrame) = true
