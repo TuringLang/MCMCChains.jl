@@ -3,10 +3,11 @@ using Statistics: std
 
 @testset "Summarize to DataFrame tests" begin
     val = rand(1000, 8, 4)
-    chns = Chains(val,
-                ["a", "b", "c", "d", "e", "f", "g", "h"],
-                Dict(:internals => ["c", "d", "e", "f", "g", "h"]),
-                sorted=true)
+    chns = Chains(
+        val,
+        ["a", "b", "c", "d", "e", "f", "g", "h"],
+        Dict(:internals => ["c", "d", "e", "f", "g", "h"])
+    )
 
     parm_df = summarize(chns, sections=[:parameters])
 

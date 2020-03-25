@@ -13,11 +13,11 @@ val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
 val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 
 # construct a Chains object
-chn = Chains(val, start = 1, thin = 2, sorted=true)
+chn = Chains(val, start = 1, thin = 2)
 
 # Chains object for discretediag
 val_disc = rand(Int16, 200, n_name, n_chain)
-chn_disc = Chains(val_disc, start = 1, thin = 2, sorted=true)
+chn_disc = Chains(val_disc, start = 1, thin = 2)
 
 @testset "basic chains functions" begin
     @test first(chn) == 1
@@ -82,8 +82,8 @@ end
 end
 
 @testset "sorting" begin
-    chn_sorted = Chains(rand(100,3,1), ["2", "1", "3"], sorted=true)
-    chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"], sorted=false)
+    chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"])
+    chn_sorted = sort(chn_unsorted)
 
     @test names(chn_sorted) == Symbol.([1, 2, 3])
     @test names(chn_unsorted) == Symbol.([2, 1, 3])

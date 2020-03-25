@@ -44,7 +44,6 @@ function DataFrames.DataFrame(chain::Chains,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
     append_chains=true,
     remove_missing_union=true,
-    sorted=false,
     showall=false
 )
     sections = _clean_sections(chain, sections)
@@ -63,9 +62,7 @@ function DataFrames.DataFrame(chain::Chains,
     if append_chains
         b = DataFrame()
         for section in section_list
-            names = sorted ?
-                sort(chn.name_map[section], by = string, lt = natural) :
-                chn.name_map[section]
+            names = chn.name_map[section]
             for par in names
                 x = get(chn, Symbol(par))
                 d, c = size(x[Symbol(par)])
@@ -77,9 +74,7 @@ function DataFrames.DataFrame(chain::Chains,
         for i in 1:c
             b[i] = DataFrame()
             for section in section_list
-                names = sorted ?
-                    sort(chn.name_map[section], by = string, lt = natural) :
-                    chn.name_map[section]
+                names = chn.name_map[section]
                 for par in names
                     x = get(chn[:,:,i], Symbol(par))
                     d, c = size(x[Symbol(par)])

@@ -229,8 +229,8 @@ function summarize(chains::Chains, funs...;
         showall::Bool=false,
         name::String="",
         additional_df=nothing,
-        digits::Int=4,
-        sorted::Bool=false)
+        digits::Int=4
+)
     # Check that we actually have :parameters.
     showall = showall || !in(:parameters, keys(chains.name_map))
     
@@ -242,7 +242,7 @@ function summarize(chains::Chains, funs...;
     end
     
     # Generate a chain to work on.
-    chn = Chains(chains, sections, sorted=sorted)
+    chn = Chains(chains, sections)
 
     # Obtain names of parameters.
     names_of_params = names(chn)

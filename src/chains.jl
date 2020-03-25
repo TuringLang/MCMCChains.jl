@@ -35,8 +35,7 @@ function Chains(
     start::Int = 1,
     thin::Int = 1,
     evidence = missing,
-    info::NamedTuple = NamedTuple(),
-    sorted::Bool = false
+    info::NamedTuple = NamedTuple()
 )
     # Make sure that we have a `:parameters` index and # Copying can avoid state mutation.
     _name_map = initnamemap(name_map)
@@ -67,13 +66,7 @@ function Chains(
                     chain = 1:size(val, 3))
 
     # Create the new chain.
-    chains = Chains(arr, evidence, _name_map, info)
-
-    if sorted
-        return sort(chains)
-    else
-        return chains
-    end
+    return Chains(arr, evidence, _name_map, info)
 end
 
 # Retrieve a new chain with only a specific section pulled out.

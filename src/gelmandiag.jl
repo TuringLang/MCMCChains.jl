@@ -82,7 +82,6 @@ function gelmandiag(
     chains::Chains{<:Real};
     sections::Union{Symbol, Vector{Symbol}} = :parameters,
     showall = false,
-    sorted = true,
     transform = false,
     alpha = 0.05,
     digits = 4,
@@ -90,13 +89,9 @@ function gelmandiag(
 )
     # Subset the chain.
     if showall
-        if sorted
-            _chains = sort(chains)
-        else
-            _chains = chains
-        end
+        _chains = chains
     else
-        _chains = Chains(chains, _clean_sections(chains, sections); sorted=sorted)
+        _chains = Chains(chains, _clean_sections(chains, sections))
     end
 
     # Compute the potential scale reduction factor.
@@ -114,7 +109,6 @@ function gelmandiag_multivariate(
     chains::Chains{<:Real};
     sections::Union{Symbol, Vector{Symbol}} = :parameters,
     showall = false,
-    sorted = true,
     transform = true,
     alpha = 0.05,
     digits = 4,
@@ -122,13 +116,9 @@ function gelmandiag_multivariate(
 )
     # Subset the chain.
     if showall
-        if sorted
-            _chains = sort(chains)
-        else
-            _chains = chains
-        end
+        _chains = chains
     else
-        _chains = Chains(chains, _clean_sections(chains, sections); sorted=sorted)
+        _chains = Chains(chains, _clean_sections(chains, sections))
     end
 
     # Compute the potential scale reduction factor.

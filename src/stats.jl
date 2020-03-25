@@ -197,7 +197,6 @@ function describe(io::IO,
                   showall::Bool=false,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                   digits::Int=4,
-                  sorted=false,
                   args...
                  )
     dfs = vcat(summarystats(c,
@@ -205,14 +204,12 @@ function describe(io::IO,
                 sections=sections,
                 etype=etype,
                 digits=digits,
-                sorted=sorted,
                 args...),
            quantile(c,
                 showall=showall,
                 sections=sections,
                 q=q,
-                digits=digits,
-                sorted=sorted))
+                digits=digits))
     return dfs
 end
 
@@ -251,13 +248,14 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function quantile(chn::Chains;
-        q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
-        append_chains=true,
-        showall=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits::Int=4,
-        sorted=false)
+function quantile(
+    chn::Chains;
+    q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
+    append_chains=true,
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+    digits::Int=4
+)
     # compute quantiles
     funs = Function[]
     func_names = @. Symbol(100 * q, :%)
@@ -271,8 +269,8 @@ function quantile(chn::Chains;
         sections=sections,
         name="Quantiles",
         digits=digits,
-        append_chains=append_chains, 
-        sorted=sorted)
+        append_chains=append_chains
+    )
 end
 
 """
@@ -289,12 +287,12 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function ess(chn::Chains;
+function ess(
+    chn::Chains;
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
     maxlag = 250,
-    digits::Int=4,
-    sorted=false
+    digits::Int=4
 )
 	param = showall ? names(chn) : names(chn, sections)
 	n_chain_orig = size(chn, 3)
@@ -424,7 +422,6 @@ function summarystats(chn::Chains;
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         etype=:bm,
         digits::Int=4,
-        sorted=false,
         args...
     )
 
@@ -438,7 +435,7 @@ function summarystats(chn::Chains;
     func_names = [:mean, :std, :naivese, :mcse]
 
     # Caluclate ESS separately.
-    ess_df = ess(chn, sections=sections, showall=showall, sorted=sorted)
+    ess_df = ess(chn, sections=sections, showall=showall)
 
     # Summarize.
     summary_df = summarize(chn, funs...;
@@ -448,8 +445,7 @@ function summarystats(chn::Chains;
         name="Summary Statistics",
         additional_df = ess_df,
         digits=digits,
-        append_chains=append_chains, 
-        sorted=sorted)
+        append_chains=append_chains)
 
     return summary_df
 end

@@ -372,11 +372,8 @@ function discretediag(chn::Chains; frac::Real=0.3,
                       method::Symbol=:weiss,
                       sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                       nsim::Int=1000,
-                      showall=false,
-                      sorted=true)
-    c = showall ?
-        sorted ? sort(chn) : chn :
-        Chains(chn, _clean_sections(chn, sections); sorted=sorted)
+                      showall=false)
+    c = showall ? chn : Chains(chn, _clean_sections(chn, sections))
 
     @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
 
