@@ -84,4 +84,15 @@ using MCMCChains, Test
         arr2 = Array(chn, append_chains=false)
         @test all(vcat([arr2[i] .== squished_val[i] for i in 1:nchains]...))
     end
+
+    @testset "concretize" begin
+        z = Any[0.5 1; 0.5 missing]
+        @test eltype(MCMCChains.concretize(z)) === Union{Float64,Missing}
+
+        zz = [Any[0.5, 1, missing] for _ in 1:3]
+        @test eltype(MCMCChains.concretize(zz)) === Vector{Vector{Union{Float64,Missing}}}
+
+        zzz = Any[Any[0.5, 1, missing] for _ in 1:3]
+        @test eltype(MCMCChains.concretize(zzz)) === Vector{Vector{Union{Float64,Missing}}}
+    end
 end
