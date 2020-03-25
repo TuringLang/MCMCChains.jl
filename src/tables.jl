@@ -91,7 +91,8 @@ function Tables.namedtupleiterator(cdf::ChainDataFrame)
 end
 
 function Tables.schema(::ChainDataFrame{NamedTuple{names,T}}) where {names,T}
-    return Tables.Schema(names, eltype.(fieldtypes(T)))
+    types = ntuple(i -> eltype(fieldtype(T, i)), fieldcount(T))
+    return Tables.Schema(names, types)
 end
 
 IteratorInterfaceExtensions.isiterable(::ChainDataFrame) = true
