@@ -5,7 +5,7 @@
 function _check_columnnames(chn::Chains)
     for name in names(chn)
         symname = Symbol(name)
-        if symnname === :iteration || symnname === :chain
+        if symname === :iteration || symname === :chain
             error("'$(name)' is a reserved column name. Please rename the parameter.")
         end
     end
