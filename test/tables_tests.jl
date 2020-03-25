@@ -47,8 +47,8 @@ using DataFrames
             @test Tables.schema(chn).names ===
                   (:Iteration, :Chain, :a, :b, :c, :d, :e, :f, :g, :h)
             @test Tables.schema(chn).types === (
-                Int64,
-                Int64,
+                Int,
+                Int,
                 Float64,
                 Float64,
                 Float64,
@@ -93,22 +93,22 @@ using DataFrames
             @test Tables.columnaccess(typeof(cdf))
             @test Tables.columns(cdf) === cdf
             @test Tables.columnnames(cdf) == keys(cdf.nt)
-            @testset for k in keys(cdf.nt)
-                @test Tables.getcolumn(cdf, k) == getproperty(cdf.nt, k)
+            for (k, v) in pairs(cdf.nt)
+                @test Tables.getcolumn(cdf, k) == v
             end
             @test Tables.getcolumn(cdf, 1) == Tables.getcolumn(cdf, keys(cdf.nt)[1])
             @test Tables.getcolumn(cdf, 2) == Tables.getcolumn(cdf, keys(cdf.nt)[2])
             @test_throws Exception Tables.getcolumn(cdf, :blah)
-            @test_throws Exception Tables.getcolumn(cdf, length(keys(cdf.nt)) + 1)
+            @test_throws Exception Tables.getcolumn(cdf, length(cdf.nt) + 1)
             @test Tables.rowaccess(typeof(cdf))
             @test Tables.rows(cdf) === cdf
-            @test length(Tables.rowtable(cdf)) == length(values(cdf.nt)[1])
+            @test length(Tables.rowtable(cdf)) == length(cdf.nt[1])
             @test Tables.columntable(cdf) == cdf.nt
             nt = Tables.rowtable(cdf)[1]
-            @test nt == (; (k => getproperty(cdf.nt, k)[1] for k in keys(cdf.nt))...)
+            @test nt == (; (k => v[1] for (k, v) in pairs(cdf.nt))...)
             @test nt == collect(Iterators.take(Tables.namedtupleiterator(cdf), 1))[1]
             nt = Tables.rowtable(cdf)[2]
-            @test nt == (; (k => getproperty(cdf.nt, k)[2] for k in keys(cdf.nt))...)
+            @test nt == (; (k => v[2] for (k, v) in pairs(cdf.nt))...)
             @test nt == collect(Iterators.take(Tables.namedtupleiterator(cdf), 2))[2]
             @test Tables.schema(cdf) isa Tables.Schema
             @test Tables.schema(cdf).names === keys(cdf.nt)
@@ -119,9 +119,9 @@ using DataFrames
             @test IteratorInterfaceExtensions.isiterable(cdf)
             @test TableTraits.isiterabletable(cdf)
             nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 1))[1]
-            @test nt == (; (k => getproperty(cdf.nt, k)[1] for k in keys(cdf.nt))...)
+            @test nt == (; (k => v[1] for (k, v) in pairs(cdf.nt))...)
             nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 2))[2]
-            @test nt == (; (k => getproperty(cdf.nt, k)[2] for k in keys(cdf.nt))...)
+            @test nt == (; (k => v[2] for (k, v) in pairs(cdf.nt))...)
         end
 
         @testset "DataFrames.DataFrame constructor" begin
