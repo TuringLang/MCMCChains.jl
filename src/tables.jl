@@ -62,7 +62,7 @@ Tables.columns(cdf::ChainDataFrame) = cdf
 Tables.columnnames(cdf::ChainDataFrame) = keys(cdf.nt)
 
 Tables.getcolumn(cdf::ChainDataFrame, i::Int) = cdf.nt[i]
-Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = getproperty(cdf.nt, nm)
+Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = cdf.nt[nm]
 
 Tables.rowaccess(::Type{<:ChainDataFrame}) = true
 
