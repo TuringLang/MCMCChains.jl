@@ -486,19 +486,6 @@ function mean(chn::Chains;
     return summary_df
 end
 
-mean(chn::Chains, ss::Vector{Symbol}) = mean(chn[:, ss, :])
-mean(chn::Chains, s::String) = mean(chn, Symbol(s))
-mean(chn::Chains, ss::Vector{String}) = mean(chn, Symbol.(ss))
-function mean(chn::Chains, s::Symbol)
-    syms = _sym2index(chn, [s])
-
-    if length(syms) == 0
-        throw(ArgumentError("Symbol :$s not found in chain."))
-    end
-
-    if length(syms) > 1
-        return mean(chn[:, syms, :])
-    else
-        return mean(chn[:,syms,:].value.data)
-    end
-end
+mean(chn::Chains, syms) = mean(chn[:, syms, :])
+# resolve method ambiguity with `mean(f, ::AbstractArray)`
+mean(chn::Chains, syms::AbstractVector) = mean(chn[:, syms, :])

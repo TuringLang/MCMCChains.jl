@@ -19,7 +19,8 @@ import Random
 import Statistics: std, cor, mean, var
 
 export Chains, chains, chainscat
-export set_section, get_params, sections, sort_sections, setinfo, replacenames
+export set_section, get_params, sections, sort_sections, setinfo
+export replacenames, namesingroup
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize

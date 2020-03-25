@@ -12,6 +12,16 @@ function initnamemap(namemap)
     (; parameters = Symbol[], (Symbol(key) => Symbol.(values) for (key, values) in namemap)...)
 end
 
+"""
+    namemap_intersect(namemap::NamedTuple, names)
+
+This is an internal function used to remove values from a name map
+and return a new name map.
+"""
+@generated function namemap_intersect(namemap::NamedTuple{sections}, names) where {sections}
+    :((; $((:($section = intersect(namemap.$section, names)) for section in sections)...)))
+end
+
 #################### Mathematical Operators ####################
 function cummean(x::AbstractArray)
     return mapslices(cummean, x, dims = 1)

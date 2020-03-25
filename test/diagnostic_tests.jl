@@ -37,6 +37,9 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
     @test isa(set_section(chn, Dict(:internals => ["param1"])), AbstractChains)
     @test mean(chn) isa ChainDataFrame
+    @test mean(chn, ["param1", "param3"]) isa ChainDataFrame
+    @test mean(chn, "param1") isa ChainDataFrame
+
     chn2 = @inferred replacenames(chn, "param1" => "PARAM1")
     @test names(chn2) == [:PARAM1, :param2, :param3, :param4]
 end
