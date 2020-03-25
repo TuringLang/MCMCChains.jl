@@ -79,8 +79,10 @@ chn = Chains(val, ["a", "b", "c", "d", "e"])
 By default, parameters will be given the name `Parami`, where `i` is the parameter number.
 
 ### Rename Parameters
-Parameter names can be changed with the function `set_names`, which accepts a `Chain` object and a `Dict` containing the mapping between
-old and new column names. Note that `set_names` creates a new `Chain` object because mutation is not supported.
+
+Parameter names can be changed with the function `replacenames`, which accepts a `Chains`
+object and pairs of old and new parameter names. Note that `replacenames` creates a new
+`Chains` object that shares the same underlying data.
 
 ```julia
 chn = Chains(
@@ -90,7 +92,7 @@ chn = Chains(
 )
 
 # Set "one" and "five" to uppercase.
-new_chain = set_names(chn,  Dict(["one" => "ONE", "five" => "FIVE"]))
+new_chain = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
 ```
 
 ### Sections

@@ -614,25 +614,25 @@ function pool_chain(c::Chains)
     return Chains(pool_data, names(c), c.name_map; info=c.info)
 end
 
-function set_names(c::Chains, d::Dict; sorted::Bool=true)
-    # Set new parameter names.
-    params = names(c)
-    new_params = replace(params, d...)
+function replacenames(chains::Chains, old_new::Pair...)
+    isempty(old_new) && error("you have to specify at least one replacement")
 
-    # Iterate through each pair in the name map to
-    # create a new one.
-    new_map = Dict()
-    for (section, parameters) in pairs(c.name_map)
-        new_map[section] = replace(parameters, d...)
+    # Set new parameter names and a new name map.
+    names_of_params = copy(names(chains))
+    namemap = deepcopy(chains.name_map)
+    for (old, new) in old_new
+        symold_symnew = Symbol(old) => Symbol(new)
+
+        replace!(names_of_params, symold_symnew)
+        for names in namemap
+            replace!(names, symold_symnew)
+        end
     end
 
-    # Return a new chains object.
-    return Chains(
-        c.value.data,
-        new_params,
-        new_map;
-        info=c.info,
-        evidence=c.logevidence,
-        sorted=sorted,
+    value = AxisArray(
+        chains.value.data;
+        iter = range(chains), var = names_of_params, chain = 1:size(chains, 3)
     )
+
+    return Chains(value, chains.logevidence, namemap, chains.info)
 end
