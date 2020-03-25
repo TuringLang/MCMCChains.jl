@@ -16,9 +16,9 @@ using DataFrames
             @test Tables.columnaccess(typeof(chn))
             @test Tables.columns(chn) === chn
             @test Tables.columnnames(chn) ==
-                  (:Iteration, :Chain, :a, :b, :c, :d, :e, :f, :g, :h)
-            @test Tables.getcolumn(chn, :Iteration) == [1:1000; 1:1000; 1:1000; 1:1000]
-            @test Tables.getcolumn(chn, :Chain) ==
+                  (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
+            @test Tables.getcolumn(chn, :iteration) == [1:1000; 1:1000; 1:1000; 1:1000]
+            @test Tables.getcolumn(chn, :chain) ==
                   [fill(1, 1000); fill(2, 1000); fill(3, 1000); fill(4, 1000)]
             @test Tables.getcolumn(chn, :a) == [
                 vec(chn[:, :a, 1].value)
@@ -27,8 +27,8 @@ using DataFrames
                 vec(chn[:, :a, 4].value)
             ]
             @test_throws Exception Tables.getcolumn(chn, :j)
-            @test Tables.getcolumn(chn, 1) == Tables.getcolumn(chn, :Iteration)
-            @test Tables.getcolumn(chn, 2) == Tables.getcolumn(chn, :Chain)
+            @test Tables.getcolumn(chn, 1) == Tables.getcolumn(chn, :iteration)
+            @test Tables.getcolumn(chn, 2) == Tables.getcolumn(chn, :chain)
             @test Tables.getcolumn(chn, 3) == Tables.getcolumn(chn, :a)
             @test_throws Exception Tables.getcolumn(chn, :i)
             @test_throws Exception Tables.getcolumn(chn, 11)
@@ -45,7 +45,7 @@ using DataFrames
             @test nt == collect(Iterators.take(Tables.namedtupleiterator(chn), 2))[2]
             @test Tables.schema(chn) isa Tables.Schema
             @test Tables.schema(chn).names ===
-                  (:Iteration, :Chain, :a, :b, :c, :d, :e, :f, :g, :h)
+                  (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
             @test Tables.schema(chn).types === (
                 Int,
                 Int,
