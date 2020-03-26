@@ -12,6 +12,9 @@ using Formatting
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
 using Requires
+import Tables
+import TableTraits
+import IteratorInterfaceExtensions
 
 using LinearAlgebra: diag
 import Serialization: serialize, deserialize
@@ -61,9 +64,6 @@ include("sampling.jl")
 include("stats.jl")
 include("modelstats.jl")
 include("plot.jl")
-
-function __init__()
-    @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" include("dataframes-compat.jl")
-end
+include("tables.jl")
 
 end # module
