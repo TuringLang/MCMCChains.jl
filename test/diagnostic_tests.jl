@@ -26,6 +26,16 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test size(chn) == (4000, 4, 2)
     @test size(chn[1:1000, :, :]) == (1000, 4, 2)
     @test keys(chn) == [:param1, :param2, :param3, :param4]
+
+    @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
+    @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
+    @test isa(set_section(chn, Dict(:internals => ["param1"])), AbstractChains)
+    @test mean(chn) isa ChainDataFrame
+    @test mean(chn, ["param1", "param3"]) isa ChainDataFrame
+    @test mean(chn, "param1") isa ChainDataFrame
+end
+
+@testset "indexing tests" begin
     @test isa(chn[:,1,:], AbstractChains)
     @test isa(chn[200:300, "param1", :], AbstractChains)
     @test isa(chn[200:300, ["param1", "param3"], :], AbstractChains)
@@ -33,15 +43,16 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
     @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
     @test all(chn[:,1,2].value .== val[:,1,2])
-    @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
-    @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
-    @test isa(set_section(chn, Dict(:internals => ["param1"])), AbstractChains)
-    @test mean(chn) isa ChainDataFrame
-    @test mean(chn, ["param1", "param3"]) isa ChainDataFrame
-    @test mean(chn, "param1") isa ChainDataFrame
+end
 
-    chn2 = @inferred replacenames(chn, "param1" => "PARAM1")
-    @test names(chn2) == [:PARAM1, :param2, :param3, :param4]
+@testset "names and groups tests" begin
+    chn2 = @inferred replacenames(chn, "param2" => "param[2]", "param3" => "param[3]")
+    @test names(chn2) == [:param1, Symbol("param[2]"), Symbol("param[3]"), :param4]
+    @test namesingroup(chn2, "param") == Symbol.(["param[2]", "param[3]"])
+
+    chn3 = group(chn2, "param")
+    @test names(chn3) == Symbol.(["param[2]", "param[3]"])
+    @test chn3.value.data == chn[:, [:param2, :param3], :].value.data
 end
 
 @testset "function tests" begin

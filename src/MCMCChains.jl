@@ -23,7 +23,7 @@ import Statistics: std, cor, mean, var
 
 export Chains, chains, chainscat
 export set_section, get_params, sections, sort_sections, setinfo
-export replacenames, namesingroup
+export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize

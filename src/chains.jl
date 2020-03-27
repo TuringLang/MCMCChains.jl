@@ -84,8 +84,9 @@ function Chains(chn::Chains, sections)
     return Chains(value, chn.logevidence, name_map, chn.info)
 end
 
-#################### Indexing ####################
+# Groups of parameters
 
+namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
 function namesingroup(chains::Chains, sym::Symbol)
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
@@ -93,6 +94,12 @@ function namesingroup(chains::Chains, sym::Symbol)
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
+
+function group(chains::Chains, name::Union{String,Symbol})
+    return chains[:, namesingroup(chains, name), :]
+end
+
+#################### Indexing ####################
 
 Base.getindex(c::Chains, i1::Integer) = c[i1, :, :]
 Base.getindex(c::Chains, i1::AbstractVector{<:Integer}) = c[i1, :, :]

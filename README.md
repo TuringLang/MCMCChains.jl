@@ -145,6 +145,19 @@ c 0.0004 0.2739 0.5137 0.7498 0.9997
 
 Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals` section by calling `describe(chn, sections=:internals)` or all variables with `describe(chn, showall=true)`. Most MCMCChains functions like `plot` or `gelmandiag` support the `section` and `showall` keyword arguments.
 
+### Groups of parameters
+
+By convention, MCMCChains assumes that parameters with names of the form `"name[index]"`
+belong to one group of parameters called `:name`. You can access the names of all
+parameters in a `chain` that belong to the group `:name` by running
+```julia
+namesingroup(chain, :name)
+```
+If the chain contains a parameter of name `:name` it will be returned as well.
+
+The function `group(chain, :name)` returns a subset of the chain `chain` with all
+parameters in the group `:name`.
+
 ### The `get` Function
 
 MCMCChains provides a `get` function designed to make it easier to access parameters `get(chn, :P)` returns a `NamedTuple` which can be easy to work with.
