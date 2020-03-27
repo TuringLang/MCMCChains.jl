@@ -27,7 +27,7 @@ end
 # Generic chain constructor.
 function Chains(
     val::AbstractArray{<:Union{Missing, Real},3},
-    parameter_names::AbstractVector{Symbol} = Symbol.(:param, 1:size(val, 2)),
+    parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
     name_map = (parameters = parameter_names,);
     start::Int = 1,
     thin::Int = 1,
@@ -145,8 +145,8 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 Example:
 
 ```julia
-x = get(c, :param1)
-x = get(c, [:param1, :param2])
+x = get(c, :param_1)
+x = get(c, [:param_1, :param_2])
 ```
 """
 Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)

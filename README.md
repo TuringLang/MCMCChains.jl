@@ -77,7 +77,8 @@ val = rand(500,5, 2)
 chn = Chains(val, ["a", "b", "c", "d", "e"])
 ```
 
-By default, parameters will be given the name `:parami`, where `i` is the parameter number.
+By default, parameters will be given the name `:param_i`, where `i` is the parameter
+number.
 
 ### Rename Parameters
 
