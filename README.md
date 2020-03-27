@@ -94,7 +94,10 @@ chn = Chains(
 )
 
 # Set "one" and "five" to uppercase.
-new_chain = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
+chn2 = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
+
+# Alternatively you can provide a dictionary.
+chn3 = replacenames(chn, Dict("two" => "TWO", "four" => "FOUR"))
 ```
 
 ### Sections

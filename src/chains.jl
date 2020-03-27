@@ -570,6 +570,8 @@ function pool_chain(c::Chains)
     return Chains(pool_data, names(c), c.name_map; info=c.info)
 end
 
+# replace parameter names
+replacenames(chains::Chains, dict::AbstractDict) = replacenames(chains, pairs(dict)...)
 function replacenames(chains::Chains, old_new::Pair...)
     isempty(old_new) && error("you have to specify at least one replacement")
 

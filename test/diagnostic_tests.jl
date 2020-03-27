@@ -47,12 +47,15 @@ end
 
 @testset "names and groups tests" begin
     chn2 = @inferred replacenames(chn, "param_2" => "param[2]", "param_3" => "param[3]")
+    @test chn2.value ==
+        (@inferred replacenames(chn, Dict("param_2" => "param[2]",
+                                          "param_3" => "param[3]"))).value
     @test names(chn2) == [:param_1, Symbol("param[2]"), Symbol("param[3]"), :param_4]
     @test namesingroup(chn2, "param") == Symbol.(["param[2]", "param[3]"])
 
     chn3 = group(chn2, "param")
     @test names(chn3) == Symbol.(["param[2]", "param[3]"])
-    @test chn3.value.data == chn[:, [:param_2, :param_3], :].value.data
+    @test chn3.value == chn[:, [:param_2, :param_3], :].value
 end
 
 @testset "function tests" begin
