@@ -432,7 +432,7 @@ function summarystats(chn::Chains;
 
     # Store everything.
     funs = [mean∘cskip, std∘cskip, sem∘cskip, df_mcse]
-    func_names = [:mean, :std, :naivese, :mcse]
+    func_names = [:mean, :std, :naive_se, :mcse]
 
     # Caluclate ESS separately.
     ess_df = ess(chn, sections=sections, showall=showall)
