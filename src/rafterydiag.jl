@@ -59,7 +59,6 @@ function rafterydiag(
                      eps = 0.001,
                      showall=false,
                      sorted=true,
-                     digits=4,
                      sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
                     )
     c = showall ?
@@ -89,8 +88,7 @@ function rafterydiag(
     vector_of_df = [
         ChainDataFrame(
             "Raftery and Lewis Diagnostic - Chain $i",
-            (parameters = names_of_params, zip(colnames, columns)...);
-            digits = digits
+            (parameters = names_of_params, zip(colnames, columns)...)
         )
         for (i, columns) in enumerate(data)
     ]

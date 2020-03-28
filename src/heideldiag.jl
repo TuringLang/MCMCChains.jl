@@ -23,7 +23,7 @@ function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
   end
   halfwidth = sqrt(2.0) * erfinv(1.0 - alpha) * mcse(y, etype; args...)
   passed = halfwidth / abs(ybar) <= eps
-  [i + start - 2, converged, round(pvalue, digits = 4), ybar, halfwidth, passed]
+  [i + start - 2, converged, pvalue, ybar, halfwidth, passed]
 end
 
 function heideldiag(chn::Chains;
@@ -33,7 +33,6 @@ function heideldiag(chn::Chains;
                     sections::Vector{Symbol}=[:parameters],
                     showall=false,
                     sorted=true,
-                    digits=4,
                     args...
                    )
     c = showall ?
@@ -69,8 +68,7 @@ function heideldiag(chn::Chains;
     vector_of_df = [
         ChainDataFrame(
             "Heidelberger and Welch Diagnostic - Chain $i",
-            (parameters = names_of_params, zip(colnames, columns)...);
-            digits = digits
+            (parameters = names_of_params, zip(colnames, columns)...)
         )
         for (i, columns) in enumerate(data)
     ]
