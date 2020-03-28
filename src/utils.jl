@@ -22,6 +22,19 @@ and return a new name map.
     :((; $((:($section = intersect(namemap.$section, names)) for section in sections)...)))
 end
 
+"""
+    string2symbol(x)
+
+Convert strings to symbols.
+
+If `x isa String`, the corresponding `Symbol` is returned. Likewise, if
+`x isa AbstractVector{String}`, the corresponding vector of `Symbol`s is returned. In all
+other cases, input `x` is returned.
+"""
+string2symbol(x) = x
+string2symbol(x::String) = Symbol(x)
+string2symbol(x::AbstractVector{String}) = Symbol.(x)
+
 #################### Mathematical Operators ####################
 function cummean(x::AbstractArray)
     return mapslices(cummean, x, dims = 1)

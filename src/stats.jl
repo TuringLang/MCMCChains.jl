@@ -289,23 +289,30 @@ The `digits` keyword may be a(n)
 """
 function ess(
     chn::Chains;
-    showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    maxlag = 250,
-    digits::Int=4
+    showall=false,
+    digits::Int=4,
+    kwargs...
 )
-	param = showall ? names(chn) : names(chn, sections)
-	n_chain_orig = size(chn, 3)
+    _chn = showall ? chn : Chains(chn, sections)
+    nt = merge((parameters = names(_chn),), ess(_chn.value.data; kwargs...))
+	return ChainDataFrame("ESS", nt; digits=digits)
+end
+
+function ess(
+    chn::AbstractArray{<:Union{Real,Missing},3};
+    maxlag = 250
+)
+    n, nparams, n_chain_orig = size(chn)
 
 	# Split the chains.
-	parameter_vec = Vector(undef, length(param))
+	parameter_vec = Vector(undef, nparams)
     midpoint = Int32(floor(size(chn, 1) / 2))
-    n = size(chn, 1)
-	for i in 1:length(param)
+    for i in 1:nparams
 		parameter_vec[i] = []
 		for j in 1:n_chain_orig
-            c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
-            c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
+            c1 = vec(cskip(chn[1:midpoint, i, j]))
+            c2 = vec(cskip(chn[midpoint+1:end, i, j]))
             n = min(n, length(c1), length(c2))
             push!(parameter_vec[i], c1, c2)
 		end
@@ -317,15 +324,14 @@ function ess(
     lags = 0:maxlag
 
     # Preallocate B, W, varhat, and Rhat vectors for each param.
-    B = Vector(undef, length(param))
-    W = Vector(undef, length(param))
-    varhat = Vector(undef, length(param))
-    Rhat = Vector{Float64}(undef, length(param))
+    B = Vector(undef, nparams)
+    W = Vector(undef, nparams)
+    varhat = Vector(undef, nparams)
+    Rhat = Vector{Float64}(undef, nparams)
 
     # calculate B, W, varhat, and Rhat for each param.
-    for i in 1:length(param)
+    for i in 1:nparams
 		draw = parameter_vec[i]
-		p = param[i]
         allchain = mean(vcat([d for d in draw]...))
         eachchain = [mean(draw[j]) for j in 1:m]
         s = [sum((draw[j] .- eachchain[j]).^2) / (n-1) for j in 1:m]
@@ -335,16 +341,16 @@ function ess(
         Rhat[i] = sqrt(varhat[i] / W[i])
     end
 
-	V = Vector(undef, length(param))
-    ρ = Vector(undef, length(param))
+	V = Vector(undef, nparams)
+    ρ = Vector(undef, nparams)
     for p in eachindex(V)
         V[p] = Vector(undef, length(lags))
 		ρ[p] = Vector(undef, length(lags))
     end
 
     # Calculate ρ
-    c_autocor = Vector(undef, length(param))
-    for i in 1:length(param)
+    c_autocor = Vector(undef, nparams)
+    for i in 1:nparams
         c_autocor[i] = [0.0]
     end
 
@@ -352,9 +358,8 @@ function ess(
         lag = lags[t]
         range1 = lag+1:n
         range2 = 1:(n-lag)
-        for i in 1:length(param)
+        for i in 1:nparams
             draw = parameter_vec[i]
-			p = param[i]
             z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
 			z = sum([zi .^ 2 for zi in z])
             V[i][t] = 1 / (m * (n-lag)) * sum(z)
@@ -364,9 +369,9 @@ function ess(
     end
 
 	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
-    P = Vector(undef, length(param))
-    ess = Vector{Float64}(undef, length(param))
-	for i in 1:length(param)
+    P = Vector(undef, nparams)
+    ess = Vector{Float64}(undef, nparams)
+	for i in 1:nparams
         big_P = 0.0
 		ρ_val = Float64.(ρ[i])
 
@@ -387,10 +392,9 @@ function ess(
         P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
 
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
-	end
-
-    nt = (parameters = param, ess = ess, rhat = Rhat)
-	return ChainDataFrame("ESS", nt; digits=digits)
+    end
+    
+    return (ess = ess, rhat = Rhat)
 end
 
 # this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl

@@ -4,19 +4,19 @@ using Test
 
 ## CHAIN TESTS
 # Define the experiment
-n_iter = 4000
-n_name = 3
-n_chain = 2
+niter = 4000
+nparams = 3
+nchains = 2
 
 # some sample experiment results
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
-val = hcat(val, rand(1:2, n_iter, 1, n_chain))
+val = randn(niter, nparams, nchains) .+ [1, 2, 3]'
+val = hcat(val, rand(1:2, niter, 1, nchains))
 
 # construct a Chains object
 chn = Chains(val, start = 1, thin = 2)
 
 # Chains object for discretediag
-val_disc = rand(Int16, 200, n_name, n_chain)
+val_disc = rand(Int16, 200, nparams, nchains)
 chn_disc = Chains(val_disc, start = 1, thin = 2)
 
 @testset "basic chains functions" begin
@@ -32,17 +32,17 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test isa(set_section(chn, Dict(:internals => ["param_1"])), AbstractChains)
     @test mean(chn) isa ChainDataFrame
     @test mean(chn, ["param_1", "param_3"]) isa ChainDataFrame
-    @test mean(chn, "param_1") isa ChainDataFrame
+    @test 0.95 ≤ mean(chn, "param_1") ≤ 1.05
 end
 
 @testset "indexing tests" begin
-    @test isa(chn[:,1,:], AbstractChains)
-    @test isa(chn[200:300, "param_1", :], AbstractChains)
-    @test isa(chn[200:300, ["param_1", "param_3"], :], AbstractChains)
-    @test isa(chn[200:300, "param_1", 1], AbstractChains)
-    @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
-    @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
-    @test all(chn[:,1,2].value .== val[:,1,2])
+    @test chn[:,1,:] isa AbstractMatrix
+    @test chn[200:300, "param_1", :] isa AbstractMatrix
+    @test chn[200:300, ["param_1", "param_3"], :] isa Chains
+    @test chn[200:300, "param_1", 1] isa AbstractVector
+    @test size(chn[:,1,:]) == (niter, nchains)
+    @test chn[:,1,1] == val[:,1,1]
+    @test chn[:,1,2] == val[:,1,2]
 end
 
 @testset "names and groups tests" begin
@@ -64,11 +64,11 @@ end
     @test MCMCChains.diag_all(rand(50, 2), :hangartner, 1, 1, 1) != nothing
     @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
-    @test eltype(discretediag(chn_disc[:,2,:])) <: ChainDataFrame
-    @test typeof(gelmandiag(chn[:,1,:])) <: ChainDataFrame
-    @test eltype(gewekediag(chn[:,1,:])) <: ChainDataFrame
-    @test eltype(heideldiag(chn[:,1,:])) <: ChainDataFrame
-    @test eltype(rafterydiag(chn[:,1,:])) <: ChainDataFrame
+    @test eltype(discretediag(chn_disc[:,2:2,:])) <: ChainDataFrame
+    @test typeof(gelmandiag(chn[:,1:1,:])) <: ChainDataFrame
+    @test eltype(gewekediag(chn[:,1:1,:])) <: ChainDataFrame
+    @test eltype(heideldiag(chn[:,1:1,:])) <: ChainDataFrame
+    @test eltype(rafterydiag(chn[:,1:1,:])) <: ChainDataFrame
 end
 
 @testset "stats tests" begin

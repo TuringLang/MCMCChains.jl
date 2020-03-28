@@ -101,8 +101,8 @@ end
 
 #################### Indexing ####################
 
-Base.getindex(c::Chains, i1::Integer) = c[i1, :, :]
-Base.getindex(c::Chains, i1::AbstractVector{<:Integer}) = c[i1, :, :]
+Base.getindex(c::Chains, i::Integer) = c[i, :, :]
+Base.getindex(c::Chains, i::AbstractVector{<:Integer}) = c[i, :, :]
 
 Base.getindex(c::Chains, v::String) = c[:, Symbol(v), :]
 Base.getindex(c::Chains, v::AbstractVector{String}) = c[:, Symbol.(v), :]
@@ -110,24 +110,27 @@ Base.getindex(c::Chains, v::AbstractVector{String}) = c[:, Symbol.(v), :]
 Base.getindex(c::Chains, v::Symbol) = c[:, v, :]
 Base.getindex(c::Chains, v::AbstractVector{Symbol}) = c[:, v, :]
 
-function Base.getindex(chn::Chains, i, j, k)
-    newval = chn.value[_index1(chn, i), _index2(chn, j), _index3(chn, k)]
-    names = newval.axes[2].val
-    new_name_map = namemap_intersect(chn.name_map, names)
-    return Chains(newval, chn.logevidence, new_name_map, chn.info)
+Base.getindex(chn::Chains, i, j, k) = _getindex(chn, chn.value[_toindex(i, j, k)...])
+
+_getindex(::Chains, data) = data
+function _getindex(chains::Chains, data::AxisArray{<:Any,3})
+    names = data.axes[2].val
+    namemap = namemap_intersect(chains.name_map, names)
+    return Chains(data, chains.logevidence, namemap, chains.info)
 end
 
-# ensure that array structure is preserved
-_index1(::Chains, i) = i
-_index1(::Chains, i::Integer) = i:i
+# convert strings to symbols but try to keep all dimensions for multiple parameters
+_toindex(i, j, k) = (i, string2symbol(j), k)
+_toindex(i::Integer, j, k) = (i:i, string2symbol(j), k)
+_toindex(i, j, k::Integer) = (i, string2symbol(j), k:k)
+_toindex(i::Integer, j, k::Integer) = (i:i, string2symbol(j), k:k)
 
-_index2(::Chains, i) = [i]
-_index2(::Chains, i::Union{AbstractVector,Colon}) = i
-_index2(chains::Chains, i::Union{Symbol,String}) = [Symbol(i)]
-_index2(chains::Chains, i::AbstractVector{String}) = Symbol.(i)
-
-_index3(::Chains, i) = i
-_index3(::Chains, i::Integer) = i:i
+# return an array or a number if a single parameter is specified
+const SingleIndex = Union{Symbol,String,Integer}
+_toindex(i, j::SingleIndex, k) = (i, string2symbol(j), k)
+_toindex(i::Integer, j::SingleIndex, k) = (i, string2symbol(j), k)
+_toindex(i, j::SingleIndex, k::Integer) = (i, string2symbol(j), k)
+_toindex(i::Integer, j::SingleIndex, k::Integer) = (i, string2symbol(j), k)
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 Base.lastindex(c::Chains) = lastindex(c.value, 1)
