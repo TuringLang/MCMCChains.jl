@@ -14,7 +14,7 @@ function gewekediag(x::Vector{<:Real}; first::Real=0.1, last::Real=0.5,
   x2 = x[round(Int, n - last * n + 1):n]
   z = (mean(x1) - mean(x2)) /
       sqrt(mcse(x1, etype; args...)^2 + mcse(x2, etype; args...)^2)
-  [round(z, digits = 3), round(1.0 - erf(abs(z) / sqrt(2.0)), digits = 4)]
+  [z, 1 - erf(abs(z) / sqrt(2))]
 end
 
 function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
@@ -22,7 +22,6 @@ function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
                     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
                     showall=false,
                     sorted=true, 
-                    digits=4,
                     args...)
     c = showall ?
         sorted ? sort(chn) : chn :
@@ -47,8 +46,7 @@ function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
     vector_of_df = [
         ChainDataFrame(
             "Geweke Diagnostic - Chain $i",
-            (parameters = names_of_params, z_score = d[:, 1], p_value = d[:, 2]);
-            digits = digits
+            (parameters = names_of_params, z_score = d[:, 1], p_value = d[:, 2])
         )
         for (i, d) in enumerate(diags)
     ]
