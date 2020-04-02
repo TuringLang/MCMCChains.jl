@@ -42,3 +42,8 @@ end
     @test DIC1 < DIC2
     @test pD1 < pD2
 end
+
+@testset "hpd tests" begin
+    result = hpd(chn1)
+    @test all(result.nt.upper .> result.nt.lower)
+end
