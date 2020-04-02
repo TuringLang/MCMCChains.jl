@@ -1,22 +1,34 @@
-using Turing, Test
+using MCMCChains
+using Distributions
+
+using Random
+using Test
+
+Random.seed!(20)
 
 ProjDir = mktempdir()
 
 @testset "serialization read and write test" begin
-    @model gdemo(x) = begin
-        s ~ InverseGamma(2,3)
-        m ~ Normal(0, sqrt(s))
-        for i in eachindex(x)
-            x[i] ~ Normal(m, sqrt(s))
-        end
+    # Consider the model
+    # ```math
+    # s ~ IG(2, 3)
+    # m ~ Normal(0, √s)
+    # x ~ Normal(m, √s)
+    # ```
+    # for variable ``x``. Given observations ``x₁ = 1.5`` and ``x₂ = 2``, sample one chain
+    # with 500 samples from the posterior
+    # ```math
+    # m, s ~ Normal-IG(7/6, 3, 3, 49/12)
+    # ```
+    vals = Matrix{Float64}(undef, 500, 2)
+    rand!(InverseGamma(3, 49/12), view(vals, :, 2))
+    for i in 1:size(vals, 1)
+        vals[i, 1] = rand(Normal(7/6, sqrt(vals[i, 2] / 3)))
     end
-
-    model = gdemo([1.5, 2.0])
-    sampler = HMC(0.01, 5)
-    chn1 = sample(model, sampler, 500, save_state=true)
+    chn1 = Chains(vals, ["m", "s"])
 
     write(joinpath(ProjDir, "chn1.jls"), chn1)
-    chn2 = read(joinpath(ProjDir, "chn1.jls"), MCMCChains.Chains)
+    chn2 = read(joinpath(ProjDir, "chn1.jls"), Chains)
 
     open(joinpath(ProjDir, "chn1.txt"), "w") do io
         describe(io, chn1);
@@ -28,10 +40,6 @@ ProjDir = mktempdir()
 
     @test open(f->read(f, String), joinpath(ProjDir, "chn1.txt")) ==
         open(f->read(f, String), joinpath(ProjDir, "chn2.txt"))
-
-    # Test whether sampler state made it through serialization/deserialization.
-    chn3 = Turing.Inference.resume(chn2, 100)
-    @test range(chn3) == 1:1:100
 end
 
 rm(ProjDir, force=true, recursive=true)

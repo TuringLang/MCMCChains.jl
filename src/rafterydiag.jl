@@ -1,13 +1,13 @@
 #################### Raftery and Lewis Diagnostic ####################
 
 function rafterydiag(
-                     x::Vector{T};
+                     x::Vector{<:Real};
                      q = 0.025,
                      r = 0.005,
                      s = 0.95,
                      eps = 0.001,
                      range = 1:length(x)
-                    ) where {T<:Real}
+                    )
 
     nx = length(x)
     phi = sqrt(2.0) * erfinv(s)
@@ -52,13 +52,14 @@ function rafterydiag(
 end
 
 function rafterydiag(
-                     chn::AbstractChains;
+                     chn::Chains;
                      q = 0.025,
                      r = 0.005,
                      s = 0.95,
                      eps = 0.001,
                      showall=false,
                      sorted=true,
+                     digits=4,
                      sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
                     )
     c = showall ?
@@ -77,15 +78,22 @@ function rafterydiag(
         )
     end
 
-    colnames = Symbol.(["parameters", "Thinning", "Burn-in", "Total", "Nmin",
-        "Dependence Factor"])
+    # Retrieve columns.
+    data = [[vals[k][:, i] for i in 1:5] for k in 1:m]
 
-    pnames = Symbol.(names(c))
-    vals = map(x -> round.(x, digits=4), vals)
-    columns = [vcat([pnames], [vals[k][:,i] for i in 1:5]) for k in 1:m]
+    # Obtain names of parameters.
+    names_of_params = names(chn)
 
-    dfs = [DataFrame(columns[k], colnames) for k in 1:m]
-    dfs_wrapped = [ChainDataFrame("Raftery and Lewis Diagnostic - Chain $k",
-                   dfs[k]) for k in 1:m]
-    return dfs_wrapped
+    # Compute data frames.
+    colnames = (:Thinning, Symbol("Burn-in"), :Total, :Nmin, Symbol("Dependence Factor"))
+    vector_of_df = [
+        ChainDataFrame(
+            "Raftery and Lewis Diagnostic - Chain $i",
+            (parameters = names_of_params, zip(colnames, columns)...);
+            digits = digits
+        )
+        for (i, columns) in enumerate(data)
+    ]
+
+    return vector_of_df
 end

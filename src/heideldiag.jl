@@ -1,7 +1,7 @@
 #################### Heidelberger and Welch Diagnostic ####################
 
-function heideldiag(x::Vector{T}; alpha::Real=0.05, eps::Real=0.1,
-                             etype=:imse, start::Integer=1, args...) where {T<:Real}
+function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
+                             etype=:imse, start::Integer=1, args...)
   n = length(x)
   delta = trunc(Int, 0.10 * n)
   y = x[trunc(Int, n / 2):end]
@@ -26,13 +26,14 @@ function heideldiag(x::Vector{T}; alpha::Real=0.05, eps::Real=0.1,
   [i + start - 2, converged, round(pvalue, digits = 4), ybar, halfwidth, passed]
 end
 
-function heideldiag(chn::AbstractChains;
+function heideldiag(chn::Chains;
                     alpha = 0.05,
                     eps = 0.1,
                     etype = :imse,
                     sections::Vector{Symbol}=[:parameters],
                     showall=false,
                     sorted=true,
+                    digits=4,
                     args...
                    )
     c = showall ?
@@ -56,16 +57,23 @@ function heideldiag(chn::AbstractChains;
                            )
     end
 
-    colnames = Symbol.(["parameters", "Burn-in", "Stationarity", "p-value", "Mean",
-        "Halfwidth", "Test"])
+    # Retrieve columns.
+    data = [[vals[k][:, i] for i in 1:6] for k in 1:m]
 
-    # Round values.
-    pnames = Symbol.(names(c))
-    vals = map(x -> round.(x, digits=4), vals)
-    columns = [vcat([pnames], [vals[k][:,i] for i in 1:6]) for k in 1:m]
+    # Obtain names of parameters.
+    names_of_params = names(chn)
 
-    dfs = [DataFrame(columns[k], colnames) for k in 1:m]
-    dfs_wrapped = [ChainDataFrame("Heidelberger and Welch Diagnostic - Chain $k",
-                   dfs[k]) for k in 1:m]
-    return dfs_wrapped
+    # Compute data frames.
+    colnames = (Symbol("Burn-in"), :Stationarity, Symbol("p-value"), :Mean, :Halfwidth,
+        :Test)
+    vector_of_df = [
+        ChainDataFrame(
+            "Heidelberger and Welch Diagnostic - Chain $i",
+            (parameters = names_of_params, zip(colnames, columns)...);
+            digits = digits
+        )
+        for (i, columns) in enumerate(data)
+    ]
+
+    return vector_of_df
 end

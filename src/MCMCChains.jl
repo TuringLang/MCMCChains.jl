@@ -1,42 +1,35 @@
 module MCMCChains
 
-using AbstractMCMC
-
-import Statistics
-import Showoff: showoff
-import StatsBase: autocor, autocov, countmap, counts, describe, predict,
-       quantile, sample, sem, summarystats, sample, AbstractWeights
-import LinearAlgebra: diag
-import Serialization: serialize, deserialize
-import Base: sort, range, names, get, hash, convert, show, display
-import Statistics: cor, mean
-import Core.Array
-import DataFrames: DataFrame, names, eachcol
-
-using RecipesBase
-import RecipesBase: plot
-
-using Serialization
-using Distributions
-using KernelDensity
-using SpecialFunctions
 using AxisArrays
 const axes = Base.axes
 
-export Chains, getindex, setindex!, chains, setinfo, chainscat
-export describe, set_section, get_params, sections, set_names
-export sample, AbstractWeights
-export Array, DataFrame, sort_sections, convert
-export summarize, summarystats, ChainDataFrame
-export hpd, ess
-export mean
+import AbstractMCMC
+import AbstractMCMC: chainscat
+using Distributions
+using RecipesBase
+using SpecialFunctions
+using Formatting
+import StatsBase: autocov, counts, sem, AbstractWeights,
+    autocor, describe, quantile, sample, summarystats, cov
+using Requires
 
-# export diagnostics functions
+using LinearAlgebra: diag
+import Serialization: serialize, deserialize
+import Random
+import Statistics: std, cor, mean, var
+
+export Chains, chains, chainscat
+export set_section, get_params, sections, sort_sections, setinfo, set_names
+export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
+export ChainDataFrame
+export summarize
+
+# Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
-export autocor
+export hpd, ess
 
 """
-    Chains type
+    Chains
 
 Parameters:
 
@@ -46,16 +39,14 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{A, T, K<:NamedTuple, L<:NamedTuple} <: AbstractChains
-    value::AxisArray{A,3}
-    logevidence::T
+struct Chains{T,L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
+    value::AxisArray{T,3}
+    logevidence::L
     name_map::K
-    info::L
+    info::I
 end
 
-# imports
 include("utils.jl")
-
 include("chains.jl")
 include("constructors.jl")
 include("summarize.jl")
@@ -70,5 +61,9 @@ include("sampling.jl")
 include("stats.jl")
 include("modelstats.jl")
 include("plot.jl")
+
+function __init__()
+    @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" include("dataframes-compat.jl")
+end
 
 end # module

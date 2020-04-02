@@ -6,7 +6,7 @@
         relative=true
         showall=false,
         append_chains=true,
-        digits=missing,
+        digits::Int=4,
         sections=[:parameters])
 
 Compute the autocorrelation of each parameter for the chain. Setting `append_chains=false` will return a vector of dataframes containing the autocorrelations for each chain.
@@ -16,31 +16,31 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function autocor(chn::AbstractChains;
-        lags::Vector=[1, 5, 10, 50],
+function autocor(chn::Chains;
+        lags::AbstractVector{<:Integer}=[1, 5, 10, 50],
         demean::Bool=true,
         relative::Bool=true,
         showall=false,
         append_chains = false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
+        digits::Int=4,
         kwargs...)
     funs = Function[]
-    func_names = String[]
+    func_names = @. Symbol("lag ", lags)
     for i in lags
         push!(funs, x -> autocor(x, [i], demean=demean)[1])
-        push!(func_names, "lag $i")
     end
     return summarize(chn, funs...;
         func_names = func_names,
         showall = showall,
+        sections = sections,
         append_chains = append_chains,
         name = "Autocorrelation",
         digits=digits)
 end
 
 """
-    cor(chn; showall=false, append_chains=true, sections=[:parameters], digits=missing)
+    cor(chn; showall=false, append_chains=true, sections=[:parameters], digits::Int=4)
 
 Compute the Pearson correlation matrix for the chain. Setting `append_chains=false` will
 return a vector of dataframes containing a correlation matrix for each chain.
@@ -50,34 +50,44 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function cor(chn::AbstractChains;
+function cor(chain::Chains;
         showall=false,
         append_chains=true,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
-        kwargs...)
-    df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
+        sections::Union{Symbol, Vector{Symbol}}=:parameters,
+        digits::Int=4,
+        kwargs...
+)
+    # Obtain interesting subset of the chain.
+    chn = showall ? chain : Chains(chain, sections)
 
-    # Generate
-    cormat = if append_chains
-        cor(convert(Matrix, df[:, 1:end]))
+    # Obstain names of parameters.
+    names_of_params = Symbol.(names(chn))
+
+    if append_chains
+        df = chaindataframe_cor("Correlation", names_of_params, to_matrix(chn);
+                                digits = digits)
+        return df
     else
-        [cor(convert(Matrix, i[:, 1:end])) for i in df]
+        vector_of_df = [
+            chaindataframe_cor(
+                "Correlation - Chain $i", names_of_params, data; digits = digits
+            )
+            for (i, data) in enumerate(to_vector_of_matrices(chn))
+        ]
+        return vector_of_df
     end
-    nms = append_chains ? names(df) : names(df[1])
-    columns = if append_chains
-        [nms, [cormat[:, i] for i in 1:size(cormat, 2)]...]
-    else
-        [[nms, [cm[:, i] for i in 1:size(cm, 2)]...] for cm in cormat]
-    end
-    colnames = vcat([:parameters], nms...)
-    df_summary = if append_chains
-        ChainDataFrame("Correlation", DataFrame(columns, colnames), digits=digits)
-    else
-        [ChainDataFrame("Correlation", DataFrame(c, colnames), digits=digits)
-            for c in columns]
-    end
-    return df_summary
+end
+
+function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwargs...)
+    # Compute the correlation matrix.
+    cormat = cor(chains)
+
+    # Summarize the results in a named tuple.
+    nt = (; parameters = names_of_params,
+          zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...)
+
+    # Create a ChainDataFrame.
+    return ChainDataFrame(name, nt; kwargs...)
 end
 
 """
@@ -85,7 +95,7 @@ end
         append_chains=true,
         showall=false,
         sections=[:parameters],
-        digits=missing)
+        digits::Int=4)
 
 Computes the change rate for the chain. Setting `append_chains=false` will
 return a vector of dataframes containing the change rates for each chain.
@@ -95,54 +105,82 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function changerate(chn::AbstractChains;
+function changerate(chains::Chains{<:Real};
     append_chains=true,
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    digits=missing,
-    kwargs...)
-    # Check for missing values.
-    @assert !any(ismissing.(chn.value)) "Change rate comp. doesn't support missing values."
+    digits::Int=4,
+    kwargs...
+)
+    # Obtain interesting subset of the chains.
+    chn = showall ? chains : Chains(chains, sections)
 
-    df = DataFrame(chn, append_chains=true, showall=showall)
-    n, p = size(df[1])
-    m = length(chains(chn))
+    # Obstain names of parameters.
+    names_of_params = Symbol.(names(chn))
 
-    r = zeros(Float64, p, 1, 1)
-    r_mv = 0.0
-    delta = Array{Bool}(undef, p)
-    for k in 1:m
-        dfk = df[k]
-        prev = convert(Vector, dfk[1,:])
-        for i in 2:n
-            for j in 1:p
-                x = dfk[i, j]
-                dx = x != prev[j]
-                r[j] += dx
-                delta[j] = dx
-                prev[j] = x
-            end
-            r_mv += any(delta)
-        end
+    if append_chains
+        df = chaindataframe_changerate("Change Rate", names_of_params, chn.value.data)
+        return df
+    else
+        vector_of_df = [
+            chaindataframe_changerate(
+                "Change Rate - Chain $i", names_of_params, data; digits = digits
+            )
+            for (i, data) in enumerate(to_vector_of_matrices(chn))
+        ]
+        return vector_of_df
     end
-    vals = round.([r..., r_mv] / (m * (n - 1)), digits = 3)
-    rownames = push!(names(df[1]), :multivariate)
-    return DataFrame(parameters = rownames,
-        change_rate = vals,
-        name="Change Rate",
-        digits=digits)
 end
 
-describe(c::AbstractChains; args...) = describe(stdout, c; args...)
+function chaindataframe_changerate(name, names_of_params, chains; kwargs...)
+    # Compute the change rates.
+    changerates, mvchangerate = chains
+
+    # Summarize the results in a named tuple.
+    nt = (; zip(names_of_params, changerates)..., multivariate = mvchangerate)
+
+    # Create a ChainDataFrame.
+    return ChainDataFrame(name, nt; kwargs...)
+end
+
+changerate(chains::AbstractMatrix{<:Real}) = changerate(reshape(chains, Val(3)))
+function changerate(chains::AbstractArray{<:Real,3})
+    niters, nparams, nchains = size(chains)
+
+    changerates = zeros(nparams)
+    mvchangerate = 0.0
+
+    for chain in 1:nchains, iter in 2:niters
+        isanychanged = false
+
+        for param in 1:nparams
+            # update if the sample is different from the one in the previous iteration
+            if chains[iter-1, param, chain] != chains[iter, param, chain]
+                changerates[param] += 1
+                isanychanged = true
+            end
+        end
+
+        mvchangerate += isanychanged
+    end
+
+    factor = nchains * (niters - 1)
+    changerates ./= factor
+    mvchangerate /= factor
+
+    changerates, mvchangerate
+end
+
+describe(c::Chains; args...) = describe(stdout, c; args...)
 
 """
     describe(io::IO,
-        c::AbstractChains;
+        c::Chains;
         q = [0.025, 0.25, 0.5, 0.75, 0.975],
         etype=:bm,
         showall=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
+        digits::Int=4,
         args...)
 
 Prints the summary statistics and quantiles for the chain.
@@ -153,29 +191,32 @@ The `digits` keyword may be a(n)
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
 function describe(io::IO,
-                  c::AbstractChains;
+                  c::Chains;
                   q = [0.025, 0.25, 0.5, 0.75, 0.975],
                   etype=:bm,
                   showall::Bool=false,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                  digits=missing,
+                  digits::Int=4,
+                  sorted=false,
                   args...
                  )
-    dfs = [summarystats(c,
+    dfs = vcat(summarystats(c,
                 showall=showall,
                 sections=sections,
                 etype=etype,
                 digits=digits,
+                sorted=sorted,
                 args...),
            quantile(c,
                 showall=showall,
                 sections=sections,
                 q=q,
-                digits=digits)]
+                digits=digits,
+                sorted=sorted))
     return dfs
 end
 
-function _hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
+function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
     n = length(x)
     m = max(1, ceil(Int, alpha * n))
 
@@ -187,19 +228,11 @@ function _hpd(x::Vector{T}; alpha::Real=0.05) where {T<:Real}
     return [a[i], b[i]]
 end
 
-function hpd(chn::AbstractChains; alpha::Real=0.05,
-        append_chains=true,
-        showall=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=nothing)
+function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
     labels = [:upper, :lower]
     u(x) = _hpd(x, alpha=alpha)[1]
     l(x) = _hpd(x, alpha=alpha)[2]
-    return summarize(chn, u, l;
-        func_names = labels,
-        showall=showall,
-        name="HPD",
-        digits=digits)
+    return summarize(chn, u, l; name = "HPD", func_names = labels, kwargs...)
 end
 
 """
@@ -208,7 +241,7 @@ end
         append_chains=true,
         showall=false,
         sections=[:parameters],
-        digits=missing)
+        digits::Int=4)
 
 Computes the quantiles for each parameter in the chain. Setting `append_chains=false` will
 return a vector of dataframes containing the quantiles for each chain.
@@ -218,33 +251,36 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function quantile(chn::AbstractChains;
+function quantile(chn::Chains;
         q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
         append_chains=true,
         showall=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing)
+        digits::Int=4,
+        sorted=false)
     # compute quantiles
     funs = Function[]
-    func_names = String[]
+    func_names = @. Symbol(100 * q, :%)
     for i in q
         push!(funs, x -> quantile(cskip(x), i))
-        push!(func_names, "$(string(100*i))%")
     end
+
     return summarize(chn, funs...;
         func_names=func_names,
         showall=showall,
         sections=sections,
-        name = "Quantiles",
-        digits=digits)
+        name="Quantiles",
+        digits=digits,
+        append_chains=append_chains, 
+        sorted=sorted)
 end
 
 """
-	ess(chn::AbstractChains;
+	ess(chn::Chains;
 		showall=false,
 		sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
 		maxlag = 250,
-        digits=missing)
+        digits::Int=4)
 
 Compute a chain's number of effective samples. More information can be found in the Gelman et al. (2014) book "Bayesian Data Analysis", or in [this article](https://arxiv.org/abs/1903.08008).
 
@@ -253,38 +289,40 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function ess(chn::AbstractChains;
+function ess(chn::Chains;
     showall=false,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
     maxlag = 250,
-    digits=missing
+    digits::Int=4,
+    sorted=false
 )
 	param = showall ? names(chn) : names(chn, sections)
 	n_chain_orig = size(chn, 3)
 
 	# Split the chains.
 	parameter_vec = Vector(undef, length(param))
-	midpoint = Int32(floor(size(chn, 1) / 2))
+    midpoint = Int32(floor(size(chn, 1) / 2))
+    n = size(chn, 1)
 	for i in 1:length(param)
 		parameter_vec[i] = []
 		for j in 1:n_chain_orig
             c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
             c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
+            n = min(n, length(c1), length(c2))
             push!(parameter_vec[i], c1, c2)
 		end
 	end
 
     # Misc allocations.
     m = n_chain_orig * 2
-    n = min(length.(parameter_vec[1])...)
     maxlag = min(maxlag, n-1)
-    lags = collect(0:maxlag)
+    lags = 0:maxlag
 
     # Preallocate B, W, varhat, and Rhat vectors for each param.
     B = Vector(undef, length(param))
     W = Vector(undef, length(param))
     varhat = Vector(undef, length(param))
-    Rhat = Vector(undef, length(param))
+    Rhat = Vector{Float64}(undef, length(param))
 
     # calculate B, W, varhat, and Rhat for each param.
     for i in 1:length(param)
@@ -329,7 +367,7 @@ function ess(chn::AbstractChains;
 
 	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
     P = Vector(undef, length(param))
-    ess = Vector(undef, length(param))
+    ess = Vector{Float64}(undef, length(param))
 	for i in 1:length(param)
         big_P = 0.0
 		ρ_val = Float64.(ρ[i])
@@ -353,8 +391,8 @@ function ess(chn::AbstractChains;
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
 	end
 
-    df = DataFrame(parameters = Symbol.(param), ess = ess, r_hat = Rhat)
-	return ChainDataFrame("ESS", df, digits=digits)
+    df = (parameters = string.(param), ess = ess, r_hat = Rhat)
+	return ChainDataFrame("ESS", df; digits=digits)
 end
 
 # this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl
@@ -370,7 +408,7 @@ end
         append_chains=true,
         showall=false,
         sections=[:parameters],
-        digits=missing,
+        digits::Int=4,
         args...)
 
 Computes the mean, standard deviation, naive standard error, Monte Carlo standard error, and effective sample size for each parameter in the chain. Setting `append_chains=false` will return a vector of dataframes containing the summary statistics for each chain. `args...` is passed to the `msce` function.
@@ -380,18 +418,17 @@ The `digits` keyword may be a(n)
 - `NamedTuple`, which only rounds the named column to the specified digits, as with `(mean=2, std=3)`. This would round the `mean` column to 2 digits and the `std` column to 3 digits.
 - `Dict`, with a similar structure as `NamedTuple`. `Dict(mean => 2, std => 3)` would set `mean` to two digits and `std` to three digits.
 """
-function summarystats(chn::MCMCChains.AbstractChains;
+function summarystats(chn::Chains;
         append_chains::Bool=true,
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         etype=:bm,
-        digits=missing,
+        digits::Int=4,
         sorted=false,
         args...
     )
 
     # Make some functions.
-    sem(x) = sqrt(var(x) / length(x))
     df_mcse(x) = length(x) < 200 ?
         missing :
         mcse(cskip(x), etype, args...)
@@ -401,39 +438,41 @@ function summarystats(chn::MCMCChains.AbstractChains;
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Caluclate ESS separately.
-    ess_df = ess(chn, sections=sections, showall=showall).df
+    ess_df = ess(chn, sections=sections, showall=showall, sorted=sorted)
 
     # Summarize.
     summary_df = summarize(chn, funs...;
-        sections=sections,
         func_names=func_names,
         showall=showall,
+        sections=sections,
         name="Summary Statistics",
         additional_df = ess_df,
-        digits=digits)
+        digits=digits,
+        append_chains=append_chains, 
+        sorted=sorted)
 
     return summary_df
 end
 
 """
-    mean(chn::MCMCChains.AbstractChains;
+    mean(chn::Chains;
             append_chains::Bool=true,
             showall::Bool=false,
             sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-            digits=missing,
+            digits::Int=4,
             args...)
-    mean(chn::MCMCChains.AbstractChains, ss::Vector{Symbol})
-    mean(chn::MCMCChains.AbstractChains, s::Symbol)
-    mean(chn::MCMCChains.AbstractChains, s::String)
-    mean(chn::MCMCChains.AbstractChains, ss::Vector{String})
+    mean(chn::Chains, ss::Vector{Symbol})
+    mean(chn::Chains, s::Symbol)
+    mean(chn::Chains, s::String)
+    mean(chn::Chains, ss::Vector{String})
 
 Calculates the mean of a `Chains` object, or a specific parameter.
 """
-function Statistics.mean(chn::MCMCChains.AbstractChains;
+function mean(chn::Chains;
         append_chains::Bool=true,
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        digits=missing,
+        digits::Int=4,
         args...
     )
     # Store everything.
@@ -442,22 +481,19 @@ function Statistics.mean(chn::MCMCChains.AbstractChains;
 
     # Summarize.
     summary_df = summarize(chn, funs...;
-        sections=sections,
         func_names=func_names,
         showall=showall,
+        sections=sections,
         name="Mean",
         digits=digits)
 
     return summary_df
 end
 
-Statistics.mean(chn::MCMCChains.AbstractChains, ss::Vector{Symbol}) =
-    mean(chn[:, ss, :])
-Statistics.mean(chn::MCMCChains.AbstractChains, s::String) =
-    mean(chn, Symbol(s))
-Statistics.mean(chn::MCMCChains.AbstractChains, ss::Vector{String}) =
-    mean(chn, Symbol.(ss))
-function Statistics.mean(chn::MCMCChains.AbstractChains, s::Symbol)
+mean(chn::Chains, ss::Vector{Symbol}) = mean(chn[:, ss, :])
+mean(chn::Chains, s::String) = mean(chn, Symbol(s))
+mean(chn::Chains, ss::Vector{String}) = mean(chn, Symbol.(ss))
+function mean(chn::Chains, s::Symbol)
     syms = _sym2index(chn, [s])
 
     if length(syms) == 0

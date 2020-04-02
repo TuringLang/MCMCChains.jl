@@ -1,6 +1,6 @@
 #################### Gelman, Rubin, and Brooks Diagnostics ####################
 
-function gelmandiag(chn::AbstractChains;
+function gelmandiag(chn::Chains;
         alpha::Real=0.05,
         mpsrf::Bool=false,
         transform::Bool=false,
@@ -66,5 +66,6 @@ function gelmandiag(chn::AbstractChains;
 
     columns = [psrf_names, psrf[:,1], psrf[:,2]]
     name = "Gelman, Rubin, and Brooks Diagnostic"
-    return ChainDataFrame(name, DataFrame(columns, psrf_labels))
+    nt = NamedTuple{tuple(psrf_labels...)}(tuple(columns...))
+    return ChainDataFrame(name, nt)
 end
