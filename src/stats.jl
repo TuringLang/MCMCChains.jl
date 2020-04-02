@@ -230,8 +230,8 @@ end
 
 function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
     labels = [:upper, :lower]
-    u(x) = _hpd(x, alpha=alpha)[1]
-    l(x) = _hpd(x, alpha=alpha)[2]
+    l(x) = _hpd(x, alpha=alpha)[1]
+    u(x) = _hpd(x, alpha=alpha)[2]
     return summarize(chn, u, l; name = "HPD", func_names = labels, kwargs...)
 end
 
@@ -271,7 +271,7 @@ function quantile(chn::Chains;
         sections=sections,
         name="Quantiles",
         digits=digits,
-        append_chains=append_chains, 
+        append_chains=append_chains,
         sorted=sorted)
 end
 
@@ -379,7 +379,7 @@ function ess(chn::Chains;
             sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
             push!(P[i], sumvals)
             k = tprime
-            
+
             if sumvals < 0
                 break
             end
@@ -448,7 +448,7 @@ function summarystats(chn::Chains;
         name="Summary Statistics",
         additional_df = ess_df,
         digits=digits,
-        append_chains=append_chains, 
+        append_chains=append_chains,
         sorted=sorted)
 
     return summary_df
