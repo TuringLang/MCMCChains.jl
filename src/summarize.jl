@@ -1,101 +1,37 @@
 struct ChainDataFrame{NT<:NamedTuple}
     name::String
     nt::NT
-    n_rows::Int
-    n_cols::Int
-    digits::Int
+    nrows::Int
+    ncols::Int
 
-    function ChainDataFrame(name::String, nt::NamedTuple; digits::Int=4)
+    function ChainDataFrame(name::String, nt::NamedTuple)
         lengths = length(first(nt))
         all(x -> length(x) == lengths, nt) || error("Lengths must be equal.")
 
-        return new{typeof(nt)}(name, nt, lengths, length(nt), digits)
+        return new{typeof(nt)}(name, nt, lengths, length(nt))
     end
 end
 
 ChainDataFrame(nt::NamedTuple) = ChainDataFrame("", nt)
 
-Base.size(c::ChainDataFrame) = (c.n_rows, c.n_cols)
+Base.size(c::ChainDataFrame) = (c.nrows, c.ncols)
 Base.names(c::ChainDataFrame) = collect(keys(c.nt))
 
-function Base.show(io::IO, c::ChainDataFrame)
-    println(io, c.name)
+# Display
 
-    # Preallocations
-    n_cols = c.n_cols
-    n_rows = c.n_rows
-    column_names = collect(keys(c.nt))
-    digits = c.digits
-    f_format_str = "%.$(digits)f"
-    i_format_str = "%n"
-
-    # Create printed array.
-    arr = Array{String, 2}(undef, n_rows + 1, n_cols)
-
-    # Add headers
-    arr[1, :] = string.(column_names)
-
-    # Add values to array, accumulate string lengths.
-    lengths = length.(arr[1,:])
-    for i in 1:n_cols
-        k = column_names[i]
-        values = c.nt[k]
-        etype = eltype(values)
-
-        if etype <: Real
-            arr[2:end, i] = sprintf1.(f_format_str, values)
-        elseif etype <: Integer
-            arr[2:end, i] = sprintf1.(i_format_str, values)
-        else 
-            arr[2:end, i] = string.(values)
-        end
-        lengths[i] = max(maximum(length.(arr[2:end, i])), lengths[i])
-    end
-
-    # Do it array style.
-    bufs = [IOBuffer() for _ in 1:(n_rows+2)]
-
-    for i in 1:n_cols
-        for j in 1:(n_rows+2)
-            # Print the headers
-            if j == 1
-                print(bufs[j],  "  ", lpad(arr[j,i], lengths[i]))
-            end
-
-            # Print sep row.
-            if j == 2
-                print(bufs[j], "  ", repeat("─", lengths[i]))
-            end
-
-            # Print values.
-            if j > 2
-                bufs[j]
-                print(bufs[j], "  ", lpad(arr[j-1,i], lengths[i]))
-            end
-        end
-    end
-
-    for j in 1:length(bufs)
-        s = String(take!(bufs[j]))
-        println(io, s)
-    end
+function Base.show(io::IO, df::ChainDataFrame)
+    print(io, df.name, " (", df.nrows, " x ", df.ncols, ")")
 end
 
-Base.isequal(cs1::Vector{ChainDataFrame}, cs2::Vector{ChainDataFrame}) = isequal.(cs1, cs2)
+function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
+    digits = get(io, :digits, 4)
+    formatter = PrettyTables.ft_printf("%.$(digits)f")
+
+    println(io, df.name)
+    PrettyTables.pretty_table(io, df.nt; formatter = formatter, tf = PrettyTables.borderless)
+end
+
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
-
-function Base.show(io::IO, cs::Vector{C}) where C<:ChainDataFrame
-    println(io, summary(cs))
-    for i in cs
-        println(io)
-        show(io, i)
-    end
-end
-
-# Allows overriding of `display`
-function Base.show(io::IO, ::MIME"text/plain", cs::Vector{ChainDataFrame})
-    show(io, cs)
-end
 
 # Index functions
 function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, g::Union{Colon, Integer, UnitRange})
@@ -144,7 +80,7 @@ function Base.getindex(
             ks = vcat(:parameters, ks)
         end
         nt = NamedTuple{tuple(ks...)}(tuple([c.nt[k][ind] for k in ks]...))
-        return ChainDataFrame(c.name, nt, digits=c.digits)
+        return ChainDataFrame(c.name, nt)
     else
         # Otherwise, return a vector if there's multiple parameters
         # or just a scalar if there's one parameter.
@@ -158,9 +94,9 @@ end
 
 function Base.lastindex(c::ChainDataFrame, i::Integer)
     if i == 1
-        return c.n_rows
+        return c.nrows
     elseif i ==2
-        return c.n_cols
+        return c.ncols
     else
         error("No such dimension")
     end
@@ -168,7 +104,7 @@ end
 
 function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
     T = promote_eltype_namedtuple_tail(c.nt)
-    arr = Array{T, 2}(undef, c.n_rows, c.n_cols - 1)
+    arr = Array{T, 2}(undef, c.nrows, c.ncols - 1)
     
     for (i, k) in enumerate(Iterators.drop(keys(c.nt), 1))
         arr[:, i] = c.nt[k]
@@ -229,7 +165,6 @@ function summarize(chains::Chains, funs...;
         showall::Bool=false,
         name::String="",
         additional_df=nothing,
-        digits::Int=4
 )
     # Check that we actually have :parameters.
     showall = showall || !in(:parameters, keys(chains.name_map))
@@ -260,7 +195,7 @@ function summarize(chains::Chains, funs...;
 
         # Build the ChainDataFrame.
         nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-        df = ChainDataFrame(name, nt; digits=digits)
+        df = ChainDataFrame(name, nt)
 
         return df
     else
@@ -274,7 +209,7 @@ function summarize(chains::Chains, funs...;
             for fvals in vector_of_fvals
         ]
         vector_of_df = [
-            ChainDataFrame(name * " (Chain $i)", nt; digits=digits)
+            ChainDataFrame(name * " (Chain $i)", nt)
             for (i, nt) in enumerate(vector_of_nt)
         ]
 

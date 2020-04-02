@@ -237,12 +237,19 @@ get_params(c::Chains; flatten = false) = get(c, section = sections(c), flatten=f
 
 #################### Base Methods ####################
 
-function Base.show(io::IO, c::Chains)
-    print(io, "Object of type Chains, with data of type $(summary(c.value.data))\n\n")
-    println(io, header(c))
+function Base.show(io::IO, chains::Chains)
+    print(io, "MCMC chain (", summary(chains.value.data), ")")
+end
+
+function Base.show(io::IO, mime::MIME"text/plain", chains::Chains)
+    print(io, "Chains ", chains, ":\n\n", header(chains))
 
     # Show summary stats.
-    show(io, describe(c))
+    summaries = describe(chains)
+    for summary in summaries
+        println(io)
+        show(io, mime, summary)
+    end
 end
 
 Base.keys(c::Chains) = names(c)
