@@ -41,8 +41,9 @@ end
     # Add missing values.
     chn_m = Chains(cat(chn.value, ones(1, 2, nchains) .* missing, dims = 1))
 
-    # Currently we only check if diag. functions throw an assertion if a value is missing.
-    @test_throws AssertionError gelmandiag(chn_m)
+    # Currently we only check if diagnostic functions throw a `MethodError` if the
+    # element type of the chain is not a subtype of `Real`.
+    @test_throws MethodError gelmandiag(chn_m)
 
     gw_1 = gewekediag(chn)
     gw_2 = gewekediag(chn_m)

@@ -61,7 +61,7 @@ end
     @test size(chn2) == (20, 5, 2)
     @test names(chn2) == names(chn)
     @test range(chn2) == 1:20
-    @test chn2.name_map == (internal = ["d", "e"], parameters = ["c", "b", "a"])
+    @test chn2.name_map == (parameters = [:a, :b, :c], internal = [:d, :e])
     
     chn2a = cat(chn, chn)
     @test chn2a.value == chn2.value
@@ -85,7 +85,7 @@ end
     @test names(chn3) == names(chn)
     @test range(chn3) == 1:15
     # just take the name map of first argument
-    @test chn3.name_map == (internal = ["d", "e"], parameters = ["c", "b", "a"])
+    @test chn3.name_map == (parameters = [:a, :b, :c], internal = [:d, :e])
     
     chn3a = cat(chn, chn1)
     @test chn3a.value == chn3.value
@@ -123,7 +123,7 @@ end
     @test size(chn2) == (10, 5, 2)
     @test names(chn2) == vcat(names(chn), names(chn1))
     @test range(chn2) == 1:10
-    @test chn2.name_map == (internal = ["c", "d"], parameters = ["b", "a", "e"])
+    @test chn2.name_map == (parameters = [:a, :b, :e], internal = [:c, :d])
     
     chn2a = cat(chn, chn1; dims = Val(2))
     @test chn2a.value == chn2.value
@@ -154,7 +154,7 @@ end
     @test names(chn2) == names(chn)
     @test range(chn2) == 1:10
     # just keep the name map of the first argument
-    @test chn2.name_map == (internal = ["c"], parameters = ["b", "a"])
+    @test chn2.name_map == (parameters = [:a, :b], internal = [:c])
     
     chn2a = cat(chn, chn1; dims = Val(3))
     @test chn2a.value == chn2.value

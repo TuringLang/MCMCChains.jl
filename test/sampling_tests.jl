@@ -17,7 +17,7 @@ Random.seed!(20)
     chn_sample = sample(chn, 5)
     @test range(chn_sample) == 1:1:5
 
-    c = kde(Array(chn[:s]))
+    c = kde(vec(chn[:s]))
     chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
     @test mean(chn_weighted_sample) ≈ 5.0 atol=0.1
 end

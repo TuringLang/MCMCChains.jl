@@ -20,7 +20,7 @@ function Tables.columns(chn::Chains)
     return chn
 end
 
-Tables.columnnames(chn::Chains) = (:iteration, :chain, Symbol.(names(chn))...)
+Tables.columnnames(chn::Chains) = (:iteration, :chain, names(chn)...)
 
 function Tables.getcolumn(chn::Chains, i::Int)
     return Tables.getcolumn(chn, Tables.columnnames(chn)[i])
@@ -35,7 +35,7 @@ function Tables.getcolumn(chn::Chains, nm::Symbol)
         niter = size(chn, 1)
         return repeat(chainids; inner = niter)
     else
-        return vec(getindex(chn, nm).value)
+        return vec(chn[nm])
     end
 end
 

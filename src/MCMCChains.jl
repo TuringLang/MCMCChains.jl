@@ -23,7 +23,8 @@ import Random
 import Statistics: std, cor, mean, var
 
 export Chains, chains, chainscat
-export set_section, get_params, sections, sort_sections, setinfo, set_names
+export set_section, get_params, sections, sort_sections, setinfo
+export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
@@ -43,8 +44,8 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{T,L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
-    value::AxisArray{T,3}
+struct Chains{T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
+    value::A
     logevidence::L
     name_map::K
     info::I

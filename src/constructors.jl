@@ -63,8 +63,7 @@ function Base.Array(chain::Chains,
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
     append_chains = true,
     remove_missing_union = true,
-    showall = false,
-    sorted = false
+    showall = false
 )
     sections = showall ? keys(chain.name_map) : sections
     if remove_missing_union

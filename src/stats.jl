@@ -169,20 +169,17 @@ function describe(io::IO,
                   etype=:bm,
                   showall::Bool=false,
                   sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                  sorted=false,
                   args...
                  )
     dfs = vcat(summarystats(c,
                 showall=showall,
                 sections=sections,
                 etype=etype,
-                sorted=sorted,
                 args...),
            quantile(c,
                 showall=showall,
                 sections=sections,
-                q=q,
-                sorted=sorted))
+                q=q))
     return dfs
 end
 
@@ -215,12 +212,13 @@ end
 Computes the quantiles for each parameter in the chain. Setting `append_chains=false` will
 return a vector of dataframes containing the quantiles for each chain.
 """
-function quantile(chn::Chains;
-        q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
-        append_chains=true,
-        showall=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        sorted=false)
+function quantile(
+    chn::Chains;
+    q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
+    append_chains=true,
+    showall=false,
+    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
+)
     # compute quantiles
     funs = Function[]
     func_names = @. Symbol(100 * q, :%)
@@ -233,8 +231,8 @@ function quantile(chn::Chains;
         showall=showall,
         sections=sections,
         name="Quantiles",
-        append_chains=append_chains, 
-        sorted=sorted)
+        append_chains=append_chains
+    )
 end
 
 """
@@ -247,24 +245,31 @@ Compute a chain's number of effective samples. More information can be found in 
 et al. (2014) book "Bayesian Data Analysis", or in
 [this article](https://arxiv.org/abs/1903.08008).
 """
-function ess(chn::Chains;
-    showall=false,
+function ess(
+    chn::Chains;
     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    maxlag = 250,
-    sorted=false
+    showall=false,
+    kwargs...
 )
-	param = showall ? names(chn) : names(chn, sections)
-	n_chain_orig = size(chn, 3)
+    _chn = showall ? chn : Chains(chn, sections)
+    nt = merge((parameters = names(_chn),), ess(_chn.value.data; kwargs...))
+	return ChainDataFrame("ESS", nt; digits=digits)
+end
+
+function ess(
+    chn::AbstractArray{<:Union{Real,Missing},3};
+    maxlag = 250
+)
+    n, nparams, n_chain_orig = size(chn)
 
 	# Split the chains.
-	parameter_vec = Vector(undef, length(param))
+	parameter_vec = Vector(undef, nparams)
     midpoint = Int32(floor(size(chn, 1) / 2))
-    n = size(chn, 1)
-	for i in 1:length(param)
+    for i in 1:nparams
 		parameter_vec[i] = []
 		for j in 1:n_chain_orig
-            c1 = vec(cskip(chn[1:midpoint, param[i], j].value.data))
-            c2 = vec(cskip(chn[midpoint+1:end, param[i], j].value.data))
+            c1 = vec(cskip(chn[1:midpoint, i, j]))
+            c2 = vec(cskip(chn[midpoint+1:end, i, j]))
             n = min(n, length(c1), length(c2))
             push!(parameter_vec[i], c1, c2)
 		end
@@ -276,15 +281,14 @@ function ess(chn::Chains;
     lags = 0:maxlag
 
     # Preallocate B, W, varhat, and Rhat vectors for each param.
-    B = Vector(undef, length(param))
-    W = Vector(undef, length(param))
-    varhat = Vector(undef, length(param))
-    Rhat = Vector{Float64}(undef, length(param))
+    B = Vector(undef, nparams)
+    W = Vector(undef, nparams)
+    varhat = Vector(undef, nparams)
+    Rhat = Vector{Float64}(undef, nparams)
 
     # calculate B, W, varhat, and Rhat for each param.
-    for i in 1:length(param)
+    for i in 1:nparams
 		draw = parameter_vec[i]
-		p = param[i]
         allchain = mean(vcat([d for d in draw]...))
         eachchain = [mean(draw[j]) for j in 1:m]
         s = [sum((draw[j] .- eachchain[j]).^2) / (n-1) for j in 1:m]
@@ -294,16 +298,16 @@ function ess(chn::Chains;
         Rhat[i] = sqrt(varhat[i] / W[i])
     end
 
-	V = Vector(undef, length(param))
-    ρ = Vector(undef, length(param))
+	V = Vector(undef, nparams)
+    ρ = Vector(undef, nparams)
     for p in eachindex(V)
         V[p] = Vector(undef, length(lags))
 		ρ[p] = Vector(undef, length(lags))
     end
 
     # Calculate ρ
-    c_autocor = Vector(undef, length(param))
-    for i in 1:length(param)
+    c_autocor = Vector(undef, nparams)
+    for i in 1:nparams
         c_autocor[i] = [0.0]
     end
 
@@ -311,9 +315,8 @@ function ess(chn::Chains;
         lag = lags[t]
         range1 = lag+1:n
         range2 = 1:(n-lag)
-        for i in 1:length(param)
+        for i in 1:nparams
             draw = parameter_vec[i]
-			p = param[i]
             z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
 			z = sum([zi .^ 2 for zi in z])
             V[i][t] = 1 / (m * (n-lag)) * sum(z)
@@ -323,9 +326,9 @@ function ess(chn::Chains;
     end
 
 	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
-    P = Vector(undef, length(param))
-    ess = Vector{Float64}(undef, length(param))
-	for i in 1:length(param)
+    P = Vector(undef, nparams)
+    ess = Vector{Float64}(undef, nparams)
+	for i in 1:nparams
         big_P = 0.0
 		ρ_val = Float64.(ρ[i])
 
@@ -346,10 +349,9 @@ function ess(chn::Chains;
         P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
 
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
-	end
-
-    df = (parameters = string.(param), ess = ess, r_hat = Rhat)
-	return ChainDataFrame("ESS", df)
+    end
+    
+    return (ess = ess, rhat = Rhat)
 end
 
 # this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl
@@ -377,7 +379,6 @@ function summarystats(chn::Chains;
         showall::Bool=false,
         sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
         etype=:bm,
-        sorted=false,
         args...
     )
 
@@ -391,7 +392,7 @@ function summarystats(chn::Chains;
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Caluclate ESS separately.
-    ess_df = ess(chn, sections=sections, showall=showall, sorted=sorted)
+    ess_df = ess(chn, sections=sections, showall=showall)
 
     # Summarize.
     summary_df = summarize(chn, funs...;
@@ -400,8 +401,7 @@ function summarystats(chn::Chains;
         sections=sections,
         name="Summary Statistics",
         additional_df = ess_df,
-        append_chains=append_chains, 
-        sorted=sorted)
+        append_chains=append_chains)
 
     return summary_df
 end
@@ -435,19 +435,6 @@ function mean(chn::Chains;
     return summary_df
 end
 
-mean(chn::Chains, ss::Vector{Symbol}) = mean(chn[:, ss, :])
-mean(chn::Chains, s::String) = mean(chn, Symbol(s))
-mean(chn::Chains, ss::Vector{String}) = mean(chn, Symbol.(ss))
-function mean(chn::Chains, s::Symbol)
-    syms = _sym2index(chn, [s])
-
-    if length(syms) == 0
-        throw(ArgumentError("Symbol :$s not found in chain."))
-    end
-
-    if length(syms) > 1
-        return mean(chn[:, syms, :])
-    else
-        return mean(chn[:,syms,:].value.data)
-    end
-end
+mean(chn::Chains, syms) = mean(chn[:, syms, :])
+# resolve method ambiguity with `mean(f, ::AbstractArray)`
+mean(chn::Chains, syms::AbstractVector) = mean(chn[:, syms, :])

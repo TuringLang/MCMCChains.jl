@@ -2,9 +2,6 @@
 
 ## Constructors ##
 
-# Default name map.
-const DEFAULT_MAP = Dict{Symbol, Vector{Any}}(:parameters => [])
-
 # Constructor to handle a vector of vectors.
 Chains(val::AbstractVector{<:AbstractVector{<:Union{Missing, Real}}}, args...; kwargs...) =
 	Chains(copy(reduce(hcat, val)'), args...; kwargs...)
@@ -15,70 +12,49 @@ Chains(val::AbstractVector{<:Union{Missing, Real}}, args...; kwargs...) =
 
 # Constructor to handle a 2D array
 Chains(val::AbstractMatrix{<:Union{Missing, Real}}, args...; kwargs...) =
-	Chains(reshape(val, size(val, 1), size(val, 2), 1), args...; kwargs...)
+    Chains(reshape(val, size(val, 1), size(val, 2), 1), args...; kwargs...)
+
+# Constructor to handle parameter names that are not Symbols.
+function Chains(
+    val::AbstractArray{<:Union{Missing,Real},3},
+    parameter_names::AbstractVector,
+    args...;
+    kwargs...
+)
+    return Chains(val, Symbol.(parameter_names), args...; kwargs...)
+end
 
 # Generic chain constructor.
 function Chains(
-        val::AbstractArray{<:Union{Missing, Real},3},
-        parameter_names::Vector{String} = map(i->"Param$i", 1:size(val, 2)),
-        name_map_original = copy(DEFAULT_MAP);
-        start::Int=1,
-        thin::Int=1,
-        evidence = missing,
-        info::NamedTuple=NamedTuple(),
-        sorted::Bool=false)
-    # If we received an array of pairs, convert it to a dictionary.
-    name_map = if typeof(name_map_original) <: Dict
-        # Copying can avoid state mutation.
-        deepcopy(name_map_original)
-    elseif typeof(name_map_original) <: Array
-        Dict(deepcopy(name_map_original))
-    elseif typeof(name_map_original) <: NamedTuple
-        _namedtuple2dict(name_map_original)
-    end
-
-    # Make sure that we have a :parameters index.
-    if !in(:parameters, keys(name_map))
-        name_map[:parameters] = []
-    end
+    val::AbstractArray{<:Union{Missing, Real},3},
+    parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
+    name_map = (parameters = parameter_names,);
+    start::Int = 1,
+    thin::Int = 1,
+    evidence = missing,
+    info::NamedTuple = NamedTuple()
+)
+    # Make sure that we have a `:parameters` index and # Copying can avoid state mutation.
+    _name_map = initnamemap(name_map)
 
     # Preclean the name_map of names that aren't in the
     # parameter_names vector.
-    for section in keys(name_map)
-        filter!(x -> x ∈ parameter_names, name_map[section])
+    for names in _name_map
+        filter!(x -> x ∈ parameter_names, names)
     end
 
-    if length(keys(name_map)) == 1
-        name_map[first(keys(name_map))] = parameter_names
-    else
-        # Store unassigned variables.
-        unassigned = Set([])
+    # Store unassigned variables.
+    unassigned = Set(Symbol[])
 
-        # Check that all parameters are assigned.
-        for param in parameter_names
-            found = false
-            for (_, assigned) in name_map
-                if param in assigned
-                    found = true
-                    break
-                end
-            end
-
-            # Assign to :parameters by default, or :internals if it starts
-            # or ends with an underscore.
-            if !found
-                push!(unassigned, param)
-            end
-        end
-
-        # Assign all unassigned parameter names.
-        for param in unassigned
-            push!(name_map[:parameters], param)
+    # Check that all parameters are assigned.
+    for param in parameter_names
+        if all(param ∉ names for names in _name_map)
+            push!(unassigned, param)
         end
     end
 
-    # Make the name_map NamedTuple.
-    name_map_tupl = _dict2namedtuple(name_map)
+    # Assign all unassigned parameter names.
+    append!(_name_map[:parameters], unassigned)
 
     # Construct the AxisArray.
     arr = AxisArray(val;
@@ -87,88 +63,74 @@ function Chains(
                     chain = 1:size(val, 3))
 
     # Create the new chain.
-    chains = Chains(arr, evidence, name_map_tupl, info)
-
-    if sorted
-        return sort(chains)
-    else
-        return chains
-    end
+    return Chains(arr, evidence, _name_map, info)
 end
 
 # Retrieve a new chain with only a specific section pulled out.
-Chains(::Chains, ::Tuple{}; kwargs...) = throw(ArgumentError("no section specified"))
-Chains(c::Chains, section; kwargs...) = Chains(c, (section,); kwargs...)
-function Chains(c::Chains, section::AbstractArray; kwargs...)
-	Chains(c, ntuple(i -> section[i], length(section)); kwargs...)
-end
-function Chains(c::Chains, section::NTuple{<:Any,Symbol}; sorted::Bool=false)
-    # Make sure the section exists first.
-	section ⊆ keys(c.name_map) ||
-		throw(ArgumentError("$section is not a subset of the chain's name map"))
+Chains(c::Chains, section::Union{Symbol,String}) = Chains(c, (section,))
+function Chains(chn::Chains, sections)
+    # Make sure the sections exist first.
+    allsections = keys(chn.name_map)
+	all(x -> Symbol(x) in allsections, sections) ||
+		error("some sections are not present in the chain")
 
 	# Create the new section map.
-    name_map = NamedTuple{section}(getindex.(Ref(c.name_map), section))
+    name_map = (; (Symbol(k) => chn.name_map[Symbol(k)] for k in sections)...)
 
     # Extract wanted values.
-    value = c.value[:, mapreduce(collect, vcat, name_map), :]
+    value = chn.value[:, reduce(vcat, name_map), :]
 
     # Create the new chain.
-    chain = Chains(value, c.logevidence, name_map, c.info)
-
-    if sorted
-        return sort(chain)
-    else
-        return chain
-    end
+    return Chains(value, chn.logevidence, name_map, chn.info)
 end
 
+# Groups of parameters
+
+namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
+function namesingroup(chains::Chains, sym::Symbol)
+    # Start by looking up the symbols in the list of parameter names.
+    names_of_params = names(chains)
+    regex = Regex("^$sym\$|^$sym\\[")
+    indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
+    return names_of_params[indices]
+end
+
+function group(chains::Chains, name::Union{String,Symbol})
+    return chains[:, namesingroup(chains, name), :]
+end
 
 #################### Indexing ####################
-function _sym2index(c::Chains, v::Union{Vector{Symbol}, Vector{String}}; sorted::Bool = false)
-    v_str = string.(v)
-    idx = indexin(v_str, names(c))
-    syms = []
-    for i in eachindex(idx)
-        value = v_str[i]
-        if idx[i] == nothing
-            append!(syms,
-                collect(Iterators.filter(k -> startswith(string(k), value*"["), names(c))))
-        else
-            push!(syms, value)
-        end
-    end
-    return sorted ? sort!(syms, lt=natural) : syms
+
+Base.getindex(c::Chains, i::Integer) = c[i, :, :]
+Base.getindex(c::Chains, i::AbstractVector{<:Integer}) = c[i, :, :]
+
+Base.getindex(c::Chains, v::String) = c[:, Symbol(v), :]
+Base.getindex(c::Chains, v::AbstractVector{String}) = c[:, Symbol.(v), :]
+
+Base.getindex(c::Chains, v::Symbol) = c[:, v, :]
+Base.getindex(c::Chains, v::AbstractVector{Symbol}) = c[:, v, :]
+
+Base.getindex(chn::Chains, i, j, k) = _getindex(chn, chn.value[_toindex(i, j, k)...])
+
+_getindex(::Chains, data) = data
+function _getindex(chains::Chains, data::AxisArray{<:Any,3})
+    names = data.axes[2].val
+    namemap = namemap_intersect(chains.name_map, names)
+    return Chains(data, chains.logevidence, namemap, chains.info)
 end
 
-Base.getindex(c::Chains, i1::T) where T<:Union{AbstractUnitRange, StepRange} = c[i1, :, :]
-Base.getindex(c::Chains, i1::Integer) = c[i1:i1, :, :]
-Base.getindex(c::Chains, v::Symbol) = c[[v]]
-Base.getindex(c::Chains, v::String) = c[:, [v], :]
-Base.getindex(c::Chains, v::Vector{String}) = c[:, v, :]
+# convert strings to symbols but try to keep all dimensions for multiple parameters
+_toindex(i, j, k) = (i, string2symbol(j), k)
+_toindex(i::Integer, j, k) = (i:i, string2symbol(j), k)
+_toindex(i, j, k::Integer) = (i, string2symbol(j), k:k)
+_toindex(i::Integer, j, k::Integer) = (i:i, string2symbol(j), k:k)
 
-function Base.getindex(c::Chains, v::Vector{Symbol})
-    syms = _sym2index(c, v)
-    return c[:, syms, :]
-end
-
-function Base.getindex(c::Chains, i...)
-    # Make sure things are in array form to preserve the axes.
-    ind = [typeof(i[1]) <: Integer ? (i[1]:i[1]) : i[1],
-           typeof(i[2]) <: Union{AbstractArray, Colon} ?  i[2] : [i[2]],
-           typeof(i[3]) <: Union{AbstractArray, Colon} ?  i[3] : [i[3]]
-    ]
-
-    # Check to see if we received a symbol in i[2].
-    if ind[2] != Colon() && typeof(first(ind[2])) <: Symbol
-        ind[2] = _sym2index(c, ind[2])
-    end
-
-    newval = getindex(c.value, ind...)
-    names = newval.axes[2].val
-    new_name_map = _trim_name_map(names, c.name_map)
-    return Chains(newval, c.logevidence, new_name_map, c.info)
-end
+# return an array or a number if a single parameter is specified
+const SingleIndex = Union{Symbol,String,Integer}
+_toindex(i, j::SingleIndex, k) = (i, string2symbol(j), k)
+_toindex(i::Integer, j::SingleIndex, k) = (i, string2symbol(j), k)
+_toindex(i, j::SingleIndex, k::Integer) = (i, string2symbol(j), k)
+_toindex(i::Integer, j::SingleIndex, k::Integer) = (i, string2symbol(j), k)
 
 Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 Base.lastindex(c::Chains) = lastindex(c.value, 1)
@@ -186,15 +148,15 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 Example:
 
 ```julia
-x = get(c, :param1)
-x = get(c, [:param1, :param2])
+x = get(c, :param_1)
+x = get(c, [:param_1, :param_2])
 ```
 """
 Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)
 function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
     pairs = Dict()
     for v in vs
-        syms = _sym2index(c, [v])
+        syms = namesingroup(c, v)
         len = length(syms)
         val = ()
         if len > 1
@@ -230,30 +192,30 @@ x = get(chn, section = :parameters)
 x = get(chn, section = [:internals, :parameters])
 ```
 """
-function Base.get(c::Chains;
-        section::Union{Vector{Symbol}, Symbol},
-        flatten = false)
-    section = section isa Symbol ? [section] : section
-    not_found = Symbol[]
-    names = Set(String[])
-    for v in section
-        if v in keys(c.name_map)
-            # If the name contains a bracket,
-            # split it so get can group them correctly.
-            nms = flatten ?
-                c.name_map[v] :
-                map(n -> String(split(n, "[")[1]), c.name_map[v])
-            push!(names, nms...)
+function Base.get(
+    c::Chains;
+    section::Union{Symbol,AbstractVector{Symbol}},
+    flatten = false
+)
+    names = Set(Symbol[])
+    regex = r"[^\[]*"
+    _section = section isa Symbol ? (section,) : section
+    for v in _section
+        v in keys(c.name_map) || error("section $v does not exist")
+
+        # If the name contains a bracket,
+        # split it so get can group them correctly.
+        if flatten
+            append!(names, c.name_map[v])
         else
-            push!(not_found, v)
+            for name in c.name_map[v]
+                m = match(regex, string(name))
+                push!(names, Symbol(m.match))
+            end
         end
     end
 
-    if length(not_found) > 0
-        throw(ArgumentError("$not_found not found in chains name map."))
-    end
-
-    return get(c, Symbol.(names), flatten = flatten)
+    return get(c, collect(names); flatten = flatten)
 end
 
 """
@@ -321,31 +283,30 @@ function chains(c::Chains)
 end
 
 """
-    names(c::Chains, sections)
+    names(chains::Chains)
 
-Return the parameter names in a `Chains` object.
+Return the parameter names in the `chains`.
 """
-function Base.names(c::Chains)
-    return c.value[Axis{:var}].val
-end
+Base.names(chains::Chains) = chains.value[Axis{:var}].val
 
 """
-    names(c::Chains, sections::Union{Symbol, Vector{Symbol}})
+    names(chains::Chains, section::Symbol)
 
-Return the parameter names in a `Chains` object, given an array of sections.
+Return the parameter names of a `section` in the `chains`.
 """
-function Base.names(c::Chains, sections::Union{Symbol, Vector{Symbol}})
-    # Check that sections is an array.
-    sections = typeof(sections) <: AbstractArray ?
-        sections :
-        [sections]
+Base.names(chains::Chains, section::Symbol) = convert(Vector{Symbol}, chains.name_map[section])
 
-    nms = []
+"""
+    names(chains::Chains, sections)
 
-    for i in sections
-        push!(nms, c.name_map[i]...)
+Return the parameter names of the `sections` in the `chains`.
+"""
+function Base.names(c::Chains, sections)
+    names = Symbol[]
+    for section in sections
+        append!(names, c.name_map[section])
     end
-    return nms
+    return names
 end
 
 """
@@ -445,32 +406,13 @@ end
 
 function link(c::Chains)
   cc = copy(c.value.data)
-  for j in 1:length(c.names)
+  for j in axes(cc, 2)
     x = cc[:, j, :]
     if minimum(x) > 0.0
       cc[:, j, :] = maximum(x) < 1.0 ? logit.(x) : log.(x)
     end
   end
   cc
-end
-
-"""
-    _trim_name_map(names::Vector, name_map::NamedTuple)
-
-This is an internal function used to remove values from a name map
-and return a new name_map.
-"""
-function _trim_name_map(names::Vector, name_map::NamedTuple)
-    n = _namedtuple2dict(name_map)
-    for (key, values) in n
-        intersection = values ∩ names
-        if length(intersection) > 0
-            n[key] = intersection
-        else
-            delete!(n, key)
-        end
-    end
-    return _dict2namedtuple(n)
 end
 
 ### Chains specific functions ###
@@ -490,15 +432,15 @@ function Base.sort(c::Chains)
         new_v[:, i, :] = v[:, sorted[i][1], :]
     end
 
-    # Sort the name map too:
-    name_dict = Dict()
-    for (name, values) in pairs(c.name_map)
-        name_dict[name] = sort(values, by=x -> string(x), lt=natural)
-    end
-    new_name_map = _dict2namedtuple(name_dict)
-
     aa = AxisArray(new_v, new_axes...)
-    return Chains(aa, c.logevidence, new_name_map, c.info)
+
+    # Sort the name map too:
+    namemap = deepcopy(c.name_map)
+    for names in namemap
+        sort!(names, by=string, lt=natural)
+    end
+
+    return Chains(aa, c.logevidence, namemap, c.info)
 end
 
 """
@@ -516,46 +458,40 @@ function setinfo(c::Chains, n::NamedTuple)
     return Chains(c.value, c.logevidence, c.name_map, n)
 end
 
-set_section(c::Chains, nt::NamedTuple) = set_section(c, _namedtuple2dict(nt))
-
 """
-    set_section(c::Chains, nt::Dict)
+    set_section(chains::Chains, namemap)
 
-Changes a chains name mapping to a provided dictionary. This also supports a NamedTuple.
-Any parameters in the chain that are unassigned will be placed into
-the :parameters section.
+Create a new `Chains` object from `chains` with the provided `namemap` mapping of parameter
+names.
+
+Both chains share the same underlying data. Any parameters in the chain that are unassigned
+will be placed into the `:parameters` section.
 """
-function set_section(c::Chains, d::Dict)
-    # Add :parameters if it's not there.
-    if !(:parameters in keys(d))
-        d[:parameters] = []
-    end
+function set_section(chains::Chains, namemap)
+    # Initialize the name map.
+    _namemap = initnamemap(namemap)
 
     # Make sure all the names are in the new name map.
-    nms = Set([])
-    for values in values(d)
-        for val in values
-            push!(nms, val)
+    newnames = Set(Symbol[])
+    names_of_params = names(chains)
+    for names in _namemap
+        filter!(x -> x ∈ names_of_params, names)
+        for name in names
+            push!(newnames, name)
         end
     end
-    missing_names = setdiff(names(c), nms)
+    missingnames = setdiff(names_of_params, newnames)
 
-    # Assign everything to :parameters if anything's missing.
-    if length(missing_names) > 0
+    # Assign everything that is missing to :parameters.
+    if !isempty(missingnames)
         @warn "Section mapping does not contain all parameter names, " *
-            "$missing_names assigned to :parameters."
-        push!(d[:parameters], missing_names...)
+            "$missingnames assigned to :parameters."
+        for name in missingnames
+            push!(_namemap.parameters, name)
+        end
     end
 
-    nt = _dict2namedtuple(d)
-    return Chains(c.value, c.logevidence, nt, c.info)
-end
-
-function _use_showall(c::Chains, section::Symbol)
-    if section == :parameters && !in(:parameters, keys(c.name_map))
-        return true
-    end
-    return false
+    return Chains(chains.value, chains.logevidence, _namemap, chains.info)
 end
 
 function _clean_sections(c::Chains, sections::Union{Vector{Symbol}, Symbol})
@@ -644,25 +580,27 @@ function pool_chain(c::Chains)
     return Chains(pool_data, names(c), c.name_map; info=c.info)
 end
 
-function set_names(c::Chains, d::Dict; sorted::Bool=true)
-    # Set new parameter names.
-    params = names(c)
-    new_params = replace(params, d...)
+# replace parameter names
+replacenames(chains::Chains, dict::AbstractDict) = replacenames(chains, pairs(dict)...)
+function replacenames(chains::Chains, old_new::Pair...)
+    isempty(old_new) && error("you have to specify at least one replacement")
 
-    # Iterate through each pair in the name map to
-    # create a new one.
-    new_map = Dict()
-    for (section, parameters) in pairs(c.name_map)
-        new_map[section] = replace(parameters, d...)
+    # Set new parameter names and a new name map.
+    names_of_params = copy(names(chains))
+    namemap = deepcopy(chains.name_map)
+    for (old, new) in old_new
+        symold_symnew = Symbol(old) => Symbol(new)
+
+        replace!(names_of_params, symold_symnew)
+        for names in namemap
+            replace!(names, symold_symnew)
+        end
     end
 
-    # Return a new chains object.
-    return Chains(
-        c.value.data,
-        new_params,
-        new_map;
-        info=c.info,
-        evidence=c.logevidence,
-        sorted=sorted,
+    value = AxisArray(
+        chains.value.data;
+        iter = range(chains), var = names_of_params, chain = 1:size(chains, 3)
     )
+
+    return Chains(value, chains.logevidence, namemap, chains.info)
 end

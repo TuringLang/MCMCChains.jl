@@ -32,12 +32,9 @@ function heideldiag(chn::Chains;
                     etype = :imse,
                     sections::Vector{Symbol}=[:parameters],
                     showall=false,
-                    sorted=true,
                     args...
                    )
-    c = showall ?
-       sorted ? sort(chn) : chn :
-       Chains(chn, _clean_sections(chn, sections); sorted=sorted)
+    c = showall ? chn : Chains(chn, _clean_sections(chn, sections))
 
     # Preallocate.
     _, p, m = size(c.value)
@@ -63,12 +60,12 @@ function heideldiag(chn::Chains;
     names_of_params = names(chn)
 
     # Compute data frames.
-    colnames = (Symbol("Burn-in"), :Stationarity, Symbol("p-value"), :Mean, :Halfwidth,
-        :Test)
     vector_of_df = [
         ChainDataFrame(
             "Heidelberger and Welch Diagnostic - Chain $i",
-            (parameters = names_of_params, zip(colnames, columns)...)
+            (parameters = names_of_params, burnin = columns[1], stationarity = columns[2],
+             pvalue = columns[3], mean = columns[4], halfwidth = columns[5],
+             test = columns[6])
         )
         for (i, columns) in enumerate(data)
     ]

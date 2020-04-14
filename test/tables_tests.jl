@@ -21,10 +21,10 @@ using DataFrames
             @test Tables.getcolumn(chn, :chain) ==
                   [fill(1, 1000); fill(2, 1000); fill(3, 1000); fill(4, 1000)]
             @test Tables.getcolumn(chn, :a) == [
-                vec(chn[:, :a, 1].value)
-                vec(chn[:, :a, 2].value)
-                vec(chn[:, :a, 3].value)
-                vec(chn[:, :a, 4].value)
+                vec(chn[:, :a, 1])
+                vec(chn[:, :a, 2])
+                vec(chn[:, :a, 3])
+                vec(chn[:, :a, 4])
             ]
             @test_throws Exception Tables.getcolumn(chn, :j)
             @test Tables.getcolumn(chn, 1) == Tables.getcolumn(chn, :iteration)
