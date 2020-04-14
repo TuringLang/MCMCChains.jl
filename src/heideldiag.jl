@@ -26,30 +26,30 @@ function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
   [i + start - 2, converged, pvalue, ybar, halfwidth, passed]
 end
 
-function heideldiag(chn::Chains;
-                    alpha = 0.05,
-                    eps = 0.1,
-                    etype = :imse,
-                    sections::Vector{Symbol}=[:parameters],
-                    showall=false,
-                    args...
-                   )
-    c = showall ? chn : Chains(chn, _clean_sections(chn, sections))
+function heideldiag(
+    chains::Chains;
+    alpha = 0.05,
+    eps = 0.1,
+    etype = :imse,
+    sections = :parameters,
+    kwargs...
+)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Preallocate.
-    _, p, m = size(c.value)
+    _, p, m = size(_chains.value)
     vals = [Array{Float64}(undef, p, 6) for i in 1:m]
-
 
     # Perform tests.
     for j in 1:p, k in 1:m
         vals[k][j, :] = heideldiag(
-                            collect(skipmissing(c.value[:, j, k])),
+                            collect(skipmissing(_chains.value[:, j, k])),
                             alpha=alpha,
                             eps=eps,
                             etype=etype,
-                            start=first(c);
-                            args...
+                            start=first(_chains);
+                            kwargs...
                            )
     end
 
@@ -57,7 +57,7 @@ function heideldiag(chn::Chains;
     data = [[vals[k][:, i] for i in 1:6] for k in 1:m]
 
     # Obtain names of parameters.
-    names_of_params = names(chn)
+    names_of_params = names(_chains)
 
     # Compute data frames.
     vector_of_df = [

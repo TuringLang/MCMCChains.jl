@@ -20,14 +20,14 @@ end
     chn = Chains(randn(1000, 2, 2))
 
     # Call describe without missing values.
-    describe(devnull, chn; showall=true)
+    describe(devnull, chn; sections = nothing)
     s1, s2 = summarystats(chn), quantile(chn)
 
     # Add missing values.
     chn_m = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
 
     # Call describe with missing values.
-    describe(devnull, chn_m; showall=true)
+    describe(devnull, chn_m; sections = nothing)
     m1, m2 = summarystats(chn_m), quantile(chn_m)
 
     @test testdiff(s1, m1)
@@ -58,5 +58,5 @@ end
         @test testdiff(rf_1, rf_2)
     end
 
-    @test_throws AssertionError discretediag(chn_m)
+    @test_throws MethodError discretediag(chn_m)
 end

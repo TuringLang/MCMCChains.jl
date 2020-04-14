@@ -368,16 +368,17 @@ function discretediag_sub(c::Chains, frac::Real, method::Symbol,
 
 end
 
-function discretediag(chn::Chains; frac::Real=0.3,
-                      method::Symbol=:weiss,
-                      sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                      nsim::Int=1000,
-                      showall=false)
-    c = showall ? chn : Chains(chn, _clean_sections(chn, sections))
+function discretediag(
+    chains::Chains{<:Real};
+    sections = :parameters,
+    frac::Real = 0.3,
+    method::Symbol = :weiss,
+    nsim::Int = 1000
+)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
-    @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
-
-    num_iters, num_vars, num_chains = size(c.value)
+    num_iters, num_vars, num_chains = size(_chains.value)
 
     valid_methods = [:hangartner, :weiss, :DARBOOT,
         :MCBOOT, :billingsley, :billingsleyBOOT]
@@ -391,10 +392,10 @@ function discretediag(chn::Chains; frac::Real=0.3,
         throw(ArgumentError("frac must be in (0,1)"))
     end
 
-    V, vals = discretediag_sub(c, frac, method, nsim,
-    size(c.value,1), size(c.value,1))[1:2]
+    V, vals = discretediag_sub(_chains, frac, method, nsim, size(_chains.value, 1),
+                               size(_chains.value, 1))[1:2]
 
-    num_chains = length(chains(c))
+    num_chains = size(_chains, 3)
 
     # discretediag returns an array with dimension (nchains + 1) × 3.
     # the line below separates out the returned value into chain-specific
@@ -404,7 +405,7 @@ function discretediag(chn::Chains; frac::Real=0.3,
 
     colnames = (:parameters, :stat, :df, :p_value)
 
-    pnames = Symbol.(names(c))
+    pnames = names(_chains)
     columns = [vcat([pnames], [k[:,i] for i in 1:size(k,2)]) for k in sep_vals]
     summary_names = ["Chisq Diagnostic - $(k==1 ? "Between Chains" : "Chain $k")"  for k in 1:(num_chains+1)]
     dfs = [NamedTuple{colnames}(tuple(columns[k]...)) for k in 1:(num_chains+1)]

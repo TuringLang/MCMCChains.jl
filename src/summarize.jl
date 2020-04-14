@@ -158,26 +158,21 @@ Summarize method for a Chains object.
 ```
 
 """
-function summarize(chains::Chains, funs...;
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        func_names::AbstractVector{Symbol} = Symbol[],
-        append_chains::Bool=true,
-        showall::Bool=false,
-        name::String="",
-        additional_df=nothing,
+function summarize(
+    chains::Chains, funs...;
+    sections = :parameters,
+    func_names::AbstractVector{Symbol} = Symbol[],
+    append_chains::Bool = true,
+    name::String = "",
+    additional_df = nothing
 )
-    # Check that we actually have :parameters.
-    showall = showall || !in(:parameters, keys(chains.name_map))
-    
-    # If we weren't given any functions, fall back on summary stats.
-    if length(funs) == 0
-        return summarystats(chains,
-            sections=sections,
-            showall=showall)
+    # If we weren't given any functions, fall back to summary stats.
+    if isempty(funs)
+        return summarystats(chains; sections = sections)
     end
-    
+
     # Generate a chain to work on.
-    chn = Chains(chains, sections)
+    chn = Chains(chains, _clean_sections(chains, sections))
 
     # Obtain names of parameters.
     names_of_params = names(chn)

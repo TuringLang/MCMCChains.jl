@@ -80,19 +80,13 @@ end
 
 function gelmandiag(
     chains::Chains{<:Real};
-    sections::Union{Symbol, Vector{Symbol}} = :parameters,
-    showall = false,
+    sections = :parameters,
     transform = false,
     alpha = 0.05,
-    digits = 4,
     kwargs...
 )
     # Subset the chain.
-    if showall
-        _chains = chains
-    else
-        _chains = Chains(chains, _clean_sections(chains, sections))
-    end
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
@@ -102,24 +96,18 @@ function gelmandiag(
     colnames = (:psrf, Symbol(100 * (1 - alpha / 2), :%))
     nt = (; parameters = names(_chains), zip(colnames, results)...)
 
-    return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt; digits = digits)
+    return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt)
 end
 
 function gelmandiag_multivariate(
     chains::Chains{<:Real};
-    sections::Union{Symbol, Vector{Symbol}} = :parameters,
-    showall = false,
+    sections = :parameters,
     transform = true,
     alpha = 0.05,
-    digits = 4,
     kwargs...
 )
     # Subset the chain.
-    if showall
-        _chains = chains
-    else
-        _chains = Chains(chains, _clean_sections(chains, sections))
-    end
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
@@ -129,6 +117,6 @@ function gelmandiag_multivariate(
     colnames = (:psrf, Symbol(100 * (1 - alpha / 2), :%))
     nt = (; parameters = names(_chains), zip(colnames, (results.psrf, results.psrfci))...)
 
-    return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt; digits = digits),
+    return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt),
         results.multivariate
 end

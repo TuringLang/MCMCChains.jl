@@ -52,25 +52,26 @@ function rafterydiag(
 end
 
 function rafterydiag(
-                     chn::Chains;
-                     q = 0.025,
-                     r = 0.005,
-                     s = 0.95,
-                     eps = 0.001,
-                     showall=false,
-                     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
-                    )
-    c = showall ? chn : Chains(chn, _clean_sections(chn, sections))
-    _, p, m = size(c.value)
+    chains::Chains;
+    sections = :parameters,
+    q = 0.025,
+    r = 0.005,
+    s = 0.95,
+    eps = 0.001
+)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
+
+    _, p, m = size(_chains.value)
     vals = [Array{Float64}(undef, p, 5) for i in 1:m]
     for j in 1:p, k in 1:m
         vals[k][j, :] = rafterydiag(
-            collect(skipmissing(c.value[:, j, k])),
+            collect(skipmissing(_chains.value[:, j, k])),
             q=q,
             r=r,
             s=s,
             eps=eps,
-            range=range(c)
+            range=range(_chains)
         )
     end
 
@@ -78,7 +79,7 @@ function rafterydiag(
     data = [[vals[k][:, i] for i in 1:5] for k in 1:m]
 
     # Obtain names of parameters.
-    names_of_params = names(chn)
+    names_of_params = names(_chains)
 
     # Compute data frames.
     vector_of_df = [

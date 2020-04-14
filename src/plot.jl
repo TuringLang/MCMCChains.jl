@@ -25,22 +25,24 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
 @recipe f(c::Chains, s::Symbol) = c, [s]
 
-@recipe function f(c::Chains, i::Int;
+@recipe function f(
+    chains::Chains, i::Int;
     colordim = :chain,
     barbounds = (-Inf, Inf),
     maxlag = nothing,
-    section = :parameters,
-    append_chains = false)
+    sections = :parameters,
+    append_chains = false
+)
     st = get(plotattributes, :seriestype, :traceplot)
-    c = append_chains || st == :pooleddensity ? pool_chain(c) : c
+    c = append_chains || st == :pooleddensity ? pool_chain(chains) : chains
 
     if colordim == :parameter
-        title --> "Chain $(chains(c)[i])"
+        title --> "Chain $(MCMCChains.chains(c)[i])"
         label --> string.(names(c))
         val = c.value[:, :, i]
     elseif colordim == :chain
         title --> string(names(c)[i])
-        label --> map(k -> "Chain $(chains(c)[k])", 1:size(c, 3))
+        label --> map(x -> "Chain $x", MCMCChains.chains(c))
         val = c.value[:, i, :]
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
@@ -58,8 +60,8 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     end
 
     if st == :autocorplot
-        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)        
-        ac = autocor(c, lags=lags; showall=true)
+        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
+        ac = autocor(c; sections = nothing, lags = lags)
         ac_mat = convert(Array, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
@@ -106,30 +108,31 @@ end
 end
 
 @recipe function f(
-    chn::Chains,
+    chains::Chains,
     parameters::AbstractVector{Symbol};
-    colordim = :chain,
-    section = :parameters,
-    append_chains = false
+    colordim = :chain
 )
-    c = Chains(chn, section)
-    c = append_chains ? pool_chain(c) : c
-    colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
-    ret = indexin(parameters, Symbol.(keys(c)))
-    any(y -> y == nothing, ret) && error("Parameter not found")
-    c, Int.(ret)
+    colordim != :chain &&
+        error("Symbol names are interpreted as parameter names, only compatible with ",
+              "`colordim = :chain`")
+
+    ret = indexin(parameters, names(chains))
+    any(y === nothing for y in ret) && error("Parameter not found")
+
+    return chains, Int.(ret)
 end
 
-@recipe function f(chn::Chains,
-                   parameters::AbstractVector{<:Integer} = Int[];
-                   width = 500,
-                   height = 250,
-                   colordim = :chain,
-                   section = :parameters,
-                   append_chains = false,
-                  )
-    c = isempty(parameters) ? Chains(chn, section) : chn
-    c = append_chains ? pool_chain(c) : c
+@recipe function f(
+    chains::Chains,
+    parameters::AbstractVector{<:Integer} = Int[];
+    sections = :parameters,
+    width = 500,
+    height = 250,
+    colordim = :chain,
+    append_chains = false
+)
+    _chains = isempty(parameters) ? Chains(chains, _clean_sections(chains, sections)) : chains
+    c = append_chains ? pool_chain(_chains) : _chains
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa Symbol ? (ptypes,) : ptypes
     @assert all(ptype -> ptype ∈ supportedplots, ptypes)

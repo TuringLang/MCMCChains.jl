@@ -71,10 +71,10 @@ Chains(c::Chains, section::Union{Symbol,String}) = Chains(c, (section,))
 function Chains(chn::Chains, sections)
     # Make sure the sections exist first.
     allsections = keys(chn.name_map)
-	all(x -> Symbol(x) in allsections, sections) ||
-		error("some sections are not present in the chain")
+	  all(x -> Symbol(x) in allsections, sections) ||
+		    error("some sections are not present in the chain")
 
-	# Create the new section map.
+	  # Create the new section map.
     name_map = (; (Symbol(k) => chn.name_map[Symbol(k)] for k in sections)...)
 
     # Extract wanted values.
@@ -83,6 +83,7 @@ function Chains(chn::Chains, sections)
     # Create the new chain.
     return Chains(value, chn.logevidence, name_map, chn.info)
 end
+Chains(chain::Chains, ::Nothing) = chain
 
 # Groups of parameters
 
@@ -499,6 +500,8 @@ function _clean_sections(c::Chains, sections::Union{Vector{Symbol}, Symbol})
     ks = collect(keys(c.name_map))
     return ks ∩ sections
 end
+_clean_sections(::Chains, ::Nothing) = nothing
+
 
 #################### Concatenation ####################
 

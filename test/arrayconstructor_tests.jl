@@ -53,8 +53,7 @@ using MCMCChains, Test
         @test size(Array(chns, [:parameters])) == (d*c, main_params)
         @test size(Array(chns, [:parameters])) == size(Array(chns))
         @test size(Array(chns, [:parameters, :internals])) == (d*c, total_params)
-        @test size(Array(chns, [:parameters, :internals])) ==
-            size(Array(chns, showall=true))
+        @test size(Array(chns, [:parameters, :internals])) == size(Array(chns, nothing))
         @test size(Array(chns, [:internals])) == (d*c, internal_params)
         @test size(Array(chns, append_chains=true)) == (d*c, main_params)
         @test size(Array(chns, append_chains=false)) == (5,)
