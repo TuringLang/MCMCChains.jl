@@ -70,11 +70,10 @@ end
 Chains(c::Chains, section::Union{Symbol,String}) = Chains(c, (section,))
 function Chains(chn::Chains, sections)
     # Make sure the sections exist first.
-    allsections = keys(chn.name_map)
-	all(x -> Symbol(x) in allsections, sections) ||
-		error("some sections are not present in the chain")
+	  all(haskey(chn.name_map, Symbol(x)) for x in sections) ||
+		    error("some sections are not present in the chain")
 
-	# Create the new section map.
+	  # Create the new section map.
     name_map = (; (Symbol(k) => chn.name_map[Symbol(k)] for k in sections)...)
 
     # Extract wanted values.
@@ -83,6 +82,7 @@ function Chains(chn::Chains, sections)
     # Create the new chain.
     return Chains(value, chn.logevidence, name_map, chn.info)
 end
+Chains(chain::Chains, ::Nothing) = chain
 
 # Groups of parameters
 
@@ -310,19 +310,14 @@ function Base.names(c::Chains, sections)
 end
 
 """
-    get_sections(c::Chains, sections::Vector = [])
+    get_sections(chains[, sections])
 
 Returns multiple `Chains` objects, each containing only a single section.
 """
-function get_sections(c::Chains, sections::Vector = [])
-    sections = length(sections) == 0 ? collect(keys(c.name_map)) : sections
-    return [Chains(c, section) for section in sections]
+function get_sections(chains::Chains, sections = keys(chains.name_map))
+    return [Chains(chains, section) for section in sections]
 end
-
-# Return a new chain for each section.
-function get_sections(c::Chains, section::Union{Symbol, String})
-    return get_sections(c, [section])
-end
+get_sections(chains::Chains, section::Union{Symbol, String}) = Chains(chains, section)
 
 """
     sections(c::Chains)
@@ -494,11 +489,18 @@ function set_section(chains::Chains, namemap)
     return Chains(chains.value, chains.logevidence, _namemap, chains.info)
 end
 
-function _clean_sections(c::Chains, sections::Union{Vector{Symbol}, Symbol})
-    sections = sections isa AbstractArray ? sections : [sections]
-    ks = collect(keys(c.name_map))
-    return ks ∩ sections
+_default_sections(c::Chains) = haskey(c.name_map, :parameters) ? :parameters : nothing
+
+function _clean_sections(chains::Chains, sections)
+    return filter(sections) do section
+        haskey(chains.name_map, Symbol(section))
+    end
 end
+function _clean_sections(chains::Chains, section::Union{String,Symbol})
+    return haskey(chains.name_map, Symbol(section)) ? section : ()
+end
+_clean_sections(::Chains, ::Nothing) = nothing
+
 
 #################### Concatenation ####################
 

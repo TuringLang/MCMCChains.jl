@@ -17,27 +17,31 @@ function gewekediag(x::Vector{<:Real}; first::Real=0.1, last::Real=0.5,
   [z, 1 - erf(abs(z) / sqrt(2))]
 end
 
-function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
-                    etype=:imse,
-                    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                    showall=false,
-                    args...)
-    c = showall ? chn : Chains(chn, _clean_sections(chn, sections))
+function gewekediag(
+    chains::Chains;
+    sections = _default_sections(chains),
+    first::Real = 0.1,
+    last::Real = 0.5,
+    etype = :imse,
+    kwargs...
+)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
-    _, p, m = size(c.value)
+    _, p, m = size(_chains.value)
     diags = [Array{Float64}(undef, p, 2) for _ in 1:m]
     for j in 1:p, k in 1:m
         diags[k][j,:] = gewekediag(
-                            collect(skipmissing(c.value[:, j, k])),
+                            collect(skipmissing(_chains.value[:, j, k])),
                             first=first,
                             last=last,
                             etype=etype;
-                            args...
+                            kwargs...
                         )
     end
 
     # Obtain names of parameters.
-    names_of_params = names(chn)
+    names_of_params = names(_chains)
 
     # Compute data frames.
     vector_of_df = [

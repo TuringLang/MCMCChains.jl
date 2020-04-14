@@ -121,63 +121,32 @@ function Base.convert(::Type{Array}, cs::Array{C,1}) where C<:ChainDataFrame
 end
 
 """
+    summarize(chains, funs...[; sections, func_names = [], etype = :bm])
 
-# Summarize a Chains object formatted as a ChainsDataFrame
+Summarize `chains` in a `ChainsDataFrame`.
 
-Summarize method for a Chains object.
+# Examples
 
-### Method
-```julia
-  summarize(
-    chn::Chains,
-    funs...;
-    sections::Vector{Symbol}=[:parameters],
-    func_names=[],
-    etype=:bm
-  )
-```
-
-### Required arguments
-```julia
-* `chn` : Chains object to convert to a ChainsDataFrame-formatted summary
-```
-
-### Optional arguments
-```julia
-* `funs...` : zero or more vector functions, e.g. mean, std, etc.
-* `sections = [:parameters]` : Sections from the Chains object to be included
-* `etype = :bm` : Default for df_mcse
-```
-
-### Examples
-```julia
 * `summarize(chns)` : Complete chain summary
 * `summarize(chns[[:parm1, :parm2]])` : Chain summary of selected parameters
-* `summarize(chns, sections=[:parameters])`  : Chain summary of :parameters section
-* `summarize(chns, sections=[:parameters, :internals])` : Chain summary for multiple sections
-```
-
+* `summarize(chns; sections=[:parameters])`  : Chain summary of :parameters section
+* `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
-function summarize(chains::Chains, funs...;
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        func_names::AbstractVector{Symbol} = Symbol[],
-        append_chains::Bool=true,
-        showall::Bool=false,
-        name::String="",
-        additional_df=nothing,
+function summarize(
+    chains::Chains, funs...;
+    sections = _default_sections(chains),
+    func_names::AbstractVector{Symbol} = Symbol[],
+    append_chains::Bool = true,
+    name::String = "",
+    additional_df = nothing
 )
-    # Check that we actually have :parameters.
-    showall = showall || !in(:parameters, keys(chains.name_map))
-    
-    # If we weren't given any functions, fall back on summary stats.
-    if length(funs) == 0
-        return summarystats(chains,
-            sections=sections,
-            showall=showall)
+    # If we weren't given any functions, fall back to summary stats.
+    if isempty(funs)
+        return summarystats(chains; sections = sections)
     end
-    
+
     # Generate a chain to work on.
-    chn = Chains(chains, sections)
+    chn = Chains(chains, _clean_sections(chains, sections))
 
     # Obtain names of parameters.
     names_of_params = names(chn)

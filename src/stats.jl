@@ -1,64 +1,63 @@
 #################### Posterior Statistics ####################
 """
-    autocor(chn;
-        lags=[1, 5, 10, 50],
-        demean=true,
-        relative=true
-        showall=false,
-        append_chains=true,
-        sections=[:parameters])
+    autocor(chains[; lags = [1, 5, 10, 50], demean = true, append_chains = true, kwargs...])
 
-Compute the autocorrelation of each parameter for the chain. Setting `append_chains=false`
-will return a vector of dataframes containing the autocorrelations for each chain.
+Compute the autocorrelation of each parameter for the chain.
+
+Setting `append_chains=false` will return a vector of dataframes containing the
+autocorrelations for each chain.
 """
-function autocor(chn::Chains;
-        lags::AbstractVector{<:Integer}=[1, 5, 10, 50],
-        demean::Bool=true,
-        relative::Bool=true,
-        showall=false,
-        append_chains = false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        kwargs...)
+function autocor(
+    chains::Chains;
+    lags::AbstractVector{<:Integer} = [1, 5, 10, 50],
+    demean::Bool = true,
+    append_chains = false,
+    kwargs...
+)
     funs = Function[]
     func_names = @. Symbol("lag ", lags)
     for i in lags
         push!(funs, x -> autocor(x, [i], demean=demean)[1])
     end
-    return summarize(chn, funs...;
+
+    return summarize(
+        chains, funs...;
         func_names = func_names,
-        showall = showall,
-        sections = sections,
         append_chains = append_chains,
-        name = "Autocorrelation")
+        name = "Autocorrelation",
+        kwargs...
+    )
 end
 
 """
-    cor(chn; showall=false, append_chains=true, sections=[:parameters])
+    cor(chains[; sections, append_chains = true, kwargs...])
 
-Compute the Pearson correlation matrix for the chain. Setting `append_chains=false` will
-return a vector of dataframes containing a correlation matrix for each chain.
+Compute the Pearson correlation matrix for the chain.
+
+Setting `append_chains=false` will return a vector of dataframes containing a correlation
+matrix for each chain.
 """
-function cor(chain::Chains;
-        showall=false,
-        append_chains=true,
-        sections::Union{Symbol, Vector{Symbol}}=:parameters,
-        kwargs...
+function cor(
+    chains::Chains;
+    sections = _default_sections(chains),
+    append_chains = true,
+    kwargs...
 )
-    # Obtain interesting subset of the chain.
-    chn = showall ? chain : Chains(chain, sections)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Obstain names of parameters.
-    names_of_params = Symbol.(names(chn))
+    names_of_params = names(_chains)
 
     if append_chains
-        df = chaindataframe_cor("Correlation", names_of_params, to_matrix(chn))
+        df = chaindataframe_cor("Correlation", names_of_params, to_matrix(_chains))
         return df
     else
         vector_of_df = [
             chaindataframe_cor(
                 "Correlation - Chain $i", names_of_params, data
             )
-            for (i, data) in enumerate(to_vector_of_matrices(chn))
+            for (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_df
     end
@@ -77,35 +76,34 @@ function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwarg
 end
 
 """
-    changerate(chn;
-        append_chains=true,
-        showall=false,
-        sections=[:parameters])
+    changerate(chains[; sections, append_chains = true, kwargs...])
 
-Computes the change rate for the chain. Setting `append_chains=false` will
-return a vector of dataframes containing the change rates for each chain.
+Compute the change rate for the chain.
+
+Setting `append_chains=false` will return a vector of dataframes containing the change
+rates for each chain.
 """
-function changerate(chains::Chains{<:Real};
-    append_chains=true,
-    showall=false,
-    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
+function changerate(
+    chains::Chains{<:Real};
+    sections = _default_sections(chains),
+    append_chains = true,
     kwargs...
 )
-    # Obtain interesting subset of the chains.
-    chn = showall ? chains : Chains(chains, sections)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Obstain names of parameters.
-    names_of_params = Symbol.(names(chn))
+    names_of_params = names(_chains)
 
     if append_chains
-        df = chaindataframe_changerate("Change Rate", names_of_params, chn.value.data)
+        df = chaindataframe_changerate("Change Rate", names_of_params, _chains.value.data)
         return df
     else
         vector_of_df = [
             chaindataframe_changerate(
                 "Change Rate - Chain $i", names_of_params, data
             )
-            for (i, data) in enumerate(to_vector_of_matrices(chn))
+            for (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_df
     end
@@ -153,33 +151,22 @@ end
 describe(c::Chains; args...) = describe(stdout, c; args...)
 
 """
-    describe(io::IO,
-        c::Chains;
-        q = [0.025, 0.25, 0.5, 0.75, 0.975],
-        etype=:bm,
-        showall=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        args...)
+    describe(io, chains[;
+             q = [0.025, 0.25, 0.5, 0.75, 0.975],
+             etype = :bm,
+             kwargs...])
 
-Prints the summary statistics and quantiles for the chain.
+Print the summary statistics and quantiles for the chain.
 """
-function describe(io::IO,
-                  c::Chains;
-                  q = [0.025, 0.25, 0.5, 0.75, 0.975],
-                  etype=:bm,
-                  showall::Bool=false,
-                  sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                  args...
-                 )
-    dfs = vcat(summarystats(c,
-                showall=showall,
-                sections=sections,
-                etype=etype,
-                args...),
-           quantile(c,
-                showall=showall,
-                sections=sections,
-                q=q))
+function describe(
+    io::IO,
+    chains::Chains;
+    q = [0.025, 0.25, 0.5, 0.75, 0.975],
+    etype = :bm,
+    kwargs...
+)
+    dfs = vcat(summarystats(chains; etype = etype, kwargs...),
+               quantile(chains; q = q, kwargs...))
     return dfs
 end
 
@@ -203,21 +190,18 @@ function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
 end
 
 """
-    quantile(chn;
-        q=[0.025, 0.25, 0.5, 0.75, 0.975],
-        append_chains=true,
-        showall=false,
-        sections=[:parameters])
+    quantile(chains[; q = [0.025, 0.25, 0.5, 0.75, 0.975], append_chains = true, kwargs...])
 
-Computes the quantiles for each parameter in the chain. Setting `append_chains=false` will
-return a vector of dataframes containing the quantiles for each chain.
+Compute the quantiles for each parameter in the chain.
+
+Setting `append_chains=false` will return a vector of dataframes containing the quantiles
+for each chain.
 """
 function quantile(
-    chn::Chains;
-    q::Vector=[0.025, 0.25, 0.5, 0.75, 0.975],
-    append_chains=true,
-    showall=false,
-    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
+    chains::Chains;
+    q::AbstractVector = [0.025, 0.25, 0.5, 0.75, 0.975],
+    append_chains = true,
+    kwargs...
 )
     # compute quantiles
     funs = Function[]
@@ -226,34 +210,35 @@ function quantile(
         push!(funs, x -> quantile(cskip(x), i))
     end
 
-    return summarize(chn, funs...;
-        func_names=func_names,
-        showall=showall,
-        sections=sections,
-        name="Quantiles",
-        append_chains=append_chains
+    return summarize(
+        chains, funs...;
+        func_names = func_names,
+        append_chains = append_chains,
+        name = "Quantiles",
+        kwargs...
     )
 end
 
 """
-	ess(chn::Chains;
-		showall=false,
-		sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-		maxlag = 250)
+	  ess(chn::Chains[;	sections, kwargs...])
 
-Compute a chain's number of effective samples. More information can be found in the Gelman
-et al. (2014) book "Bayesian Data Analysis", or in
-[this article](https://arxiv.org/abs/1903.08008).
+Compute the effective sample size (ESS) of a chain.
+
+More information can be found in the Gelman et al. (2014) book "Bayesian Data Analysis", or
+in [this article](https://arxiv.org/abs/1903.08008).
 """
 function ess(
-    chn::Chains;
-    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-    showall=false,
+    chains::Chains;
+    sections = _default_sections(chains),
     kwargs...
 )
-    _chn = showall ? chn : Chains(chn, sections)
-    nt = merge((parameters = names(_chn),), ess(_chn.value.data; kwargs...))
-	return ChainDataFrame("ESS", nt; digits=digits)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
+
+    # Compute the ESS.
+    nt = merge((parameters = names(_chains),), ess(_chains.value.data; kwargs...))
+
+	  return ChainDataFrame("ESS", nt)
 end
 
 function ess(
@@ -350,7 +335,7 @@ function ess(
 
         ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
     end
-    
+
     return (ess = ess, rhat = Rhat)
 end
 
@@ -363,74 +348,70 @@ function _autocorrelation(x::AbstractVector, k::Integer, v = var(x), kwargs...)
 end
 
 """
-    summarystats(chn;
-        append_chains=true,
-        showall=false,
-        sections=[:parameters],
-        args...)
+    summarystats(chains[;
+                 sections, append_chains = true, maxlag = 250, etype = :bm, kwargs...])
 
-Computes the mean, standard deviation, naive standard error, Monte Carlo standard error,
-and effective sample size for each parameter in the chain. Setting `append_chains=false`
-will return a vector of dataframes containing the summary statistics for each chain.
-`args...` is passed to the `msce` function.
+Compute the mean, standard deviation, naive standard error, Monte Carlo standard error,
+and effective sample size for each parameter in the chain.
+
+Setting `append_chains=false` will return a vector of dataframes containing the summary
+statistics for each chain.
+
+The remaining keyword arguments are passed to the `msce` function.
 """
-function summarystats(chn::Chains;
-        append_chains::Bool=true,
-        showall::Bool=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        etype=:bm,
-        args...
-    )
-
+function summarystats(
+    chains::Chains;
+    sections = _default_sections(chains),
+    append_chains::Bool = true,
+    maxlag = 250,
+    etype = :bm,
+    kwargs...
+)
     # Make some functions.
     df_mcse(x) = length(x) < 200 ?
         missing :
-        mcse(cskip(x), etype, args...)
+        mcse(cskip(x), etype; kwargs...)
 
     # Store everything.
     funs = [mean∘cskip, std∘cskip, sem∘cskip, df_mcse]
     func_names = [:mean, :std, :naive_se, :mcse]
 
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
+
     # Caluclate ESS separately.
-    ess_df = ess(chn, sections=sections, showall=showall)
+    ess_df = ess(_chains; sections = nothing, maxlag = maxlag)
 
     # Summarize.
-    summary_df = summarize(chn, funs...;
-        func_names=func_names,
-        showall=showall,
-        sections=sections,
-        name="Summary Statistics",
+    summary_df = summarize(
+        _chains, funs...;
+        func_names = func_names,
+        append_chains = append_chains,
         additional_df = ess_df,
-        append_chains=append_chains)
+        name = "Summary Statistics",
+        sections = nothing
+    )
 
     return summary_df
 end
 
 """
-    mean(chn::Chains[, params];
-            append_chains::Bool=true,
-            showall::Bool=false,
-            sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-            args...)
+    mean(chains[, params; kwargs...])
 
-Calculates the mean of a `Chains` object, or a specific parameter.
+Calculate the mean of a chain.
 """
-function mean(chn::Chains;
-        append_chains::Bool=true,
-        showall::Bool=false,
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        args...
-    )
+function mean(chains::Chains; kwargs...)
     # Store everything.
     funs = [mean∘cskip]
     func_names = [:mean]
 
     # Summarize.
-    summary_df = summarize(chn, funs...;
-        func_names=func_names,
-        showall=showall,
-        sections=sections,
-        name="Mean")
+    summary_df = summarize(
+        chains, funs...;
+        func_names = func_names,
+        name = "Mean",
+        kwargs...
+    )
 
     return summary_df
 end
