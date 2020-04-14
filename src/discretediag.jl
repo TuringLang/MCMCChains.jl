@@ -370,7 +370,7 @@ end
 
 function discretediag(
     chains::Chains{<:Real};
-    sections = :parameters,
+    sections = _default_sections(chains),
     frac::Real = 0.3,
     method::Symbol = :weiss,
     nsim::Int = 1000

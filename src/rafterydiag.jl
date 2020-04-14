@@ -53,7 +53,7 @@ end
 
 function rafterydiag(
     chains::Chains;
-    sections = :parameters,
+    sections = _default_sections(chains),
     q = 0.025,
     r = 0.005,
     s = 0.95,

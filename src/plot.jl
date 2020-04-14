@@ -30,7 +30,6 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     colordim = :chain,
     barbounds = (-Inf, Inf),
     maxlag = nothing,
-    sections = :parameters,
     append_chains = false
 )
     st = get(plotattributes, :seriestype, :traceplot)
@@ -125,7 +124,7 @@ end
 @recipe function f(
     chains::Chains,
     parameters::AbstractVector{<:Integer} = Int[];
-    sections = :parameters,
+    sections = _default_sections(chains),
     width = 500,
     height = 250,
     colordim = :chain,

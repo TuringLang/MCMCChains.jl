@@ -19,10 +19,10 @@ end
 
 function gewekediag(
     chains::Chains;
-    first::Real=0.1,
-    last::Real=0.5,
-    etype=:imse,
-    sections = :parameters,
+    sections = _default_sections(chains),
+    first::Real = 0.1,
+    last::Real = 0.5,
+    etype = :imse,
     kwargs...
 )
     # Subset the chain.

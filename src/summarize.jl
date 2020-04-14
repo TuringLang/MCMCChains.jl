@@ -121,46 +121,20 @@ function Base.convert(::Type{Array}, cs::Array{C,1}) where C<:ChainDataFrame
 end
 
 """
+    summarize(chains, funs...[; sections, func_names = [], etype = :bm])
 
-# Summarize a Chains object formatted as a ChainsDataFrame
+Summarize `chains` in a `ChainsDataFrame`.
 
-Summarize method for a Chains object.
+# Examples
 
-### Method
-```julia
-  summarize(
-    chn::Chains,
-    funs...;
-    sections::Vector{Symbol}=[:parameters],
-    func_names=[],
-    etype=:bm
-  )
-```
-
-### Required arguments
-```julia
-* `chn` : Chains object to convert to a ChainsDataFrame-formatted summary
-```
-
-### Optional arguments
-```julia
-* `funs...` : zero or more vector functions, e.g. mean, std, etc.
-* `sections = [:parameters]` : Sections from the Chains object to be included
-* `etype = :bm` : Default for df_mcse
-```
-
-### Examples
-```julia
 * `summarize(chns)` : Complete chain summary
 * `summarize(chns[[:parm1, :parm2]])` : Chain summary of selected parameters
-* `summarize(chns, sections=[:parameters])`  : Chain summary of :parameters section
-* `summarize(chns, sections=[:parameters, :internals])` : Chain summary for multiple sections
-```
-
+* `summarize(chns; sections=[:parameters])`  : Chain summary of :parameters section
+* `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
 function summarize(
     chains::Chains, funs...;
-    sections = :parameters,
+    sections = _default_sections(chains),
     func_names::AbstractVector{Symbol} = Symbol[],
     append_chains::Bool = true,
     name::String = "",

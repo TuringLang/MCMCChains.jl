@@ -28,10 +28,10 @@ end
 
 function heideldiag(
     chains::Chains;
+    sections = _default_sections(chains),
     alpha = 0.05,
     eps = 0.1,
     etype = :imse,
-    sections = :parameters,
     kwargs...
 )
     # Subset the chain.

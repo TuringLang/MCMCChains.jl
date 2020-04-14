@@ -30,7 +30,7 @@ function autocor(
 end
 
 """
-    cor(chains[; sections = :parameters, append_chains = true, kwargs...])
+    cor(chains[; sections, append_chains = true, kwargs...])
 
 Compute the Pearson correlation matrix for the chain.
 
@@ -39,7 +39,7 @@ matrix for each chain.
 """
 function cor(
     chains::Chains;
-    sections = :parameters,
+    sections = _default_sections(chains),
     append_chains = true,
     kwargs...
 )
@@ -76,7 +76,7 @@ function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwarg
 end
 
 """
-    changerate(chains[; sections = :parameters, append_chains = true, kwargs...])
+    changerate(chains[; sections, append_chains = true, kwargs...])
 
 Compute the change rate for the chain.
 
@@ -85,7 +85,7 @@ rates for each chain.
 """
 function changerate(
     chains::Chains{<:Real};
-    sections = :parameters,
+    sections = _default_sections(chains),
     append_chains = true,
     kwargs...
 )
@@ -220,7 +220,7 @@ function quantile(
 end
 
 """
-	  ess(chn::Chains[;	sections = :parameters, kwargs...])
+	  ess(chn::Chains[;	sections, kwargs...])
 
 Compute the effective sample size (ESS) of a chain.
 
@@ -229,7 +229,7 @@ in [this article](https://arxiv.org/abs/1903.08008).
 """
 function ess(
     chains::Chains;
-    sections = :parameters,
+    sections = _default_sections(chains),
     kwargs...
 )
     # Subset the chain.
@@ -349,8 +349,7 @@ end
 
 """
     summarystats(chains[;
-                 sections = :parameters, append_chains = true, maxlag = 250, etype = :bm,
-                 kwargs...])
+                 sections, append_chains = true, maxlag = 250, etype = :bm, kwargs...])
 
 Compute the mean, standard deviation, naive standard error, Monte Carlo standard error,
 and effective sample size for each parameter in the chain.
@@ -362,7 +361,7 @@ The remaining keyword arguments are passed to the `msce` function.
 """
 function summarystats(
     chains::Chains;
-    sections = :parameters,
+    sections = _default_sections(chains),
     append_chains::Bool = true,
     maxlag = 250,
     etype = :bm,

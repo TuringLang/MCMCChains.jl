@@ -19,7 +19,7 @@ function sort_sections(chn::Chains)
 end
 
 """
-    Array(chains[, sections = :parameters;
+    Array(chains[, sections;
           append_chains = true, remove_missing_union = true])
 
 Construct an `Array` from a chain.
@@ -31,15 +31,15 @@ cde(), etc.
 # Examples
 
 * `Array(chns)` : Array with chain values are appended
-* `Array(chns[:par])` : Array with selected parameter chain values are appended
+* `Array(chns[[:par]])` : Array with selected parameter chain values are appended
 * `Array(chns, :parameters)`  : Array with only :parameter section
 * `Array(chns, [:parameters, :internals])`  : Array includes multiple sections
-* `Array(chns, append_chains=false)`  : Array of Arrays, each chain in its own array
-* `Array(chns, remove_missing_union=false)` : No conversion to remove missing values
+* `Array(chns; append_chains=false)`  : Array of Arrays, each chain in its own array
+* `Array(chns; remove_missing_union=false)` : No conversion to remove missing values
 """
 function Base.Array(
     chains::Chains,
-    sections = :parameters;
+    sections = _default_sections(chains);
     append_chains = true,
     remove_missing_union = true
 )

@@ -80,7 +80,7 @@ end
 
 function gelmandiag(
     chains::Chains{<:Real};
-    sections = :parameters,
+    sections = _default_sections(chains),
     transform = false,
     alpha = 0.05,
     kwargs...
@@ -101,7 +101,7 @@ end
 
 function gelmandiag_multivariate(
     chains::Chains{<:Real};
-    sections = :parameters,
+    sections = _default_sections(chains),
     transform = true,
     alpha = 0.05,
     kwargs...
