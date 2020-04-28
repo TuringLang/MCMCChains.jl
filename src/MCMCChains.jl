@@ -23,6 +23,7 @@ import Random
 import Statistics: std, cor, mean, var
 
 export Chains, chains, chainscat
+export setrange, resetrange
 export set_section, get_params, sections, sort_sections, setinfo
 export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile

@@ -27,6 +27,29 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test size(chn[1:1000, :, :]) == (1000, 4, 2)
     @test keys(chn) == names(chn) == [:param_1, :param_2, :param_3, :param_4]
 
+    @test range(chn) == range(1; step = 2, length = niter)
+
+    @test_throws ErrorException setrange(chn, 1:10)
+    @test_throws MethodError setrange(chn, float.(range(chn)))
+
+    chn2 = setrange(chn, range(1; step = 10, length = niter))
+    @test range(chn2) == range(1; step = 10, length = niter)
+    @test names(chn2) === names(chn)
+    @test chains(chn2) === chains(chn)
+    @test chn2.value.data === chn.value.data
+    @test chn2.logevidence === chn.logevidence
+    @test chn2.name_map === chn.name_map
+    @test chn2.info == chn.info
+
+    chn3 = resetrange(chn)
+    @test range(chn3) == 1:niter
+    @test names(chn3) === names(chn)
+    @test chains(chn3) === chains(chn)
+    @test chn3.value.data === chn.value.data
+    @test chn3.logevidence === chn.logevidence
+    @test chn3.name_map === chn.name_map
+    @test chn3.info == chn.info
+
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
     @test isa(set_section(chn, Dict(:internals => ["param_1"])), AbstractChains)
