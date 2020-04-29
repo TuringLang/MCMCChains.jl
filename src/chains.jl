@@ -265,13 +265,40 @@ Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 #################### Auxilliary Functions ####################
 
 """
-    range(c::Chains)
+    range(chains::Chains)
 
-Returns the range used in a `Chains` object.
+Return the range of iteration indices of the `chains`.
 """
-function Base.range(c::Chains)
-    return c.value[Axis{:iter}].val
+Base.range(chains::Chains) = chains.value[Axis{:iter}].val
+
+"""
+    setrange(chains::Chains, range)
+
+Generate a new chain from `chains` with iterations indexed by `range`.
+
+The new chain and `chains` share the same data in memory.
+"""
+function setrange(chains::Chains, range::AbstractRange{<:Integer})
+    if length(chains) != length(range)
+        error("length of `range` (", length(range),
+              ") is not equal to the number of iterations (", length(chains), ")")
+    end
+
+    value = AxisArray(chains.value.data;
+                      iter = range, var = names(chains), chain = MCMCChains.chains(chains))
+
+    return Chains(value, chains.logevidence, chains.name_map, chains.info)
 end
+
+"""
+    resetrange(chains::Chains)
+
+Generate a new chain from `chains` with iterations indexed by `1:n`, where `n` is the number
+of samples per chain.
+
+The new chain and `chains` share the same data in memory.
+"""
+resetrange(chains::Chains) = setrange(chains, 1:size(chains, 1))
 
 """
     chains(c::Chains)
