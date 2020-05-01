@@ -28,14 +28,9 @@ using Test
     println("Serialization")
     @time include("serialization_tests.jl")
 
-<<<<<<< HEAD
-    # run tests for array constructor
-    include("arrayconstructor_tests.jl")
-=======
     # run tests for sampling api
     println("Sampling")
     @time include("sampling_tests.jl")
->>>>>>> 338784ee4d17478724037ab151e4ec1cf437899c
 
     # run tests for array constructor
     println("Array")
@@ -45,14 +40,9 @@ using Test
     println("Tables interfaces")
     @time include("tables_tests.jl")
 
-<<<<<<< HEAD
-    # run tests for summaries
-    include("summarize_tests.jl")
-=======
     # run tests for dataframe summary
     println("Summary")
     @time include("summarize_tests.jl")
->>>>>>> 338784ee4d17478724037ab151e4ec1cf437899c
 
     # run tests for posterior stats
     println("Model statistics")
