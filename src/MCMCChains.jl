@@ -6,6 +6,7 @@ using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat, AbstractChains
 using Distributions
+using FFTW
 using RecipesBase
 using SpecialFunctions
 using Formatting
@@ -20,7 +21,7 @@ import IteratorInterfaceExtensions
 using LinearAlgebra: diag
 import Serialization: serialize, deserialize
 import Random
-import Statistics: std, cor, mean, var
+import Statistics: std, cor, mean, var, mean!
 
 export Chains, chains, chainscat
 export setrange, resetrange
