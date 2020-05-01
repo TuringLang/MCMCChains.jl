@@ -2,8 +2,9 @@ using MCMCChains, Test
 
 @testset "Array constructor tests" begin
     @testset "Smoke tests" begin
-        val = convert(Array{Union{Missing, Float64},3}, rand(1000, 5, 5))
+        val = convert(Array{Union{Missing,Real},3}, rand(1000, 5, 5))
         chns = Chains(val, ["a", "b", "c", "d", "e"], [:internals => ["d", "e"]])
+        chns_a = chns[[:a]]
 
         # Config.
         main_params = 3
@@ -12,25 +13,55 @@ using MCMCChains, Test
 
         d, p, c = size(chns)
 
+        # return type
+        @test Array(chns) isa Matrix{Float64}
+        @test Array(MCMCChains.concretize(chns)) isa Matrix{Float64}
+        @test MCMCChains.concretize(Array(chns)) isa Matrix{Float64}
+
+        @test Array(chns; append_chains = true) isa Matrix{Float64}
+        @test Array(MCMCChains.concretize(chns); append_chains = true) isa Matrix{Float64}
+        @test MCMCChains.concretize(Array(chns; append_chains = true)) isa Matrix{Float64}
+
+        @test Array(chns; append_chains = false) isa Vector{Matrix{Float64}}
+        @test Array(MCMCChains.concretize(chns); append_chains = false) isa
+            Vector{Matrix{Float64}}
+        @test MCMCChains.concretize(Array(chns; append_chains = false)) isa
+            Vector{Matrix{Float64}}
+
+        @test Array(chns_a; append_chains = false) isa Vector{Vector{Float64}}
+        @test Array(MCMCChains.concretize(chns_a); append_chains = false) isa
+            Vector{Vector{Float64}}
+        @test MCMCChains.concretize(Array(chns_a; append_chains = false)) isa
+            Vector{Vector{Float64}}
+
+        @test Array(chns; remove_missing_union = false) isa Matrix{Union{Missing,Real}}
+        @test Array(chns; append_chains = true, remove_missing_union = false) isa
+            Matrix{Union{Missing,Real}}
+        @test Array(chns; append_chains = false, remove_missing_union = false) isa
+            Vector{Matrix{Union{Missing,Real}}}
+        @test Array(chns_a; append_chains = false, remove_missing_union = false) isa
+            Vector{Vector{Union{Missing,Real}}}
+
+        # type inference (needs concretely typed Chains)
+        @inferred MCMCChains.to_matrix(chns)
+        @inferred MCMCChains.to_vector(chns)
+        @inferred MCMCChains.to_vector_of_vectors(chns_a)
+        @inferred MCMCChains.to_vector_of_matrices(chns)
+
+        # sizes
         @test size(Array(chns)) == (d*c, main_params)
         @test size(Array(chns, [:parameters])) == (d*c, main_params)
         @test size(Array(chns, [:parameters])) == size(Array(chns))
         @test size(Array(chns, [:parameters, :internals])) == (d*c, total_params)
-        @test size(Array(chns, [:parameters, :internals])) ==
-            size(Array(chns, showall=true))
+        @test size(Array(chns, [:parameters, :internals])) == size(Array(chns, nothing))
         @test size(Array(chns, [:internals])) == (d*c, internal_params)
         @test size(Array(chns, append_chains=true)) == (d*c, main_params)
         @test size(Array(chns, append_chains=false)) == (5,)
         @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
-        @test typeof(Array(chns, append_chains=true)) == Array{Float64, 2}
-        @test size(Array(chns, remove_missing_union=false)) == (d*c, main_params)
-        @test size(Array(chns, append_chains=false,
-            remove_missing_union=false)) == (5,)
-        @test size(Array(chns, append_chains=false,
-            remove_missing_union=false)[1]) == (d, main_params)
-        @test typeof(Array(chns, append_chains=true, remove_missing_union=false)) ==
-            Array{Union{Missing, Float64}, 2}
-        @test size(Array(chns[:b])) == (d*c,)
+        @test size(Array(chns)) == (d*c, main_params)
+        @test size(Array(chns, append_chains=false)) == (5,)
+        @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
+        @test size(Array(chns[[:b]])) == (d*c,)
 
         Array(chns)
         Array(chns[:a])
@@ -51,5 +82,16 @@ using MCMCChains, Test
         # Test append
         arr2 = Array(chn, append_chains=false)
         @test all(vcat([arr2[i] .== squished_val[i] for i in 1:nchains]...))
+    end
+
+    @testset "concretize" begin
+        z = Any[0.5 1; 0.5 missing]
+        @test eltype(MCMCChains.concretize(z)) === Union{Float64,Missing}
+
+        zz = [Any[0.5, 1, missing] for _ in 1:3]
+        @test eltype(MCMCChains.concretize(zz)) === Vector{Union{Float64,Missing}}
+
+        zzz = Any[Any[0.5, 1, missing] for _ in 1:3]
+        @test eltype(MCMCChains.concretize(zzz)) === Vector{Union{Float64,Missing}}
     end
 end

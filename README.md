@@ -11,24 +11,23 @@ The following simple example illustrates how to use Chain to visually summarize 
 using MCMCChains
 using StatsPlots
 
-theme(:ggplot2);
+theme(:ggplot2)
 
 # Define the experiment
-n_iter = 500;
-n_name = 3;
-n_chain = 2;
+n_iter = 500
+n_name = 3
+n_chain = 2
 
 # experiment results
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]';
-val = hcat(val, rand(1:2, n_iter, 1, n_chain));
+val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
+val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 
 # construct a Chains object
-chn = Chains(val);
+chn = Chains(val)
 
 # visualize the MCMC simulation results
 p1 = plot(chn)
 p2 = plot(chn, colordim = :parameter)
-
 ```
 This code results in the visualizations shown below. Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
@@ -38,23 +37,28 @@ Summarize parameters | Summarize chains
 ![p1](https://user-images.githubusercontent.com/7974003/45822242-f0009180-bce2-11e8-8fa0-a97c8732400f.png)  |  ![p2](https://user-images.githubusercontent.com/7974003/45822249-f131be80-bce2-11e8-8dd3-42db7d58abd9.png)
 
 ## Manual
+
 ### Chains type
+
 ```julia
 # construction of a Chains object with no names
-Chains(val::AbstractArray{A,3};
-        start::Int=1,
-        thin::Int=1,
-        evidence = 0.0,
-        info=NamedTuple())
+Chains(
+    val::AbstractArray{A,3};
+    start::Int=1,
+    thin::Int=1,
+    evidence = 0.0,
+    info=NamedTuple(),
+)
 
-# construction of a chains object with new names
-Chains(val::AbstractArray{A,3},
-        parameter_names::Vector{String},
-        name_map = copy(DEFAULT_MAP);
-        start::Int=1,
-        thin::Int=1,
-        evidence = 0.0,
-        info=NamedTuple())
+Chains(
+    val::AbstractArray{A,3},
+    parameter_names::AbstractVector,
+    name_map = (parameters = parameter_names,);
+    start::Int=1,
+    thin::Int=1,
+    evidence = 0.0,
+    info=NamedTuple(),
+)
 
 # Indexing a Chains object
 chn = Chains(...)
@@ -73,11 +77,14 @@ val = rand(500,5, 2)
 chn = Chains(val, ["a", "b", "c", "d", "e"])
 ```
 
-By default, parameters will be given the name `Parami`, where `i` is the parameter number.
+By default, parameters will be given the name `:param_i`, where `i` is the parameter
+number.
 
 ### Rename Parameters
-Parameter names can be changed with the function `set_names`, which accepts a `Chain` object and a `Dict` containing the mapping between
-old and new column names. Note that `set_names` creates a new `Chain` object because mutation is not supported.
+
+Parameter names can be changed with the function `replacenames`, which accepts a `Chains`
+object and pairs of old and new parameter names. Note that `replacenames` creates a new
+`Chains` object that shares the same underlying data.
 
 ```julia
 chn = Chains(
@@ -87,12 +94,17 @@ chn = Chains(
 )
 
 # Set "one" and "five" to uppercase.
-new_chain = set_names(chn,  Dict(["one" => "ONE", "five" => "FIVE"]))
+chn2 = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
+
+# Alternatively you can provide a dictionary.
+chn3 = replacenames(chn, Dict("two" => "TWO", "four" => "FOUR"))
 ```
 
 ### Sections
 
-Chains parameters are sorted into sections, which are types of parameters. By default, every chain contains a section called `:parameters`, which is where all values are assigned unless assigned elsewhere. Chains can be assigned a named map during construction:
+Chains parameters are sorted into sections that represent groups of parameters. By default,
+every chain contains a `:parameters` section, to which all unassigned parameters are
+assigned to. Chains can be assigned a named map during construction:
 
 ```julia
 chn = Chains(val,
@@ -100,7 +112,7 @@ chn = Chains(val,
   Dict(:internals => ["d", "e"]))
 ```
 
-Or through the `set_section` function, which returns a new `Chains` object (as `Chains` objects cannot be modified in place due to section map immutability):
+The `set_section` function returns a new `Chains` object:
 
 ```julia
 chn2 = set_section(chn, Dict(:internals => ["d", "e"]))
@@ -135,7 +147,23 @@ b 0.0001 0.2290 0.4972 0.7365 0.9998
 c 0.0004 0.2739 0.5137 0.7498 0.9997
 ```
 
-Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals` section by calling `describe(chn, sections=:internals)` or all variables with `describe(chn, showall=true)`. Most MCMCChains functions like `plot` or `gelmandiag` support the `section` and `showall` keyword arguments.
+Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals`
+section by calling `describe(chn; sections = :internals)` or all variables with
+`describe(chn; sections = nothing)`. Many functions such as `plot` or `gelmandiag`
+support the `sections` keyword argument.
+
+### Groups of parameters
+
+By convention, MCMCChains assumes that parameters with names of the form `"name[index]"`
+belong to one group of parameters called `:name`. You can access the names of all
+parameters in a `chain` that belong to the group `:name` by running
+```julia
+namesingroup(chain, :name)
+```
+If the chain contains a parameter of name `:name` it will be returned as well.
+
+The function `group(chain, :name)` returns a subset of the chain `chain` with all
+parameters in the group `:name`.
 
 ### The `get` Function
 
@@ -172,27 +200,27 @@ Note that `x.P` is a tuple which has to be indexed by the relevant index, while 
 Options for method are  `[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]`
 
 ```julia
-discretediag(c::AbstractChains; frac=0.3, method=:weiss, nsim=1000)
+discretediag(c::Chains; frac=0.3, method=:weiss, nsim=1000)
 ```
 
 #### Gelman, Rubin, and Brooks Diagnostics
 ```julia
-gelmandiag(c::AbstractChains; alpha=0.05, mpsrf=false, transform=false)
+gelmandiag(c::Chains; alpha=0.05, mpsrf=false, transform=false)
 ```
 
 #### Geweke Diagnostic
 ```julia
-gewekediag(c::AbstractChains; first=0.1, last=0.5, etype=:imse)
+gewekediag(c::Chains; first=0.1, last=0.5, etype=:imse)
 ```
 
 #### Heidelberger and Welch Diagnostics
 ```julia
-heideldiag(c::AbstractChains; alpha=0.05, eps=0.1, etype=:imse)
+heideldiag(c::Chains; alpha=0.05, eps=0.1, etype=:imse)
 ```
 
 #### Raftery and Lewis Diagnostic
 ```julia
-rafterydiag(c::AbstractChains; q=0.025, r=0.005, s=0.95, eps=0.001)
+rafterydiag(c::Chains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ```
 
 ### Model Selection
@@ -213,30 +241,31 @@ DIC, pD = dic(chn, lpfun)
 ### Plotting
 ```julia
 # construct a plot
-plot(c::AbstractChains, seriestype = (:traceplot, :mixeddensity))
+plot(c::Chains, seriestype = (:traceplot, :mixeddensity))
 
 # construct trace plots
-plot(c::AbstractChains, seriestype = :traceplot)
+plot(c::Chains, seriestype = :traceplot)
+
 # or for all seriestypes use the alternative shorthand syntax
-traceplot(c::AbstractChains)
+traceplot(c::Chains)
 
 # construct running average plots
-meanplot(c::AbstractChains)
+meanplot(c::Chains)
 
 # construct density plots
-density(c::AbstractChains)
+density(c::Chains)
 
 # construct histogram plots
-histogram(c::AbstractChains)
+histogram(c::Chains)
 
 # construct mixed density plots
-mixeddensity(c::AbstractChains)
+mixeddensity(c::Chains)
 
 # construct autocorrelation plots
-autocorplot(c::AbstractChains)
+autocorplot(c::Chains)
 
 # make a cornerplot (requires StatPlots) of parameters in a Chain:
-corner(c::AbstractChains, [:A, :B])
+corner(c::Chains, [:A, :B])
 ```
 
 ### Saving and Loading Chains
@@ -273,7 +302,7 @@ Array(chns, append_chains=false)
 Array(chns, remove_missing_union=false)
 
 # This will not convert the Array columns from a
-`Union{Missing, Real}` to a `Vector{Real}`.
+# `Union{Missing, Real}` to a `Vector{Real}`.
 ```
 
 Similarly, for DataFrames:
@@ -287,27 +316,34 @@ DataFrame(chns, append_chains=false)
 DataFrame(chns, remove_missing_union=false)
 ```
 
-See also ?MCMCChains.DataFrame and ?MCMCChains.Array for more help.
+See also `?DataFrame` and `?Array` for more help.
 
 ### Sampling Chains
 
-MCMCChains overloads several `sample()` methods as defined in StatsBase:
+MCMCChains overloads several `sample` methods as defined in StatsBase:
 
 ```julia
 # Sampling `n` samples from the chain `a`. Optionally
 # weighting the samples using `wv`.
 sample([rng], a, [wv::AbstractWeights], n::Integer)
 
-# E.g. creating 10000 weighted samples:
-c = kde(Array(chn[:s]))
-chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
-
 # As above, but supports replacing and ordering.
 sample([rng], a, [wv::AbstractWeights], n::Integer; replace=true,
   ordered=false)
 ```
 
-See also ?MCMCChains.sample for additional help.
+See also `?sample` for additional help. Alternatively, you can construct
+and sample from a kernel density estimator using the KernelDensity package:
+
+```julia
+using KernelDensity
+
+# Construct a kernel density estimator
+c = kde(Array(chn[:s]))
+
+# Generate 10000 weighted samples from the grid points
+chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
+```
 
 ## License Notice
 Note that this package heavily uses and adapts code from the Mamba.jl package licensed under MIT License, see License.md.

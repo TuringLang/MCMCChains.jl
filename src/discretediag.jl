@@ -1,7 +1,7 @@
 ########################### Chisq Diagnostic ###########################
 
-function update_hangartner_temp_vars!(u::Matrix{Int64}, X::Matrix{Int64},
-                                      t::Int64)
+function update_hangartner_temp_vars!(u::Matrix{Int}, X::Matrix{Int},
+                                      t::Int)
   d = size(X,2)
 
   for j in 1:d
@@ -14,8 +14,8 @@ function hangartner_inner(Y::AbstractMatrix, m::Int)
   n, d = size(Y)
 
   # Count for each category in each chain
-  u = zeros(Int64, m, d)
-  v = zeros(Int64, m, d)
+  u = zeros(Int, m, d)
+  v = zeros(Int, m, d)
 
   for t in 1:n
     # fill out temp vars
@@ -31,12 +31,12 @@ end
 
 The weiss procedure to assess convergence in MCMC output computes X^2/c and evaluates a p-value from the X^2 distribution with (|R| − 1)(s − 1) degrees of freedom.
 """
-function weiss(X::AbstractMatrix{U}) where {U<:Any}
+function weiss(X::AbstractMatrix)
   ## number of iterations, number of chains
   n, d = size(X)
 
   ## mapping of values to integers
-  v_dict = Dict{U, Int}()
+  v_dict = Dict{eltype(X), Int}()
 
   ## max unique categories
   mc = map(c -> length(unique(X[:,c])), 1:d)
@@ -78,7 +78,7 @@ function weiss(X::AbstractMatrix{U}) where {U<:Any}
   return ( stat, m_tot, pval, ca)
 end
 
-function weiss_sub(u::Matrix{Int64}, v::Matrix{Int64}, t::Int)
+function weiss_sub(u::Matrix{Int}, v::Matrix{Int}, t::Int)
   m, d = size(u)
   nt = 0.0
   dt = 0.0
@@ -119,9 +119,9 @@ function weiss_sub(u::Matrix{Int64}, v::Matrix{Int64}, t::Int)
   return (phia, chi_stat, m_tot)
 end
 
-function update_billingsley_temp_vars!(f::Array{Int64,3},
-                                       X::Matrix{Int64},
-                                       t::Int64)
+function update_billingsley_temp_vars!(f::Array{Int,3},
+                                       X::Matrix{Int},
+                                       t::Int)
   d = size(X,2)
   for j in 1:d
     if t > 1
@@ -130,7 +130,7 @@ function update_billingsley_temp_vars!(f::Array{Int64,3},
   end
 end
 
-function billingsley_sub(f::Array{Int64,3})
+function billingsley_sub(f::Array{Int,3})
   df = 0.0
   stat = 0.0
 
@@ -177,7 +177,7 @@ end
 function bd_inner(Y::AbstractMatrix, m::Int)
   num_iters, num_chains = size(Y)
   # Transition matrix for each chain
-  f = zeros(Int64, m, m, num_chains)
+  f = zeros(Int, m, m, num_chains)
 
   for t in 1:num_iters
     # fill out temp vars
@@ -188,7 +188,7 @@ end
 
 function simulate_NDARMA(N::Int, p::Int, q::Int, prob::Vector{Float64},
                          phi::Vector{Float64})
-  X = zeros(Int64, N)
+  X = zeros(Int, N)
   X[1:p] = rand(Categorical(prob), p)
   d1 = Multinomial(1, phi)
   d2 = Categorical(prob)
@@ -201,7 +201,7 @@ function simulate_NDARMA(N::Int, p::Int, q::Int, prob::Vector{Float64},
 end
 
 function simulate_MC(N::Int, P::Matrix{Float64})
-  X = zeros(Int64, N)
+  X = zeros(Int, N)
   n, m = size(P)
   X[1] = sample(1:n)
   for i in 2:N
@@ -210,14 +210,14 @@ function simulate_MC(N::Int, P::Matrix{Float64})
   return X
 end
 
-function diag_all(X::AbstractMatrix{U}, method::Symbol,
-                  nsim::Int, start_iter::Int, step_size::Int) where {U<:Any}
+function diag_all(X::AbstractMatrix, method::Symbol,
+                  nsim::Int, start_iter::Int, step_size::Int)
 
   ## number of iterations, number of chains
   n, d = size(X)
 
   ## mapping of values to integers
-  v_dict = Dict{U, Int}()
+  v_dict = Dict{eltype(X), Int}()
 
   ## max unique categories
   mc = map(c -> length(unique(X[:,c])), 1:d)
@@ -327,7 +327,7 @@ function diag_all(X::AbstractMatrix{U}, method::Symbol,
   return result
 end
 
-function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
+function discretediag_sub(c::Chains, frac::Real, method::Symbol,
                           nsim::Int, start_iter::Int, step_size::Int)
 
   num_iters, num_vars, num_chains = size(c.value)
@@ -337,9 +337,9 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
   plot_vals_pval = zeros(length(start_iter:step_size:num_iters), num_vars)
 
   ## Between-chain diagnostic
-  X = zeros(Int64, num_iters, num_chains)
+  X = zeros(Int, num_iters, num_chains)
   for j in 1:length(num_vars)
-    X = convert(Array{Int64, 2}, c.value[:,j,:])
+    X = convert(Array{Int, 2}, c.value[:,j,:])
     result = diag_all(X, method, nsim, start_iter, step_size)
     plot_vals_stat[:,j] = result[1, :] ./ result[2, :]
     plot_vals_pval[:,j] = result[3, :]
@@ -347,14 +347,14 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
   end
 
   ## Within-chain diagnostic
-  x = zeros(Int64, num_iters)
-  Y = zeros(Int64, num_iters, 2)
+  x = zeros(Int, num_iters)
+  Y = zeros(Int, num_iters, 2)
   for j in 1:num_vars
     for k in 1:num_chains
-      x = convert(Array{Int64, 1}, c.value[:,j,k])
+      x = convert(Array{Int, 1}, c.value[:,j,k])
 
-      idx1 = 1:round(Int64, frac * num_iters)
-      idx2 = round(Int64, num_iters - frac * num_iters + 1):num_iters
+      idx1 = 1:round(Int, frac * num_iters)
+      idx2 = round(Int, num_iters - frac * num_iters + 1):num_iters
       x1 = x[idx1]
       x2 = x[idx2]
       n_min = min(length(x1), length(x2))
@@ -368,19 +368,17 @@ function discretediag_sub(c::AbstractChains, frac::Real, method::Symbol,
 
 end
 
-function discretediag(chn::AbstractChains; frac::Real=0.3,
-                      method::Symbol=:weiss,
-                      sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-                      nsim::Int=1000,
-                      showall=false,
-                      sorted=true)
-    c = showall ?
-        sorted ? sort(chn) : chn :
-        Chains(chn, _clean_sections(chn, sections); sorted=sorted)
+function discretediag(
+    chains::Chains{<:Real};
+    sections = _default_sections(chains),
+    frac::Real = 0.3,
+    method::Symbol = :weiss,
+    nsim::Int = 1000
+)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
-    @assert !any(ismissing.(c.value)) "Diagnostic doesn't support missing values"
-
-    num_iters, num_vars, num_chains = size(c.value)
+    num_iters, num_vars, num_chains = size(_chains.value)
 
     valid_methods = [:hangartner, :weiss, :DARBOOT,
         :MCBOOT, :billingsley, :billingsleyBOOT]
@@ -394,10 +392,10 @@ function discretediag(chn::AbstractChains; frac::Real=0.3,
         throw(ArgumentError("frac must be in (0,1)"))
     end
 
-    V, vals = discretediag_sub(c, frac, method, nsim,
-    size(c.value,1), size(c.value,1))[1:2]
+    V, vals = discretediag_sub(_chains, frac, method, nsim, size(_chains.value, 1),
+                               size(_chains.value, 1))[1:2]
 
-    num_chains = length(chains(c))
+    num_chains = size(_chains, 3)
 
     # discretediag returns an array with dimension (nchains + 1) × 3.
     # the line below separates out the returned value into chain-specific
@@ -405,13 +403,12 @@ function discretediag(chn::AbstractChains; frac::Real=0.3,
     sep_vals = [vals[(3 * (k - 1) + 1):(3 * (k - 1) + 3), :]'
         for k in 1:(num_chains+1)]
 
-    colnames = Symbol.([:parameters, :stat, :df, :p_value])
+    colnames = (:parameters, :stat, :df, :p_value)
 
-    pnames = Symbol.(names(c))
-    vals = map(x -> round.(x, digits=4), vals)
+    pnames = names(_chains)
     columns = [vcat([pnames], [k[:,i] for i in 1:size(k,2)]) for k in sep_vals]
     summary_names = ["Chisq Diagnostic - $(k==1 ? "Between Chains" : "Chain $k")"  for k in 1:(num_chains+1)]
-    dfs = [DataFrame(columns[k], colnames) for k in 1:(num_chains+1)]
+    dfs = [NamedTuple{colnames}(tuple(columns[k]...)) for k in 1:(num_chains+1)]
     dfs_wrapped = [ChainDataFrame(summary_names[k],
                    dfs[k]) for k in 1:(num_chains+1)]
     return dfs_wrapped

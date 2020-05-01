@@ -1,21 +1,22 @@
 using MCMCChains
+using AbstractMCMC: AbstractChains
 using Test
 
 ## CHAIN TESTS
 # Define the experiment
-n_iter = 4000
-n_name = 3
-n_chain = 2
+niter = 4000
+nparams = 3
+nchains = 2
 
 # some sample experiment results
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
-val = hcat(val, rand(1:2, n_iter, 1, n_chain))
+val = randn(niter, nparams, nchains) .+ [1, 2, 3]'
+val = hcat(val, rand(1:2, niter, 1, nchains))
 
 # construct a Chains object
 chn = Chains(val, start = 1, thin = 2)
 
 # Chains object for discretediag
-val_disc = rand(Int16, 200, n_name, n_chain)
+val_disc = rand(Int16, 200, nparams, nchains)
 chn_disc = Chains(val_disc, start = 1, thin = 2)
 
 @testset "basic chains functions" begin
@@ -24,23 +25,60 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test last(chn) == 7999
     @test size(chn) == (4000, 4, 2)
     @test size(chn[1:1000, :, :]) == (1000, 4, 2)
-    @test keys(chn) == ["Param1", "Param2", "Param3", "Param4"]
-    @test isa(chn[:,1,:], MCMCChains.AbstractChains)
-    @test isa(chn[200:300,"Param1",:], MCMCChains.AbstractChains)
-    @test isa(chn[200:300,["Param1", "Param3"],:], MCMCChains.AbstractChains)
-    @test isa(chn[200:300,"Param1",1], MCMCChains.AbstractChains)
-    @test length(vec(chn[:,1,:].value)) == n_chain * n_iter
-    @test all(collect(skipmissing(chn[:,1,1].value)) .== val[:,1,1])
-    @test all(chn[:,1,2].value .== val[:,1,2])
+    @test keys(chn) == names(chn) == [:param_1, :param_2, :param_3, :param_4]
+
+    @test range(chn) == range(1; step = 2, length = niter)
+
+    @test_throws ErrorException setrange(chn, 1:10)
+    @test_throws MethodError setrange(chn, float.(range(chn)))
+
+    chn2 = setrange(chn, range(1; step = 10, length = niter))
+    @test range(chn2) == range(1; step = 10, length = niter)
+    @test names(chn2) === names(chn)
+    @test chains(chn2) === chains(chn)
+    @test chn2.value.data === chn.value.data
+    @test chn2.logevidence === chn.logevidence
+    @test chn2.name_map === chn.name_map
+    @test chn2.info == chn.info
+
+    chn3 = resetrange(chn)
+    @test range(chn3) == 1:niter
+    @test names(chn3) === names(chn)
+    @test chains(chn3) === chains(chn)
+    @test chn3.value.data === chn.value.data
+    @test chn3.logevidence === chn.logevidence
+    @test chn3.name_map === chn.name_map
+    @test chn3.info == chn.info
+
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
-    @test isa(set_section(chn, Dict(:internals => ["Param1"])), MCMCChains.AbstractChains)
-    @test mean(chn) isa MCMCChains.ChainDataFrame
-    @test mean(chn, ["Param1", "Param2"]) isa MCMCChains.ChainDataFrame
-    @test 1.05 >= mean(chn, :Param1) >= 0.95
-    @test 1.05 >= mean(chn, "Param1") >= 0.95
-    @test names(set_names(chn, Dict("Param1" => "PARAM1"))) ==
-        ["PARAM1", "Param2", "Param3", "Param4"]
+    @test isa(set_section(chn, Dict(:internals => ["param_1"])), AbstractChains)
+    @test mean(chn) isa ChainDataFrame
+    @test mean(chn, ["param_1", "param_3"]) isa ChainDataFrame
+    @test 0.95 ≤ mean(chn, "param_1") ≤ 1.05
+end
+
+@testset "indexing tests" begin
+    @test chn[:,1,:] isa AbstractMatrix
+    @test chn[200:300, "param_1", :] isa AbstractMatrix
+    @test chn[200:300, ["param_1", "param_3"], :] isa Chains
+    @test chn[200:300, "param_1", 1] isa AbstractVector
+    @test size(chn[:,1,:]) == (niter, nchains)
+    @test chn[:,1,1] == val[:,1,1]
+    @test chn[:,1,2] == val[:,1,2]
+end
+
+@testset "names and groups tests" begin
+    chn2 = @inferred replacenames(chn, "param_2" => "param[2]", "param_3" => "param[3]")
+    @test chn2.value ==
+        (@inferred replacenames(chn, Dict("param_2" => "param[2]",
+                                          "param_3" => "param[3]"))).value
+    @test names(chn2) == [:param_1, Symbol("param[2]"), Symbol("param[3]"), :param_4]
+    @test namesingroup(chn2, "param") == Symbol.(["param[2]", "param[3]"])
+
+    chn3 = group(chn2, "param")
+    @test names(chn3) == Symbol.(["param[2]", "param[3]"])
+    @test chn3.value == chn[:, [:param_2, :param_3], :].value
 end
 
 @testset "function tests" begin
@@ -49,53 +87,41 @@ end
     @test MCMCChains.diag_all(rand(50, 2), :hangartner, 1, 1, 1) != nothing
     @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
-    @test isa(discretediag(chn_disc[:,2,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(gelmandiag(chn[:,1,:]), MCMCChains.ChainDataFrame)
-    @test isa(gewekediag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(heideldiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
-    @test isa(rafterydiag(chn[:,1,:]), Vector{MCMCChains.ChainDataFrame})
+    @test eltype(discretediag(chn_disc[:,2:2,:])) <: ChainDataFrame
+    @test typeof(gelmandiag(chn[:,1:1,:])) <: ChainDataFrame
+    @test eltype(gewekediag(chn[:,1:1,:])) <: ChainDataFrame
+    @test eltype(heideldiag(chn[:,1:1,:])) <: ChainDataFrame
+    @test eltype(rafterydiag(chn[:,1:1,:])) <: ChainDataFrame
+end
+
+@testset "stats tests" begin
+    @test autocor(chn) isa Vector{<:ChainDataFrame}
+    @test autocor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @test MCMCChains.cor(chn) isa ChainDataFrame
+    @test MCMCChains.cor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @test MCMCChains.changerate(chn) isa ChainDataFrame
+    @test MCMCChains.changerate(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @test hpd(chn) isa ChainDataFrame
+    @test hpd(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+end
+
+@testset "vector of vectors" begin
+    val = [rand(20) for _ in 1:10]
+
+    chn = Chains(val)
+    chn2 = Chains(reduce(hcat, val)')
+
+    @test chains(chn) == chains(chn2)
+    @test names(chn) == names(chn2)
 end
 
 @testset "sorting" begin
-    chn_sorted = Chains(rand(100,3,1), ["2", "1", "3"])
-    chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"], sorted=false)
+    chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"])
+    chn_sorted = sort(chn_unsorted)
 
-    @test names(chn_sorted) == ["1", "2", "3"]
-    @test names(chn_unsorted) == ["2", "1", "3"]
-end
-
-@testset "concatenation tests" begin
-    v1 = rand(500, 5, 1)
-    v2 = rand(500, 5, 1)
-    v3 = rand(500, 4, 1)
-    v4 = rand(500, 5, 4)
-
-    c1 = Chains(v1, ["a1", "a2", "a3", "a4", "a5"])
-    c2 = Chains(v2, ["a1", "a2", "a3", "a4", "a5"], start = 501)
-    c3 = Chains(v3, ["z1", "z2", "z3", "z4"])
-    c4 = Chains(v4, ["a1", "a2", "a3", "a4", "a5"])
-
-    # Test dim 1
-    c1_2 = cat(c1, c2, dims = 1)
-    @test c1_2.value.data == cat(v1, v2, dims=1)
-    @test range(c1_2) == 1:1:1000
-    @test names(c1_2) == names(c1) == names(c2)
-    @test chains(c1_2) == chains(c1) == chains(c2)
-    @test c1_2.value == vcat(c1, c2).value
-
-    # Test dim 2
-    c1_3 = cat(c1, c3, dims = 2)
-    @test c1_3.value.data == cat(v1, v3, dims=2)
-    @test range(c1_3) == 1:1:500
-    @test names(c1_3) == cat(names(c1), names(c3), dims=1)
-    @test chains(c1_3) == chains(c1) == chains(c3)
-    @test c1_3.value == hcat(c1, c3).value
-
-    # Test dim 3
-    c1_4 = cat(c1, c4, dims = 3)
-    @test c1_4.value.data == cat(v1, v4, dims=3)
-    @test range(c1_4) == 1:1:500
-    @test names(c1_4) == names(c1) == names(c4)
-    @test length(chains(c1_4)) == length(chains(c1)) + length(chains(c4))
-    @test c1_4.value == chainscat(c1, c4).value
+    @test names(chn_sorted) == Symbol.([1, 2, 3])
+    @test names(chn_unsorted) == Symbol.([2, 1, 3])
 end

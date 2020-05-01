@@ -1,7 +1,7 @@
 #################### Heidelberger and Welch Diagnostic ####################
 
-function heideldiag(x::Vector{T}; alpha::Real=0.05, eps::Real=0.1,
-                             etype=:imse, start::Integer=1, args...) where {T<:Real}
+function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
+                             etype=:imse, start::Integer=1, args...)
   n = length(x)
   delta = trunc(Int, 0.10 * n)
   y = x[trunc(Int, n / 2):end]
@@ -23,49 +23,52 @@ function heideldiag(x::Vector{T}; alpha::Real=0.05, eps::Real=0.1,
   end
   halfwidth = sqrt(2.0) * erfinv(1.0 - alpha) * mcse(y, etype; args...)
   passed = halfwidth / abs(ybar) <= eps
-  [i + start - 2, converged, round(pvalue, digits = 4), ybar, halfwidth, passed]
+  [i + start - 2, converged, pvalue, ybar, halfwidth, passed]
 end
 
-function heideldiag(chn::AbstractChains;
-                    alpha = 0.05,
-                    eps = 0.1,
-                    etype = :imse,
-                    sections::Vector{Symbol}=[:parameters],
-                    showall=false,
-                    sorted=true,
-                    args...
-                   )
-    c = showall ?
-       sorted ? sort(chn) : chn :
-       Chains(chn, _clean_sections(chn, sections); sorted=sorted)
+function heideldiag(
+    chains::Chains;
+    sections = _default_sections(chains),
+    alpha = 0.05,
+    eps = 0.1,
+    etype = :imse,
+    kwargs...
+)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Preallocate.
-    _, p, m = size(c.value)
+    _, p, m = size(_chains.value)
     vals = [Array{Float64}(undef, p, 6) for i in 1:m]
-
 
     # Perform tests.
     for j in 1:p, k in 1:m
         vals[k][j, :] = heideldiag(
-                            collect(skipmissing(c.value[:, j, k])),
+                            collect(skipmissing(_chains.value[:, j, k])),
                             alpha=alpha,
                             eps=eps,
                             etype=etype,
-                            start=first(c);
-                            args...
+                            start=first(_chains);
+                            kwargs...
                            )
     end
 
-    colnames = Symbol.(["parameters", "Burn-in", "Stationarity", "p-value", "Mean",
-        "Halfwidth", "Test"])
+    # Retrieve columns.
+    data = [[vals[k][:, i] for i in 1:6] for k in 1:m]
 
-    # Round values.
-    pnames = Symbol.(names(c))
-    vals = map(x -> round.(x, digits=4), vals)
-    columns = [vcat([pnames], [vals[k][:,i] for i in 1:6]) for k in 1:m]
+    # Obtain names of parameters.
+    names_of_params = names(_chains)
 
-    dfs = [DataFrame(columns[k], colnames) for k in 1:m]
-    dfs_wrapped = [ChainDataFrame("Heidelberger and Welch Diagnostic - Chain $k",
-                   dfs[k]) for k in 1:m]
-    return dfs_wrapped
+    # Compute data frames.
+    vector_of_df = [
+        ChainDataFrame(
+            "Heidelberger and Welch Diagnostic - Chain $i",
+            (parameters = names_of_params, burnin = columns[1], stationarity = columns[2],
+             pvalue = columns[3], mean = columns[4], halfwidth = columns[5],
+             test = columns[6])
+        )
+        for (i, columns) in enumerate(data)
+    ]
+
+    return vector_of_df
 end

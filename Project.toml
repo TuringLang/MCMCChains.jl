@@ -2,27 +2,35 @@ name = "MCMCChains"
 uuid = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
 keywords = ["markov chain monte carlo", "probablistic programming"]
 license = "MIT"
-desc = " Chain types and utility functions for MCMC simulations."
-version = "0.4.0"
+desc = "Chain types and utility functions for MCMC simulations."
+version = "4.0.0-DEV"
 
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 AbstractMCMC = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
 AxisArrays = "39de3d68-74b9-583c-8d2d-e117c070f3a9"
+<<<<<<< HEAD
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+=======
+>>>>>>> 338784ee4d17478724037ab151e4ec1cf437899c
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
+Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
+IteratorInterfaceExtensions = "82899510-4779-5014-852e-03e436cf321d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
-Showoff = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+TableTraits = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
+Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
+<<<<<<< HEAD
 AbstractFFTs = "0.5"
 AbstractMCMC = "~0.1"
 AxisArrays = "0.3"
@@ -38,9 +46,33 @@ julia = "1"
 
 [extras]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+=======
+AbstractMCMC = "0.4, 0.5"
+AxisArrays = "0.3, 0.4"
+Distributions = "0.21, 0.22, 0.23"
+Formatting = "0.4"
+IteratorInterfaceExtensions = "0.1.1, 1"
+PrettyTables = "0.8.4"
+RecipesBase = "0.7, 0.8, 1.0"
+Requires = "0.5, 1.0"
+SpecialFunctions = "^0.8, 0.9, 0.10"
+StatsBase = "0.32, 0.33"
+TableTraits = "0.4, 1"
+Tables = "1"
+julia = "1"
+
+[extras]
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+>>>>>>> 338784ee4d17478724037ab151e4ec1cf437899c
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [targets]
+<<<<<<< HEAD
 test = ["FFTW", "StatsPlots", "Test", "Turing"]
+=======
+test = ["DataFrames", "KernelDensity", "Logging", "StatsPlots", "Test", "UnicodePlots"]
+>>>>>>> 338784ee4d17478724037ab151e4ec1cf437899c

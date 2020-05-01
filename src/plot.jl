@@ -23,31 +23,32 @@ const translationdict = Dict(
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
 
-@recipe f(c::AbstractChains, s::Symbol) = c, [s]
+@recipe f(c::Chains, s::Symbol) = c, [s]
 
-@recipe function f(c::AbstractChains, i::Int;
+@recipe function f(
+    chains::Chains, i::Int;
     colordim = :chain,
     barbounds = (-Inf, Inf),
     maxlag = nothing,
-    section = :parameters,
-    append_chains = false)
+    append_chains = false
+)
     st = get(plotattributes, :seriestype, :traceplot)
-    c = append_chains || st == :pooleddensity ? pool_chain(c) : c
+    c = append_chains || st == :pooleddensity ? pool_chain(chains) : chains
 
     if colordim == :parameter
-        title --> "Chain $(chains(c)[i])"
-        label --> names(c)
+        title --> "Chain $(MCMCChains.chains(c)[i])"
+        label --> string.(names(c))
         val = c.value[:, :, i]
     elseif colordim == :chain
-        title --> names(c)[i]
-        label --> map(k -> "Chain $(chains(c)[k])", 1:size(c)[3])
+        title --> string(names(c)[i])
+        label --> map(x -> "Chain $x", MCMCChains.chains(c))
         val = c.value[:, i, :]
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
     end
 
     if st == :mixeddensity || st == :pooleddensity
-        discrete = MCMCChains.indiscretesupport(c, barbounds)
+        discrete = indiscretesupport(c, barbounds)
         st = if colordim == :chain
             discrete[i] ? :histogram : :density
         else
@@ -59,8 +60,8 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
     if st == :autocorplot
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
-        ac = MCMCChains.autocor(c, lags=collect(lags); showall=true)
-        ac_mat = convert(Matrix, ac)
+        ac = autocor(c; sections = nothing, lags = lags)
+        ac_mat = convert(Array, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ supportedplots
@@ -88,7 +89,7 @@ end
     seriestype := :path
     xaxis --> "Iteration"
     yaxis --> "Mean"
-    range(p.c), MCMCChains.cummean(p.val)
+    range(p.c), cummean(p.val)
 end
 
 @recipe function f(p::_AutocorPlot)
@@ -105,29 +106,32 @@ end
     range(p.c), p.val
 end
 
-@recipe function f(chn::MCMCChains.AbstractChains, parameters::AbstractVector{Symbol};
-        colordim = :chain, section = :parameters, append_chains = false, sorted=true)
-    c = Chains(chn, section, sorted=sorted)
-    c = append_chains ? pool_chain(c) : c
-    colordim != :chain && error("Symbol names are interpreted as parameter names, only compatible with `colordim = :chain`")
-    ret = indexin(parameters, Symbol.(keys(c)))
-    any(y -> y == nothing, ret) && error("Parameter not found")
-    c, Int.(ret)
+@recipe function f(
+    chains::Chains,
+    parameters::AbstractVector{Symbol};
+    colordim = :chain
+)
+    colordim != :chain &&
+        error("Symbol names are interpreted as parameter names, only compatible with ",
+              "`colordim = :chain`")
+
+    ret = indexin(parameters, names(chains))
+    any(y === nothing for y in ret) && error("Parameter not found")
+
+    return chains, Int.(ret)
 end
 
-@recipe function f(chn::MCMCChains.AbstractChains,
-                   parameters::AbstractVector{<:Integer} = Int[];
-                   width = 500,
-                   height = 250,
-                   colordim = :chain,
-                   section = :parameters,
-                   append_chains = false,
-                   sorted=true
-                  )
-    c = isempty(parameters) ?
-        Chains(chn, section; sorted=sorted) :
-        sorted ? sort(chn) : chn
-    c = append_chains ? pool_chain(c) : c
+@recipe function f(
+    chains::Chains,
+    parameters::AbstractVector{<:Integer} = Int[];
+    sections = _default_sections(chains),
+    width = 500,
+    height = 250,
+    colordim = :chain,
+    append_chains = false
+)
+    _chains = isempty(parameters) ? Chains(chains, _clean_sections(chains, sections)) : chains
+    c = append_chains ? pool_chain(_chains) : _chains
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa Symbol ? (ptypes,) : ptypes
     @assert all(ptype -> ptype ∈ supportedplots, ptypes)

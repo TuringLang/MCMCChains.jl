@@ -1,197 +1,187 @@
-using DataFrames: names!
-using StatsBase: mean, std, sem
-import StatsBase: sem
-import Base.size
-import Base.names
-
-struct ChainDataFrame
+struct ChainDataFrame{NT<:NamedTuple}
     name::String
-    df::DataFrame
+    nt::NT
+    nrows::Int
+    ncols::Int
 
-    function ChainDataFrame(name::String, df::DataFrame; digits=missing)
-        if !ismissing(digits)
-            if isa(digits, Integer)
-                nrow = size(df, 1)
-                ncol = size(df, 2)
-                for i in 1:nrow
-                    for j in 1:ncol
-                        if applicable(round, df[i,j])
-                            df[i, j] = round(df[i,j], digits=digits)
-                        end
-                    end
-                end
-            elseif isa(digits, NamedTuple) || isa(digits, Dict)
-                cols = keys(digits)
-                nrow = size(df, 1)
-                for c in cols
-                    if c in names(df)
-                        for r in 1:nrow
-                            df[r,c] = round(df[r,c], digits=digits[c])
-                        end
-                    end
-                end
-            end
-        end
+    function ChainDataFrame(name::String, nt::NamedTuple)
+        lengths = length(first(nt))
+        all(x -> length(x) == lengths, nt) || error("Lengths must be equal.")
 
-        return new(name, df)
+        return new{typeof(nt)}(name, nt, lengths, length(nt))
     end
 end
 
-ChainDataFrame(df::DataFrame) = ChainDataFrame("", df)
+ChainDataFrame(nt::NamedTuple) = ChainDataFrame("", nt)
 
-Base.size(c::ChainDataFrame) = size(c.df)
-Base.names(c::ChainDataFrame) = names(c.df)
-function Base.show(io::IO, c::ChainDataFrame)
-    println(io, c.name)
-    show(io, c.df, summary = false, allrows=true, allcols=true)
+Base.size(c::ChainDataFrame) = (c.nrows, c.ncols)
+Base.names(c::ChainDataFrame) = collect(keys(c.nt))
+
+# Display
+
+function Base.show(io::IO, df::ChainDataFrame)
+    print(io, df.name, " (", df.nrows, " x ", df.ncols, ")")
 end
 
-Base.getindex(c::ChainDataFrame, args...) = getindex(c.df, args...)
-Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}) = c.df[:, s]
-Base.isequal(cs1::Vector{ChainDataFrame}, cs2::Vector{ChainDataFrame}) = isequal.(cs1, cs2)
+function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
+    digits = get(io, :digits, 4)
+    formatter = PrettyTables.ft_printf("%.$(digits)f")
+
+    println(io, df.name)
+    PrettyTables.pretty_table(io, df.nt; formatter = formatter, tf = PrettyTables.borderless)
+end
+
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
 
-function Base.show(io::IO, cs::Vector{ChainDataFrame})
-    println(io, summary(cs))
-    for i in cs
-        println(io)
-        println(io, i.name)
-        show(io, i.df, allrows=true, summary=false)
-        println(io)
-    end
+# Index functions
+function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, g::Union{Colon, Integer, UnitRange})
+    convert(Array, getindex(c, c.nt[:parameters][s], collect(keys(c.nt))[g]))
 end
 
-# Allows overriding of `display`
-function Base.show(io::IO, ::MIME"text/plain", cs::Vector{ChainDataFrame})
-    show(io, cs)
+function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}, g::Colon)
+    getindex(c, c.nt[:parameters], collect(keys(c.nt)))
 end
 
-function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}, m)
-    s = s isa AbstractArray ? s : [s]
-    s_ind = indexin(s, c.df[:, :parameters])
-    return c.df[s_ind, m]
+function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}})
+    getindex(c, s, collect(keys(c.nt)))
 end
 
-function Base.getindex(c::ChainDataFrame,
-        s1::Vector{Symbol},
-        s2::Union{Symbol, Vector{Symbol}})
-    return c.df[map(x -> x in s1, c.df[:, :parameters]), s2]
+function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, ks)
+    getindex(c, c.nt[:parameters][s], ks)
 end
 
-function Base.getindex(c::ChainDataFrame,
-        s1::Symbol,
-        s2::Union{Symbol, Vector{Symbol}})
-    return c.df[c.df[:, :parameters] .== s1, s2]
+# dispatches involing `String` and `AbstractVector{String}`
+Base.getindex(c::ChainDataFrame, s::String, ks) = getindex(c, Symbol(s), ks)
+function Base.getindex(c::ChainDataFrame, s::AbstractVector{String}, ks)
+    return getindex(c, Symbol.(s), ks)
 end
 
+# dispatch for `Symbol`
+Base.getindex(c::ChainDataFrame, s::Symbol, ks) = getindex(c, [s], ks)
 
-Base.lastindex(c::ChainDataFrame, i::Integer) = lastindex(c.df, i)
-
-Base.convert(::Type{Array{ChainDataFrame,1}}, cs::Array{ChainDataFrame,1}) = cs
-function Base.convert(::Type{T}, cs::Array{ChainDataFrame,1}) where T<:Array
-    arrs = [convert(T, cs[j].df[:, 2:end]) for j in 1:length(cs)]
-    return cat(arrs..., dims = 3)
+function Base.getindex(c::ChainDataFrame, s::AbstractVector{Symbol}, ks::Symbol)
+    return getindex(c, s, [ks])
 end
-"""
 
-# Summarize a Chains object formatted as a DataFrame
+function Base.getindex(
+    c::ChainDataFrame,
+    s::AbstractVector{Symbol},
+    ks::AbstractVector{Symbol}
+)
+    ind = indexin(s, c.nt[:parameters])
 
-Summarize method for an MCMCChains.Chains object.
+    not_found = map(x -> x === nothing, ind)
 
-### Method
-```julia
-  summarize(
-    chn::MCMCChains.AbstractChains,
-    funs...;
-    sections::Vector{Symbol}=[:parameters],
-    func_names=[],
-    etype=:bm
-  )
-```
+    any(not_found) && error("Cannot find parameters $(s[not_found]) in chain")
 
-### Required arguments
-```julia
-* `chn` : Chains object to convert to a DataFrame-formatted summary
-```
-
-### Optional arguments
-```julia
-* `funs...` : zero or more vector functions, e.g. mean, std, etc.
-* `sections = [:parameters]` : Sections from the Chains object to be included
-* `etype = :bm` : Default for df_mcse
-```
-
-### Examples
-```julia
-* `summarize(chns)` : Complete chain summary
-* `summarize(chns[[:parm1, :parm2]])` : Chain summary of selected parameters
-* `summarize(chns, sections=[:parameters])`  : Chain summary of :parameters section
-* `summarize(chns, sections=[:parameters, :internals])` : Chain summary for multiple sections
-```
-
-"""
-function summarize(chn::Chains, funs...;
-        sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters],
-        func_names=[],
-        append_chains::Bool=true,
-        showall::Bool=false,
-        name::String="",
-        additional_df=nothing,
-        digits=missing)
-    # Check that we actually have :parameters.
-    showall = showall ? true : !in(:parameters, keys(chn.name_map))
-
-    # If we weren't given any functions, fall back on summary stats.
-    if length(funs) == 0
-        return summarystats(chn,
-            sections=sections,
-            showall=showall)
-    end
-
-    # Generate a dataframe to work on.
-    df = DataFrame(chn, sections, showall=showall, append_chains=append_chains)
-
-    # If no function names were given, make a new list.
-    func_names = length(func_names) == 0 ?
-        handle_funs(funs) : Symbol.(func_names)
-
-    # Do all the math, make columns.
-    columns = if append_chains
-        vcat([names(df)],
-             [[f(col) for col = eachcol(df, false)] for f in funs])
+    # If there are multiple columns, return a new CDF.
+    if length(ks) > 1
+        if !(:parameters in ks)
+            ks = vcat(:parameters, ks)
+        end
+        nt = NamedTuple{tuple(ks...)}(tuple([c.nt[k][ind] for k in ks]...))
+        return ChainDataFrame(c.name, nt)
     else
-        [vcat([names(df[1])],
-              [[f(col) for col = eachcol(i, false)] for f in funs]) for i in df]
-    end
-
-    # Make a vector of column names.
-    colnames = vcat([:parameters], func_names)
-
-    # Build the dataframes.
-    ret_df = if append_chains
-        DataFrame(columns, colnames)
-    else
-        [DataFrame(i, colnames) for i in columns]
-    end
-
-    if additional_df != nothing
-        if append_chains
-            ret_df = join(ret_df, additional_df, on=:parameters)
+        # Otherwise, return a vector if there's multiple parameters
+        # or just a scalar if there's one parameter.
+        if length(s) == 1
+            return c.nt[ks[1]][ind][1]
         else
-            ret_df = [join(r, additional_df, on=:parameters) for r in ret_df]
+            return c.nt[ks[1]][ind]
         end
     end
-
-    ret_df = if append_chains
-        ChainDataFrame(name, ret_df, digits=digits)
-    else
-        [ChainDataFrame(name, r, digits=digits) for r in ret_df]
-    end
-
-    return ret_df
 end
 
-function handle_funs(fns)
-    tmp =  [string(f) for f in fns]
-    Symbol.([split(tmp[i], ".")[end] for i in 1:length(tmp)])
+function Base.lastindex(c::ChainDataFrame, i::Integer)
+    if i == 1
+        return c.nrows
+    elseif i ==2
+        return c.ncols
+    else
+        error("No such dimension")
+    end
+end
+
+function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
+    T = promote_eltype_namedtuple_tail(c.nt)
+    arr = Array{T, 2}(undef, c.nrows, c.ncols - 1)
+    
+    for (i, k) in enumerate(Iterators.drop(keys(c.nt), 1))
+        arr[:, i] = c.nt[k]
+    end
+
+    return arr
+end
+
+Base.convert(::Type{Array{ChainDataFrame,1}}, cs::Array{ChainDataFrame,1}) = cs
+function Base.convert(::Type{Array}, cs::Array{C,1}) where C<:ChainDataFrame
+    return mapreduce((x, y) -> cat(x, y; dims = Val(3)), cs) do c
+        reshape(convert(Array, c), Val(3))
+    end
+end
+
+"""
+    summarize(chains, funs...[; sections, func_names = [], etype = :bm])
+
+Summarize `chains` in a `ChainsDataFrame`.
+
+# Examples
+
+* `summarize(chns)` : Complete chain summary
+* `summarize(chns[[:parm1, :parm2]])` : Chain summary of selected parameters
+* `summarize(chns; sections=[:parameters])`  : Chain summary of :parameters section
+* `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
+"""
+function summarize(
+    chains::Chains, funs...;
+    sections = _default_sections(chains),
+    func_names::AbstractVector{Symbol} = Symbol[],
+    append_chains::Bool = true,
+    name::String = "",
+    additional_df = nothing
+)
+    # If we weren't given any functions, fall back to summary stats.
+    if isempty(funs)
+        return summarystats(chains; sections = sections)
+    end
+
+    # Generate a chain to work on.
+    chn = Chains(chains, _clean_sections(chains, sections))
+
+    # Obtain names of parameters.
+    names_of_params = names(chn)
+
+    # If no function names were given, make a new list.
+    fnames = isempty(func_names) ? collect(nameof.(funs)) : func_names
+
+    # Obtain the additional named tuple.
+    additional_nt = additional_df === nothing ? NamedTuple() : additional_df.nt
+
+    if append_chains
+        # Evaluate the functions.
+        data = to_matrix(chn)
+        fvals = [[f(data[:, i]) for i in axes(data, 2)] for f in funs]
+
+        # Build the ChainDataFrame.
+        nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
+        df = ChainDataFrame(name, nt)
+
+        return df
+    else
+        # Evaluate the functions.
+        data = to_vector_of_matrices(chn)
+        vector_of_fvals = [[[f(x[:, i]) for i in axes(x, 2)] for f in funs] for x in data]
+
+        # Build the ChainDataFrames.
+        vector_of_nt = [
+            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
+            for fvals in vector_of_fvals
+        ]
+        vector_of_df = [
+            ChainDataFrame(name * " (Chain $i)", nt)
+            for (i, nt) in enumerate(vector_of_nt)
+        ]
+
+        return vector_of_df
+    end
 end
