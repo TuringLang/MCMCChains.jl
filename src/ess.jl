@@ -187,18 +187,25 @@ function mean_autocorr(k::Int, cache::BDAESSCache)
 end
 
 """
-	ess(chains::AbstractChains[; parameters = names(chains, :parameters), kwargs...])
+    ess(chains::Chains; sections = _default_sections(chains), kwargs...)
 
 Estimate the effective sample size and the potential scale reduction.
 """
-function ess(chains::AbstractChains; parameters = names(chains, :parameters), kwargs...)
-    # estimate the effective sample size
-    ess, rhat = ess_rhat(view(chains.value, :, parameters, :); kwargs...)
+function ess(
+    chains::Chains;
+    sections = _default_sections(chains), # perhaps directly nothing by default - or no sections argument?
+    kwargs...
+)
+    # subset the chain
+    _chains = Chains(chains, _clean_sections(chains, sections)) # may be unnecessary, already applied upstream
 
-    # create data frame
-    df = DataFrame(parameters = Symbol.(parameters), ess = ess, r_hat = rhat)
+    # estimate the effective sample size and rhat
+    ess, rhat = ess_rhat(_chains.value.data; kwargs...)
 
-	return df
+    # convert to namedtuple
+    nt = merge((parameters = names(_chains),), (ess = ess, rhat = rhat))
+
+    return ChainDataFrame("ESS", nt)
 end
 
 function ess_rhat(chains::AbstractArray{<:Union{Missing,Real},3};
