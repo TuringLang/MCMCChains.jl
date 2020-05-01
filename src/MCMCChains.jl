@@ -18,7 +18,7 @@ import Tables
 import TableTraits
 import IteratorInterfaceExtensions
 
-using LinearAlgebra: diag
+using LinearAlgebra # : diag, BlasReal, dot
 import Serialization: serialize, deserialize
 import Random
 import Statistics: std, cor, mean, var, mean!
