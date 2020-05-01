@@ -238,7 +238,7 @@ statistics for each chain.
 
 maxlag is the maximum lag for which autocorrelations can be computed
 
-The remaining keyword arguments are passed to the `msce` function.
+The remaining keyword arguments are passed to the `msce` function. #TODO: I don't think this comment is true any more, as the method used to compute ESS must be passed as a keyword?
 """
 function summarystats(
     chains::Chains;
@@ -261,7 +261,7 @@ function summarystats(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    ess_df = ess(_chains; sections = nothing, maxlag = maxlag) # this is a ChainDataFrame
+    ess_df = ess(_chains; sections = nothing, maxlag = maxlag) # this is a ChainDataFrame - maybe sections = _default_sections() by default
 
     # Summarize.
     summary_df = summarize(
