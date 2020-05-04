@@ -49,7 +49,7 @@ mutable struct ESSCache{T}
 end
 
 mutable struct FFTESSCache{T,P,I}
-	A::T
+    A::T
     plan::P
     invplan::I
     niter::Int
@@ -61,33 +61,33 @@ mutable struct BDAESSCache{T}
 end
 
 function build_cache(::ESSMethod, samples::Matrix, var::Vector)
-	# check arguments
-	niter, nchains = size(samples)
+    # check arguments
+    niter, nchains = size(samples)
     length(var) == nchains || throw(DimensionMismatch())
 
     return ESSCache(samples, var)
 end
 
 function build_cache(::FFTESSMethod, samples::Matrix, var::Vector)
-	# check arguments
-	niter, nchains = size(samples)
-	length(var) == nchains || throw(DimensionMismatch())
+    # check arguments
+    niter, nchains = size(samples)
+    length(var) == nchains || throw(DimensionMismatch())
 
-	# create cache for FFT
-	T = complex(eltype(samples))
-	n = nextprod([2, 3], 2 * niter - 1)
+    # create cache for FFT
+    T = complex(eltype(samples))
+    n = nextprod([2, 3], 2 * niter - 1)
     A = Matrix{T}(undef, n, nchains)
 
-	# create plans of FFTs
-	fft_plan = plan_fft!(A, 1)
-	ifft_plan = plan_ifft!(A, 1)
+    # create plans of FFTs
+    fft_plan = plan_fft!(A, 1)
+    ifft_plan = plan_ifft!(A, 1)
 
-	return FFTESSCache(A, fft_plan, ifft_plan, niter)
+    return FFTESSCache(A, fft_plan, ifft_plan, niter)
 end
 
 function build_cache(::BDAESSMethod, samples::Matrix, var::Vector)
-	# check arguments
-	nchains = size(samples, 2)
+    # check arguments
+    nchains = size(samples, 2)
     length(var) == nchains || throw(DimensionMismatch())
 
     return BDAESSCache(samples, var)
@@ -96,7 +96,7 @@ end
 update_cache!(cache, samples::Matrix, var::Vector) = nothing
 
 function update_cache!(cache::FFTESSCache, samples::Matrix, var::Vector)
-	# check arguments
+    # check arguments
     niter, nchains = size(samples)
     niter == cache.niter || throw(DimensionMismatch())
     A = cache.A
@@ -105,21 +105,21 @@ function update_cache!(cache::FFTESSCache, samples::Matrix, var::Vector)
     # copy samples and add zero padding
     n = size(A, 1)
     T = eltype(A)
-	@inbounds for j in 1:nchains
-		for i in 1:niter
-			A[i, j] = samples[i, j]
+    @inbounds for j in 1:nchains
+        for i in 1:niter
+            A[i, j] = samples[i, j]
         end
         for i in (niter + 1):n
-			A[i, j] = zero(T)
-		end
-	end
+            A[i, j] = zero(T)
+        end
+    end
 
-	# compute unnormalized autocorrelation
-	cache.plan * A
-	@. A = abs2(A)
-	cache.invplan * A
+    # compute unnormalized autocorrelation
+    cache.plan * A
+    @. A = abs2(A)
+    cache.invplan * A
 
-	nothing
+    nothing
 end
 
 # estimation of the autocorrelation function
@@ -130,7 +130,7 @@ function mean_autocorr(k::Int, cache::ESSCache)
     0 ≤ k < niter || throw(ArgumentError("only lags ≥ 0 and < $niter are supported"))
 
     # compute mean autocorrelation
-	var = cache.var
+    var = cache.var
     s = zero(eltype(var))
     firstrange = 1:(niter - k)
     lastrange = (k + 1):niter
@@ -173,7 +173,7 @@ function mean_autocorr(k::Int, cache::BDAESSCache)
     0 ≤ k < niter || throw(ArgumentError("only lags ≥ 0 and < $niter are supported"))
 
     # compute mean autocorrelation
-	var = cache.var
+    var = cache.var
     s = zero(eltype(var))
     @inbounds for j in 1:nchains
         sj = zero(s)
