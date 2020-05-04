@@ -259,7 +259,7 @@ function summarystats(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    ess_df = ess(_chains; sections = nothing, maxlag = maxlag) # this is a ChainDataFrame - maybe sections = _default_sections() by default
+    ess_df = ess(_chains; sections = nothing, maxlag = maxlag)
 
     # Summarize.
     summary_df = summarize(

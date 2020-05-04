@@ -187,17 +187,17 @@ function mean_autocorr(k::Int, cache::BDAESSCache)
 end
 
 """
-    ess(chains::Chains; sections = _default_sections(chains), kwargs...)
+    ess(chains::Chains; kwargs...)
 
 Estimate the effective sample size and the potential scale reduction.
 """
 function ess(
     chains::Chains;
-    sections = _default_sections(chains), # perhaps directly nothing by default - or no sections argument?
+    sections = _default_sections(chains),
     kwargs...
 )
     # subset the chain
-    _chains = Chains(chains, _clean_sections(chains, sections)) # may be unnecessary, already applied upstream
+    _chains = Chains(chains, _clean_sections(chains, sections))
 
     # estimate the effective sample size and rhat
     ess, rhat = ess_rhat(_chains.value.data; kwargs...)
