@@ -82,7 +82,7 @@ end
         # analyze array
         ess_array, rhat_array = MCMCChains.ess_rhat(x; method = method)
 
-        @test ess_df["ess"] == ess_array
-        @test ess_df["rhat"] == rhat_array
+        @test ess_df[:,2] == ess_array
+        @test ess_df[:,3] == rhat_array
     end
 end
