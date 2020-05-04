@@ -6,7 +6,6 @@ using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat, AbstractChains
 using Distributions
-using FFTW
 using RecipesBase
 using SpecialFunctions
 using Formatting
