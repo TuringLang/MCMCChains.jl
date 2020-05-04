@@ -242,6 +242,7 @@ function summarystats(
     chains::Chains;
     sections = _default_sections(chains),
     append_chains::Bool = true,
+    method::AbstractESSMethod = ESSMethod(),
     maxlag = 250,
     etype = :bm,
     kwargs...
@@ -259,7 +260,7 @@ function summarystats(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    ess_df = ess(_chains; sections = nothing, maxlag = maxlag)
+    ess_df = ess(_chains; sections = nothing, method = method, maxlag = maxlag)
 
     # Summarize.
     summary_df = summarize(
