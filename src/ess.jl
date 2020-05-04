@@ -208,13 +208,11 @@ function ess(
     return ChainDataFrame("ESS", nt)
 end
 
-function ess_rhat(chains::AbstractArray{<:Union{Missing,Real},3};
-                  method::AbstractESSMethod = ESSMethod(), kwargs...)
-    return ess_rhat(method, chains; kwargs...)
-end
-
-function ess_rhat(method, chains::AbstractArray{<:Union{Missing,Real},3};
-                  maxlag::Int = 250)
+function ess_rhat(
+    chains::AbstractArray{<:Union{Missing,Real},3};
+    method::AbstractESSMethod = ESSMethod(),
+    maxlag::Int = 250
+)
     # compute size of matrices (each chain is split!)
     niter = size(chains, 1) ÷ 2
     nparams = size(chains, 2)
