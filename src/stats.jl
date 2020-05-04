@@ -236,7 +236,7 @@ and effective sample size for each parameter in the chain.
 Setting `append_chains=false` will return a vector of dataframes containing the summary
 statistics for each chain.
 
-maxlag is the maximum lag for which autocorrelations can be computed
+When estimating the effective sample size, autocorrelations are computed for at most `maxlag` lags.
 """
 function summarystats(
     chains::Chains;
