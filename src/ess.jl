@@ -243,7 +243,7 @@ function ess_rhat(method, chains::AbstractArray{<:Union{Missing,Real},3};
     rhat = Vector{T}(undef, nparams)
 
     # for each parameter
-    for (i, chains_slice) in enumerate(eachslice(chains; dims = 2))
+    for (i, chains_slice) in enumerate(eachcol(chains))
         # check that no values are missing
         if any(x -> x === missing, chains_slice)
             rhat[i] = missing
