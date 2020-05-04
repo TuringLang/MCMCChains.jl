@@ -227,7 +227,7 @@ function ess_rhat(method, chains::AbstractArray{<:Union{Missing,Real},3};
 
     # define caches for mean and variance
     U = typeof(zero(eltype(chains)) / 1)
-    T = eltype(chains) >: Missing ? Union{Missing,U} : U
+    T = promote_type(eltype(chains), typeof(zero(eltype(chains)) / 1))
     chain_mean = Array{T}(undef, 1, nchains)
     chain_var = Array{T}(undef, nchains)
     samples = Array{T}(undef, niter, nchains)
