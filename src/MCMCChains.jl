@@ -5,6 +5,7 @@ const axes = Base.axes
 using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat, AbstractChains
+using Compat
 using Distributions
 using RecipesBase
 using SpecialFunctions
