@@ -86,3 +86,19 @@ end
         @test ess_df[:,3] == rhat_array
     end
 end
+
+@testset "ESS and R̂ (single sample)" begin # check that issue #137 is fixed
+    val = rand(1, 5, 3)
+    chain = Chains(val, ["a", "b", "c", "d", "e"])
+
+    for method in (ESSMethod(), FFTESSMethod(), BDAESSMethod())
+        # analyze chain
+        ess_df = ess(chain; method = method)
+
+        # analyze array
+        ess_array, rhat_array = MCMCChains.ess_rhat(val; method = method)
+
+        @test ismissing(ess_df[:,2][1]) # since min(maxlag, niter - 1) = 0
+        @test ismissing(ess_df[:,3][1])
+    end
+end
