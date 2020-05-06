@@ -4,7 +4,7 @@ using AxisArrays
 const axes = Base.axes
 using AbstractFFTs
 import AbstractMCMC
-import AbstractMCMC: chainscat, AbstractChains
+import AbstractMCMC: chainscat
 using Compat
 using Distributions
 using RecipesBase
