@@ -136,7 +136,7 @@ function mean_autocorr(k::Int, cache::ESSCache)
     lastrange = (k + 1):niter
     @inbounds for i in 1:nchains
         # increment unnormalized correlation estimates
-        if eltype(samples) isa LinearAlgebra.BlasReal
+        if eltype(samples) isa BlasReal
             # call into BLAS if possible
             s += dot(samples, firstrange, samples, lastrange) / var[i]
             firstrange = firstrange .+ niter
