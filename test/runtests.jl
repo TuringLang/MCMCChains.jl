@@ -1,6 +1,9 @@
 using Test
 
 @testset "MCMCChains" begin
+    # run tests for effective sample size
+    include("ess_tests.jl")
+
     # run plotting tests
     println("Plotting")
     @time include("plot_test.jl")

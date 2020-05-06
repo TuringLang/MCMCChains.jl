@@ -219,137 +219,17 @@ function quantile(
     )
 end
 
-"""
-	  ess(chn::Chains[;	sections, kwargs...])
-
-Compute the effective sample size (ESS) of a chain.
-
-More information can be found in the Gelman et al. (2014) book "Bayesian Data Analysis", or
-in [this article](https://arxiv.org/abs/1903.08008).
-"""
-function ess(
-    chains::Chains;
-    sections = _default_sections(chains),
-    kwargs...
-)
-    # Subset the chain.
-    _chains = Chains(chains, _clean_sections(chains, sections))
-
-    # Compute the ESS.
-    nt = merge((parameters = names(_chains),), ess(_chains.value.data; kwargs...))
-
-	  return ChainDataFrame("ESS", nt)
-end
-
-function ess(
-    chn::AbstractArray{<:Union{Real,Missing},3};
-    maxlag = 250
-)
-    n, nparams, n_chain_orig = size(chn)
-
-	# Split the chains.
-	parameter_vec = Vector(undef, nparams)
-    midpoint = Int32(floor(size(chn, 1) / 2))
-    for i in 1:nparams
-		parameter_vec[i] = []
-		for j in 1:n_chain_orig
-            c1 = vec(cskip(chn[1:midpoint, i, j]))
-            c2 = vec(cskip(chn[midpoint+1:end, i, j]))
-            n = min(n, length(c1), length(c2))
-            push!(parameter_vec[i], c1, c2)
-		end
-	end
-
-    # Misc allocations.
-    m = n_chain_orig * 2
-    maxlag = min(maxlag, n-1)
-    lags = 0:maxlag
-
-    # Preallocate B, W, varhat, and Rhat vectors for each param.
-    B = Vector(undef, nparams)
-    W = Vector(undef, nparams)
-    varhat = Vector(undef, nparams)
-    Rhat = Vector{Float64}(undef, nparams)
-
-    # calculate B, W, varhat, and Rhat for each param.
-    for i in 1:nparams
-		draw = parameter_vec[i]
-        allchain = mean(vcat([d for d in draw]...))
-        eachchain = [mean(draw[j]) for j in 1:m]
-        s = [sum((draw[j] .- eachchain[j]).^2) / (n-1) for j in 1:m]
-        B[i] = (n / (m - 1)) * sum((eachchain .- allchain).^2)
-        W[i] = sum(s) / m
-        varhat[i] = (n-1)/n * W[i] + (B[i] / n)
-        Rhat[i] = sqrt(varhat[i] / W[i])
-    end
-
-	V = Vector(undef, nparams)
-    ρ = Vector(undef, nparams)
-    for p in eachindex(V)
-        V[p] = Vector(undef, length(lags))
-		ρ[p] = Vector(undef, length(lags))
-    end
-
-    # Calculate ρ
-    c_autocor = Vector(undef, nparams)
-    for i in 1:nparams
-        c_autocor[i] = [0.0]
-    end
-
-    for t in eachindex(lags)
-        lag = lags[t]
-        range1 = lag+1:n
-        range2 = 1:(n-lag)
-        for i in 1:nparams
-            draw = parameter_vec[i]
-            z = [draw[j][range1] .- draw[j][range2] for j in 1:m]
-			z = sum([zi .^ 2 for zi in z])
-            V[i][t] = 1 / (m * (n-lag)) * sum(z)
-            autocors = [_autocorrelation(draw[j], lag) for j in 1:m]
-			ρ[i][t] = 1 - V[i][t] / (2 * varhat[i])
-        end
-    end
-
-	# Find first odd positive integer where ρ[p][T+1] + ρ[p][T+2] is negative
-    P = Vector(undef, nparams)
-    ess = Vector{Float64}(undef, nparams)
-	for i in 1:nparams
-        big_P = 0.0
-		ρ_val = Float64.(ρ[i])
-
-        # Big P.
-        P[i] = Float64[ρ_val[1]]
-        k = tprime = 1
-        for tprime in 1:Int(floor((length(lags)/2 - 1)))
-            sumvals = ρ_val[2*tprime] + ρ_val[2*tprime+1]
-            push!(P[i], sumvals)
-            k = tprime
-            
-            if sumvals < 0
-                break
-            end
-        end
-
-        # Create monotone.
-        P_monotone = [min(P[i][t], P[i][1:t]...) for t in 1:length(P[i])]
-
-        ess[i] = (n*m) / (-1 + 2*sum(P_monotone))
-    end
-
-    return (ess = ess, rhat = Rhat)
-end
-
-# this function is sourced from https://github.com/tpapp/MCMCDiagnostics.jl/blob/master/src/MCMCDiagnostics.jl
-function _autocorrelation(x::AbstractVector, k::Integer, v = var(x), kwargs...)
-    x1 = @view(x[1:(end-k)])
-    x2 = @view(x[(1+k):end])
-    V = sum((x1 .- x2).^2) / length(x1)
-    1 - V / (2*v)
-end
 
 """
-    summarystats(chains[;
-                 sections, append_chains = true, maxlag = 250, etype = :bm, kwargs...])
+    function summarystats(
+        chains;
+        sections = _default_sections(chains),
+        append_chains= true,
+        method::AbstractESSMethod = ESSMethod(),
+        maxlag = 250,
+        etype = :bm,
+        kwargs...
+    )
 
 Compute the mean, standard deviation, naive standard error, Monte Carlo standard error,
 and effective sample size for each parameter in the chain.
@@ -357,12 +237,13 @@ and effective sample size for each parameter in the chain.
 Setting `append_chains=false` will return a vector of dataframes containing the summary
 statistics for each chain.
 
-The remaining keyword arguments are passed to the `msce` function.
+When estimating the effective sample size, autocorrelations are computed for at most `maxlag` lags.
 """
 function summarystats(
     chains::Chains;
     sections = _default_sections(chains),
     append_chains::Bool = true,
+    method::AbstractESSMethod = ESSMethod(),
     maxlag = 250,
     etype = :bm,
     kwargs...
@@ -379,8 +260,8 @@ function summarystats(
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
-    # Caluclate ESS separately.
-    ess_df = ess(_chains; sections = nothing, maxlag = maxlag)
+    # Calculate ESS separately.
+    ess_df = ess(_chains; sections = nothing, method = method, maxlag = maxlag)
 
     # Summarize.
     summary_df = summarize(

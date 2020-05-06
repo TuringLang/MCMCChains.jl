@@ -2,9 +2,10 @@ module MCMCChains
 
 using AxisArrays
 const axes = Base.axes
-
+using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat
+using Compat
 using Distributions
 using RecipesBase
 using SpecialFunctions
@@ -17,10 +18,10 @@ import Tables
 import TableTraits
 import IteratorInterfaceExtensions
 
-using LinearAlgebra: diag
+using LinearAlgebra: diag, dot, BlasReal
 import Serialization: serialize, deserialize
 import Random
-import Statistics: std, cor, mean, var
+import Statistics: std, cor, mean, var, mean!
 
 export Chains, chains, chainscat
 export setrange, resetrange
@@ -33,6 +34,8 @@ export summarize
 # Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export hpd, ess
+
+export ESSMethod, FFTESSMethod, BDAESSMethod
 
 """
     Chains
@@ -55,6 +58,7 @@ end
 include("utils.jl")
 include("chains.jl")
 include("constructors.jl")
+include("ess.jl")
 include("summarize.jl")
 include("discretediag.jl")
 include("fileio.jl")
