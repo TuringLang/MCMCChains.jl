@@ -225,6 +225,7 @@ end
         chains;
         sections = _default_sections(chains),
         append_chains= true,
+        method::AbstractESSMethod = ESSMethod(),
         maxlag = 250,
         etype = :bm,
         kwargs...
