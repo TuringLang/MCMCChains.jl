@@ -82,7 +82,7 @@ function rafterydiag(
     data = [[vals[k][:, i] for i in 1:5] for k in 1:m]
 
     # Obtain names of parameters.
-    names_of_params = names(chn)
+    names_of_params = names(c)
 
     # Compute data frames.
     colnames = (:Thinning, Symbol("Burn-in"), :Total, :Nmin, Symbol("Dependence Factor"))

@@ -61,7 +61,7 @@ function heideldiag(chn::Chains;
     data = [[vals[k][:, i] for i in 1:6] for k in 1:m]
 
     # Obtain names of parameters.
-    names_of_params = names(chn)
+    names_of_params = names(c)
 
     # Compute data frames.
     colnames = (Symbol("Burn-in"), :Stationarity, Symbol("p-value"), :Mean, :Halfwidth,

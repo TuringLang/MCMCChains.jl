@@ -41,7 +41,7 @@ function gewekediag(chn::Chains; first::Real=0.1, last::Real=0.5,
     end
 
     # Obtain names of parameters.
-    names_of_params = names(chn)
+    names_of_params = names(c)
 
     # Compute data frames.
     vector_of_df = [
