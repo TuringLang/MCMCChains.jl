@@ -183,10 +183,10 @@ function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
 end
 
 function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
-    labels = [:upper, :lower]
-    u(x) = _hpd(x, alpha=alpha)[1]
-    l(x) = _hpd(x, alpha=alpha)[2]
-    return summarize(chn, u, l; name = "HPD", func_names = labels, kwargs...)
+    labels = [:lower, :upper]
+    l(x) = _hpd(x, alpha=alpha)[1]
+    u(x) = _hpd(x, alpha=alpha)[2]
+    return summarize(chn, l, u; name = "HPD", func_names = labels, kwargs...)
 end
 
 """

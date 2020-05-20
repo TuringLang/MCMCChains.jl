@@ -106,6 +106,9 @@ end
 
     @test hpd(chn) isa ChainDataFrame
     @test hpd(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    result = hpd(chn)
+    @test all(result.nt.upper .> result.nt.lower)
 end
 
 @testset "vector of vectors" begin
