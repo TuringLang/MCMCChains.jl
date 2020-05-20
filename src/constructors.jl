@@ -19,59 +19,32 @@ function sort_sections(chn::Chains)
 end
 
 """
+    Array(chains[, sections;
+          append_chains = true, remove_missing_union = true])
 
-# Array
+Construct an `Array` from a chain.
 
-Array constructor from a Chains object. Returns 3 dimensionsal
-array or an Array of 2 dimensional Arrays. If only a single parameter is selected for
-inclusion, a dimension is dropped in both cases, as is e.g. required by cde(), etc.
+Returns 3 dimensionsal array or an Array of 2 dimensional Arrays. If only a single parameter
+is selected for inclusion, a dimension is dropped in both cases, as is e.g. required by
+cde(), etc.
 
-### Method
-```julia
-  Array(
-    chn::Chains,
-    sections::Vector{Symbol};
-    append_chains::Bool,
-    remove_missing_union::Bool
-  )
-```
+# Examples
 
-### Required arguments
-```julia
-* `chn` : Chains object to convert to an Array
-```
-
-### Optional arguments
-```julia
-* `sections = Symbol[]` : Sections from the Chains object to be included
-* `append_chains = true`  : Append chains into a single column
-* `remove_missing_union = true`  : Convert Union{Missing, Real} to Float64
-```
-
-### Examples
-```julia
 * `Array(chns)` : Array with chain values are appended
-* `Array(chns[:par])` : Array with selected parameter chain values are appended
-* `Array(chns, [:parameters])`  : Array with only :parameter section
+* `Array(chns[[:par]])` : Array with selected parameter chain values are appended
+* `Array(chns, :parameters)`  : Array with only :parameter section
 * `Array(chns, [:parameters, :internals])`  : Array includes multiple sections
-* `Array(chns, append_chains=false)`  : Array of Arrays, each chain in its own array
-* `Array(chns, remove_missing_union=false)` : No conversion to remove missing values
-```
-
+* `Array(chns; append_chains=false)`  : Array of Arrays, each chain in its own array
+* `Array(chns; remove_missing_union=false)` : No conversion to remove missing values
 """
-function Base.Array(chain::Chains,
-    sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters];
+function Base.Array(
+    chains::Chains,
+    sections = _default_sections(chains);
     append_chains = true,
-    remove_missing_union = true,
-    showall = false,
-    sorted = false
+    remove_missing_union = true
 )
-    sections = showall ? keys(chain.name_map) : sections
-    if remove_missing_union
-        chn = concretize(Chains(chain, sections))
-    else
-        chn = Chains(chain, sections)
-    end
+    _chains = Chains(chains, _clean_sections(chains, sections))
+    chn = remove_missing_union ? concretize(_chains) : _chains
 
     nparams = size(chn, 2)
     if append_chains

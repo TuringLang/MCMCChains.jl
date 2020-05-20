@@ -4,7 +4,7 @@ using MCMCChains, Test
     @testset "Smoke tests" begin
         val = convert(Array{Union{Missing,Real},3}, rand(1000, 5, 5))
         chns = Chains(val, ["a", "b", "c", "d", "e"], [:internals => ["d", "e"]])
-        chns_a = chns[:a]
+        chns_a = chns[[:a]]
 
         # Config.
         main_params = 3
@@ -43,18 +43,17 @@ using MCMCChains, Test
             Vector{Vector{Union{Missing,Real}}}
 
         # type inference (needs concretely typed Chains)
-        @test_broken @inferred MCMCChains.to_matrix(chns)
-        @test_broken @inferred MCMCChains.to_vector(chns)
-        @test_broken @inferred MCMCChains.to_vector_of_vectors(chns_a)
-        @test_broken @inferred MCMCChains.to_vector_of_matrices(chns)
+        @inferred MCMCChains.to_matrix(chns)
+        @inferred MCMCChains.to_vector(chns)
+        @inferred MCMCChains.to_vector_of_vectors(chns_a)
+        @inferred MCMCChains.to_vector_of_matrices(chns)
 
         # sizes
         @test size(Array(chns)) == (d*c, main_params)
         @test size(Array(chns, [:parameters])) == (d*c, main_params)
         @test size(Array(chns, [:parameters])) == size(Array(chns))
         @test size(Array(chns, [:parameters, :internals])) == (d*c, total_params)
-        @test size(Array(chns, [:parameters, :internals])) ==
-            size(Array(chns, showall=true))
+        @test size(Array(chns, [:parameters, :internals])) == size(Array(chns, nothing))
         @test size(Array(chns, [:internals])) == (d*c, internal_params)
         @test size(Array(chns, append_chains=true)) == (d*c, main_params)
         @test size(Array(chns, append_chains=false)) == (5,)
@@ -62,7 +61,7 @@ using MCMCChains, Test
         @test size(Array(chns)) == (d*c, main_params)
         @test size(Array(chns, append_chains=false)) == (5,)
         @test size(Array(chns, append_chains=false)[1]) == (d, main_params)
-        @test size(Array(chns[:b])) == (d*c,)
+        @test size(Array(chns[[:b]])) == (d*c,)
 
         Array(chns)
         Array(chns[:a])

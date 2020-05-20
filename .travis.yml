@@ -4,6 +4,7 @@ language: julia
 branches:
   only:
     - master
+    - dev
 
 os:
   - linux

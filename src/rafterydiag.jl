@@ -52,29 +52,26 @@ function rafterydiag(
 end
 
 function rafterydiag(
-                     chn::Chains;
-                     q = 0.025,
-                     r = 0.005,
-                     s = 0.95,
-                     eps = 0.001,
-                     showall=false,
-                     sorted=true,
-                     digits=4,
-                     sections::Union{Symbol, Vector{Symbol}}=Symbol[:parameters]
-                    )
-    c = showall ?
-        sorted ? sort(chn) : chn :
-        Chains(chn, _clean_sections(chn, sections); sorted=sorted)
-    _, p, m = size(c.value)
+    chains::Chains;
+    sections = _default_sections(chains),
+    q = 0.025,
+    r = 0.005,
+    s = 0.95,
+    eps = 0.001
+)
+    # Subset the chain.
+    _chains = Chains(chains, _clean_sections(chains, sections))
+
+    _, p, m = size(_chains.value)
     vals = [Array{Float64}(undef, p, 5) for i in 1:m]
     for j in 1:p, k in 1:m
         vals[k][j, :] = rafterydiag(
-            collect(skipmissing(c.value[:, j, k])),
+            collect(skipmissing(_chains.value[:, j, k])),
             q=q,
             r=r,
             s=s,
             eps=eps,
-            range=range(c)
+            range=range(_chains)
         )
     end
 
@@ -82,15 +79,14 @@ function rafterydiag(
     data = [[vals[k][:, i] for i in 1:5] for k in 1:m]
 
     # Obtain names of parameters.
-    names_of_params = names(chn)
+    names_of_params = names(_chains)
 
     # Compute data frames.
-    colnames = (:Thinning, Symbol("Burn-in"), :Total, :Nmin, Symbol("Dependence Factor"))
     vector_of_df = [
         ChainDataFrame(
             "Raftery and Lewis Diagnostic - Chain $i",
-            (parameters = names_of_params, zip(colnames, columns)...);
-            digits = digits
+            (parameters = names_of_params, thinning = columns[1], burnin = columns[2],
+             total = columns[3], nmin = columns[4], dependencefactor = columns[5])
         )
         for (i, columns) in enumerate(data)
     ]
