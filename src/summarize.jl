@@ -28,7 +28,8 @@ function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
     formatter = PrettyTables.ft_printf("%.$(digits)f")
 
     println(io, df.name)
-    PrettyTables.pretty_table(io, df.nt; formatter = formatter, tf = PrettyTables.borderless)
+    PrettyTables.pretty_table(io, df.nt;
+                              formatters = formatter, tf = PrettyTables.borderless)
 end
 
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
