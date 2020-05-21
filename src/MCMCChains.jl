@@ -2,9 +2,10 @@ module MCMCChains
 
 using AxisArrays
 const axes = Base.axes
-
+using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat
+using Compat
 using Distributions
 using RecipesBase
 using SpecialFunctions
@@ -12,14 +13,20 @@ using Formatting
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
 using Requires
+import PrettyTables
+import Tables
+import TableTraits
+import IteratorInterfaceExtensions
 
-using LinearAlgebra: diag
+using LinearAlgebra: diag, dot, BlasReal
 import Serialization: serialize, deserialize
 import Random
-import Statistics: std, cor, mean, var
+import Statistics: std, cor, mean, var, mean!
 
 export Chains, chains, chainscat
-export set_section, get_params, sections, sort_sections, setinfo, set_names
+export setrange, resetrange
+export set_section, get_params, sections, sort_sections, setinfo
+export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
@@ -27,6 +34,8 @@ export summarize
 # Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export hpd, ess
+
+export ESSMethod, FFTESSMethod, BDAESSMethod
 
 """
     Chains
@@ -39,8 +48,8 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{T,L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
-    value::AxisArray{T,3}
+struct Chains{T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
+    value::A
     logevidence::L
     name_map::K
     info::I
@@ -49,6 +58,7 @@ end
 include("utils.jl")
 include("chains.jl")
 include("constructors.jl")
+include("ess.jl")
 include("summarize.jl")
 include("discretediag.jl")
 include("fileio.jl")
@@ -61,9 +71,6 @@ include("sampling.jl")
 include("stats.jl")
 include("modelstats.jl")
 include("plot.jl")
-
-function __init__()
-    @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" include("dataframes-compat.jl")
-end
+include("tables.jl")
 
 end # module

@@ -1,3 +1,40 @@
+@generated function initnamemap(namemap::NamedTuple{names}) where names
+    if :parameters in names
+        :((; $((:($name = Symbol.(namemap.$name)) for name in names)...)))
+    else
+        :((; parameters = Symbol[],
+          $((:($name = Symbol.(namemap.$name)) for name in names)...)))
+    end
+end
+
+# fallback
+function initnamemap(namemap)
+    (; parameters = Symbol[], (Symbol(key) => Symbol.(values) for (key, values) in namemap)...)
+end
+
+"""
+    namemap_intersect(namemap::NamedTuple, names)
+
+This is an internal function used to remove values from a name map
+and return a new name map.
+"""
+@generated function namemap_intersect(namemap::NamedTuple{sections}, names) where {sections}
+    :((; $((:($section = intersect(namemap.$section, names)) for section in sections)...)))
+end
+
+"""
+    string2symbol(x)
+
+Convert strings to symbols.
+
+If `x isa String`, the corresponding `Symbol` is returned. Likewise, if
+`x isa AbstractVector{String}`, the corresponding vector of `Symbol`s is returned. In all
+other cases, input `x` is returned.
+"""
+string2symbol(x) = x
+string2symbol(x::String) = Symbol(x)
+string2symbol(x::AbstractVector{String}) = Symbol.(x)
+
 #################### Mathematical Operators ####################
 function cummean(x::AbstractArray)
     return mapslices(cummean, x, dims = 1)

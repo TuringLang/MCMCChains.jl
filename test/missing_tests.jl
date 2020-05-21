@@ -15,24 +15,6 @@ end
     @test MCMCChains.cummean(x) == [1., 1., 2., 2.]
 end
 
-@testset "stats" begin
-    Random.seed!(1234)
-    chn = Chains(randn(1000, 2, 2))
-
-    # Call describe without missing values.
-    describe(devnull, chn; showall=true)
-    s1, s2 = summarystats(chn), quantile(chn)
-
-    # Add missing values.
-    chn_m = Chains(cat(chn.value, ones(1, 2, 2) .* missing, dims = 1))
-
-    # Call describe with missing values.
-    describe(devnull, chn_m; showall=true)
-    m1, m2 = summarystats(chn_m), quantile(chn_m)
-
-    @test testdiff(s1, m1)
-end
-
 @testset "diagnostic functions" begin
     Random.seed!(1234)
     nchains = 2
@@ -41,8 +23,9 @@ end
     # Add missing values.
     chn_m = Chains(cat(chn.value, ones(1, 2, nchains) .* missing, dims = 1))
 
-    # Currently we only check if diag. functions throw an assertion if a value is missing.
-    @test_throws AssertionError gelmandiag(chn_m)
+    # Currently we only check if diagnostic functions throw a `MethodError` if the
+    # element type of the chain is not a subtype of `Real`.
+    @test_throws MethodError gelmandiag(chn_m)
 
     gw_1 = gewekediag(chn)
     gw_2 = gewekediag(chn_m)
@@ -57,5 +40,5 @@ end
         @test testdiff(rf_1, rf_2)
     end
 
-    @test_throws AssertionError discretediag(chn_m)
+    @test_throws MethodError discretediag(chn_m)
 end

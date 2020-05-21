@@ -37,7 +37,9 @@ Summarize parameters | Summarize chains
 ![p1](https://user-images.githubusercontent.com/7974003/45822242-f0009180-bce2-11e8-8fa0-a97c8732400f.png)  |  ![p2](https://user-images.githubusercontent.com/7974003/45822249-f131be80-bce2-11e8-8dd3-42db7d58abd9.png)
 
 ## Manual
+
 ### Chains type
+
 ```julia
 # construction of a Chains object with no names
 Chains(
@@ -48,11 +50,10 @@ Chains(
     info=NamedTuple(),
 )
 
-# construction of a chains object with new names
 Chains(
     val::AbstractArray{A,3},
-    parameter_names::Vector{String},
-    name_map = copy(DEFAULT_MAP);
+    parameter_names::AbstractVector,
+    name_map = (parameters = parameter_names,);
     start::Int=1,
     thin::Int=1,
     evidence = 0.0,
@@ -76,11 +77,14 @@ val = rand(500,5, 2)
 chn = Chains(val, ["a", "b", "c", "d", "e"])
 ```
 
-By default, parameters will be given the name `Parami`, where `i` is the parameter number.
+By default, parameters will be given the name `:param_i`, where `i` is the parameter
+number.
 
 ### Rename Parameters
-Parameter names can be changed with the function `set_names`, which accepts a `Chain` object and a `Dict` containing the mapping between
-old and new column names. Note that `set_names` creates a new `Chain` object because mutation is not supported.
+
+Parameter names can be changed with the function `replacenames`, which accepts a `Chains`
+object and pairs of old and new parameter names. Note that `replacenames` creates a new
+`Chains` object that shares the same underlying data.
 
 ```julia
 chn = Chains(
@@ -90,12 +94,17 @@ chn = Chains(
 )
 
 # Set "one" and "five" to uppercase.
-new_chain = set_names(chn,  Dict(["one" => "ONE", "five" => "FIVE"]))
+chn2 = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
+
+# Alternatively you can provide a dictionary.
+chn3 = replacenames(chn, Dict("two" => "TWO", "four" => "FOUR"))
 ```
 
 ### Sections
 
-Chains parameters are sorted into sections, which are types of parameters. By default, every chain contains a section called `:parameters`, which is where all values are assigned unless assigned elsewhere. Chains can be assigned a named map during construction:
+Chains parameters are sorted into sections that represent groups of parameters. By default,
+every chain contains a `:parameters` section, to which all unassigned parameters are
+assigned to. Chains can be assigned a named map during construction:
 
 ```julia
 chn = Chains(val,
@@ -103,7 +112,7 @@ chn = Chains(val,
   Dict(:internals => ["d", "e"]))
 ```
 
-Or through the `set_section` function, which returns a new `Chains` object (as `Chains` objects cannot be modified in place due to section map immutability):
+The `set_section` function returns a new `Chains` object:
 
 ```julia
 chn2 = set_section(chn, Dict(:internals => ["d", "e"]))
@@ -138,7 +147,23 @@ b 0.0001 0.2290 0.4972 0.7365 0.9998
 c 0.0004 0.2739 0.5137 0.7498 0.9997
 ```
 
-Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals` section by calling `describe(chn, sections=:internals)` or all variables with `describe(chn, showall=true)`. Most MCMCChains functions like `plot` or `gelmandiag` support the `section` and `showall` keyword arguments.
+Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals`
+section by calling `describe(chn; sections = :internals)` or all variables with
+`describe(chn; sections = nothing)`. Many functions such as `plot` or `gelmandiag`
+support the `sections` keyword argument.
+
+### Groups of parameters
+
+By convention, MCMCChains assumes that parameters with names of the form `"name[index]"`
+belong to one group of parameters called `:name`. You can access the names of all
+parameters in a `chain` that belong to the group `:name` by running
+```julia
+namesingroup(chain, :name)
+```
+If the chain contains a parameter of name `:name` it will be returned as well.
+
+The function `group(chain, :name)` returns a subset of the chain `chain` with all
+parameters in the group `:name`.
 
 ### The `get` Function
 
