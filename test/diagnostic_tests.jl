@@ -82,16 +82,31 @@ end
 end
 
 @testset "function tests" begin
+    tchain = Chains(rand(n_iter, n_name, n_chain), ["a", "b", "c"], Dict(:internals => ["c"]))
+
     # the following tests only check if the function calls work!
     @test MCMCChains.diag_all(rand(50, 2), :weiss, 1, 1, 1) != nothing
     @test MCMCChains.diag_all(rand(50, 2), :hangartner, 1, 1, 1) != nothing
     @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
     @test eltype(discretediag(chn_disc[:,2:2,:])) <: ChainDataFrame
-    @test typeof(gelmandiag(chn[:,1:1,:])) <: ChainDataFrame
-    @test eltype(gewekediag(chn[:,1:1,:])) <: ChainDataFrame
-    @test eltype(heideldiag(chn[:,1:1,:])) <: ChainDataFrame
-    @test eltype(rafterydiag(chn[:,1:1,:])) <: ChainDataFrame
+
+    gelman = gelmandiag(tchain)
+    geweke = gewekediag(tchain)
+    heidel = heideldiag(tchain)
+    raferty = rafterydiag(tchain)
+
+    # test raw return values
+    @test typeof(gelman) <: ChainDataFrame
+    @test typeof(geweke) <: Array{<:ChainDataFrame}
+    @test typeof(heidel) <: Array{<:ChainDataFrame}
+    @test typeof(raferty) <: Array{<:ChainDataFrame}
+
+    # test ChainDataFrame sizes
+    @test size(gelman) == (2,3)
+    @test size(geweke[1]) == (2,3)
+    @test size(heidel[1]) == (2,7)
+    @test size(raferty[1]) == (2,6)
 end
 
 @testset "stats tests" begin
