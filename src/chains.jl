@@ -438,16 +438,19 @@ function link(c::Chains)
 end
 
 ### Chains specific functions ###
-"""
-    sort(c::Chains)
 
-Returns a new column-sorted version of `c`, using natural sort order.
 """
-function Base.sort(c::Chains)
+    sort(c::Chains[; lt=NaturalSort.natural])
+
+Returns a new column-sorted version of `c`.
+
+By default the columns are sorted in natural sort order.
+"""
+function Base.sort(c::Chains; lt = NaturalSort.natural)
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
-    sorted = sort(unsorted, by = x -> string(x[2]), lt=natural)
+    sorted = sort(unsorted, by = x -> string(x[2]), lt=lt)
     new_axes = (v.axes[1], Axis{:var}([n for (_, n) in sorted]), v.axes[3])
     new_v = copy(v.data)
     for i in eachindex(sorted)
@@ -459,7 +462,7 @@ function Base.sort(c::Chains)
     # Sort the name map too:
     namemap = deepcopy(c.name_map)
     for names in namemap
-        sort!(names, by=string, lt=natural)
+        sort!(names, by=string, lt=lt)
     end
 
     return Chains(aa, c.logevidence, namemap, c.info)

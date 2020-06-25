@@ -13,6 +13,7 @@ using Formatting
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
 using Requires
+import NaturalSort
 import PrettyTables
 import Tables
 import TableTraits
