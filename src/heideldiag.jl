@@ -3,7 +3,7 @@
 function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
                              etype=:imse, start::Integer=1, args...)
   n = length(x)
-  delta = trunc(Int, 0.10 * n)
+  delta = max(1,trunc(Int, 0.10 * n))
   y = x[trunc(Int, n / 2):end]
   S0 = length(y) * mcse(y, etype; args...)^2
   i, pvalue, converged, ybar = 1, 1.0, false, NaN
@@ -21,6 +21,7 @@ function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
     end
     i += delta
   end
+
   halfwidth = sqrt(2.0) * erfinv(1.0 - alpha) * mcse(y, etype; args...)
   passed = halfwidth / abs(ybar) <= eps
   [i + start - 2, converged, pvalue, ybar, halfwidth, passed]
