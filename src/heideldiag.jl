@@ -21,7 +21,6 @@ function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
     end
     i += delta
   end
-
   halfwidth = sqrt(2.0) * erfinv(1.0 - alpha) * mcse(y, etype; args...)
   passed = halfwidth / abs(ybar) <= eps
   [i + start - 2, converged, pvalue, ybar, halfwidth, passed]
