@@ -2,6 +2,7 @@ using MCMCChains
 using Distributions
 
 using Random
+using Serialization
 using Test
 
 Random.seed!(20)
@@ -27,8 +28,12 @@ ProjDir = mktempdir()
     end
     chn1 = Chains(vals, ["m", "s"])
 
-    write(joinpath(ProjDir, "chn1.jls"), chn1)
-    chn2 = read(joinpath(ProjDir, "chn1.jls"), Chains)
+    # Julia 1.0 doesn't support `serialize(::AbstractString, value)`
+    # and `deserialize(::AbstractString)`
+    open(joinpath(ProjDir, "chn1.jls"), "w") do io
+        serialize(io, chn1)
+    end
+    chn2 = open(deserialize, joinpath(ProjDir, "chn1.jls"), "r")
 
     open(joinpath(ProjDir, "chn1.txt"), "w") do io
         describe(io, chn1);
