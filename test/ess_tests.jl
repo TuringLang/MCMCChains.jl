@@ -45,10 +45,8 @@ end
 
     # check that the estimates are reasonable
     @test all(x -> isapprox(x, 100_000; atol = 2_500), ess_standard)
+    @test all(x -> isapprox(x, 100_000; atol = 2_500), ess_bda)
     @test all(x -> isapprox(x, 1; atol = 0.1), rhat_standard)
-
-    @test count(x -> !isapprox(x, 100_000; atol = 2_500), ess_bda) == 7
-    @test all(x -> isapprox(x, 1; atol = 0.1), rhat_bda)
 
     # BDA method fluctuates more
     @test var(ess_standard) < var(ess_bda)
