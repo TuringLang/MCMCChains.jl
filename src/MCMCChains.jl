@@ -77,22 +77,22 @@ include("tables.jl")
 # deprecations
 # TODO: Remove dependency on Serialization if this deprecation is removed
 @static if VERSION < v"1.1"
-    Base.@deprecate Base.read(
+    Base.@deprecate read(
         f::AbstractString,
         ::Type{T}
     ) where {T<:Chains} open(Serialization.deserialize, f, "r") false
-    Base.@deprecate Base.write(
+    Base.@deprecate write(
         f::AbstractString,
         c::Chains
     ) open(f, "w") do io
         Serialization.serialize(io, c)
     end false
 else
-    Base.@deprecate Base.read(
+    Base.@deprecate read(
         f::AbstractString,
         ::Type{T}
     ) where {T<:Chains} Serialization.deserialize(f) false
-    Base.@deprecate Base.write(
+    Base.@deprecate write(
         f::AbstractString,
         c::Chains
     ) Serialization.serialize(f, c) false
