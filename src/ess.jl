@@ -100,9 +100,9 @@ function build_cache(::BDAESSMethod, samples::Matrix, var::Vector)
     return BDAESSCache(samples, var, mean(var))
 end
 
-update_cache!(cache::ESSCache) = nothing
+update!(cache::ESSCache) = nothing
 
-function update_cache!(cache::FFTESSCache)
+function update!(cache::FFTESSCache)
     # copy samples and add zero padding
     samples = cache.samples
     samples_cache = cache.samples_cache
@@ -126,7 +126,7 @@ function update_cache!(cache::FFTESSCache)
     nothing
 end
 
-function update_cache!(cache::BDAESSCache)
+function update!(cache::BDAESSCache)
     # recompute mean of within-chain variances
     cache.mean_chain_var = mean(cache.chain_var)
 
@@ -281,7 +281,7 @@ function ess_rhat(
         samples .-= chain_mean
 
         # update cache
-        update_cache!(esscache)
+        update!(esscache)
 
         # compute the first two autocorrelation estimates
         # by combining autocorrelation (or rather autocovariance) estimates of each chain
