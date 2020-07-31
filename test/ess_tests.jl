@@ -31,27 +31,30 @@ end
 @testset "ESS and R̂ (IID samples)" begin
     Random.seed!(20)
 
-    x = randn(10_000, 40, 10)
+    rawx = randn(10_000, 40, 10)
+
+    # Repeat tests with different scales
+    for scale in (1, 50, 100)
+        x = scale * rawx
+
+        ess_standard, rhat_standard = MCMCChains.ess_rhat(x)
+        ess_standard2, rhat_standard2 = MCMCChains.ess_rhat(x; method = ESSMethod())
+        ess_fft, rhat_fft = MCMCChains.ess_rhat(x; method = FFTESSMethod())
+        ess_bda, rhat_bda = MCMCChains.ess_rhat(x; method = BDAESSMethod())
     
-    ess_standard, rhat_standard = MCMCChains.ess_rhat(x)
-    ess_standard2, rhat_standard2 = MCMCChains.ess_rhat(x; method = ESSMethod())
-    ess_fft, rhat_fft = MCMCChains.ess_rhat(x; method = FFTESSMethod())
-    ess_bda, rhat_bda = MCMCChains.ess_rhat(x; method = BDAESSMethod())
-    
-    # check that we get (roughly) the same results
-    @test ess_standard == ess_standard2
-    @test ess_standard ≈ ess_fft
-    @test rhat_standard == rhat_standard2 == rhat_fft == rhat_bda
+        # check that we get (roughly) the same results
+        @test ess_standard == ess_standard2
+        @test ess_standard ≈ ess_fft
+        @test rhat_standard == rhat_standard2 == rhat_fft == rhat_bda
 
-    # check that the estimates are reasonable
-    @test all(x -> isapprox(x, 100_000; atol = 2_500), ess_standard)
-    @test all(x -> isapprox(x, 1; atol = 0.1), rhat_standard)
+        # check that the estimates are reasonable
+        @test all(x -> isapprox(x, 100_000; atol = 2_500), ess_standard)
+        @test all(x -> isapprox(x, 100_000; atol = 2_500), ess_bda)
+        @test all(x -> isapprox(x, 1; atol = 0.1), rhat_standard)
 
-    @test count(x -> !isapprox(x, 100_000; atol = 2_500), ess_bda) == 7
-    @test all(x -> isapprox(x, 1; atol = 0.1), rhat_bda)
-
-    # BDA method fluctuates more
-    @test var(ess_standard) < var(ess_bda)
+        # BDA method fluctuates more
+        @test var(ess_standard) < var(ess_bda)
+    end
 end
 
 @testset "ESS and R̂ (identical samples)" begin
