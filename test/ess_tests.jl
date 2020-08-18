@@ -8,7 +8,7 @@ using Test
 @testset "copy and split" begin
     # check a matrix with even number of rows
     x = rand(50, 20)
-    
+
     # check incompatible sizes
     @test_throws DimensionMismatch MCMCChains.copyto_split!(similar(x, 25, 20), x)
     @test_throws DimensionMismatch MCMCChains.copyto_split!(similar(x, 50, 40), x)
@@ -41,15 +41,15 @@ end
         ess_standard2, rhat_standard2 = MCMCChains.ess_rhat(x; method = ESSMethod())
         ess_fft, rhat_fft = MCMCChains.ess_rhat(x; method = FFTESSMethod())
         ess_bda, rhat_bda = MCMCChains.ess_rhat(x; method = BDAESSMethod())
-    
+
         # check that we get (roughly) the same results
         @test ess_standard == ess_standard2
         @test ess_standard ≈ ess_fft
         @test rhat_standard == rhat_standard2 == rhat_fft == rhat_bda
 
         # check that the estimates are reasonable
-        @test all(x -> isapprox(x, 100_000; atol = 2_500), ess_standard)
-        @test all(x -> isapprox(x, 100_000; atol = 2_500), ess_bda)
+        @test all(x -> isapprox(x, 100_000; atol = 5_000), ess_standard)
+        @test all(x -> isapprox(x, 100_000; atol = 5_000), ess_bda)
         @test all(x -> isapprox(x, 1; atol = 0.1), rhat_standard)
 
         # BDA method fluctuates more
