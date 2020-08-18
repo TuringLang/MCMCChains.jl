@@ -1,6 +1,5 @@
 # MCMCChains.jl
 [![Build Status](https://travis-ci.org/TuringLang/MCMCChains.jl.svg?branch=master)](https://travis-ci.org/TuringLang/MCMCChains.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/1av8osv0099nqw8m/branch/master?svg=true)](https://ci.appveyor.com/project/trappmartin/mcmcchain-jl/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/TuringLang/MCMCChains.jl/badge.svg?branch=master)](https://coveralls.io/github/TuringLang/MCMCChains.jl?branch=master)
 
 Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations.
@@ -120,35 +119,38 @@ chn2 = set_section(chn, Dict(:internals => ["d", "e"]))
 
 Any parameters not assigned will be placed into `:parameters`.
 
-Calling `show(chn)` provides the following output:
+Calling `display(chn)` provides the following output:
 
 ```julia
-Log evidence      = 0.0
+Chains MCMC chain (500×5×2 Array{Float64,3}):
+
 Iterations        = 1:500
 Thinning interval = 1
-Chains            = 1, 2, 3
+Chains            = 1, 2
 Samples per chain = 500
-parameters        = c, b, a
+parameters        = a, b, c
+internals         = d, e
 
-Empirical Posterior Estimates
-────────────────────────────────────
-parameters
-   Mean    SD   Naive SE  MCSE  ESS
-a 0.5169 0.2920   0.0075 0.0066 500
-b 0.4891 0.2929   0.0076 0.0070 500
-c 0.5102 0.2840   0.0073 0.0068 500
+Summary Statistics
+  parameters      mean       std   naive_se      mcse         ess      rhat
+      Symbol   Float64   Float64    Float64   Float64     Float64   Float64
+
+           a    0.4930    0.2906     0.0092    0.0095   1044.0585    1.0030
+           b    0.5148    0.2875     0.0091    0.0087    992.1013    0.9984
+           c    0.5046    0.2899     0.0092    0.0087    922.6449    0.9987
 
 Quantiles
-────────────────────────────────────
-parameters
-   2.5%   25.0%  50.0%  75.0%  97.5%
-a 0.0001 0.2620 0.5314 0.7774 0.9978
-b 0.0001 0.2290 0.4972 0.7365 0.9998
-c 0.0004 0.2739 0.5137 0.7498 0.9997
+  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
+      Symbol   Float64   Float64   Float64   Float64   Float64
+
+           a    0.0232    0.2405    0.4836    0.7530    0.9687
+           b    0.0176    0.2781    0.5289    0.7605    0.9742
+           c    0.0258    0.2493    0.5071    0.7537    0.9754
 ```
 
-Note that only `a`, `b`, and `c` are being shown. You can explicity show the `:internals`
-section by calling `describe(chn; sections = :internals)` or all variables with
+Note that only `a`, `b`, and `c` are being shown. You can explicity retrieve
+an array of the summary statistics and the quantiles of the `:internals` section by
+calling `describe(chn; sections = :internals)`, or of all variables with
 `describe(chn; sections = nothing)`. Many functions such as `plot` or `gelmandiag`
 support the `sections` keyword argument.
 
