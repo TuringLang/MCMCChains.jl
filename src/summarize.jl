@@ -106,7 +106,7 @@ end
 function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
     T = promote_eltype_namedtuple_tail(c.nt)
     arr = Array{T, 2}(undef, c.nrows, c.ncols - 1)
-    
+
     for (i, k) in enumerate(Iterators.drop(keys(c.nt), 1))
         arr[:, i] = c.nt[k]
     end
@@ -114,8 +114,7 @@ function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
     return arr
 end
 
-Base.convert(::Type{Array{ChainDataFrame,1}}, cs::Array{ChainDataFrame,1}) = cs
-function Base.convert(::Type{Array}, cs::Array{C,1}) where C<:ChainDataFrame
+function Base.convert(::Type{Array}, cs::Array{ChainDataFrame{T},1}) where T<:NamedTuple
     return mapreduce((x, y) -> cat(x, y; dims = Val(3)), cs) do c
         reshape(convert(Array, c), Val(3))
     end
