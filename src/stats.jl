@@ -248,13 +248,8 @@ function summarystats(
     etype = :bm,
     kwargs...
 )
-    # Make some functions.
-    df_mcse(x) = length(x) < 200 ?
-        missing :
-        mcse(cskip(x), etype; kwargs...)
-
     # Store everything.
-    funs = [mean∘cskip, std∘cskip, sem∘cskip, df_mcse]
+    funs = [mean∘cskip, std∘cskip, sem∘cskip, x -> mcse(cskip(x), etype; kwargs...)]
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Subset the chain.
