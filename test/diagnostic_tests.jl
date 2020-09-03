@@ -1,3 +1,4 @@
+using XGBoost
 using MCMCChains
 using AbstractMCMC: AbstractChains
 using Test
@@ -142,4 +143,23 @@ end
 
     @test names(chn_sorted) == Symbol.([1, 2, 3])
     @test names(chn_unsorted) == Symbol.([2, 1, 3])
+end
+
+@testset "R-star test" begin
+
+    niter = 4000
+    nparams = 2
+    nchains = 4
+
+    # some sample experiment results
+    val = randn(niter, nparams, nchains) .+ [1, 2]'
+    val = hcat(val, rand(1:2, niter, 1, nchains))
+
+    # construct a Chains object
+    chn = Chains(val, start = 1, thin = 2)
+
+    # compute r star statistic using 1k iterations of training
+    R = Rstar(chn)
+
+    @test R ≈ 1.0 atol=0.1
 end

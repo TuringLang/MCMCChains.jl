@@ -36,6 +36,11 @@ export summarize
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export hpd, ess
 
+@init @require XGBoost="009559a3-9522-5dbb-924b-0b6ed2b22bb9" @eval begin
+    include("rstar.jl")
+    export Rstar
+end
+
 export ESSMethod, FFTESSMethod, BDAESSMethod
 
 """
