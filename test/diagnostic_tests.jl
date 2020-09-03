@@ -159,7 +159,7 @@ end
     chn = Chains(val, start = 1, thin = 2)
 
     # compute r star statistic using 1k iterations of training
-    R = Rstar(chn)
+    R = rstar(chn)
 
     @test R ≈ 1.0 atol=0.1
 end
