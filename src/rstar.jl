@@ -1,4 +1,4 @@
-import XGBoost
+using .XGBoost
 """
     rstar(chains::Chains; subset = 0.8, niter = 1_000, eta = 0.5, XGBoostParams)
     rstar(chains::Chains, iterations::Int; subset = 0.8, niter = 1_000, eta = 0.5, XGBoostParams)
