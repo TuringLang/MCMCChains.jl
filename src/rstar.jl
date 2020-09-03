@@ -43,9 +43,9 @@ function rstar(x::AbstractMatrix, y::AbstractVector, nchains::Int, iterations::I
     Ntrain = round(Int, N*subset)
     Ntest = N - Ntrain
 
-    ids = Random.shuffle(collect(1:N))
-    train_ids = ids[1:Ntrain]
-    test_ids = ids[(Ntrain+1):end]
+    ids = Random.randperm(N)
+    train_ids = view(ids, 1:Ntrain)
+    test_ids = view(ids, (Ntrain+1):N)
 
     @assert length(test_ids) == Ntest
 
