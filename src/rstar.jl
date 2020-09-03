@@ -80,7 +80,7 @@ function rstar(x::AbstractMatrix, y::AbstractVector, nchains::Int, iterations::I
 end
 
 function rstar(chn::Chains, iterations; kwargs...)
-    nchains = length(chains(chn))
+    nchains = size(chn, 3)
     @assert nchains > 1
 
     # collect data
