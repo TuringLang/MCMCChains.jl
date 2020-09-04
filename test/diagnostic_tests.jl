@@ -83,7 +83,7 @@ end
 end
 
 @testset "function tests" begin
-    tchain = Chains(rand(n_iter, n_name, n_chain), ["a", "b", "c"], Dict(:internals => ["c"]))
+    tchain = Chains(rand(niter, nparams, nchains), ["a", "b", "c"], Dict(:internals => ["c"]))
 
     # the following tests only check if the function calls work!
     @test MCMCChains.diag_all(rand(50, 2), :weiss, 1, 1, 1) != nothing
@@ -138,7 +138,7 @@ end
 end
 
 @testset "sorting" begin
-    chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"])
+    chn_unsorted = Chains(rand(100, nparams, 1), ["2", "1", "3"])
     chn_sorted = sort(chn_unsorted)
 
     @test names(chn_sorted) == Symbol.([1, 2, 3])
@@ -147,19 +147,21 @@ end
 
 @testset "R-star test" begin
 
-    niter = 4000
-    nparams = 2
-    nchains = 4
+    # Compute R* statistic for a mixed chain.
+    R = rstar(chn, opt_iter=100)
+    # Resulting R value should be close to one, i.e. the classifier does not perform better than random guessing.
+    @test first(R) ≈ 1.0 atol=0.1
 
-    # some sample experiment results
-    val = randn(niter, nparams, nchains) .+ [1, 2]'
-    val = hcat(val, rand(1:2, niter, 1, nchains))
+    # Compute multiple R* values for a mixed chain.
+    R = rstar(chn, iterations=10, opt_iter=100)
+    # The resulting average should be close to one.
+    @test mean(R) ≈ 1.0 atol=0.1
 
-    # construct a Chains object
-    chn = Chains(val, start = 1, thin = 2)
-
-    # compute r star statistic using 1k iterations of training
-    R = rstar(chn)
-
-    @test R ≈ 1.0 atol=0.1
+    # Compute R* statistic for a non-mixed chain.
+    val = hcat(sin.(1:niter), cos.(1:niter))
+    val = cat(val, hcat(cos.(1:niter)*100, sin.(1:niter)*100), dims=3)
+    chn_notmixed = Chains(val)
+    # Restuling R value should be close to two, i.e. the classifier should be able to learn an almost perfect decision boundary between chains.
+    R = rstar(chn_notmixed, opt_iter=100)
+    @test first(R) ≈ 2 atol=0.1
 end
