@@ -56,7 +56,7 @@ function rstar(rng::Random.AbstractRNG, x::AbstractMatrix, y::AbstractVector, nc
                       objective = mode, num_class = nchains,
                       xgboostparams...)
 
-    Rstats = ones(iterations) * Inf
+    Rstats = fill(Inf, iterations)
     ytest = view(y, test_ids)
     for i in 1:iterations
         # predict labels for "test" data
