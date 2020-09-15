@@ -1,4 +1,3 @@
-using XGBoost
 using MCMCChains
 using AbstractMCMC: AbstractChains
 using Test
@@ -145,23 +144,3 @@ end
     @test names(chn_unsorted) == Symbol.([2, 1, 3])
 end
 
-@testset "R-star test" begin
-
-    # Compute R* statistic for a mixed chain.
-    R = rstar(chn, opt_iter=100)
-    # Resulting R value should be close to one, i.e. the classifier does not perform better than random guessing.
-    @test first(R) ≈ 1.0 atol=0.1
-
-    # Compute multiple R* values for a mixed chain.
-    R = rstar(chn, iterations=10, opt_iter=100)
-    # The resulting average should be close to one.
-    @test mean(R) ≈ 1.0 atol=0.1
-
-    # Compute R* statistic for a non-mixed chain.
-    val = hcat(sin.(1:niter), cos.(1:niter))
-    val = cat(val, hcat(cos.(1:niter)*100, sin.(1:niter)*100), dims=3)
-    chn_notmixed = Chains(val)
-    # Restuling R value should be close to two, i.e. the classifier should be able to learn an almost perfect decision boundary between chains.
-    R = rstar(chn_notmixed, opt_iter=100)
-    @test first(R) ≈ 2 atol=0.1
-end
