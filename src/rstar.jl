@@ -121,5 +121,5 @@ function rstar(rng::Random.AbstractRNG, chn::Chains, model::MLJModelInterface.Su
     x = RStarTable(chn)
     y = repeat(chains(chn); inner = size(chn,1))
 
-    return rstar(Random.default_rng(), model, x, y; kwargs...)
+    return rstar(rng, model, x, y; kwargs...)
 end
