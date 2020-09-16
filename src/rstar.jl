@@ -39,7 +39,7 @@ function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x
     size(x,1) != length(y) && throw(DimensionMismatch())
     iterations >= 1 && ArgumentError("Number of iterations has to be positive!")
 
-    if iterations > 1 && classif isa Deterministic
+    if iterations > 1 && classif isa MLJModelInterface.Deterministic
         @warn("Classifier is not a probabilistic classifier but number of iterations is > 1.")
     elseif iterations == 1 && classif isa Probabilistic
         @warn("Classifier is probabilistic but number of iterations is equal to one.")
