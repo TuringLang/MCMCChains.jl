@@ -81,7 +81,7 @@ function rstar(rng::Random.AbstractRNG, chn::Chains, model::MLJModelInterface.Su
 end
 
 function rstar_score(rng::Random.AbstractRNG, classif::MLJModelInterface.Probabilistic, fitresult, xtest, ytest)
-    pred = get.(rand.(rng, MLJModelInterface.predict(classif, fitresult, xtest)))
+    pred = get.(rand.(Ref(rng), MLJModelInterface.predict(classif, fitresult, xtest)))
     return mean(((p,y),) -> p == y, zip(pred, ytest))
 end
 
