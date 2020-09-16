@@ -110,7 +110,7 @@ function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x
 end
 
 function rstar(chn::Chains, model::MLJModelInterface.Supervised; kwargs...)
-    return rstar(Random.default_rng(), chn, model; kwargs...)
+    return rstar(Random.GLOBAL_RNG, chn, model; kwargs...)
 end
 
 function rstar(rng::Random.AbstractRNG, chn::Chains, model::MLJModelInterface.Supervised; kwargs...)
