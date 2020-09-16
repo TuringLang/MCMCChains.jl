@@ -10,15 +10,6 @@ chn = Chains(val, colnames, Dict(:internals => internal_colnames))
 
 model = @load XGBoostClassifier()
 
-@testset "RStarTable test" begin
-    t = MCMCChains.RStarTable(chn)
-
-    @test Tables.istable(typeof(t))
-    @test Tables.columnaccess(typeof(t))
-    @test Tables.matrix(t) === t.data
-    @test t[[1,2]] isa MCMCChains.RStarTable
-end
-
 @testset "R star test" begin
 
     # Compute R* statistic for a mixed chain.
