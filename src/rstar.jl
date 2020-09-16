@@ -1,9 +1,10 @@
 """
-    rstar(chains::Chains, model::MLJModelInterface.Supervised; subset = 0.8, iterations = 10, verbosity = 0)
-    rstar(rng::Random.AbstractRNG, chains::Chains, model::MLJModelInterface.Supervised; subset = 0.8, iterations = 10, verbosity = 0)
-    rstar(rng::Random.AbstractRNG, model::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector; subset = 0.8, iterations = 10, verbosity = 0)
+    rstar([rng ,]model, chains::Chains; kwargs...)
+    rstar([rng ,]model, x::AbstractMatrix, y::AbstractVector; kwargs...)
 
-Compute the R* statistic for convergence diagnostic of MCMC. This implementation is an adaption of Algorithm 1 & 2, described in [Lambert & Vehtari]. Note that the correctness of the statistic depends on the convergence of the classifier used internally in the statistic. You can track if the training of the classifier converged by inspection of the printed RMSE values from the XGBoost backend. To adjust the number of iterations used to train the classifier set `niter` accordingly.
+Compute the R* convergence diagnostic of MCMC.
+
+This implementation is an adaption of Algorithm 1 & 2, described in [Lambert & Vehtari]. Note that the correctness of the statistic depends on the convergence of the classifier used internally in the statistic. You can track if the training of the classifier converged by inspection of the printed RMSE values from the XGBoost backend. To adjust the number of iterations used to train the classifier set `niter` accordingly.
 
 # Keyword Arguments
 * `subset = 0.8` ... Subset used to train the classifier, i.e. 0.8 implies 80% of the samples are used.
