@@ -225,6 +225,32 @@ heideldiag(c::Chains; alpha=0.05, eps=0.1, etype=:imse)
 rafterydiag(c::Chains; q=0.025, r=0.005, s=0.95, eps=0.001)
 ```
 
+#### Rstar Diagnostic
+Rstar diagnostic described in [https://arxiv.org/pdf/2003.07900.pdf](https://arxiv.org/pdf/2003.07900.pdf).
+Note that the use requires MLJ and MLJModels to be installed.
+
+Usage:
+
+```julia
+using MLJ, MLJModels
+
+chn ... # sampling results of multiple chains
+
+# select classifier used to compute the diagnostic
+classif = @load XGBoostClassifier
+
+# estimate diagnostic
+Rs = rstar(chn, classif)
+R = mean(Rs)
+
+# visualize distribution
+using Plots
+histogram(Rs)
+```
+
+See `? rstar` for more details.
+
+
 ### Model Selection
 #### Deviance Information Criterion (DIC)
 ```julia

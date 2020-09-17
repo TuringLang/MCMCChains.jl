@@ -1,8 +1,14 @@
 using Test
 
 @testset "MCMCChains" begin
+
+    # run tests related to rstar statistic
+    println("Rstar")
+    @time include("rstar_tests.jl")
+
     # run tests for effective sample size
-    include("ess_tests.jl")
+    println("ESS")
+    @time include("ess_tests.jl")
 
     # run plotting tests
     println("Plotting")

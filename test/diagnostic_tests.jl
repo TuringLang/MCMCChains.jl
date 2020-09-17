@@ -82,7 +82,7 @@ end
 end
 
 @testset "function tests" begin
-    tchain = Chains(rand(n_iter, n_name, n_chain), ["a", "b", "c"], Dict(:internals => ["c"]))
+    tchain = Chains(rand(niter, nparams, nchains), ["a", "b", "c"], Dict(:internals => ["c"]))
 
     # the following tests only check if the function calls work!
     @test MCMCChains.diag_all(rand(50, 2), :weiss, 1, 1, 1) != nothing
@@ -137,9 +137,10 @@ end
 end
 
 @testset "sorting" begin
-    chn_unsorted = Chains(rand(100,3,1), ["2", "1", "3"])
+    chn_unsorted = Chains(rand(100, nparams, 1), ["2", "1", "3"])
     chn_sorted = sort(chn_unsorted)
 
     @test names(chn_sorted) == Symbol.([1, 2, 3])
     @test names(chn_unsorted) == Symbol.([2, 1, 3])
 end
+
