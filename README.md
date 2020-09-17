@@ -240,7 +240,7 @@ chn ... # sampling results of multiple chains
 classif = @load XGBoostClassifier
 
 # estimate diagnostic
-Rs = rstar(chn, classif)
+Rs = rstar(classif, chn)
 R = mean(Rs)
 
 # visualize distribution
