@@ -3,7 +3,8 @@ using Tables
 using MLJ, MLJModels
 using Test
 
-val = rand(1000, 8, 4)
+N = 1000
+val = rand(N, 8, 4)
 colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
 internal_colnames = ["c", "d", "e", "f", "g", "h"]
 chn = Chains(val, colnames, Dict(:internals => internal_colnames))
@@ -13,7 +14,7 @@ classif = @load XGBoostClassifier()
 @testset "R star test" begin
 
     # Compute R* statistic for a mixed chain.
-    R = rstar(classif, randn(100, 2), rand(1:2, 100))
+    R = rstar(classif, randn(N,2), rand(1:3,N))
 
     # Resulting R value should be close to one, i.e. the classifier does not perform better than random guessing.
     @test mean(R) ≈ 1 atol=0.1
