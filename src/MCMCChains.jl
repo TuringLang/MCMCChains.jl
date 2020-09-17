@@ -12,7 +12,7 @@ using SpecialFunctions
 using Formatting
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
-using Requires
+import MLJModelInterface
 import NaturalSort
 import PrettyTables
 import Tables
@@ -35,6 +35,8 @@ export summarize
 # Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export hpd, ess
+
+export rstar
 
 export ESSMethod, FFTESSMethod, BDAESSMethod
 
@@ -73,6 +75,7 @@ include("stats.jl")
 include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
+include("rstar.jl")
 
 # deprecations
 # TODO: Remove dependency on Serialization if this deprecation is removed
