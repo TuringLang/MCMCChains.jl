@@ -1,6 +1,6 @@
 """
-    rstar([rng ,]model, chains::Chains; kwargs...)
-    rstar([rng ,]model, x::AbstractMatrix, y::AbstractVector; kwargs...)
+    rstar([rng ,] classif::Supervised, chains::Chains; kwargs...)
+    rstar([rng ,] classif::Supervised, x::AbstractMatrix, y::AbstractVector; kwargs...)
 
 Compute the R* convergence diagnostic of MCMC.
 
@@ -13,16 +13,16 @@ This implementation is an adaption of Algorithm 1 & 2, described in [Lambert & V
 
 # Usage
 
-```julia-repl
+```julia
 using MLJ, MLJModels
 # You need to load MLJBase and the respective package your are using for classification first.
 
-# Select a classification model to compute the Rstar statistic.
+# Select a classifier to compute the Rstar statistic.
 # For example the XGBoost classifier.
-model = @load XGBoostClassifier()
+classif = @load XGBoostClassifier()
 
 # Compute 100 samples of the R* statistic using sampling from according to the prediction probabilities.
-Rs = rstar(chn, model, iterations = 20)
+Rs = rstar(classif, chn, iterations = 20)
 
 # estimate Rstar
 R = mean(Rs)
@@ -66,11 +66,15 @@ function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x
     return Rstats
 end
 
-function rstar(chn::Chains, model::MLJModelInterface.Supervised; kwargs...)
-    return rstar(Random.GLOBAL_RNG, chn, model; kwargs...)
+function rstar(classif::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector{Int}; kwargs...)
+    rstar(Random.GLOBAL_RNG, classif, x, y; kwargs...)
 end
 
-function rstar(rng::Random.AbstractRNG, chn::Chains, model::MLJModelInterface.Supervised; kwargs...)
+function rstar(classif::MLJModelInterface.Supervised, chn::Chains; kwargs...)
+    return rstar(Random.GLOBAL_RNG, classif, chn; kwargs...)
+end
+
+function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, chn::Chains; kwargs...)
     nchains = size(chn, 3)
     nchains <= 1 && throw(DimensionMismatch())
 
@@ -78,7 +82,7 @@ function rstar(rng::Random.AbstractRNG, chn::Chains, model::MLJModelInterface.Su
     x = Array(chn)
     y = repeat(chains(chn); inner = size(chn,1))
 
-    return rstar(rng, model, x, y; kwargs...)
+    return rstar(rng, classif, x, y; kwargs...)
 end
 
 function rstar_score(rng::Random.AbstractRNG, classif::MLJModelInterface.Probabilistic, fitresult, xtest, ytest)
