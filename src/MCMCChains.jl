@@ -20,8 +20,8 @@ import TableTraits
 import IteratorInterfaceExtensions
 
 using LinearAlgebra: diag, dot, BlasReal
-import Serialization: serialize, deserialize
 import Random
+import Serialization
 import Statistics: std, cor, mean, var, mean!
 
 export Chains, chains, chainscat
@@ -76,5 +76,29 @@ include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
+
+# deprecations
+# TODO: Remove dependency on Serialization if this deprecation is removed
+@static if VERSION < v"1.1"
+    Base.@deprecate read(
+        f::AbstractString,
+        ::Type{T}
+    ) where {T<:Chains} open(Serialization.deserialize, f, "r") false
+    Base.@deprecate write(
+        f::AbstractString,
+        c::Chains
+    ) open(f, "w") do io
+        Serialization.serialize(io, c)
+    end false
+else
+    Base.@deprecate read(
+        f::AbstractString,
+        ::Type{T}
+    ) where {T<:Chains} Serialization.deserialize(f) false
+    Base.@deprecate write(
+        f::AbstractString,
+        c::Chains
+    ) Serialization.serialize(f, c) false
+end
 
 end # module

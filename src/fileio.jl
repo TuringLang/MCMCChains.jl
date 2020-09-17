@@ -1,16 +1,5 @@
 #################### File I/O ####################
 
-function Base.read(name::AbstractString, ::Type{T}) where {T<:Chains}
-  c = open(deserialize, name, "r")
-  isa(c, T) || throw(TypeError(:open, "read(\"$name\", $T)", T, c))
-  return c
-end
-
-function Base.write(name::AbstractString, c::Chains)
-  open(file -> serialize(file, c), name, "w")
-end
-
-
 function readcoda(output::AbstractString, index::AbstractString)
   out = readdlm(output, Any)
   ind = readdlm(index, Any)

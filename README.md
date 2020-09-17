@@ -298,14 +298,20 @@ corner(c::Chains, [:A, :B])
 
 ### Saving and Loading Chains
 
-Chains objects can be serialized and deserialized using `read` and `write`.
+Like any Julia object, a `Chains` object can be saved using `Serialization.serialize`
+and loaded back by `Serialization.deserialize` as identical as possible.
+Note, however, that in general
+[this process will not work if the reading and writing are done by different versions of Julia, or an instance of Julia with a different system image](https://docs.julialang.org/en/v1/stdlib/Serialization/#Serialization-1).
+You might want to consider [JLSO](https://github.com/invenia/JLSO.jl) for saving metadata
+such as the Julia version and the versions of all packages installed as well.
 
 ```julia
 # Save a chain.
-write("chain-file.jls", chn)
+using Serialization
+serialize("chain-file.jls", chn)
 
 # Read a chain.
-chn2 = read("chain-file.jls", Chains)
+chn2 = deserialize("chain-file.jls")
 ```
 
 ### Exporting Chains
