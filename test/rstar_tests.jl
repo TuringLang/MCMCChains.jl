@@ -17,13 +17,13 @@ classif = @load XGBoostClassifier()
     R = rstar(classif, randn(N,2), rand(1:3,N))
 
     # Resulting R value should be close to one, i.e. the classifier does not perform better than random guessing.
-    @test mean(R) ≈ 1 atol=0.1
+    @test mean(R) ≈ 1 atol=0.15
 
     # Compute R* statistic for a mixed chain.
     R = rstar(classif, chn)
 
     # Resulting R value should be close to one, i.e. the classifier does not perform better than random guessing.
-    @test mean(R) ≈ 1 atol=0.1
+    @test mean(R) ≈ 1 atol=0.15
 
     # Compute R* statistic for a non-mixed chain.
     niter = 1000
