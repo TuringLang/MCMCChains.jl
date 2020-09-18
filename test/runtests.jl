@@ -1,4 +1,8 @@
 using Test
+using Random
+
+# set seed for all testsets
+Random.seed!(0)
 
 @testset "MCMCChains" begin
 
