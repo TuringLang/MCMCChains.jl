@@ -79,23 +79,27 @@ include("rstar.jl")
 
 # deprecations
 # TODO: Remove dependency on Serialization if this deprecation is removed
+# somehow `@deprecate` doesn't work with qualified function names,
+# so we use the following hack
+const _read = Base.read
+const _write = Base.write
 @static if VERSION < v"1.1"
-    Base.@deprecate read(
+    Base.@deprecate _read(
         f::AbstractString,
         ::Type{T}
     ) where {T<:Chains} open(Serialization.deserialize, f, "r") false
-    Base.@deprecate write(
+    Base.@deprecate _write(
         f::AbstractString,
         c::Chains
     ) open(f, "w") do io
         Serialization.serialize(io, c)
     end false
 else
-    Base.@deprecate read(
+    Base.@deprecate _read(
         f::AbstractString,
         ::Type{T}
     ) where {T<:Chains} Serialization.deserialize(f) false
-    Base.@deprecate write(
+    Base.@deprecate _write(
         f::AbstractString,
         c::Chains
     ) Serialization.serialize(f, c) false
