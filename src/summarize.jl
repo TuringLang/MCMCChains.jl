@@ -39,7 +39,7 @@ function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, g
     convert(Array, getindex(c, c.nt[:parameters][s], collect(keys(c.nt))[g]))
 end
 
-Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}}, g::Colon) = getindex(c, s)
+Base.getindex(c::ChainDataFrame, s::Vector{Symbol}, ::Colon) = getindex(c, s)
 function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}})
     getindex(c, s, collect(keys(c.nt)))
 end
