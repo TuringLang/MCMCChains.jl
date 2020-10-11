@@ -14,6 +14,11 @@ using Statistics: std
     @test 0.48 < parm_df[:a, :mean][1] < 0.52
     @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess, :rhat]
 
+    # Indexing tests
+    @test convert(Array, parm_df[:a, :]) == convert(Array, parm_df[:a])
+    @test parm_df[:a, :][:,:parameters] == :a
+    @test parm_df[[:a, :b], :][:,:parameters] == [:a, :b]
+
     all_sections_df = summarize(chns, sections=[:parameters, :internals])
     @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
     @test size(all_sections_df) == (8, 7)
