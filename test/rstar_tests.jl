@@ -1,6 +1,6 @@
 using MCMCChains
 using Tables
-using MLJ, MLJModels
+using MLJModels
 using Test
 
 N = 1000
