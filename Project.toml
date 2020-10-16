@@ -31,7 +31,7 @@ AbstractFFTs = "0.5"
 AbstractMCMC = "0.4, 0.5, 1.0, 2.0"
 AxisArrays = "0.4.2"
 Compat = "2.2, 3"
-Distributions = "0.21, 0.22, 0.23"
+Distributions = "0.21, 0.22, 0.23, 0.24"
 Formatting = "0.4"
 IteratorInterfaceExtensions = "0.1.1, 1"
 MLJModelInterface = "0.3.5"
@@ -49,7 +49,6 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 KernelDensity = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
 MLJModels = "d491faf4-2d78-11e9-2867-c94bc002c0b7"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
@@ -57,4 +56,4 @@ UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 XGBoost = "009559a3-9522-5dbb-924b-0b6ed2b22bb9"
 
 [targets]
-test = ["DataFrames", "FFTW", "KernelDensity", "Logging", "StatsPlots", "Test", "UnicodePlots", "MLJ", "MLJModels", "XGBoost"]
+test = ["DataFrames", "FFTW", "KernelDensity", "Logging", "StatsPlots", "Test", "UnicodePlots", "MLJModels", "XGBoost"]
