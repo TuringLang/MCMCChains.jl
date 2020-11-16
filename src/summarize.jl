@@ -28,8 +28,12 @@ function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
     formatter = PrettyTables.ft_printf("%.$(digits)f")
 
     println(io, df.name)
-    PrettyTables.pretty_table(io, df.nt;
-                              formatters = formatter, tf = PrettyTables.borderless)
+    # Support for PrettyTables 0.9 (`borderless`) and 0.10 (`tf_borderless`)
+    PrettyTables.pretty_table(
+        io, df.nt;
+        formatters = formatter,
+        tf = isdefined(PrettyTables, :borderless) ? PrettyTables.borderless : PrettyTables.tf_borderless,
+    )
 end
 
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
