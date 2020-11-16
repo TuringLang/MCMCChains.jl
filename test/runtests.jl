@@ -1,3 +1,4 @@
+using Pkg
 using Test
 using Random
 
@@ -5,10 +6,14 @@ using Random
 Random.seed!(0)
 
 @testset "MCMCChains" begin
-
-    # run tests related to rstar statistic
-    println("Rstar")
-    @time include("rstar_tests.jl")
+    # MLJXGBoostInterface requires Julia >= 1.3
+    if VERSION >= v"1.3"
+        # run tests related to rstar statistic
+        println("Rstar")
+        Pkg.add("MLJModels")
+        Pkg.add("MLJXGBoostInterface")
+        @time include("rstar_tests.jl")
+    end
 
     # run tests for effective sample size
     println("ESS")
