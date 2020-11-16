@@ -11,6 +11,12 @@ using Statistics: std
 
     parm_df = summarize(chns, sections=[:parameters])
 
+    # check that display of ChainDataFrame does not error
+    println("compact display:")
+    show(stdout, parm_df)
+    println("\nverbose display:")
+    show(stdout, "text/plain", parm_df)
+
     @test 0.48 < parm_df[:a, :mean][1] < 0.52
     @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess, :rhat]
 
