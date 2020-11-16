@@ -1,6 +1,6 @@
 using MCMCChains
-using Tables
 using MLJModels
+using MLJXGBoostInterface
 using Test
 
 N = 1000
@@ -12,7 +12,6 @@ chn = Chains(val, colnames, Dict(:internals => internal_colnames))
 classif = @load XGBoostClassifier()
 
 @testset "R star test" begin
-
     # Compute R* statistic for a mixed chain.
     R = rstar(classif, randn(N,2), rand(1:3,N))
 
