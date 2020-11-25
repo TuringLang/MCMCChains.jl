@@ -31,7 +31,7 @@ Random.seed!(20)
     @test round(mean(get1.m[1])) ≈ 1.0
     @test round(mean(get1.m[10])) ≈ 10.0
     @test length(get2.s) == n_samples
-    @test collect(keys(get2)) == [:m, :s]
+    @test sort(collect(keys(get2))) == [:m, :s]
 
     getall = get_params(chn)
     @test getall == get(chn, section = [:parameters])
