@@ -38,6 +38,8 @@ export hpd, ess
 
 export rstar
 
+export check_diagnostics, check_div, check_n_eff, check_rhat
+
 export ESSMethod, FFTESSMethod, BDAESSMethod
 
 """
@@ -76,6 +78,7 @@ include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
+include("check_diagnostics.jl")
 
 # deprecations
 # TODO: Remove dependency on Serialization if this deprecation is removed
