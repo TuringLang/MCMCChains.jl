@@ -2,6 +2,13 @@ using Pkg
 using Test
 using Random
 
+# Activate test environment on older Julia versions
+if VERSION < v"1.2"
+    Pkg.activate(@__DIR__)
+    Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
+    Pkg.instantiate()
+end
+
 # set seed for all testsets
 Random.seed!(0)
 
