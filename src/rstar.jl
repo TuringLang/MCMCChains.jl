@@ -19,10 +19,10 @@ verbosity level.
 ```julia
 # Load an MLJ classifier to compute the statistic, e.g., the XGBoost classifier.
 using MLJModels
-@load XGBoostClassifier
+XGBoost = @load XGBoostClassifier
 
 # Compute 20 samples of the R* statistic using sampling from according to the prediction probabilities.
-Rs = rstar(XGBoostClassifier(), chn; iterations=20)
+Rs = rstar(XGBoost(), chn; iterations=20)
 
 # estimate Rstar
 R = mean(Rs)
