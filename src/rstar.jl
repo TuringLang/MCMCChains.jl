@@ -1,10 +1,13 @@
 """
-    rstar([rng ,] classif::Supervised, chains::Chains; kwargs...)
-    rstar([rng ,] classif::Supervised, x::AbstractMatrix, y::AbstractVector; kwargs...)
+    rstar([rng ,]classif::Supervised, chains::Chains; kwargs...)
+    rstar([rng ,]classif::Supervised, x::AbstractMatrix, y::AbstractVector; kwargs...)
 
 Compute the R* convergence diagnostic of MCMC.
 
-This implementation is an adaption of Algorithm 1 & 2, described in [Lambert & Vehtari]. Note that the correctness of the statistic depends on the convergence of the classifier used internally in the statistic. You can track if the training of the classifier converged by inspection of the printed RMSE values from the XGBoost backend. To adjust the number of iterations used to train the classifier set `niter` accordingly.
+This implementation is an adaption of Algorithm 1 & 2, described in [^LambertVehtari]. Note
+that the correctness of the statistic depends on the convergence of the classifier used
+internally in the statistic. You can inspect the training of the classifier by adjusting the
+verbosity level.
 
 # Keyword Arguments
 * `subset = 0.8` ... Subset used to train the classifier, i.e. 0.8 implies 80% of the samples are used.
@@ -14,15 +17,12 @@ This implementation is an adaption of Algorithm 1 & 2, described in [Lambert & V
 # Usage
 
 ```julia
-using MLJ, MLJModels
-# You need to load MLJBase and the respective package your are using for classification first.
+# Load an MLJ classifier to compute the statistic, e.g., the XGBoost classifier.
+using MLJModels
+@load XGBoostClassifier
 
-# Select a classifier to compute the Rstar statistic.
-# For example the XGBoost classifier.
-classif = @load XGBoostClassifier()
-
-# Compute 100 samples of the R* statistic using sampling from according to the prediction probabilities.
-Rs = rstar(classif, chn, iterations = 20)
+# Compute 20 samples of the R* statistic using sampling from according to the prediction probabilities.
+Rs = rstar(XGBoostClassifier(), chn; iterations=20)
 
 # estimate Rstar
 R = mean(Rs)
@@ -31,8 +31,7 @@ R = mean(Rs)
 histogram(Rs)
 ```
 
-## References:
-[Lambert & Vehtari] Ben Lambert and Aki Vehtari. "R∗: A robust MCMC convergence diagnostic with uncertainty using gradient-boostined machines." Arxiv 2020.
+[^LambertVehtari]: Ben Lambert and Aki Vehtari. "R∗: A robust MCMC convergence diagnostic with uncertainty using gradient-boostined machines." Arxiv 2020.
 """
 function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector{Int}; iterations = 10, subset = 0.8, verbosity = 0)
 

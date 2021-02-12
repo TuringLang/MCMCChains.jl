@@ -1,6 +1,5 @@
 using MCMCChains
 using MLJModels
-using MLJXGBoostInterface
 using Test
 
 N = 1000
@@ -9,7 +8,8 @@ colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
 internal_colnames = ["c", "d", "e", "f", "g", "h"]
 chn = Chains(val, colnames, Dict(:internals => internal_colnames))
 
-classif = @load XGBoostClassifier()
+@load XGBoostClassifier
+classif = XGBoostClassifier()
 
 @testset "R star test" begin
     # Compute R* statistic for a mixed chain.
