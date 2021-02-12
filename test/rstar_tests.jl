@@ -8,8 +8,8 @@ colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
 internal_colnames = ["c", "d", "e", "f", "g", "h"]
 chn = Chains(val, colnames, Dict(:internals => internal_colnames))
 
-@load XGBoostClassifier
-classif = XGBoostClassifier()
+XGBoost = @load XGBoostClassifier
+classif = XGBoost()
 
 @testset "R star test" begin
     # Compute R* statistic for a mixed chain.
