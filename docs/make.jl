@@ -9,7 +9,13 @@ makedocs(
     sitename = name,
     pages = [
         "MCMCChains" => "index.md",
-        "Diagnostics" => "diagnostics.md"
+        "Plotting" => [
+            "StatsPlots.jl" => "statsplots.md"
+        ],
+        "API" => [
+            "Chains" => "chains.md",
+            "Diagnostics" => "diagnostics.md"
+        ]
     ],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true")
 )

@@ -1,5 +1,6 @@
 # Diagnostics
 
+
 ```@autodocs
 Modules = [MCMCChains]
 Pages = [

@@ -366,6 +366,12 @@ function discretediag_sub(c::Chains, frac::Real, method::Symbol,
 
 end
 
+"""
+    discretediag(chains::Chains{<:Real}; sections, frac, method, nsim)
+
+Discrete diagnostic where `method` can be 
+`[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]`.
+"""
 function discretediag(
     chains::Chains{<:Real};
     sections = _default_sections(chains),

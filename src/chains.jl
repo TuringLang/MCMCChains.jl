@@ -86,6 +86,15 @@ Chains(chain::Chains, ::Nothing) = chain
 
 # Groups of parameters
 
+"""
+    namesingroup(chains::Chains, sym::Union{String,Symbol})
+
+Returns the names of all parameters in a chain that belong to the group `:name`.
+This is based on the MCMCChains convention that parameters with names of the form `name[index]` 
+belong to one group of parameters called `:name`.
+
+If the chain contains a parameter of name `:name` it will be returned as well.
+"""
 namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
 function namesingroup(chains::Chains, sym::Symbol)
     # Start by looking up the symbols in the list of parameter names.
@@ -95,6 +104,11 @@ function namesingroup(chains::Chains, sym::Symbol)
     return names_of_params[indices]
 end
 
+"""
+    group(chains::Chains, name::Union{String,Symbol}
+
+Returns a subset of the chain chain with all parameters in the group `:name`.
+"""
 function group(chains::Chains, name::Union{String,Symbol})
     return chains[:, namesingroup(chains, name), :]
 end

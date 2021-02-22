@@ -1,48 +1,9 @@
-```@setup tutorial
-using StatsPlots; gr()
-Plots.reset_defaults()
-```
-
 # MCMCChains
 
 Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations.
 
 ## Example
 
-The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
-
-```@example tutorial
-using MCMCChains
-using StatsPlots
-
-theme(:ggplot2)
-
-# Define the experiment
-n_iter = 500
-n_name = 3
-n_chain = 2
-
-# experiment results
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
-val = hcat(val, rand(1:2, n_iter, 1, n_chain))
-
-# construct a Chains object
-chn = Chains(val)
-
-# visualize the MCMC simulation results
-plot(chn)
-plot!(size=(840, 600), fmt = :png) # hide
-```
-
-\
-
-```@example tutorial
-p2 = plot(chn, colordim = :parameter)
-plot!(size=(840, 400), fmt = :png) # hide
-```
-
-\
-Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
 ## Manual
 
@@ -85,7 +46,7 @@ val = rand(500, 5, 2)
 chn = Chains(val, ["a", "b", "c", "d", "e"])
 ```
 
-By default, parameters will be given the name `:param_[i]`, where `i` is the parameter
+By default, parameters will be given the name `:param_i`, where `i` is the parameter
 number.
 
 ### Rename Parameters
@@ -98,8 +59,9 @@ replacenames
 
 ### Sections
 
-Chains parameters are sorted into sections that represent groups of parameters. By default,
-every chain contains a `:parameters` section, to which all unassigned parameters are
+Chains parameters are sorted into sections that represent groups of parameters, see 
+[`MCMCChains.group`](@ref).
+By default, every chain contains a `:parameters` section, to which all unassigned parameters are
 assigned to. Chains can be assigned a named map during construction:
 
 ```julia
@@ -108,7 +70,7 @@ chn = Chains(val,
   Dict(:internals => ["d", "e"]))
 ```
 
-The `set_section` function returns a new `Chains` object:
+The [`MCMCChains.set_section`](@ref) function returns a new `Chains` object:
 
 ```julia
 chn2 = set_section(chn, Dict(:internals => ["d", "e"]))
@@ -153,20 +115,15 @@ support the `sections` keyword argument.
 
 ### Groups of parameters
 
-By convention, MCMCChains assumes that parameters with names of the form `"name[index]"`
-belong to one group of parameters called `:name`. You can access the names of all
-parameters in a `chain` that belong to the group `:name` by running
-```julia
-namesingroup(chain, :name)
-```
-If the chain contains a parameter of name `:name` it will be returned as well.
+You can access the names of all parameters in a `chain` that belong to the group `:name` by using
 
-The function `group(chain, :name)` returns a subset of the chain `chain` with all
-parameters in the group `:name`.
+```@docs
+namesingroup
+```
 
 ### The `get` Function
 
-MCMCChains provides a `get` function designed to make it easier to access parameters `get(chn, :P)` returns a `NamedTuple` which can be easy to work with.
+MCMCChains provides a [`get`](@ref) function designed to make it easier to access parameters `get(chn, :P)` returns a `NamedTuple` which can be easy to work with.
 
 Example:
 
@@ -177,45 +134,24 @@ chn = Chains(val, ["P[1]", "P[2]", "P[3]", "D", "E"]);
 
 x = get(chn, :P)
 ```
+where
+```@example get
+keys(x)
+```
 
 You can access each of the `P[. . .]` variables by indexing, using `x.P[1]`, `x.P[2]`, or `x.P[3]`.
 
-`get` also accepts vectors of things to retrieve, so you can call `x = get(chn, [:P, :D])`. This looks like
+`get` also accepts vectors of things to retrieve, so you can call 
 
-```julia
-(P = (Union{Missing, Float64}[0.349592; 0.671365; … ; 0.319421; 0.298899], Union{Missing, Float64}[0.757884; 0.720212; … ; 0.471339; 0.5381], Union{Missing, Float64}[0.240626; 0.987814; … ; 0.980652; 0.149805]),
- D = Union{Missing, Float64}[0.648963; 0.0419232; … ; 0.54666; 0.746028])
+```@example get
+x = get(chn, [:P, :D])
+```
+where
+```@example get
+keys(x)
 ```
 
 Note that `x.P` is a tuple which has to be indexed by the relevant index, while `x.D` is just a vector.
-
-### Convergence Diagnostics functions
-#### Discrete Diagnostic
-Options for method are  `[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]`
-
-```julia
-discretediag(c::Chains; frac=0.3, method=:weiss, nsim=1000)
-```
-
-#### Gelman, Rubin, and Brooks Diagnostics
-```julia
-gelmandiag(c::Chains; alpha=0.05, mpsrf=false, transform=false)
-```
-
-#### Geweke Diagnostic
-```julia
-gewekediag(c::Chains; first=0.1, last=0.5, etype=:imse)
-```
-
-#### Heidelberger and Welch Diagnostics
-```julia
-heideldiag(c::Chains; alpha=0.05, eps=0.1, etype=:imse)
-```
-
-#### Raftery and Lewis Diagnostic
-```julia
-rafterydiag(c::Chains; q=0.025, r=0.005, s=0.95, eps=0.001)
-```
 
 #### Rstar Diagnostic
 Rstar diagnostic described in [https://arxiv.org/pdf/2003.07900.pdf](https://arxiv.org/pdf/2003.07900.pdf).
@@ -256,36 +192,6 @@ lpfun = function f(chain::Chains) # function to compute the logpdf values
     return lp
 end
 DIC, pD = dic(chn, lpfun)
-```
-
-### Plotting
-```julia
-# construct a plot
-plot(c::Chains, seriestype = (:traceplot, :mixeddensity))
-
-# construct trace plots
-plot(c::Chains, seriestype = :traceplot)
-
-# or for all seriestypes use the alternative shorthand syntax
-traceplot(c::Chains)
-
-# construct running average plots
-meanplot(c::Chains)
-
-# construct density plots
-density(c::Chains)
-
-# construct histogram plots
-histogram(c::Chains)
-
-# construct mixed density plots
-mixeddensity(c::Chains)
-
-# construct autocorrelation plots
-autocorplot(c::Chains)
-
-# make a cornerplot (requires StatPlots) of parameters in a Chain:
-corner(c::Chains, [:A, :B])
 ```
 
 ### Saving and Loading Chains
