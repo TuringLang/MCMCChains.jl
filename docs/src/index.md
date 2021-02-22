@@ -92,7 +92,7 @@ number.
 
 Parameter names can be changed with the function `replacenames`:
 
-```docs
+```@docs
 replacenames
 ```
 
@@ -170,17 +170,12 @@ MCMCChains provides a `get` function designed to make it easier to access parame
 
 Example:
 
-```julia
+```@example get
+using MCMCChains # hide
 val = rand(500, 5, 1)
 chn = Chains(val, ["P[1]", "P[2]", "P[3]", "D", "E"]);
 
 x = get(chn, :P)
-```
-
-Here's what `x` looks like:
-
-```julia
-(P = (Union{Missing, Float64}[0.349592; 0.671365; … ; 0.319421; 0.298899], Union{Missing, Float64}[0.757884; 0.720212; … ; 0.471339; 0.5381], Union{Missing, Float64}[0.240626; 0.987814; … ; 0.980652; 0.149805]),)
 ```
 
 You can access each of the `P[. . .]` variables by indexing, using `x.P[1]`, `x.P[2]`, or `x.P[3]`.
