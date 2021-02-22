@@ -34,10 +34,14 @@ plot(chn)
 plot!(size=(840, 600), fmt = :png) # hide
 ```
 
+\
+
 ```@example tutorial
 p2 = plot(chn, colordim = :parameter)
 plot!(size=(840, 400), fmt = :png) # hide
 ```
+
+\
 Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
 ## Manual
@@ -76,32 +80,20 @@ Chains can be constructed with parameter names, like so:
 
 ```julia
 # 500 samples, 5 parameters, two chains.
-val = rand(500,5, 2)
+val = rand(500, 5, 2)
 
 chn = Chains(val, ["a", "b", "c", "d", "e"])
 ```
 
-By default, parameters will be given the name `:param_i`, where `i` is the parameter
+By default, parameters will be given the name `:param_[i]`, where `i` is the parameter
 number.
 
 ### Rename Parameters
 
-Parameter names can be changed with the function `replacenames`, which accepts a `Chains`
-object and pairs of old and new parameter names. Note that `replacenames` creates a new
-`Chains` object that shares the same underlying data.
+Parameter names can be changed with the function `replacenames`:
 
-```julia
-chn = Chains(
-	rand(100, 5, 5),
-	["one", "two", "three", "four", "five"],
-	Dict(:internals => ["four", "five"])
-)
-
-# Set "one" and "five" to uppercase.
-chn2 = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
-
-# Alternatively you can provide a dictionary.
-chn3 = replacenames(chn, Dict("two" => "TWO", "four" => "FOUR"))
+```docs
+replacenames
 ```
 
 ### Sections

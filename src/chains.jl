@@ -612,7 +612,26 @@ function pool_chain(c::Chains)
     return Chains(pool_data, names(c), c.name_map; info=c.info)
 end
 
-# replace parameter names
+"""
+    replacenames(chains::Chains, dict::AbstractDict) 
+
+Replace parameter names by creating a new `Chains` object that shares the same underlying data.
+
+# Example
+```
+chn = Chains(
+        rand(100, 5, 5),
+	    ["one", "two", "three", "four", "five"],
+	    Dict(:internals => ["four", "five"])
+        );
+
+# Set "one" and "five" to uppercase.
+chn2 = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
+
+# Alternatively, you can provide a dictionary.
+chn3 = replacenames(chn, Dict("two" => "TWO", "four" => "FOUR"))
+```
+"""
 replacenames(chains::Chains, dict::AbstractDict) = replacenames(chains, pairs(dict)...)
 function replacenames(chains::Chains, old_new::Pair...)
     isempty(old_new) && error("you have to specify at least one replacement")
