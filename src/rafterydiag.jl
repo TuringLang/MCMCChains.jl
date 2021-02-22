@@ -1,5 +1,9 @@
-#################### Raftery and Lewis Diagnostic ####################
+"""
+    rafterydiag(x::Vector{<:Real}; q, r, s, eps, range)
+    rafterydiag(chains::Chains; sections, q, r, s, eps)
 
+Raftery and Lewis Diagnostic.
+"""
 function rafterydiag(
                      x::Vector{<:Real};
                      q = 0.025,

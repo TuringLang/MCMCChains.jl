@@ -1,5 +1,3 @@
-#################### Gelman, Rubin, and Brooks Diagnostics ####################
-
 function _gelmandiag(
     psi::AbstractArray{<:Real,3};
     alpha::Real = 0.05
@@ -53,12 +51,21 @@ function _gelmandiag(
     return estimates, upperlimits, W, B
 end
 
+"""
+    gelmandiag(chains::AbstractArray{<:Real,3}; kwargs...)
+
+Gelman, Rubin and Brooks Diagnostics.
+"""
 function gelmandiag(chains::AbstractArray{<:Real,3}; kwargs...)
     estimates, upperlimits = _gelmandiag(chains; kwargs...)
 
     return (psrf = estimates, psrfci = upperlimits)
 end
 
+"""
+    gelmandiag_multivariate(chains::AbstractArray{<:Real,3}; kwargs...)
+
+"""
 function gelmandiag_multivariate(
     chains::AbstractArray{<:Real,3};
     kwargs...

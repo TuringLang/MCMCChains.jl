@@ -1,5 +1,9 @@
-#################### Heidelberger and Welch Diagnostic ####################
+"""
+    heideldiag(x::Vector{<:Real}; alpha, eps, etype, start, args...)
+    heideldiag(chains::Chains; sections, alpha, eps, etype, args...)
 
+Heidelberger and Welch Diagnostic
+"""
 function heideldiag(x::Vector{<:Real}; alpha::Real=0.05, eps::Real=0.1,
                              etype=:imse, start::Integer=1, args...)
   n = length(x)

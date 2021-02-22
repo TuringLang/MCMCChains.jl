@@ -4,8 +4,8 @@
 
 Compute the R* convergence diagnostic of MCMC.
 
-This implementation is an adaption of Algorithm 1 & 2, described in [^LambertVehtari]. Note
-that the correctness of the statistic depends on the convergence of the classifier used
+This implementation is an adaption of Algorithm 1 & 2, described by Lambert & Vehtari ([2020](https://arxiv.org/abs/2003.07900)).
+Note that the correctness of the statistic depends on the convergence of the classifier used
 internally in the statistic. You can inspect the training of the classifier by adjusting the
 verbosity level.
 
@@ -21,7 +21,7 @@ verbosity level.
 using MLJModels
 XGBoost = @load XGBoostClassifier
 
-# Compute 20 samples of the R* statistic using sampling from according to the prediction probabilities.
+# Compute 20 samples of the R* statistic using sampling according to the prediction probabilities.
 Rs = rstar(XGBoost(), chn; iterations=20)
 
 # estimate Rstar
@@ -30,8 +30,6 @@ R = mean(Rs)
 # visualize distribution
 histogram(Rs)
 ```
-
-[^LambertVehtari]: Ben Lambert and Aki Vehtari. "R∗: A robust MCMC convergence diagnostic with uncertainty using gradient-boostined machines." Arxiv 2020.
 """
 function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector{Int}; iterations = 10, subset = 0.8, verbosity = 0)
 

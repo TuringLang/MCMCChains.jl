@@ -7,6 +7,7 @@ import AbstractMCMC
 import AbstractMCMC: chainscat
 using Compat
 using Distributions
+using DocStringExtensions
 using RecipesBase
 using SpecialFunctions
 using Formatting
