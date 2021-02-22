@@ -2,12 +2,7 @@
 
 Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations.
 
-## Example
-
-
-## Manual
-
-### Chains type
+## Chains type
 
 ```julia
 # construction of a Chains object with no names
@@ -35,7 +30,7 @@ chn_param1 = chn[:,2,:] # returns a new Chains object for parameter 2
 chn[:,2,:] = ... # set values for parameter 2
 ```
 
-### Parameter Names
+## Parameter Names
 
 Chains can be constructed with parameter names, like so:
 
@@ -49,7 +44,7 @@ chn = Chains(val, ["a", "b", "c", "d", "e"])
 By default, parameters will be given the name `:param_i`, where `i` is the parameter
 number.
 
-### Rename Parameters
+## Rename Parameters
 
 Parameter names can be changed with the function `replacenames`:
 
@@ -57,7 +52,7 @@ Parameter names can be changed with the function `replacenames`:
 replacenames
 ```
 
-### Sections
+## Sections
 
 Chains parameters are sorted into sections that represent groups of parameters, see 
 [`MCMCChains.group`](@ref).
@@ -113,7 +108,7 @@ calling `describe(chn; sections = :internals)`, or of all variables with
 `describe(chn; sections = nothing)`. Many functions such as `plot` or `gelmandiag`
 support the `sections` keyword argument.
 
-### Groups of parameters
+## Groups of parameters
 
 You can access the names of all parameters in a `chain` that belong to the group `:name` by using
 
@@ -121,7 +116,7 @@ You can access the names of all parameters in a `chain` that belong to the group
 namesingroup
 ```
 
-### The `get` Function
+## The `get` Function
 
 MCMCChains provides a [`get`](@ref) function designed to make it easier to access parameters `get(chn, :P)` returns a `NamedTuple` which can be easy to work with.
 
@@ -153,48 +148,7 @@ keys(x)
 
 Note that `x.P` is a tuple which has to be indexed by the relevant index, while `x.D` is just a vector.
 
-#### Rstar Diagnostic
-Rstar diagnostic described in [https://arxiv.org/pdf/2003.07900.pdf](https://arxiv.org/pdf/2003.07900.pdf).
-Note that the use requires MLJ and MLJModels to be installed.
-
-Usage:
-
-```julia
-using MLJ, MLJModels
-
-chn ... # sampling results of multiple chains
-
-# select classifier used to compute the diagnostic
-classif = @load XGBoostClassifier
-
-# estimate diagnostic
-Rs = rstar(classif, chn)
-R = mean(Rs)
-
-# visualize distribution
-using Plots
-histogram(Rs)
-```
-
-See `? rstar` for more details.
-
-
-### Model Selection
-#### Deviance Information Criterion (DIC)
-```julia
-chn ... # sampling results
-lpfun = function f(chain::Chains) # function to compute the logpdf values
-    niter, nparams, nchains = size(chain)
-    lp = zeros(niter + nchains) # resulting logpdf values
-    for i = 1:nparams
-        lp += map(p -> logpdf( ... , x), Array(chain[:,i,:]))
-    end
-    return lp
-end
-DIC, pD = dic(chn, lpfun)
-```
-
-### Saving and Loading Chains
+## Saving and Loading Chains
 
 Like any Julia object, a `Chains` object can be saved using `Serialization.serialize`
 and loaded back by `Serialization.deserialize` as identical as possible.
@@ -212,7 +166,7 @@ serialize("chain-file.jls", chn)
 chn2 = deserialize("chain-file.jls")
 ```
 
-### Exporting Chains
+## Exporting Chains
 
 A few utility export functions have been provided to convers `Chains` objects to either an Array or a DataFrame:
 
@@ -250,7 +204,7 @@ DataFrame(chns, remove_missing_union=false)
 
 See also `?DataFrame` and `?Array` for more help.
 
-### Sampling Chains
+## Sampling Chains
 
 MCMCChains overloads several `sample` methods as defined in StatsBase:
 

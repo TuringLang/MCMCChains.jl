@@ -14,7 +14,9 @@ makedocs(
         ],
         "API" => [
             "Chains" => "chains.md",
-            "Diagnostics" => "diagnostics.md"
+            "Diagnostics" => "diagnostics.md",
+            "Posterior statistics" => "stats.md",
+            "Model selection" => "modelstats.md"
         ]
     ],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true")

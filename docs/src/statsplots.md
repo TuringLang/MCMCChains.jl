@@ -96,5 +96,5 @@ autocorplot(chn)
 **TODO:** Need to set the right params for this one.
 
 ```@example statsplots
-corner(chn, ["param_1", "param_2"])
+# corner(chn, ["param_1", "param_2"])
 ```

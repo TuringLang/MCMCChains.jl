@@ -28,6 +28,7 @@ Rs = rstar(XGBoost(), chn; iterations=20)
 R = mean(Rs)
 
 # visualize distribution
+using StatsPlots
 histogram(Rs)
 ```
 """
