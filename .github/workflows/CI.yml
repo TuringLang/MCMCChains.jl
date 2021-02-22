@@ -15,13 +15,9 @@ jobs:
         version:
           - '1.0'
           - '1'
-          - nightly
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
         arch:
-          - x86
           - x64
         exclude:
           - os: windows-latest

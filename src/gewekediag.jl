@@ -1,3 +1,9 @@
+"""
+    gewekediag(x::Vector{<:Real}; first, last, etype)
+    gewekediag(chains::Chains; sections, first, last, etype, kwargs...)
+
+Geweke diagnostic.
+"""
 function gewekediag(x::Vector{<:Real}; first::Real=0.1, last::Real=0.5,
                              etype=:imse, args...)
   if !(0.0 < first < 1.0)
@@ -15,11 +21,6 @@ function gewekediag(x::Vector{<:Real}; first::Real=0.1, last::Real=0.5,
   [z, 1 - erf(abs(z) / sqrt(2))]
 end
 
-"""
-$SIGNATURES
-
-Geweke Diagnostic.
-"""
 function gewekediag(
     chains::Chains;
     sections = _default_sections(chains),
