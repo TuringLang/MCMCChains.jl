@@ -1,4 +1,5 @@
 #################### Posterior Statistics ####################
+
 """
     autocor(chains[; lags = [1, 5, 10, 50], demean = true, append_chains = true, kwargs...])
 

@@ -8,6 +8,16 @@
 
 Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations.
 
+```
+using MCMCChains
+using StatsPlots
+
+plot(chn)
+```
+![Basic plot for Chains](https://TuringLang.github.io/MCMCChains.jl/dev/default_plot.png)
+
+See the [docs](https://TuringLang.github.io/MCMCChains.jl/dev/) for more information.
+
 ## License Notice
 
 Note that this package heavily uses and adapts code from the Mamba.jl package licensed under MIT License, see License.md.

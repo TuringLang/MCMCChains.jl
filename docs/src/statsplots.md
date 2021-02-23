@@ -7,11 +7,9 @@ MCMCChains implements many functions for plotting via [StatsPlots.jl](https://gi
 The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
 
 ```@example statsplots
+using Markdown # hide
 using MCMCChains
 using StatsPlots; gr()
-Plots.reset_defaults() # hide
-# Thanks to https://github.com/JuliaPlots/Plots.jl/issues/897. # hide
-upscale = 8 # hide
 default(size=(840,600)) # hide
 # To avoid vectorized graphics for these crowded images. # hide
 default(fmt = :png) # hide
@@ -33,6 +31,10 @@ chn = Chains(val)
 # visualize the MCMC simulation results
 plot(chn)
 plot!(size=(840, 600), fmt = :png) # hide
+# This output is used in README.md too. # hide
+filename = "default_plot.png" # hide
+savefig(filename) # hide
+Markdown.parse("![Default plot for Chains]($filename)") # hide
 ```
 
 \
