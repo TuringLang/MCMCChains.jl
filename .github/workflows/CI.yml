@@ -58,11 +58,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies for GR backend.
-        # See https://github.com/JuliaPlots/Plots.jl/issues/1649#issuecomment-682147970 for details;
-        # also, see https://gr-framework.org/julia.html#installation.
-        run: |
-          sudo apt-get install -y libxt6 libxrender1 libxext6 libgl1-mesa-glx libqt5widgets5
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
@@ -73,5 +68,6 @@ jobs:
             Pkg.instantiate()'
       - run: julia --project=docs docs/make.jl
         env:
+            GKSwstype: nul
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}

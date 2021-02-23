@@ -1,12 +1,8 @@
-push!(LOAD_PATH,"../src/")
-
 using Documenter
 using MCMCChains
 
-name = "MCMCChains.jl"
-
 makedocs(
-    sitename = name,
+    sitename = "MCMCChains.jl",
     pages = [
         "MCMCChains" => "index.md",
         "Plotting" => [

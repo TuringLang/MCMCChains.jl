@@ -27,7 +27,9 @@ end
 """
     weiss(X::AbstractMatrix)
 
-The weiss procedure to assess convergence in MCMC output computes ``\\frac{X^2}{c}`` and evaluates a p-value from the ``X^2`` (Chi-square) distribution with ``(|R| − 1)(s − 1)`` degrees of freedom.
+Assess the convergence of the MCMC chains with the Weiss procedure.
+
+It computes ``\\frac{X^2}{c}`` and evaluates a p-value from the ``\\chi^2`` distribution with ``(|R| − 1)(s − 1)`` degrees of freedom.
 """
 function weiss(X::AbstractMatrix)
   ## number of iterations, number of chains
