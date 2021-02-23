@@ -11,6 +11,7 @@ Compute the deviance information criterion (DIC).
 Note: DIC assumes that the posterior distribution is approx. multivariate Gaussian and tends to select overfitted models.
 
 ## Returns:
+
 * `DIC`: The calculated deviance information criterion
 * `pD`: The effective number of parameters
 

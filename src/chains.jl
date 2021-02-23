@@ -155,7 +155,7 @@ Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
-Returns a `NamedTuple` with `v` as the key, and matching paramter
+Return a `NamedTuple` with `v` as the key, and matching paramter
 names as the values.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
@@ -196,7 +196,7 @@ end
 """
     get(c::Chains; section::Union{Vector{Symbol}, Symbol; flatten=false}
 
-Returns all parameters in a given section(s) as a `NamedTuple`.
+Return all parameters in a given section(s) as a `NamedTuple`.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
@@ -236,7 +236,7 @@ end
 """
     get_params(c::Chains; flatten=false)
 
-Returns all parameters packaged as a `NamedTuple`. Variables with a bracket
+Return all parameters packaged as a `NamedTuple`. Variables with a bracket
 in their name (as in "P[1]") will be grouped into the returned value as P.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
@@ -318,7 +318,7 @@ resetrange(chains::Chains) = setrange(chains, 1:size(chains, 1))
 """
     chains(c::Chains)
 
-Returns the names or symbols of each chain in a `Chains` object.
+Return the names or symbols of each chain in a `Chains` object.
 """
 function chains(c::Chains)
     return c.value[Axis{:chain}].val
@@ -354,7 +354,7 @@ end
 """
     get_sections(chains[, sections])
 
-Returns multiple `Chains` objects, each containing only a single section.
+Return multiple `Chains` objects, each containing only a single section.
 """
 function get_sections(chains::Chains, sections = keys(chains.name_map))
     return [Chains(chains, section) for section in sections]
@@ -371,7 +371,7 @@ sections(c::Chains) = collect(keys(c.name_map))
 """
     header(c::Chains; section=missing)
 
-Returns a string containing summary information for a `Chains` object.
+Return a string containing summary information for a `Chains` object.
 If the `section` keyword is used, this function prints only the relevant section
 header.
 
@@ -457,7 +457,7 @@ end
 """
     sort(c::Chains[; lt=NaturalSort.natural])
 
-Returns a new column-sorted version of `c`.
+Return a new column-sorted version of `c`.
 
 By default the columns are sorted in natural sort order.
 """
@@ -486,7 +486,7 @@ end
 """
     setinfo(c::Chains, n::NamedTuple)
 
-Returns a new `Chains` object with a `NamedTuple` type `n` placed in the `info` field.
+Return a new `Chains` object with a `NamedTuple` type `n` placed in the `info` field.
 
 Example:
 

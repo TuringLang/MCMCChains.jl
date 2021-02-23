@@ -18,4 +18,4 @@ makedocs(
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true")
 )
 
-deploydocs(repo = "github.com/rikhuijzer/$name.git", devbranch = "master")
+deploydocs(repo = "github.com/TuringLang/MCMCChains.jl.git", push_preview=true)
