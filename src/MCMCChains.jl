@@ -32,6 +32,9 @@ export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
 
+# Export posterior model convergence functions
+export dic
+
 # Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
 export hpd, ess
