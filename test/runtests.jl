@@ -1,3 +1,4 @@
+using Documenter
 using Pkg
 using Test
 using Random
@@ -74,4 +75,14 @@ Random.seed!(0)
     # run tests for concatenation
     println("Concatenation")
     @time include("concatenation_tests.jl")
+
+    @testset "doctests" begin
+        DocMeta.setdocmeta!(
+            MCMCChains,
+            :DocTestSetup, 
+            :(using MCMCChains); 
+            recursive=true
+        )
+        doctest(MCMCChains)
+    end
 end

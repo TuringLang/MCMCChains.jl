@@ -1,6 +1,13 @@
 using Documenter
 using MCMCChains
 
+DocMeta.setdocmeta!(
+    MCMCChains,
+    :DocTestSetup,
+    :(using MCMCChains);
+    recursive=true
+)
+
 makedocs(
     sitename = "MCMCChains.jl",
     pages = [
@@ -19,7 +26,5 @@ makedocs(
     strict = true,
     checkdocs = :exports
 )
-
-doctest(MCMCChains)
 
 deploydocs(repo = "github.com/TuringLang/MCMCChains.jl.git", push_preview=true)
