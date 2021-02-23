@@ -20,4 +20,6 @@ makedocs(
     checkdocs = :exports
 )
 
+doctest(MCMCChains)
+
 deploydocs(repo = "github.com/TuringLang/MCMCChains.jl.git", push_preview=true)
