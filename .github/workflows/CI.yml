@@ -58,6 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install dependency for GR backend.
+        # See https://github.com/JuliaPlots/Plots.jl/issues/1649#issuecomment-682147970 for details.
+        run: |
+          apt-get install -y qtbase5-dev-tools qt5-default
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
