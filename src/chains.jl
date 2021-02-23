@@ -632,19 +632,24 @@ end
 
 Replace parameter names by creating a new `Chains` object that shares the same underlying data.
 
-# Example
-```
-chn = Chains(
-        rand(100, 5, 5),
-	    ["one", "two", "three", "four", "five"],
-	    Dict(:internals => ["four", "five"])
-        );
+# Examples
 
-# Set "one" and "five" to uppercase.
-chn2 = replacenames(chn,  "one" => "ONE", "five" => "FIVE")
+```jldoctest; setup = :(using MCMCChains)
+julia> chn = Chains(rand(100, 2, 2), ["one", "two"]);
 
-# Alternatively, you can provide a dictionary.
-chn3 = replacenames(chn, Dict("two" => "TWO", "four" => "FOUR"))
+julia> chn2 = replacenames(chn, "one" => "ONE");
+
+julia> names(chn2)
+2-element Vector{Symbol}:
+ :ONE
+ :two
+
+julia> chn3 = replacenames(chn2, Dict("ONE" => "one", "two" => "TWO"));
+
+julia> names(chn3)
+2-element Vector{Symbol}:
+ :one
+ :TWO
 ```
 """
 replacenames(chains::Chains, dict::AbstractDict) = replacenames(chains, pairs(dict)...)

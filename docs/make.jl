@@ -15,7 +15,9 @@ makedocs(
             "Model selection" => "modelstats.md"
         ]
     ],
-    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true")
+    format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    strict = true,
+    checkdocs = :exports
 )
 
 deploydocs(repo = "github.com/TuringLang/MCMCChains.jl.git", push_preview=true)

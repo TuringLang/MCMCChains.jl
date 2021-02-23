@@ -28,7 +28,6 @@ end
 
 DIC, pD = dic(chn, lpfun)
 ```
-
 """
 function dic(chain::Chains, logpdf::Function)
 
