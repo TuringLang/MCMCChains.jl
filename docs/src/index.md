@@ -173,15 +173,7 @@ MCMCChains.sample(::Chains, ::Any)
 MCMCChains.subset
 ```
 
-See `?sample` for additional help. Alternatively, you can construct
-and sample from a kernel density estimator using [KernelDensity.jl](https://github.com/JuliaStats/KernelDensity.jl):
-
-```julia
-using KernelDensity
-
-# Construct a kernel density estimator
-c = kde(Array(chn[:s]))
-
-# Generate 10000 weighted samples from the grid points
-chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
-```
+See `?sample` for additional help on sampling.
+Alternatively, you can construct and sample from a kernel density estimator using
+[KernelDensity.jl](https://github.com/JuliaStats/KernelDensity.jl),
+see [test/sampling_tests.jl](https://github.com/TuringLang/MCMCChains.jl/blob/master/test/sampling_tests.jl).
