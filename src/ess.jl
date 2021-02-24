@@ -7,12 +7,14 @@ abstract type AbstractESSMethod end
 The `ESSMethod` uses a standard algorithm for estimating the
 effective sample size of MCMC chains.
 
-It is is based on the discussion by
-[Vehtari et al. (2019)](https://arxiv.org/pdf/1903.08008.pdf) and uses a
-biased estimator of the autocovariance, as discussed by
-[Geyer (1992)](https://projecteuclid.org/euclid.ss/1177011137).
+It is is based on the discussion by [^Vehtari2019] and uses the
+biased estimator of the autocovariance, as discussed by [^Geyer1992].
 In contrast to Geyer, the divisor `n - 1` is used in the estimation of
 the autocovariance to obtain the unbiased estimator of the variance for lag 0.
+
+[^Geyer1992]: Geyer, C. J. (1992). Practical Markov Chain Monte Carlo. Statistical Science, 473-483. <https://projecteuclid.org/euclid.ss/1177011137>.
+
+[^Vehtari2019]: Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., & Bürkner, P. C. (2021). Rank-normalization, folding, and localization: An improved ``\\widehat {R}`` for assessing convergence of MCMC. Bayesian Analysis. <https://arxiv.org/pdf/1903.08008.pdf>.
 """
 struct ESSMethod <: AbstractESSMethod end
 
@@ -22,10 +24,8 @@ struct ESSMethod <: AbstractESSMethod end
 The `FFTESSMethod` uses a standard algorithm for estimating
 the effective sample size of MCMC chains.
 
-It is is based on the discussion by
-[Vehtari et al. (2019)](https://arxiv.org/pdf/1903.08008.pdf) and uses the
-biased estimator of the autocovariance, as discussed by
-[Geyer (1992)](https://projecteuclid.org/euclid.ss/1177011137).
+It is is based on the discussion by [^Vehtari2019] and uses the
+biased estimator of the autocovariance, as discussed by [^Geyer1992].
 In contrast to Geyer, the divisor `n - 1` is used in the estimation of
 the autocovariance to obtain the unbiased estimator of the variance for lag 0.
 
@@ -40,10 +40,10 @@ struct FFTESSMethod <: AbstractESSMethod end
 The `BDAESSMethod` uses a standard algorithm for estimating the effective sample size of
 MCMC chains.
 
-It is is based on the discussion by
-[Vehtari et al. (2019)](https://arxiv.org/pdf/1903.08008.pdf) and uses the
-variogram estimator of the autocorrelation function discussed in 
-[Bayesian Data Analysis (2013)](https://www.taylorfrancis.com/books/9780429113079).
+It is is based on the discussion by [^Vehtari2019] and uses the
+variogram estimator of the autocorrelation function discussed in [^Gelman2013].
+
+[^Gelman2013]: Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., & Rubin, D. B. (2013). Bayesian data analysis. CRC press.
 """
 struct BDAESSMethod <: AbstractESSMethod end
 
