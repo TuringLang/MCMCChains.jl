@@ -1,3 +1,5 @@
+export dic
+
 #################### Posterior Statistics ####################
 
 """
