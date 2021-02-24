@@ -639,14 +639,14 @@ julia> chn = Chains(rand(100, 2, 2), ["one", "two"]);
 julia> chn2 = replacenames(chn, "one" => "A");
 
 julia> names(chn2)
-2-element Vector{Symbol}:
+2-element Array{Symbol,1}:
  :A
  :two
 
 julia> chn3 = replacenames(chn2, Dict("A" => "one", "two" => "B"));
 
 julia> names(chn3) 
-2-element Vector{Symbol}:
+2-element Array{Symbol,1}:
  :one
  :B
 ```
