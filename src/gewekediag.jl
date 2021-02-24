@@ -1,3 +1,5 @@
+#################### Geweke Diagnostic ####################
+
 """
     gewekediag(x::Vector{<:Real}; first, last, etype)
     gewekediag(chains::Chains; sections, first, last, etype, kwargs...)

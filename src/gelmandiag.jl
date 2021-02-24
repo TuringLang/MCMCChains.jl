@@ -56,7 +56,7 @@ end
 """
     gelmandiag(chains::AbstractArray{<:Real,3}; kwargs...)
 
-Gelman, Rubin and Brooks Diagnostics.
+Gelman, Rubin and Brooks diagnostics.
 """
 function gelmandiag(chains::AbstractArray{<:Real,3}; kwargs...)
     estimates, upperlimits = _gelmandiag(chains; kwargs...)
@@ -67,6 +67,7 @@ end
 """
     gelmandiag_multivariate(chains::AbstractArray{<:Real,3}; kwargs...)
 
+Multivariate Gelman, Rubin and Brooks diagnostics.
 """
 function gelmandiag_multivariate(
     chains::AbstractArray{<:Real,3};
