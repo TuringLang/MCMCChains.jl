@@ -1,6 +1,5 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-MCMCChains = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 

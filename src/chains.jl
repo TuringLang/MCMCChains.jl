@@ -84,7 +84,7 @@ julia> names(chn)
 julia> chn2 = Chains(chn, :internals);
 
 julia> names(chn2)
-2-element Array{Symbol,1}:
+1-element Array{Symbol,1}:
  :a
 ```
 """
@@ -119,12 +119,12 @@ If the chain contains a parameter of name `:name` it will be returned as well.
 
 # Example
 ```jldoctest
-julia> chn = Chains(rand(100, 2, 2));
+julia> chn = Chains(rand(100, 2, 2), ["A[1]", "A[2]"]);
 
-julia> namesingroup(chn, :param)
+julia> namesingroup(chn, :A)
 2-element Array{Symbol,1}:
- :param_1
- :param_2
+ Symbol("A[1]")
+ Symbol("A[2]")
 ```
 """
 namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
