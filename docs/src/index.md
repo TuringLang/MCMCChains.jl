@@ -119,48 +119,47 @@ You might want to consider [JLSO](https://github.com/invenia/JLSO.jl) for saving
 such as the Julia version and the versions of all packages installed as well.
 
 ```julia
-# Save a chain.
 using Serialization
-serialize("chain-file.jls", chn)
 
-# Read a chain.
+serialize("chain-file.jls", chn)
 chn2 = deserialize("chain-file.jls")
 ```
 
 ## Exporting Chains
 
-A few utility export functions have been provided to convers `Chains` objects to either an Array or a DataFrame:
+A few utility export functions have been provided to convert `Chains` objects to either an Array or a DataFrame:
 
-```julia
-# Several examples of creating an Array object:
-Array(chns)
-Array(chns[:s])
-Array(chns, [:parameters])
-Array(chns, [:parameters, :internals])
+```@example exporting
+using MCMCChains # hide
 
-# By default chains are appended. This can be disabled
-# using the append_chains keyword argument:
-Array(chns, append_chains=false)
+chn = Chains(rand(3, 2, 2), [:a, :b])
 
-# This will return an `Array{Array, 1}` object containing
-# an Array for each chain.
+Array(chn)
+```
 
-# A final option is:
-Array(chns, remove_missing_union=false)
+```@example exporting
+Array(chn, [:parameters])
+```
 
-# This will not convert the Array columns from a
-# `Union{Missing, Real}` to a `Vector{Real}`.
+By default chains are appended. This can be disabled by using the `append_chains` keyword 
+argument:
+
+```@example exporting
+A = Array(chn, append_chains=false)
+```
+
+which will return a matrix for each chain. For example, for the second chain:
+
+```@example exporting
+A[2]
 ```
 
 Similarly, for DataFrames:
 
-```julia
-DataFrame(chns)
-DataFrame(chns[:s])
-DataFrame(chns, [:parameters])
-DataFrame(chns, [:parameters, :internals])
-DataFrame(chns, append_chains=false)
-DataFrame(chns, remove_missing_union=false)
+```@example exporting
+using DataFrames
+
+DataFrame(chn)
 ```
 
 See also `?DataFrame` and `?Array` for more help.
@@ -169,18 +168,13 @@ See also `?DataFrame` and `?Array` for more help.
 
 MCMCChains overloads several `sample` methods as defined in StatsBase:
 
-```julia
-# Sampling `n` samples from the chain `a`. Optionally
-# weighting the samples using `wv`.
-sample([rng], a, [wv::AbstractWeights], n::Integer)
-
-# As above, but supports replacing and ordering.
-sample([rng], a, [wv::AbstractWeights], n::Integer; replace=true,
-  ordered=false)
+```@docs
+MCMCChains.sample(::Chains, ::Any)
+MCMCChains.subset
 ```
 
-See also `?sample` for additional help. Alternatively, you can construct
-and sample from a kernel density estimator using the KernelDensity package:
+See `?sample` for additional help. Alternatively, you can construct
+and sample from a kernel density estimator using [KernelDensity.jl](https://github.com/JuliaStats/KernelDensity.jl):
 
 ```julia
 using KernelDensity
