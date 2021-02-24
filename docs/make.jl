@@ -19,7 +19,8 @@ makedocs(
             "Chains" => "chains.md",
             "Diagnostics" => "diagnostics.md",
             "Posterior statistics" => "stats.md",
-            "Model selection" => "modelstats.md"
+            "Model selection" => "modelstats.md",
+            "Summarize" => "summarize.md"
         ]
     ],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),

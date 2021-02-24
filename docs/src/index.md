@@ -1,48 +1,49 @@
 # MCMCChains
 
-Implementation of Julia types for summarizing MCMC simulations and utility functions for diagnostics and visualizations.
+Implementation of Julia types for summarizing MCMC simulations and utility functions for [diagnostics](@ref Diagnostics) and [visualizations](@ref StatsPlots.jl).
 
 ## Chains type
 
-```julia
-# construction of a Chains object with no names
-Chains(
-    val::AbstractArray{A,3};
-    start::Int=1,
-    thin::Int=1,
-    evidence = 0.0,
-    info=NamedTuple(),
-)
-
-Chains(
-    val::AbstractArray{A,3},
-    parameter_names::AbstractVector,
-    name_map = (parameters = parameter_names,);
-    start::Int=1,
-    thin::Int=1,
-    evidence = 0.0,
-    info=NamedTuple(),
-)
-
-# Indexing a Chains object
-chn = Chains(...)
-chn_param1 = chn[:,2,:] # returns a new Chains object for parameter 2
-chn[:,2,:] = ... # set values for parameter 2
+```@docs
+Chains
 ```
 
-## Parameter Names
+## Indexing and parameter Names
 
-Chains can be constructed with parameter names, like so:
+Chains can be constructed with parameter names.
+For example, to create a chains object with
 
-```julia
-# 500 samples, 5 parameters, two chains.
-val = rand(500, 5, 2)
+- 500 samples,
+- 2 parameters (named `:a` and `:b`)
+- 3 chains
 
-chn = Chains(val, ["a", "b", "c", "d", "e"])
+use
+
+```@example index
+using MCMCChains # hide
+using Random # hide
+Random.seed!(0) # hide
+val = rand(500, 2, 3)
+chn = Chains(val, [:a, :b])
 ```
 
 By default, parameters will be given the name `:param_i`, where `i` is the parameter
-number.
+number:
+
+```@example index
+chn = Chains(rand(100, 2, 2))
+```
+
+We can set and get indexes for parameter 2:
+
+```@example index
+chn_param2 = chn[1:5,2,:];
+```
+
+```@example index
+chn[:,2,:] = repeat([4], inner = (100, 1, 2))
+chn
+```
 
 ## Rename Parameters
 
@@ -59,54 +60,21 @@ Chains parameters are sorted into sections that represent groups of parameters, 
 By default, every chain contains a `:parameters` section, to which all unassigned parameters are
 assigned to. Chains can be assigned a named map during construction:
 
-```julia
-chn = Chains(val,
-  ["a", "b", "c", "d", "e"],
-  Dict(:internals => ["d", "e"]))
+```@example index
+chn = Chains(rand(100, 4, 2), [:a, :b, :c, :d])
 ```
 
 The [`MCMCChains.set_section`](@ref) function returns a new `Chains` object:
 
-```julia
-chn2 = set_section(chn, Dict(:internals => ["d", "e"]))
+```@example index
+chn2 = set_section(chn, Dict(:internals => [:c, :d]))
 ```
 
-Any parameters not assigned will be placed into `:parameters`.
-
-Calling `display(chn)` provides the following output:
-
-```julia
-Chains MCMC chain (500×5×2 Array{Float64,3}):
-
-Iterations        = 1:500
-Thinning interval = 1
-Chains            = 1, 2
-Samples per chain = 500
-parameters        = a, b, c
-internals         = d, e
-
-Summary Statistics
-  parameters      mean       std   naive_se      mcse         ess      rhat
-      Symbol   Float64   Float64    Float64   Float64     Float64   Float64
-
-           a    0.4930    0.2906     0.0092    0.0095   1044.0585    1.0030
-           b    0.5148    0.2875     0.0091    0.0087    992.1013    0.9984
-           c    0.5046    0.2899     0.0092    0.0087    922.6449    0.9987
-
-Quantiles
-  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
-      Symbol   Float64   Float64   Float64   Float64   Float64
-
-           a    0.0232    0.2405    0.4836    0.7530    0.9687
-           b    0.0176    0.2781    0.5289    0.7605    0.9742
-           c    0.0258    0.2493    0.5071    0.7537    0.9754
-```
-
-Note that only `a`, `b`, and `c` are being shown. You can explicity retrieve
+Note that only `:a` and `:b` are being shown. You can explicity retrieve
 an array of the summary statistics and the quantiles of the `:internals` section by
 calling `describe(chn; sections = :internals)`, or of all variables with
-`describe(chn; sections = nothing)`. Many functions such as `plot` or `gelmandiag`
-support the `sections` keyword argument.
+`describe(chn; sections = nothing)`. Many functions such as [`MCMCChains.summarize`](@ref) or
+[`MCMCChains.gelmandiag`](@ref) support the `sections` keyword argument.
 
 ## Groups of parameters
 
@@ -118,35 +86,28 @@ namesingroup
 
 ## The `get` Function
 
-MCMCChains provides a [`get`](@ref) function designed to make it easier to access parameters `get(chn, :P)` returns a `NamedTuple` which can be easy to work with.
-
-Example:
+MCMCChains also provides a [`get`](@ref) function designed to make it easier to access
+parameters:
 
 ```@example get
 using MCMCChains # hide
-val = rand(500, 5, 1)
-chn = Chains(val, ["P[1]", "P[2]", "P[3]", "D", "E"]);
+val = rand(6, 3, 1)
+chn = Chains(val, [:a, :b, :c]);
 
-x = get(chn, :P)
+x = get(chn, :a)
 ```
-where
+
+You can also access the variables via `getproperty`:
+
 ```@example get
-keys(x)
+x.a
 ```
-
-You can access each of the `P[. . .]` variables by indexing, using `x.P[1]`, `x.P[2]`, or `x.P[3]`.
 
 `get` also accepts vectors of things to retrieve, so you can call 
 
 ```@example get
-x = get(chn, [:P, :D])
+x = get(chn, [:a, :b])
 ```
-where
-```@example get
-keys(x)
-```
-
-Note that `x.P` is a tuple which has to be indexed by the relevant index, while `x.D` is just a vector.
 
 ## Saving and Loading Chains
 

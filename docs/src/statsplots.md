@@ -9,10 +9,7 @@ The following simple example illustrates how to use Chain to visually summarize 
 ```@example statsplots
 using Markdown # hide
 using MCMCChains
-using StatsPlots; gr()
-default(size=(840,600)) # hide
-# To avoid vectorized graphics for these crowded images. # hide
-default(fmt = :png) # hide
+using StatsPlots
 
 theme(:ggplot2)
 
@@ -26,7 +23,7 @@ val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
 val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 
 # construct a Chains object
-chn = Chains(val)
+chn = Chains(val, [:A, :B, :C, :D])
 
 # visualize the MCMC simulation results
 plot(chn)
@@ -41,6 +38,7 @@ Markdown.parse("![Default plot for Chains]($filename)") # hide
 
 ```@example statsplots
 p2 = plot(chn, colordim = :parameter)
+# Using png to avoid vectorized graphics for images with many vectors. # hide
 plot!(size=(840, 400), fmt = :png) # hide
 ```
 
@@ -63,10 +61,12 @@ mixeddensity(chn)
 
 ```@example statsplots
 plot(chn, seriestype = :traceplot)
+plot!(fmt = :png) # hide
 ```
 
 ```@example statsplots
 traceplot(chn)
+plot!(fmt = :png) # hide
 ```
 
 ## Running average
@@ -95,8 +95,6 @@ autocorplot(chn)
 
 ## Corner
 
-**TODO:** Need to set the right params for this one.
-
 ```@example statsplots
-# corner(chn, ["param_1", "param_2"])
+corner(chn, [:A, :B])
 ```

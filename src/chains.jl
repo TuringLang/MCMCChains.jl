@@ -66,7 +66,28 @@ function Chains(
     return Chains(arr, evidence, _name_map, info)
 end
 
-# Retrieve a new chain with only a specific section pulled out.
+"""
+    Chains(c::Chains, section::Union{Symbol,String}) -> Chains
+    Chains(c::Chains, sections) -> Chains
+
+Return a new chain with only a specific `section` or multiple `sections` pulled out.
+
+# Examples
+```jldoctest
+julia> chn = Chains(rand(100, 2, 1), [:a, :b], Dict(:internals => [:a]));
+
+julia> names(chn)
+2-element Array{Symbol,1}:
+ :a
+ :b
+
+julia> chn2 = Chains(chn, :internals);
+
+julia> names(chn2)
+2-element Array{Symbol,1}:
+ :a
+```
+"""
 Chains(c::Chains, section::Union{Symbol,String}) = Chains(c, (section,))
 function Chains(chn::Chains, sections)
     # Make sure the sections exist first.
@@ -95,6 +116,16 @@ This is based on the MCMCChains convention that parameters with names of the for
 belong to one group of parameters called `:name`.
 
 If the chain contains a parameter of name `:name` it will be returned as well.
+
+# Example
+```jldoctest
+julia> chn = Chains(rand(100, 2, 2));
+
+julia> namesingroup(chn, :param)
+2-element Array{Symbol,1}:
+ :param_1
+ :param_2
+```
 """
 namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
 function namesingroup(chains::Chains, sym::Symbol)
@@ -633,7 +664,7 @@ end
 Replace parameter names by creating a new `Chains` object that shares the same underlying data.
 
 # Examples
-```jldoctest; setup = :(using MCMCChains) 
+```jldoctest
 julia> chn = Chains(rand(100, 2, 2), ["one", "two"]);
 
 julia> chn2 = replacenames(chn, "one" => "A");
