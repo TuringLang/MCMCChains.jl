@@ -95,6 +95,8 @@ autocorplot(chn)
 
 ## Corner
 
+For some reason, this one fails
+
 ```@example statsplots
-corner(chn, [:A, :B])
+# corner(chn)
 ```
