@@ -1,3 +1,5 @@
+#################### Gelman, Rubin, and Brooks Diagnostics ####################
+
 function _gelmandiag(
     psi::AbstractArray{<:Real,3};
     alpha::Real = 0.05

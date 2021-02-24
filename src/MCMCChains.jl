@@ -50,11 +50,6 @@ Parameters:
 - `name_map` : A `NamedTuple` mapping each variable to a section.
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
-
-```jldoctest
-julia> foo
-bar
-```
 """
 struct Chains{T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
     value::A

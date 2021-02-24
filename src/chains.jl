@@ -648,7 +648,7 @@ julia> chn3 = replacenames(chn2, Dict("A" => "one", "two" => "B"));
 julia> names(chn3) 
 2-element Vector{Symbol}:
  :one
- :Z
+ :B
 ```
 """
 replacenames(chains::Chains, dict::AbstractDict) = replacenames(chains, pairs(dict)...)

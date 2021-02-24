@@ -1,3 +1,5 @@
+#################### Heidelberger and Welch Diagnostic ####################
+
 """
     heideldiag(x::Vector{<:Real}; alpha, eps, etype, start, args...)
     heideldiag(chains::Chains; sections, alpha, eps, etype, args...)
