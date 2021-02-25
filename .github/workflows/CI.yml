@@ -45,6 +45,11 @@ jobs:
             ${{ runner.os }}-test-
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@latest
+
+      - name: Workaround for missing test dependency
+        if: matrix.version == '1.0'
+        run: julia -e 'using Pkg; Pkg.add("Documenter")'
+
       - uses: julia-actions/julia-runtest@latest
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.num_threads == 1
