@@ -1,7 +1,4 @@
-using Documenter
 using Pkg
-using Test
-using Random
 
 # Activate test environment on older Julia versions
 if VERSION < v"1.2"
@@ -9,6 +6,12 @@ if VERSION < v"1.2"
     Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
     Pkg.instantiate()
 end
+
+using MCMCChains
+using Documenter
+
+using Test
+using Random
 
 # set seed for all testsets
 Random.seed!(0)
