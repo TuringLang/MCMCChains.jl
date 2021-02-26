@@ -17,22 +17,6 @@ with uncertainty using gradient-boosted machines. arXiv preprint
 * `subset = 0.8` ... Subset used to train the classifier, i.e. 0.8 implies 80% of the samples are used.
 * `iterations = 10` ... Number of iterations used to estimate the statistic. If the classifier is not probabilistic, i.e. does not return class probabilities, it is advisable to use a value of one.
 * `verbosity = 0` ... Verbosity level used during fitting of the classifier.
-
-# Example
-```jldoctest; output = false
-using MLJModels
-using Random
-XGBoost = @load XGBoostClassifier verbosity=0
-
-chn = Chains(fill(4, 100, 2, 3)) # Example Chains object.
-Rs = rstar(XGBoost(), chn; iterations=20)
-
-R = round(mean(Rs); digits=0)
-
-# output
-
-1.0
-```
 """
 function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector{Int}; iterations = 10, subset = 0.8, verbosity = 0)
 
