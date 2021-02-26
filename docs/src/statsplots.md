@@ -7,7 +7,6 @@ MCMCChains implements many functions for plotting via [StatsPlots.jl](https://gi
 The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
 
 ```@example statsplots
-using Markdown # hide
 using MCMCChains
 using StatsPlots
 
@@ -26,14 +25,13 @@ val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 chn = Chains(val, [:A, :B, :C, :D])
 
 # visualize the MCMC simulation results
-plot(chn)
-plot!(size=(840, 600), fmt = :png) # hide
+plot(chn; size=(840, 600))
 # This output is used in README.md too. # hide
-filename = "default_plot.png" # hide
-savefig(filename) # hide
-Markdown.parse("![Default plot for Chains]($filename)") # hide
+filename = "default_plot.svg" # hide
+savefig(filename); nothing # hide
 ```
 
+![Default plot for Chains](default_plot.svg)
 \
 
 ```@example statsplots
@@ -91,12 +89,4 @@ histogram(chn)
 
 ```@example statsplots
 autocorplot(chn)
-```
-
-## Corner
-
-For some reason, this one fails
-
-```@example statsplots
-# corner(chn)
 ```

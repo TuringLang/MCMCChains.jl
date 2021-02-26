@@ -67,8 +67,8 @@ function Chains(
 end
 
 """
-    Chains(c::Chains, section::Union{Symbol,String}) -> Chains
-    Chains(c::Chains, sections) -> Chains
+    Chains(c::Chains, section::Union{Symbol,String})
+    Chains(c::Chains, sections)
 
 Return a new chain with only a specific `section` or multiple `sections` pulled out.
 

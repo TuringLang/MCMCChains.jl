@@ -12,6 +12,7 @@ makedocs(
     sitename = "MCMCChains.jl",
     pages = [
         "MCMCChains" => "index.md",
+        "Getting started" => "getting-started.md",
         "Plotting" => [
             "StatsPlots.jl" => "statsplots.md"
         ],
@@ -24,6 +25,7 @@ makedocs(
         ]
     ],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    modules = [MCMCChains],
     strict = true,
     checkdocs = :exports
 )
