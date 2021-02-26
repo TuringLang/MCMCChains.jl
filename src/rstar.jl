@@ -27,7 +27,7 @@ XGBoost = @load XGBoostClassifier verbosity=0
 chn = Chains(fill(4, 100, 2, 3)) # Example Chains object.
 Rs = rstar(XGBoost(), chn; iterations=20)
 
-R = round(mean(Rs); digits=1)
+R = round(mean(Rs); digits=0)
 
 # output
 
