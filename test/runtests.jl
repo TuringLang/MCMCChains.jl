@@ -25,6 +25,16 @@ Random.seed!(0)
         Pkg.add("MLJModels")
         Pkg.add("MLJXGBoostInterface")
         @time include("rstar_tests.jl")
+
+        @testset "doctests" begin
+            DocMeta.setdocmeta!(
+                MCMCChains,
+                :DocTestSetup,
+                :(using MCMCChains);
+                recursive=true
+            )
+            doctest(MCMCChains)
+        end
     end
 
     # run tests for effective sample size
@@ -79,13 +89,4 @@ Random.seed!(0)
     println("Concatenation")
     @time include("concatenation_tests.jl")
 
-    @testset "doctests" begin
-        DocMeta.setdocmeta!(
-            MCMCChains,
-            :DocTestSetup,
-            :(using MCMCChains);
-            recursive=true
-        )
-        doctest(MCMCChains)
-    end
 end

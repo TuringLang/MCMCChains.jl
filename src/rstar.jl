@@ -9,7 +9,9 @@ Note that the correctness of the statistic depends on the convergence of the cla
 internally in the statistic. You can inspect the training of the classifier by adjusting the
 verbosity level.
 
-[^LambertVehtari2020]: Lambert & Vehtari (2020). ``R^*``: A robust MCMC convergence diagnostic with uncertainty using gradient-boosted machines. arXiv preprint <https://arxiv.org/abs/2003.07900>.
+[^LambertVehtari2020]: Lambert & Vehtari (2020). ``R^*``: A robust MCMC convergence diagnostic
+with uncertainty using gradient-boosted machines. arXiv preprint
+<https://arxiv.org/abs/2003.07900>.
 
 # Keyword Arguments
 * `subset = 0.8` ... Subset used to train the classifier, i.e. 0.8 implies 80% of the samples are used.
@@ -17,21 +19,19 @@ verbosity level.
 * `verbosity = 0` ... Verbosity level used during fitting of the classifier.
 
 # Example
-
-```jldoctest
-# Load an MLJ classifier to compute the statistic, e.g., the XGBoost classifier.
+```jldoctest; output = false
 using MLJModels
-XGBoost = @load XGBoostClassifier
+using Random
+XGBoost = @load XGBoostClassifier verbosity=0
 
-# Compute 20 samples of the R* statistic using sampling according to the prediction probabilities.
+chn = Chains(fill(4, 100, 2, 3)) # Example Chains object.
 Rs = rstar(XGBoost(), chn; iterations=20)
 
-# Estimate Rstar
-R = mean(Rs)
+R = round(mean(Rs); digits=1)
 
-# Visualize distribution
-using StatsPlots
-histogram(Rs)
+# output
+
+1.0
 ```
 """
 function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector{Int}; iterations = 10, subset = 0.8, verbosity = 0)
