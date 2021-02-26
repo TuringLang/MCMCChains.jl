@@ -12,7 +12,7 @@ Chains can be constructed with parameter names.
 For example, to create a chains object with
 
 - 500 samples,
-- 2 parameters (named `:a` and `:b`)
+- 2 parameters (named `a` and `b`)
 - 3 chains
 
 use
@@ -25,7 +25,7 @@ val = rand(500, 2, 3)
 chn = Chains(val, [:a, :b])
 ```
 
-By default, parameters will be given the name `:param_i`, where `i` is the parameter
+By default, parameters will be given the name "param_i", where *i* is the parameter
 number:
 
 ```@example index
@@ -68,7 +68,7 @@ The [`MCMCChains.set_section`](@ref) function returns a new `Chains` object:
 chn2 = set_section(chn, Dict(:internals => [:c, :d]))
 ```
 
-Note that only `:a` and `:b` are being shown. You can explicity retrieve
+Note that only `a` and `b` are being shown. You can explicity retrieve
 an array of the summary statistics and the quantiles of the `:internals` section by
 calling `describe(chn; sections = :internals)`, or of all variables with
 `describe(chn; sections = nothing)`. Many functions such as [`MCMCChains.summarize`](@ref) or
@@ -76,7 +76,7 @@ calling `describe(chn; sections = :internals)`, or of all variables with
 
 ## Groups of parameters
 
-You can access the names of all parameters in a `chain` that belong to the group `:name` by using
+You can access the names of all parameters in a `chain` that belong to the group `name` by using
 
 ```@docs
 namesingroup

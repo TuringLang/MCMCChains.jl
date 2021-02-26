@@ -16,9 +16,9 @@ verbosity level.
 * `iterations = 10` ... Number of iterations used to estimate the statistic. If the classifier is not probabilistic, i.e. does not return class probabilities, it is advisable to use a value of one.
 * `verbosity = 0` ... Verbosity level used during fitting of the classifier.
 
-# Usage
+# Example
 
-```julia
+```jldoctest
 # Load an MLJ classifier to compute the statistic, e.g., the XGBoost classifier.
 using MLJModels
 XGBoost = @load XGBoostClassifier
@@ -26,10 +26,10 @@ XGBoost = @load XGBoostClassifier
 # Compute 20 samples of the R* statistic using sampling according to the prediction probabilities.
 Rs = rstar(XGBoost(), chn; iterations=20)
 
-# estimate Rstar
+# Estimate Rstar
 R = mean(Rs)
 
-# visualize distribution
+# Visualize distribution
 using StatsPlots
 histogram(Rs)
 ```

@@ -110,12 +110,12 @@ Chains(chain::Chains, ::Nothing) = chain
 """
     namesingroup(chains::Chains, sym::Union{String,Symbol})
 
-Return the names of all parameters in a chain that belong to the group `:name`.
+Return the names of all parameters in a chain that belong to the group `sym`.
 
-This is based on the MCMCChains convention that parameters with names of the form `:name[index]` 
-belong to one group of parameters called `:name`.
+This is based on the MCMCChains convention that parameters with names of the form `:sym[index]`
+belong to one group of parameters called `:sym`.
 
-If the chain contains a parameter of name `:name` it will be returned as well.
+If the chain contains a parameter of name `:sym` it will be returned as well.
 
 # Example
 ```jldoctest

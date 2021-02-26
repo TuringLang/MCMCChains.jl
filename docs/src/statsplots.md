@@ -13,7 +13,7 @@ using StatsPlots
 theme(:ggplot2)
 
 # Define the experiment
-n_iter = 500
+n_iter = 100
 n_name = 3
 n_chain = 2
 
@@ -35,9 +35,7 @@ savefig(filename); nothing # hide
 \
 
 ```@example statsplots
-p2 = plot(chn, colordim = :parameter)
-# Using png to avoid vectorized graphics for images with many vectors. # hide
-plot!(size=(840, 400), fmt = :png) # hide
+plot(chn, colordim = :parameter; size=(840, 400))
 ```
 
 \
@@ -59,12 +57,10 @@ mixeddensity(chn)
 
 ```@example statsplots
 plot(chn, seriestype = :traceplot)
-plot!(fmt = :png) # hide
 ```
 
 ```@example statsplots
 traceplot(chn)
-plot!(fmt = :png) # hide
 ```
 
 ## Running average
