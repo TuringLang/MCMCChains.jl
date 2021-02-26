@@ -26,15 +26,13 @@ Random.seed!(0)
         Pkg.add("MLJXGBoostInterface")
         @time include("rstar_tests.jl")
 
-        @testset "doctests" begin
-            DocMeta.setdocmeta!(
-                MCMCChains,
-                :DocTestSetup,
-                :(using MCMCChains);
-                recursive=true
-            )
-            doctest(MCMCChains)
-        end
+        DocMeta.setdocmeta!(
+            MCMCChains,
+            :DocTestSetup,
+            :(using MCMCChains);
+            recursive=true
+        )
+        doctest(MCMCChains)
     end
 
     # run tests for effective sample size
