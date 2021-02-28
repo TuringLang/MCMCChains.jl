@@ -10,8 +10,6 @@ The following simple example illustrates how to use Chain to visually summarize 
 using MCMCChains
 using StatsPlots
 
-theme(:ggplot2)
-
 # Define the experiment
 n_iter = 100
 n_name = 3
@@ -85,4 +83,10 @@ histogram(chn)
 
 ```@example statsplots
 autocorplot(chn)
+```
+
+## Corner
+
+```@example statsplots
+corner(chn)
 ```
