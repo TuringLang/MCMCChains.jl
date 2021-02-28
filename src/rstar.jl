@@ -19,17 +19,18 @@ with uncertainty using gradient-boosted machines. arXiv preprint
 * `verbosity = 0` ... Verbosity level used during fitting of the classifier.
 
 # Example
-```jldoctest; output = false, filter = r".*"s
-julia> using MLJModels, Random
+```jldoctest rstar; output = false, filter = r".*"s
+using MLJModels
 
-julia> XGBoost = @load XGBoostClassifier verbosity=0
+XGBoost = @load XGBoostClassifier verbosity=0
+chn = Chains(fill(4, 100, 2, 3))
 
-julia> chn = Chains(fill(4, 100, 2, 3)); # Example Chains object.
+Rs = rstar(XGBoost(), chn; iterations=20)
+R = round(mean(Rs); digits=0)
 
-julia> Rs = rstar(XGBoost(), chn; iterations=20);
+# output
 
-julia> R = round(mean(Rs); digits=0);
-
+1.0
 ```
 """
 function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector{Int}; iterations = 10, subset = 0.8, verbosity = 0)
