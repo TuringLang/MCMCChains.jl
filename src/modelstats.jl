@@ -15,6 +15,6 @@ Computes Deviance Information Criterion (DIC).
 * `dic::Real`: DIC value
 """
 function dic(chain::Chains, loglik::Symbol)
-    lps = Array(chain[:, loglik, :][:])
-    return dic(lps)
+    lps = Array(chain[:, loglik, :])
+    return dic(vec(lps))
 end
