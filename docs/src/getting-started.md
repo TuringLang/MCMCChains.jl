@@ -25,7 +25,7 @@ val = rand(500, 2, 3)
 chn = Chains(val, [:a, :b])
 ```
 
-By default, parameters will be given the name "param_i", where *i* is the parameter
+By default, parameters will be given the name `param_i`, where `i` is the parameter
 number:
 
 ```@example index
@@ -55,7 +55,7 @@ replacenames
 
 Chains parameters are sorted into sections that represent groups of parameters, see 
 [`MCMCChains.group`](@ref).
-By default, every chain contains a `:parameters` section, to which all unassigned parameters are
+By default, every chain contains a `parameters` section, to which all unassigned parameters are
 assigned to. Chains can be assigned a named map during construction:
 
 ```@example index

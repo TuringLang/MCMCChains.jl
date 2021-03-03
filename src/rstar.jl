@@ -2,16 +2,14 @@
     rstar([rng ,]classif::Supervised, chains::Chains; kwargs...)
     rstar([rng ,]classif::Supervised, x::AbstractMatrix, y::AbstractVector; kwargs...)
 
-Compute the R* convergence diagnostic of MCMC.
+Compute the ``R^*`` convergence diagnostic of MCMC.
 
 This implementation is an adaption of Algorithm 1 & 2, described by [^LambertVehtari2020].
 Note that the correctness of the statistic depends on the convergence of the classifier used
 internally in the statistic. You can inspect the training of the classifier by adjusting the
 verbosity level.
 
-[^LambertVehtari2020]: Lambert & Vehtari (2020). ``R^*``: A robust MCMC convergence diagnostic
-with uncertainty using gradient-boosted machines. arXiv preprint
-<https://arxiv.org/abs/2003.07900>.
+[^LambertVehtari2020]: Lambert & Vehtari (2020). ``R^*``: A robust MCMC convergence diagnostic with uncertainty using gradient-boosted machines. arXiv preprint <https://arxiv.org/abs/2003.07900>.
 
 # Keyword Arguments
 * `subset = 0.8` ... Subset used to train the classifier, i.e. 0.8 implies 80% of the samples are used.

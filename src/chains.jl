@@ -191,11 +191,18 @@ names as the values.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
-Example:
-
+# Example
 ```julia
-x = get(c, :param_1)
-x = get(c, [:param_1, :param_2])
+julia> chn = Chains([1:5 6:10]);
+
+julia> get(chn, :param_1)
+(param_1 = [1; 2; … ; 4; 5],)
+
+julia> get(chn, [:param_1, :param_2])
+(param_2 = [6; 7; … ; 9; 10], param_1 = [1; 2; … ; 4; 5])
+
+julia> get(chn, :param_1; flatten=true)
+(param_1 = 1,)
 ```
 """
 Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)
@@ -231,11 +238,15 @@ Return all parameters in a given section(s) as a `NamedTuple`.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
-Example:
-
+# Example
 ```julia
-x = get(chn, section = :parameters)
-x = get(chn, section = [:internals, :parameters])
+julia> chn = Chains([1:5 6:10], [:a, :b], Dict(:internals => [:a]));
+
+julia> x = get(chn; section=:parameters)
+(b = [6; 7; … ; 9; 10],)
+
+julia> x = get(chn; section=[:internals, :parameters])
+(a = [1; 2; … ; 4; 5], b = [6; 7; … ; 9; 10])
 ```
 """
 function Base.get(
@@ -272,11 +283,22 @@ in their name (as in "P[1]") will be grouped into the returned value as P.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
-Example:
-
+# Example
 ```julia
-x = get_params(chn)
-x.P
+julia> chn = Chains(1:5);
+
+julia> x = get_params(chn);
+
+julia> x.param_1
+2-dimensional AxisArray{Int64,2,...} with axes:
+    :iter, 1:1:5
+    :chain, 1:1
+And data, a 5×1 Array{Int64,2}:
+ 1
+ 2
+ 3
+ 4
+ 5
 ```
 """
 get_params(c::Chains; flatten = false) = get(c, section = sections(c), flatten=flatten)
@@ -406,8 +428,7 @@ Return a string containing summary information for a `Chains` object.
 If the `section` keyword is used, this function prints only the relevant section
 header.
 
-Example:
-
+# Example
 ```julia
 # Printing the whole header.
 header(chn)
@@ -519,8 +540,7 @@ end
 
 Return a new `Chains` object with a `NamedTuple` type `n` placed in the `info` field.
 
-Example:
-
+# Example
 ```julia
 new_chn = setinfo(chn, NamedTuple{(:a, :b)}((1, 2)))
 ```
