@@ -14,7 +14,7 @@ using StatsPlots
 
 plot(chn)
 ```
-![Basic plot for Chains](https://TuringLang.github.io/MCMCChains.jl/dev/default_plot.png)
+![Basic plot for Chains](https://turinglang.github.io/MCMCChains.jl/dev/default_plot.svg)
 
 See the [docs](https://TuringLang.github.io/MCMCChains.jl/dev/) for more information.
 
