@@ -192,7 +192,7 @@ names as the values.
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
-```jldoctest
+```julia
 julia> chn = Chains([1:5 6:10]);
 
 julia> get(chn, :param_1)
@@ -239,7 +239,7 @@ Return all parameters in a given section(s) as a `NamedTuple`.
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
-```jldoctest
+```julia
 julia> chn = Chains([1:5 6:10], [:a, :b], Dict(:internals => [:a]));
 
 julia> x = get(chn; section=:parameters)
@@ -284,7 +284,7 @@ in their name (as in "P[1]") will be grouped into the returned value as P.
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
-```jldoctest
+```julia
 julia> chn = Chains(1:5);
 
 julia> x = get_params(chn);
