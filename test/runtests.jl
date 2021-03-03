@@ -1,6 +1,4 @@
 using Pkg
-using Test
-using Random
 
 # Activate test environment on older Julia versions
 if VERSION < v"1.2"
@@ -8,6 +6,12 @@ if VERSION < v"1.2"
     Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
     Pkg.instantiate()
 end
+
+using MCMCChains
+using Documenter
+
+using Test
+using Random
 
 # set seed for all testsets
 Random.seed!(0)
@@ -21,6 +25,14 @@ Random.seed!(0)
         Pkg.add("MLJModels")
         Pkg.add("MLJXGBoostInterface")
         @time include("rstar_tests.jl")
+
+        DocMeta.setdocmeta!(
+            MCMCChains,
+            :DocTestSetup,
+            :(using MCMCChains);
+            recursive=true
+        )
+        doctest(MCMCChains)
     end
 
     # run tests for effective sample size
@@ -74,4 +86,5 @@ Random.seed!(0)
     # run tests for concatenation
     println("Concatenation")
     @time include("concatenation_tests.jl")
+
 end

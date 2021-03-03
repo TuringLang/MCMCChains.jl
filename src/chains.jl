@@ -66,7 +66,28 @@ function Chains(
     return Chains(arr, evidence, _name_map, info)
 end
 
-# Retrieve a new chain with only a specific section pulled out.
+"""
+    Chains(c::Chains, section::Union{Symbol,String})
+    Chains(c::Chains, sections)
+
+Return a new chain with only a specific `section` or multiple `sections` pulled out.
+
+# Examples
+```jldoctest
+julia> chn = Chains(rand(100, 2, 1), [:a, :b], Dict(:internals => [:a]));
+
+julia> names(chn)
+2-element Array{Symbol,1}:
+ :a
+ :b
+
+julia> chn2 = Chains(chn, :internals);
+
+julia> names(chn2)
+1-element Array{Symbol,1}:
+ :a
+```
+"""
 Chains(c::Chains, section::Union{Symbol,String}) = Chains(c, (section,))
 function Chains(chn::Chains, sections)
     # Make sure the sections exist first.
@@ -86,6 +107,26 @@ Chains(chain::Chains, ::Nothing) = chain
 
 # Groups of parameters
 
+"""
+    namesingroup(chains::Chains, sym::Union{String,Symbol})
+
+Return the names of all parameters in a chain that belong to the group `sym`.
+
+This is based on the MCMCChains convention that parameters with names of the form `:sym[index]`
+belong to one group of parameters called `:sym`.
+
+If the chain contains a parameter of name `:sym` it will be returned as well.
+
+# Example
+```jldoctest
+julia> chn = Chains(rand(100, 2, 2), ["A[1]", "A[2]"]);
+
+julia> namesingroup(chn, :A)
+2-element Array{Symbol,1}:
+ Symbol("A[1]")
+ Symbol("A[2]")
+```
+"""
 namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
 function namesingroup(chains::Chains, sym::Symbol)
     # Start by looking up the symbols in the list of parameter names.
@@ -95,6 +136,11 @@ function namesingroup(chains::Chains, sym::Symbol)
     return names_of_params[indices]
 end
 
+"""
+    group(chains::Chains, name::Union{String,Symbol})
+
+Return a subset of the chain chain with all parameters in the group `Symbol(name)`.
+"""
 function group(chains::Chains, name::Union{String,Symbol})
     return chains[:, namesingroup(chains, name), :]
 end
@@ -140,7 +186,7 @@ Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
-Returns a `NamedTuple` with `v` as the key, and matching paramter
+Return a `NamedTuple` with `v` as the key, and matching paramter
 names as the values.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
@@ -181,7 +227,7 @@ end
 """
     get(c::Chains; section::Union{Vector{Symbol}, Symbol; flatten=false}
 
-Returns all parameters in a given section(s) as a `NamedTuple`.
+Return all parameters in a given section(s) as a `NamedTuple`.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
@@ -221,7 +267,7 @@ end
 """
     get_params(c::Chains; flatten=false)
 
-Returns all parameters packaged as a `NamedTuple`. Variables with a bracket
+Return all parameters packaged as a `NamedTuple`. Variables with a bracket
 in their name (as in "P[1]") will be grouped into the returned value as P.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
@@ -303,7 +349,7 @@ resetrange(chains::Chains) = setrange(chains, 1:size(chains, 1))
 """
     chains(c::Chains)
 
-Returns the names or symbols of each chain in a `Chains` object.
+Return the names or symbols of each chain in a `Chains` object.
 """
 function chains(c::Chains)
     return c.value[Axis{:chain}].val
@@ -339,7 +385,7 @@ end
 """
     get_sections(chains[, sections])
 
-Returns multiple `Chains` objects, each containing only a single section.
+Return multiple `Chains` objects, each containing only a single section.
 """
 function get_sections(chains::Chains, sections = keys(chains.name_map))
     return [Chains(chains, section) for section in sections]
@@ -356,7 +402,7 @@ sections(c::Chains) = collect(keys(c.name_map))
 """
     header(c::Chains; section=missing)
 
-Returns a string containing summary information for a `Chains` object.
+Return a string containing summary information for a `Chains` object.
 If the `section` keyword is used, this function prints only the relevant section
 header.
 
@@ -442,7 +488,7 @@ end
 """
     sort(c::Chains[; lt=NaturalSort.natural])
 
-Returns a new column-sorted version of `c`.
+Return a new column-sorted version of `c`.
 
 By default the columns are sorted in natural sort order.
 """
@@ -471,7 +517,7 @@ end
 """
     setinfo(c::Chains, n::NamedTuple)
 
-Returns a new `Chains` object with a `NamedTuple` type `n` placed in the `info` field.
+Return a new `Chains` object with a `NamedTuple` type `n` placed in the `info` field.
 
 Example:
 
@@ -612,7 +658,30 @@ function pool_chain(c::Chains)
     return Chains(pool_data, names(c), c.name_map; info=c.info)
 end
 
-# replace parameter names
+"""
+    replacenames(chains::Chains, dict::AbstractDict) 
+
+Replace parameter names by creating a new `Chains` object that shares the same underlying data.
+
+# Examples
+```jldoctest
+julia> chn = Chains(rand(100, 2, 2), ["one", "two"]);
+
+julia> chn2 = replacenames(chn, "one" => "A");
+
+julia> names(chn2)
+2-element Array{Symbol,1}:
+ :A
+ :two
+
+julia> chn3 = replacenames(chn2, Dict("A" => "one", "two" => "B"));
+
+julia> names(chn3) 
+2-element Array{Symbol,1}:
+ :one
+ :B
+```
+"""
 replacenames(chains::Chains, dict::AbstractDict) = replacenames(chains, pairs(dict)...)
 function replacenames(chains::Chains, old_new::Pair...)
     isempty(old_new) && error("you have to specify at least one replacement")

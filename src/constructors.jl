@@ -24,7 +24,7 @@ end
 
 Construct an `Array` from a chain.
 
-Returns 3 dimensionsal array or an Array of 2 dimensional Arrays. If only a single parameter
+Return 3 dimensionsal array or an Array of 2 dimensional Arrays. If only a single parameter
 is selected for inclusion, a dimension is dropped in both cases, as is e.g. required by
 cde(), etc.
 

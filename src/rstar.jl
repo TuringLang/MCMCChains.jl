@@ -4,34 +4,34 @@
 
 Compute the R* convergence diagnostic of MCMC.
 
-This implementation is an adaption of Algorithm 1 & 2, described in [^LambertVehtari]. Note
-that the correctness of the statistic depends on the convergence of the classifier used
+This implementation is an adaption of Algorithm 1 & 2, described by [^LambertVehtari2020].
+Note that the correctness of the statistic depends on the convergence of the classifier used
 internally in the statistic. You can inspect the training of the classifier by adjusting the
 verbosity level.
+
+[^LambertVehtari2020]: Lambert & Vehtari (2020). ``R^*``: A robust MCMC convergence diagnostic
+with uncertainty using gradient-boosted machines. arXiv preprint
+<https://arxiv.org/abs/2003.07900>.
 
 # Keyword Arguments
 * `subset = 0.8` ... Subset used to train the classifier, i.e. 0.8 implies 80% of the samples are used.
 * `iterations = 10` ... Number of iterations used to estimate the statistic. If the classifier is not probabilistic, i.e. does not return class probabilities, it is advisable to use a value of one.
 * `verbosity = 0` ... Verbosity level used during fitting of the classifier.
 
-# Usage
-
-```julia
-# Load an MLJ classifier to compute the statistic, e.g., the XGBoost classifier.
+# Example
+```jldoctest rstar; output = false, filter = r".*"s
 using MLJModels
-XGBoost = @load XGBoostClassifier
 
-# Compute 20 samples of the R* statistic using sampling from according to the prediction probabilities.
+XGBoost = @load XGBoostClassifier verbosity=0
+chn = Chains(fill(4, 100, 2, 3))
+
 Rs = rstar(XGBoost(), chn; iterations=20)
+R = round(mean(Rs); digits=0)
 
-# estimate Rstar
-R = mean(Rs)
+# output
 
-# visualize distribution
-histogram(Rs)
+1.0
 ```
-
-[^LambertVehtari]: Ben Lambert and Aki Vehtari. "R∗: A robust MCMC convergence diagnostic with uncertainty using gradient-boostined machines." Arxiv 2020.
 """
 function rstar(rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, x::AbstractMatrix, y::AbstractVector{Int}; iterations = 10, subset = 0.8, verbosity = 0)
 

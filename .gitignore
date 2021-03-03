@@ -8,3 +8,6 @@ tmp/
 *.jld
 .ipynb_checkpoints
 Manifest.toml
+
+/build
+/docs/build/

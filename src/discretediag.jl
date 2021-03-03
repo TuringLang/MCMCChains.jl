@@ -1,5 +1,3 @@
-########################### Chisq Diagnostic ###########################
-
 function update_hangartner_temp_vars!(u::Matrix{Int}, X::Matrix{Int},
                                       t::Int)
   d = size(X,2)
@@ -27,9 +25,11 @@ function hangartner_inner(Y::AbstractMatrix, m::Int)
 end
 
 """
-  weiss(X::AbstractMatrix) -> (statistic, m_tot, pvalue, ca)
+    weiss(X::AbstractMatrix)
 
-The weiss procedure to assess convergence in MCMC output computes X^2/c and evaluates a p-value from the X^2 distribution with (|R| − 1)(s − 1) degrees of freedom.
+Assess the convergence of the MCMC chains with the Weiss procedure.
+
+It computes ``\\frac{X^2}{c}`` and evaluates a p-value from the ``\\chi^2`` distribution with ``(|R| − 1)(s − 1)`` degrees of freedom.
 """
 function weiss(X::AbstractMatrix)
   ## number of iterations, number of chains
@@ -75,7 +75,7 @@ function weiss(X::AbstractMatrix)
     pval = 1 - cdf(Chisq((m_tot - 1) * (d - 1)), stat)
   end
 
-  return ( stat, m_tot, pval, ca)
+  return (stat, m_tot, pval, ca)
 end
 
 function weiss_sub(u::Matrix{Int}, v::Matrix{Int}, t::Int)
@@ -368,6 +368,12 @@ function discretediag_sub(c::Chains, frac::Real, method::Symbol,
 
 end
 
+"""
+    discretediag(chains::Chains{<:Real}; sections, frac, method, nsim)
+
+Discrete diagnostic where `method` can be 
+`[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]`.
+"""
 function discretediag(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
