@@ -199,7 +199,7 @@ julia> get(chn, :param_1)
 (param_1 = [1; 2; … ; 4; 5],)
 
 julia> get(chn, [:param_1, :param_2])
-(param_2 = [6; 7; … ; 9; 10], param_1 = [1; 2; … ; 4; 5],)
+(param_2 = [6; 7; … ; 9; 10], param_1 = [1; 2; … ; 4; 5])
 
 julia> get(chn, :param_1; flatten=true)
 (param_1 = 1,)
@@ -246,7 +246,7 @@ julia> x = get(chn; section=:parameters)
 (b = [6; 7; … ; 9; 10],)
 
 julia> x = get(chn; section=[:internals, :parameters])
-(a = [1; 2; … ; 4; 5], b = [6; 7; … ; 9; 10],)
+(a = [1; 2; … ; 4; 5], b = [6; 7; … ; 9; 10])
 ```
 """
 function Base.get(
