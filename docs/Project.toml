@@ -8,4 +8,5 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 [compat]
 DataFrames = "0.22"
 Documenter = "0.26"
+MLJXGBoostInterface = "0.1"
 StatsPlots = "0.14"
