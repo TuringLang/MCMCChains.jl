@@ -24,7 +24,7 @@ import Random
 import Serialization
 import Statistics: std, cor, mean, var, mean!
 
-import StatsModelComparisons: dic
+import StatsModelComparisons
 
 export Chains, chains, chainscat
 export setrange, resetrange
