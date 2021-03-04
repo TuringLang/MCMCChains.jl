@@ -5,7 +5,7 @@ export dic
 """
     dic(chain::Chains, loglik::Symbol)
 
-Compute the deviance information criterion (DIC) from Chain object on posterior log likelihood samples specified by varible name loglik.
+Compute the deviance information criterion (DIC) from `chain` on posterior log likelihood samples specified by parameter name `loglik`.
 
 Note: DIC assumes that the posterior distribution is approx. multivariate Gaussian and tends to select overfitted models.
 """
