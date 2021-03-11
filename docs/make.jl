@@ -14,7 +14,8 @@ makedocs(
         "MCMCChains" => "index.md",
         "Getting started" => "getting-started.md",
         "Plotting" => [
-            "StatsPlots.jl" => "statsplots.md"
+            "StatsPlots.jl" => "statsplots.md",
+            "Gadfly.jl" => "gadfly.md"
         ],
         "API" => [
             "Chains" => "chains.md",
