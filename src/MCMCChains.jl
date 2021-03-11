@@ -6,7 +6,6 @@ using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat
 using Compat
-using DataFrames
 using Distributions
 using RecipesBase
 using SpecialFunctions
