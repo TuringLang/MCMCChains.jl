@@ -43,12 +43,6 @@ Tables.rowaccess(::Type{<:Chains}) = true
 
 Tables.rows(chn::Chains) = Tables.rows(Tables.columntable(chn))
 
-Tables.rowtable(chn::Chains) = Tables.rowtable(Tables.columntable(chn))
-
-function Tables.namedtupleiterator(chn::Chains)
-    return Tables.namedtupleiterator(Tables.columntable(chn))
-end
-
 function Tables.schema(chn::Chains)
     _check_columnnames(chn)
     nms = Tables.columnnames(chn)
@@ -80,12 +74,6 @@ Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = cdf.nt[nm]
 Tables.rowaccess(::Type{<:ChainDataFrame}) = true
 
 Tables.rows(cdf::ChainDataFrame) = Tables.rows(Tables.columntable(cdf))
-
-Tables.rowtable(cdf::ChainDataFrame) = Tables.rowtable(Tables.columntable(cdf))
-
-function Tables.namedtupleiterator(cdf::ChainDataFrame)
-    return Tables.namedtupleiterator(Tables.columntable(cdf))
-end
 
 function Tables.schema(::ChainDataFrame{NamedTuple{names,T}}) where {names,T}
     types = ntuple(i -> eltype(fieldtype(T, i)), fieldcount(T))
