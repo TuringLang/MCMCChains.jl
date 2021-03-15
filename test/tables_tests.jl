@@ -38,6 +38,24 @@ using DataFrames
 
             @testset "row access" begin
                 @test Tables.rowaccess(typeof(chn))
+                @test Tables.rows(chn) isa Tables.RowIterator
+                @test eltype(Tables.rows(chn)) <: Tables.AbstractRow
+                rows = collect(Tables.rows(chn))
+                @test eltype(rows) <: Tables.AbstractRow
+                @test size(rows) === (4000,)
+                for chainid in 1:4, iterid in 1:1000
+                    row = rows[(chainid - 1) * 1000 + iterid]
+                    @test Tables.columnnames(row) ==
+                        (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
+                    @test Tables.getcolumn(row, 1) == iterid
+                    @test Tables.getcolumn(row, 2) == chainid
+                    @test Tables.getcolumn(row, 3) == chn[iterid, :a, chainid]
+                    @test Tables.getcolumn(row, 10) == chn[iterid, :h, chainid]
+                    @test Tables.getcolumn(row, :iteration) == iterid
+                    @test Tables.getcolumn(row, :chain) == chainid
+                    @test Tables.getcolumn(row, :a) == chn[iterid, :a, chainid]
+                    @test Tables.getcolumn(row, :h) == chn[iterid, :h, chainid]
+                end
             end
 
             @testset "integration tests" begin
@@ -136,6 +154,19 @@ using DataFrames
 
             @testset "row access" begin
                 @test Tables.rowaccess(typeof(cdf))
+                @test Tables.rows(cdf) isa Tables.RowIterator
+                @test eltype(Tables.rows(cdf)) <: Tables.AbstractRow
+                rows = collect(Tables.rows(cdf))
+                @test eltype(rows) <: Tables.AbstractRow
+                @test size(rows) === (2,)
+                @testset for i in 1:2
+                    row = rows[i]
+                    @test Tables.columnnames(row) == keys(cdf.nt)
+                    for j in length(cdf.nt)
+                        @test Tables.getcolumn(row, j) == cdf.nt[j][i]
+                        @test Tables.getcolumn(row, keys(cdf.nt)[j]) == cdf.nt[j][i]
+                    end
+                end
             end
 
             @testset "integration tests" begin
