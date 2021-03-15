@@ -59,6 +59,7 @@ using DataFrames
             )
             @test Tables.matrix(chn[:, :, 1])[:, 3:end] ≈ chn[:, :, 1].value
             @test Tables.matrix(chn[:, :, 2])[:, 3:end] ≈ chn[:, :, 2].value
+            @test Tables.matrix(Tables.rowtable(chn)) == Tables.matrix(Tables.columntable(chn))
 
             val = rand(1000, 2, 4)
             chn2 = Chains(val, ["iteration", "a"])
@@ -127,6 +128,7 @@ using DataFrames
             @test Tables.schema(cdf) isa Tables.Schema
             @test Tables.schema(cdf).names === keys(cdf.nt)
             @test Tables.schema(cdf).types === eltype.(values(cdf.nt))
+            @test Tables.matrix(Tables.rowtable(cdf)) == Tables.matrix(Tables.columntable(cdf))
         end
 
         @testset "TableTraits interface" begin
