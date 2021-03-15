@@ -33,7 +33,6 @@ using DataFrames
             @test_throws Exception Tables.getcolumn(chn, :i)
             @test_throws Exception Tables.getcolumn(chn, 11)
             @test Tables.rowaccess(typeof(chn))
-            @test Tables.rows(chn) === chn
             @test length(Tables.rowtable(chn)) == 4000
             nt = Tables.rowtable(chn)[1]
             @test nt ==
@@ -117,7 +116,6 @@ using DataFrames
             @test_throws Exception Tables.getcolumn(cdf, :blah)
             @test_throws Exception Tables.getcolumn(cdf, length(cdf.nt) + 1)
             @test Tables.rowaccess(typeof(cdf))
-            @test Tables.rows(cdf) === cdf
             @test length(Tables.rowtable(cdf)) == length(cdf.nt[1])
             @test Tables.columntable(cdf) == cdf.nt
             nt = Tables.rowtable(cdf)[1]

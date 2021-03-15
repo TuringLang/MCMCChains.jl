@@ -41,10 +41,7 @@ end
 
 Tables.rowaccess(::Type{<:Chains}) = true
 
-function Tables.rows(chn::Chains)
-    _check_columnnames(chn)
-    return chn
-end
+Tables.rows(chn::Chains) = Tables.rows(Tables.columntable(chn))
 
 Tables.rowtable(chn::Chains) = Tables.rowtable(Tables.columntable(chn))
 
@@ -82,7 +79,7 @@ Tables.getcolumn(cdf::ChainDataFrame, nm::Symbol) = cdf.nt[nm]
 
 Tables.rowaccess(::Type{<:ChainDataFrame}) = true
 
-Tables.rows(cdf::ChainDataFrame) = cdf
+Tables.rows(cdf::ChainDataFrame) = Tables.rows(Tables.columntable(cdf))
 
 Tables.rowtable(cdf::ChainDataFrame) = Tables.rowtable(Tables.columntable(cdf))
 
