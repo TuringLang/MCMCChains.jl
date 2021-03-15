@@ -26,11 +26,11 @@ function Tables.getcolumn(chn::Chains, i::Int)
     return Tables.getcolumn(chn, Tables.columnnames(chn)[i])
 end
 function Tables.getcolumn(chn::Chains, nm::Symbol)
-    if nm == :iteration
+    if nm === :iteration
         iterations = range(chn)
         nchains = size(chn, 3)
         return repeat(iterations, nchains)
-    elseif nm == :chain
+    elseif nm === :chain
         chainids = chains(chn)
         niter = size(chn, 1)
         return repeat(chainids; inner = niter)
