@@ -74,6 +74,7 @@ end
 @recipe function f(p::_DensityPlot)
     xaxis --> "Sample value"
     yaxis --> "Density"
+    trim --> true
     [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
 end
 
@@ -82,6 +83,7 @@ end
     yaxis --> "Frequency"
     fillalpha --> 0.7
     bins --> 25
+    trim --> true
     [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
 end
 
