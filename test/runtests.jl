@@ -29,7 +29,8 @@ Random.seed!(0)
         DocMeta.setdocmeta!(
             MCMCChains,
             :DocTestSetup,
-            :(using MCMCChains);
+            # https://github.com/JuliaDocs/Documenter.jl/issues/942
+            :(using MCMCChains; ENV["COLUMNS"] = 100;);
             recursive=true
         )
         doctest(
