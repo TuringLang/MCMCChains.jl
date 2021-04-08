@@ -193,14 +193,14 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
 
-```jldoctest; setup = :(ENV["COLUMNS"] = 100)
-julia> chn = Chains([1:5 6:10]);
+```jldoctest
+julia> chn = Chains([1:2 3:4]);
 
 julia> get(chn, :param_1)
-(param_1 = [1; 2; … ; 4; 5],)
+(param_1 = [1; 2],)
 
-julia> get(chn, [:param_1, :param_2])
-(param_2 = [6; 7; … ; 9; 10], param_1 = [1; 2; … ; 4; 5])
+julia> get(chn, [:param_2])
+(param_2 = [3; 4],)
 
 julia> get(chn, :param_1; flatten=true)
 (param_1 = 1,)
@@ -241,14 +241,14 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
 
-```jldoctest; setup = :(ENV["COLUMNS"] = 100)
-julia> chn = Chains([1:5 6:10], [:a, :b], Dict(:internals => [:a]));
+```jldoctest
+julia> chn = Chains([1:2 3:4], [:a, :b], Dict(:internals => [:a]));
 
-julia> x = get(chn; section=:parameters)
-(b = [6; 7; … ; 9; 10],)
+julia> get(chn; section=:parameters)
+(b = [3; 4],)
 
-julia> x = get(chn; section=[:internals, :parameters])
-(a = [1; 2; … ; 4; 5], b = [6; 7; … ; 9; 10])
+julia> get(chn; section=[:internals])
+(a = [1; 2],)
 ```
 """
 function Base.get(

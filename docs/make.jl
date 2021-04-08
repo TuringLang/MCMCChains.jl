@@ -1,9 +1,6 @@
 using Documenter
 using MCMCChains
 
-# https://github.com/JuliaDocs/Documenter.jl/issues/942
-ENV["COLUMNS"] = 100
-
 DocMeta.setdocmeta!(
     MCMCChains,
     :DocTestSetup,

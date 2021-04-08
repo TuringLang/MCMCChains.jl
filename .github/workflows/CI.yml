@@ -46,9 +46,6 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-        env:
-          # https://github.com/JuliaDocs/Documenter.jl/issues/942
-          COLUMNS: 100
       - uses: julia-actions/julia-processcoverage@v1
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.num_threads == 1
       - uses: codecov/codecov-action@v1
