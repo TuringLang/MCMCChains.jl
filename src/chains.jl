@@ -193,7 +193,7 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
 
-```jldoctest
+```jldoctest; setup = :(ENV["COLUMNS"] = 100)
 julia> chn = Chains([1:5 6:10]);
 
 julia> get(chn, :param_1)
@@ -241,7 +241,7 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
 
-```jldoctest
+```jldoctest; setup = :(ENV["COLUMNS"] = 100)
 julia> chn = Chains([1:5 6:10], [:a, :b], Dict(:internals => [:a]));
 
 julia> x = get(chn; section=:parameters)
