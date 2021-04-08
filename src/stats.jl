@@ -112,7 +112,7 @@ end
 
 function chaindataframe_changerate(name, names_of_params, chains; kwargs...)
     # Compute the change rates.
-    changerates, mvchangerate = chains
+    changerates, mvchangerate = changerate(chains)
 
     # Summarize the results in a named tuple.
     nt = (; zip(names_of_params, changerates)..., multivariate = mvchangerate)

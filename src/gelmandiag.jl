@@ -103,8 +103,8 @@ function gelmandiag(
     results = gelmandiag(psi; alpha = alpha, kwargs...)
 
     # Create a named tuple with the results.
-    colnames = (:psrf, Symbol(100 * (1 - alpha / 2), :%))
-    nt = (; parameters = names(_chains), zip(colnames, results)...)
+    sym = Symbol(100 * (1 - alpha / 2), :%)
+    nt = (; :parameters => names(_chains), :psrf => results.psrf, sym => results.psrfci)
 
     return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt)
 end
@@ -124,8 +124,8 @@ function gelmandiag_multivariate(
     results = gelmandiag_multivariate(psi; alpha = alpha, kwargs...)
 
     # Create a named tuple with the results.
-    colnames = (:psrf, Symbol(100 * (1 - alpha / 2), :%))
-    nt = (; parameters = names(_chains), zip(colnames, (results.psrf, results.psrfci))...)
+    sym = Symbol(100 * (1 - alpha / 2), :%)
+    nt = (; :parameters => names(_chains), :psrf => results.psrf, sym => results.psrfci)
 
     return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt),
         results.multivariate
