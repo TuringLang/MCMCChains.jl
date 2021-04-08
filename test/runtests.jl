@@ -42,7 +42,6 @@ Random.seed!(0)
                 r"(Array{[a-zA-Z0-9]+,\s?2}|Matrix{[a-zA-Z0-9]+})",
             ],
         )
-        end
     end
 
     # run tests for effective sample size
