@@ -77,14 +77,14 @@ Return a new chain with only a specific `section` or multiple `sections` pulled 
 julia> chn = Chains(rand(100, 2, 1), [:a, :b], Dict(:internals => [:a]));
 
 julia> names(chn)
-2-element Array{Symbol,1}:
+2-element Vector{Symbol}:
  :a
  :b
 
 julia> chn2 = Chains(chn, :internals);
 
 julia> names(chn2)
-1-element Array{Symbol,1}:
+1-element Vector{Symbol}:
  :a
 ```
 """
@@ -122,7 +122,7 @@ If the chain contains a parameter of name `:sym` it will be returned as well.
 julia> chn = Chains(rand(100, 2, 2), ["A[1]", "A[2]"]);
 
 julia> namesingroup(chn, :A)
-2-element Array{Symbol,1}:
+2-element Vector{Symbol}:
  Symbol("A[1]")
  Symbol("A[2]")
 ```
@@ -192,7 +192,8 @@ names as the values.
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
-```julia
+
+```jldoctest
 julia> chn = Chains([1:5 6:10]);
 
 julia> get(chn, :param_1)
@@ -239,7 +240,8 @@ Return all parameters in a given section(s) as a `NamedTuple`.
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
-```julia
+
+```jldoctest
 julia> chn = Chains([1:5 6:10], [:a, :b], Dict(:internals => [:a]));
 
 julia> x = get(chn; section=:parameters)
@@ -284,7 +286,8 @@ in their name (as in "P[1]") will be grouped into the returned value as P.
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
 # Example
-```julia
+
+```jldoctest
 julia> chn = Chains(1:5);
 
 julia> x = get_params(chn);
@@ -293,7 +296,7 @@ julia> x.param_1
 2-dimensional AxisArray{Int64,2,...} with axes:
     :iter, 1:1:5
     :chain, 1:1
-And data, a 5×1 Array{Int64,2}:
+And data, a 5×1 Matrix{Int64}:
  1
  2
  3
@@ -690,14 +693,14 @@ julia> chn = Chains(rand(100, 2, 2), ["one", "two"]);
 julia> chn2 = replacenames(chn, "one" => "A");
 
 julia> names(chn2)
-2-element Array{Symbol,1}:
+2-element Vector{Symbol}:
  :A
  :two
 
 julia> chn3 = replacenames(chn2, Dict("A" => "one", "two" => "B"));
 
 julia> names(chn3) 
-2-element Array{Symbol,1}:
+2-element Vector{Symbol}:
  :one
  :B
 ```

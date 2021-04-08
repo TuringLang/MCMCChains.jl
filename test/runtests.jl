@@ -32,7 +32,15 @@ Random.seed!(0)
             :(using MCMCChains);
             recursive=true
         )
-        doctest(MCMCChains)
+        doctest(
+            MCMCChains;
+            # https://github.com/JuliaLang/julia/pull/37085#issuecomment-683356098
+            doctestfilters = [
+                r"{([a-zA-Z0-9]+,\s?)+[a-zA-Z0-9]+}",
+                r"(Array{[a-zA-Z0-9]+,\s?1}|Vector{[a-zA-Z0-9]+})",
+                r"(Array{[a-zA-Z0-9]+,\s?2}|Matrix{[a-zA-Z0-9]+})",
+            ],
+        )
     end
 
     # run tests for effective sample size
