@@ -33,8 +33,6 @@ Random.seed!(0)
             recursive=true
         )
 
-        # https://github.com/JuliaDocs/Documenter.jl/issues/942
-        ENV["COLUMNS"] = 100
         doctest(
             MCMCChains;
             # https://github.com/JuliaLang/julia/pull/37085#issuecomment-683356098
