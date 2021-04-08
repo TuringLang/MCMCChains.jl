@@ -29,19 +29,24 @@ Random.seed!(0)
         DocMeta.setdocmeta!(
             MCMCChains,
             :DocTestSetup,
-            # https://github.com/JuliaDocs/Documenter.jl/issues/942
-            :(using MCMCChains; ENV["COLUMNS"] = 100;);
+            :(using MCMCChains);
             recursive=true
         )
-        doctest(
-            MCMCChains;
-            # https://github.com/JuliaLang/julia/pull/37085#issuecomment-683356098
-            doctestfilters = [
-                r"{([a-zA-Z0-9]+,\s?)+[a-zA-Z0-9]+}",
-                r"(Array{[a-zA-Z0-9]+,\s?1}|Vector{[a-zA-Z0-9]+})",
-                r"(Array{[a-zA-Z0-9]+,\s?2}|Matrix{[a-zA-Z0-9]+})",
-            ],
-        )
+
+        # https://github.com/JuliaDocs/Documenter.jl/issues/942
+        @show displaysize()
+        withenv("COLUMNS" => 100) do
+            @show displaysize()
+            doctest(
+                MCMCChains;
+                # https://github.com/JuliaLang/julia/pull/37085#issuecomment-683356098
+                doctestfilters = [
+                    r"{([a-zA-Z0-9]+,\s?)+[a-zA-Z0-9]+}",
+                    r"(Array{[a-zA-Z0-9]+,\s?1}|Vector{[a-zA-Z0-9]+})",
+                    r"(Array{[a-zA-Z0-9]+,\s?2}|Matrix{[a-zA-Z0-9]+})",
+                ],
+            )
+        end
     end
 
     # run tests for effective sample size
