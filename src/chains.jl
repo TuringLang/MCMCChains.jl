@@ -333,6 +333,78 @@ Base.last(c::Chains) = last(c.value[Axis{:iter}].val)
 
 Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
+"""
+    start_time(c::Chains)
+
+Retrieve a vector of start times (as `DateTime`)
+from `chain.info`. Assumes that either
+`DateTime` or unix timestamps (`Float64`) are stored in
+`chain.info.start_time`
+"""
+function start_time(c::Chains)
+    if :start_time in keys(c.info)
+        # We've got some times, print them out.
+        ts = c.info.start_time
+
+        if ts isa DateTime
+            return ts
+        elseif ts isa Vector{DateTime}
+            return ts
+        elseif ts isa Float64
+            return unix2datetime(ts)
+        elseif ts isa Vector{Float64}
+            return unix2datetime.(ts)
+        end
+    else
+        # Times not found -- spit out missing.
+        return missing
+    end
+end
+
+"""
+    stop_time(c::Chains)
+
+Retrieve a vector of stop times (as `DateTime`)
+from `chain.info`. Assumes that either
+`DateTime` or unix timestamps (`Float64`) are stored in
+`chain.info.stop_time`
+"""
+function stop_time(c::Chains)
+    if :stop_time in keys(c.info)
+        # We've got some times, print them out.
+        ts = c.info.stop_time
+
+        if ts isa DateTime
+            return [ts]
+        elseif ts isa Vector{DateTime}
+            return ts
+        elseif ts isa Float64
+            return [unix2datetime(ts)]
+        elseif ts isa Vector{Float64}
+            return unix2datetime.(ts)
+        end
+    else
+        # Times not found -- spit out missing.
+        return missing
+    end
+end
+
+"""
+    wall_duration(c::Chains)
+
+Calculate the wall clock time for all chains in seconds.
+The duration is calculated as the latest stopping time
+minus the earliest starting time.
+"""
+function wall_duration(c::Chains)
+    starts = start_time(c)
+    stops = stop_time(c)
+
+    earliest_start = minimum(starts)
+    latest_stop = maximum(stops)
+
+    return Dates.value(latest_stop - earliest_start) / 1000
+end
 #################### Auxilliary Functions ####################
 
 """
@@ -450,6 +522,11 @@ function header(c::Chains; section=missing)
         "= $(join(map(string, arr), ", "))\n"
     )
 
+    # Get the wall time
+    start = minimum(start_time(c))
+    stop = maximum(stop_time(c))
+    wall = wall_duration(c)
+
     # Set up string array.
     section_strings = String[]
 
@@ -466,11 +543,12 @@ function header(c::Chains; section=missing)
         push!(section_strings, section_string)
     end
 
-    #
-
     # Return header.
     return string(
         ismissing(c.logevidence) ? "" : "Log evidence      = $(c.logevidence)\n",
+        ismissing(start) ? "" : "Start time        = $(start)\n",
+        ismissing(start) ? "" : "Stop time         = $(stop)\n",
+        ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
         "Chains            = $(join(map(string, chains(c)), ", "))\n",
