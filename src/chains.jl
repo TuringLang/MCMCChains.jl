@@ -363,6 +363,16 @@ function start_time(c::Chains)
     end
 end
 
+function min_start(c::Chains)
+    ts = start_time(c)
+
+    if ts === missing
+        return missing
+    else
+        return minimum(ts)
+    end
+end
+
 """
     stop_time(c::Chains)
 
@@ -382,6 +392,16 @@ function stop_time(c::Chains)
     end
 end
 
+function max_stop(c::Chains)
+    ts = stop_time(c)
+
+    if ts === missing
+        return missing
+    else
+        return maximum(ts)
+    end
+end
+
 """
     wall_duration(c::Chains)
 
@@ -390,13 +410,16 @@ The duration is calculated as the latest stopping time
 minus the earliest starting time.
 """
 function wall_duration(c::Chains)
-    starts = start_time(c)
-    stops = stop_time(c)
+    earliest_start = min_start(c)
+    latest_stop = max_stop(c)
 
-    earliest_start = minimum(starts)
-    latest_stop = maximum(stops)
-
-    return Dates.value(latest_stop - earliest_start) / 1000
+    # DateTime - DateTime returns a Millisecond value,
+    # divide by 1k to get seconds.
+    if earliest_start === missing || latest_stop === missing
+        return missing
+    else
+        return Dates.value(latest_stop - earliest_start) / 1000
+    end
 end
 #################### Auxilliary Functions ####################
 
