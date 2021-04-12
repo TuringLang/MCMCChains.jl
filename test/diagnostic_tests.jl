@@ -66,8 +66,8 @@ end
 
     @test MCMCChains.start_time(chn_timed) == [unix2datetime(t1)]
     @test MCMCChains.stop_time(chn_timed) == [unix2datetime(t2)]
-    @test MCMCChains.max_stop(chn_timed) == t2
-    @test MCMCChains.min_start(chn_timed) == t1
+    @test MCMCChains.max_stop(chn_timed) == unix2datetime(t2)
+    @test MCMCChains.min_start(chn_timed) == unix2datetime(t1)
     @test MCMCChains.wall_duration(chn_timed) <= 1.6
 end
 
