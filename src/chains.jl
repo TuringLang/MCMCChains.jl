@@ -333,6 +333,17 @@ Base.last(c::Chains) = last(c.value[Axis{:iter}].val)
 
 Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
+# Convenience functions to handle different types of 
+# timestamps.
+to_datetime_vec(ts::DateTime) = [ts]
+to_datetime_vec(ts::Vector{DateTime}) = ts
+to_datetime_vec(ts::Float64) = [unix2datetime(ts)]
+to_datetime_vec(ts::Vector{Float64}) = unix2datetime.(ts)
+function to_datetime_vec(ts)
+    @warn "Timestamp type $(typeof(ts)) unknown."
+    return missing
+end
+
 """
     start_time(c::Chains)
 
@@ -345,16 +356,7 @@ function start_time(c::Chains)
     if :start_time in keys(c.info)
         # We've got some times, print them out.
         ts = c.info.start_time
-
-        if ts isa DateTime
-            return ts
-        elseif ts isa Vector{DateTime}
-            return ts
-        elseif ts isa Float64
-            return unix2datetime(ts)
-        elseif ts isa Vector{Float64}
-            return unix2datetime.(ts)
-        end
+        return to_datetime_vec(ts)
     else
         # Times not found -- spit out missing.
         return missing
@@ -373,16 +375,7 @@ function stop_time(c::Chains)
     if :stop_time in keys(c.info)
         # We've got some times, print them out.
         ts = c.info.stop_time
-
-        if ts isa DateTime
-            return [ts]
-        elseif ts isa Vector{DateTime}
-            return ts
-        elseif ts isa Float64
-            return [unix2datetime(ts)]
-        elseif ts isa Vector{Float64}
-            return unix2datetime.(ts)
-        end
+        return to_datetime_vec(ts)
     else
         # Times not found -- spit out missing.
         return missing
