@@ -1,5 +1,6 @@
 using MCMCChains
 using AbstractMCMC: AbstractChains
+using Dates
 using Test
 
 ## CHAIN TESTS
@@ -56,6 +57,18 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test mean(chn) isa ChainDataFrame
     @test mean(chn, ["param_1", "param_3"]) isa ChainDataFrame
     @test 0.95 ≤ mean(chn, "param_1") ≤ 1.05
+end
+
+@testset "Chain times" begin
+    t1 = time()
+    t2 = t1 + 1.5
+    chn_timed = Chains(val, info = (start_time=t1, stop_time=t2))
+
+    @test MCMCChains.start_time(chn_timed) == [unix2datetime(t1)]
+    @test MCMCChains.stop_time(chn_timed) == [unix2datetime(t2)]
+    @test MCMCChains.max_stop(chn_timed) == t2
+    @test MCMCChains.min_start(chn_timed) == t1
+    @test MCMCChains.wall_duration(chn_timed) <= 1.6
 end
 
 @testset "indexing tests" begin
