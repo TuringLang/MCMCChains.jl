@@ -335,12 +335,21 @@ Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
 # Convenience functions to handle different types of 
 # timestamps.
-to_datetime_vec(ts::DateTime) = [ts]
-to_datetime_vec(ts::Vector{DateTime}) = ts
-to_datetime_vec(ts::Float64) = [unix2datetime(ts)]
-to_datetime_vec(ts::Vector{Float64}) = unix2datetime.(ts)
-function to_datetime_vec(ts)
-    @warn "Timestamp type $(typeof(ts)) unknown."
+min_datetime(t::DateTime) = t
+min_datetime(ts::Vector{DateTime}) = minimum(ts)
+min_datetime(t::Float64) = unix2datetime(t)
+min_datetime(ts::Vector{Float64}) = unix2datetime(minimum(ts))
+min_datetime(ts) = missing_datetime(typeof(ts))
+
+max_datetime(t::DateTime) = t
+max_datetime(ts::Vector{DateTime}) = maximum(ts)
+max_datetime(t::Float64) = unix2datetime(t)
+max_datetime(ts::Vector{Float64}) = unix2datetime(maximum(ts))
+max_datetime(ts) = missing_datetime(typeof(ts))
+
+# does not specialize on `typeof(T)`
+function missing_datetime(T::Type)
+    @warn "timestamp of type $(T) unknown"
     return missing
 end
 
