@@ -526,9 +526,9 @@ function header(c::Chains; section=missing)
     )
 
     # Get the wall time
-    start = minimum(start_time(c))
-    stop = maximum(stop_time(c))
-    wall = wall_duration(c)
+    start = min_start(c)
+    stop = max_stop(c)
+    wall = wall_duration(c; start=start, stop=stop)
 
     # Set up string array.
     section_strings = String[]
