@@ -390,22 +390,20 @@ function max_stop(c::Chains)
 end
 
 """
-    wall_duration(c::Chains)
+    wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
 
 Calculate the wall clock time for all chains in seconds.
-The duration is calculated as the latest stopping time
-minus the earliest starting time.
-"""
-function wall_duration(c::Chains)
-    earliest_start = min_start(c)
-    latest_stop = max_stop(c)
 
+The duration is calculated as `stop - start`, where as default `stop`
+is the latest stopping time and `start` is the earliest starting time.
+"""
+function wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
     # DateTime - DateTime returns a Millisecond value,
     # divide by 1k to get seconds.
-    if earliest_start === missing || latest_stop === missing
-        return missing
+    return if start === missing || stop === missing
+        missing
     else
-        return Dates.value(latest_stop - earliest_start) / 1000
+        Dates.value(stop - start) / 1000
     end
 end
 #################### Auxilliary Functions ####################
