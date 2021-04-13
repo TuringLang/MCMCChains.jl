@@ -354,60 +354,38 @@ function missing_datetime(T::Type)
 end
 
 """
-    start_time(c::Chains)
+    min_start(c::Chains)
 
-Retrieve a vector of start times (as `DateTime`)
-from `chain.info`. Assumes that either
-`DateTime` or unix timestamps (`Float64`) are stored in
-`chain.info.start_time`
+Retrieve the minimum of the start times (as `DateTime`) from `chain.info`.
+
+It is assumed that the start times are stored in `chain.info.start_time` as
+`DateTime` or unix timestamps of type `Float64`.
 """
-function start_time(c::Chains)
-    if :start_time in keys(c.info)
-        # We've got some times, print them out.
-        ts = c.info.start_time
-        return to_datetime_vec(ts)
-    else
-        # Times not found -- spit out missing.
-        return missing
-    end
-end
-
 function min_start(c::Chains)
-    ts = start_time(c)
-
-    if ts === missing
-        return missing
-    else
-        return minimum(ts)
-    end
-end
-
-"""
-    stop_time(c::Chains)
-
-Retrieve a vector of stop times (as `DateTime`)
-from `chain.info`. Assumes that either
-`DateTime` or unix timestamps (`Float64`) are stored in
-`chain.info.stop_time`
-"""
-function stop_time(c::Chains)
-    if :stop_time in keys(c.info)
-        # We've got some times, print them out.
-        ts = c.info.stop_time
-        return to_datetime_vec(ts)
+    return if :start_time in keys(c.info)
+        # We've got some times, return the minimum.
+        min_datetime(c.info.start_time)
     else
         # Times not found -- spit out missing.
-        return missing
+        missing
     end
 end
 
-function max_stop(c::Chains)
-    ts = stop_time(c)
+"""
+    max_stop(c::Chains)
 
-    if ts === missing
-        return missing
+Retrieve the maximum of the stop times (as `DateTime`) from `chain.info`.
+
+It is assumed that the start times are stored in `chain.info.stop_time` as
+`DateTime` or unix timestamps of type `Float64`.
+"""
+function max_stop(c::Chains)
+    return if :stop_time in keys(c.info)
+        # We've got some times, return the minimum.
+        max_datetime(c.info.stop_time)
     else
-        return maximum(ts)
+        # Times not found -- spit out missing.
+        missing
     end
 end
 
