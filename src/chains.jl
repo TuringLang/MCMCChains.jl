@@ -550,7 +550,7 @@ function header(c::Chains; section=missing)
     return string(
         ismissing(c.logevidence) ? "" : "Log evidence      = $(c.logevidence)\n",
         ismissing(start) ? "" : "Start time        = $(start)\n",
-        ismissing(start) ? "" : "Stop time         = $(stop)\n",
+        ismissing(stop) ? "" : "Stop time         = $(stop)\n",
         ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
