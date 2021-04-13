@@ -215,7 +215,7 @@ function ess(
     dur = wall_duration(chains)
 
     # convert to namedtuple
-    nt = if ismissing(dur)
+    nt = if dur === missing
         merge((parameters = names(_chains),), (ess = ess, rhat = rhat))
     else
         merge((parameters = names(_chains),), (ess = ess, rhat = rhat, ess_per_sec=ess/dur))
