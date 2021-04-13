@@ -64,8 +64,6 @@ end
     t2 = t1 + 1.5
     chn_timed = Chains(val, info = (start_time=t1, stop_time=t2))
 
-    @test MCMCChains.start_time(chn_timed) == [unix2datetime(t1)]
-    @test MCMCChains.stop_time(chn_timed) == [unix2datetime(t2)]
     @test MCMCChains.max_stop(chn_timed) == unix2datetime(t2)
     @test MCMCChains.min_start(chn_timed) == unix2datetime(t1)
     @test MCMCChains.wall_duration(chn_timed) <= 1.6
@@ -156,4 +154,3 @@ end
     @test names(chn_sorted) == Symbol.([1, 2, 3])
     @test names(chn_unsorted) == Symbol.([2, 1, 3])
 end
-
