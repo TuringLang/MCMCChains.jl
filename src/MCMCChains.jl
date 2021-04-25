@@ -24,6 +24,8 @@ import Random
 import Serialization
 import Statistics: std, cor, mean, var, mean!
 
+using StatsModelComparisons
+
 export Chains, chains, chainscat
 export setrange, resetrange
 export set_section, get_params, sections, sort_sections, setinfo
@@ -34,7 +36,7 @@ export summarize
 
 # Export diagnostics functions
 export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
-export hpd, ess
+export hpd, ess, dic
 
 export rstar
 
