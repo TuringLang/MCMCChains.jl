@@ -83,7 +83,7 @@ function gelmandiag_multivariate(
 
     rfixed = (niters - 1) / niters
     rrandomscale = (nchains + 1) / (nchains * niters)
-    multivariate = rfixed + rrandomscale * eigmax(W \ B)
+    multivariate = rfixed + rrandomscale * LinearAlgebra.eigmax(W \ B)
 
     return (psrf = estimates, psrfci = upperlimits, psrfmultivariate = multivariate)
 end
