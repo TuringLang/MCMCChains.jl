@@ -15,6 +15,7 @@ import StatsBase: autocov, counts, sem, AbstractWeights,
 import MLJModelInterface
 import NaturalSort
 import PrettyTables
+import StatsFuns
 import Tables
 import TableTraits
 import IteratorInterfaceExtensions
