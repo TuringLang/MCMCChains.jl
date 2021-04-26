@@ -18,7 +18,7 @@ function _gelmandiag(
 
     w = LinearAlgebra.diag(W)
     b = LinearAlgebra.diag(B)
-    s2 = reshape(mapslices(diag, S2, dims = [1, 2]), nparams, nchains)'
+    s2 = reshape(mapslices(LinearAlgebra.diag, S2, dims = [1, 2]), nparams, nchains)'
     psibar2 = vec(mapslices(mean, psibar, dims = [1]))
 
     var_w = vec(mapslices(var, s2, dims = [1])) ./ nchains
