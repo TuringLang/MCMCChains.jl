@@ -122,6 +122,7 @@ function gelmandiag_multivariate(
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
     results = gelmandiag_multivariate(psi; alpha = alpha, kwargs...)
+
     # Create a named tuple with the results.
     sym = Symbol(100 * (1 - alpha / 2), :%)
     nt = (; :parameters => names(_chains), :psrf => results.psrf, sym => results.psrfci)
