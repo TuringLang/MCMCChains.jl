@@ -9,7 +9,6 @@ using Compat
 using Distributions
 using RecipesBase
 using SpecialFunctions
-using LogExpFunctions
 using Formatting
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
