@@ -9,6 +9,7 @@ using Compat
 using Distributions
 using RecipesBase
 using SpecialFunctions
+using LogExpFunctions
 using Formatting
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
@@ -19,7 +20,7 @@ import Tables
 import TableTraits
 import IteratorInterfaceExtensions
 
-using LinearAlgebra: diag, dot, BlasReal
+using LinearAlgebra: diag, dot, BlasReal,eigmax
 import Random
 import Serialization
 import Statistics: std, cor, mean, var, mean!
@@ -33,7 +34,7 @@ export ChainDataFrame
 export summarize
 
 # Export diagnostics functions
-export discretediag, gelmandiag, gewekediag, heideldiag, rafterydiag
+export discretediag, gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag
 export hpd, ess
 
 export rstar

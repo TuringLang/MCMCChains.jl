@@ -83,7 +83,7 @@ function gelmandiag_multivariate(
 
     rfixed = (niters - 1) / niters
     rrandomscale = (nchains + 1) / (nchains * niters)
-    multivariate = rfixed + rrandomscale * LinearAlgebra.eigmax(W \ B)
+    multivariate = rfixed + rrandomscale * eigmax(W \ B)
 
     return (psrf = estimates, psrfci = upperlimits, psrfmultivariate = multivariate)
 end
@@ -122,11 +122,10 @@ function gelmandiag_multivariate(
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
     results = gelmandiag_multivariate(psi; alpha = alpha, kwargs...)
-
     # Create a named tuple with the results.
     sym = Symbol(100 * (1 - alpha / 2), :%)
     nt = (; :parameters => names(_chains), :psrf => results.psrf, sym => results.psrfci)
 
     return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt),
-        results.multivariate
+        results.psrfmultivariate
 end
