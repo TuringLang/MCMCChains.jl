@@ -16,15 +16,15 @@ function _gelmandiag(
     psibar = reshape(mapslices(mean, convert(Array, psi), dims = [1]), nparams, nchains)'
     B = niters .* cov(psibar)
 
-    w = diag(W)
-    b = diag(B)
-    s2 = reshape(mapslices(diag, S2, dims = [1, 2]), nparams, nchains)'
+    w = LinearAlgebra.diag(W)
+    b = LinearAlgebra.diag(B)
+    s2 = reshape(mapslices(LinearAlgebra.diag, S2, dims = [1, 2]), nparams, nchains)'
     psibar2 = vec(mapslices(mean, psibar, dims = [1]))
 
     var_w = vec(mapslices(var, s2, dims = [1])) ./ nchains
     var_b = (2 / (nchains - 1)) .* b.^2
     var_wb = (niters / nchains) .*
-        (diag(cov(s2, psibar.^2)) .- 2 .* psibar2 .* diag(cov(s2, psibar)))
+        (LinearAlgebra.diag(cov(s2, psibar.^2)) .- 2 .* psibar2 .* LinearAlgebra.diag(cov(s2, psibar)))
 
     V = @. rfixed * w + rrandomscale * b
     var_V = rfixed^2 * var_w + rrandomscale^2 * var_b + 2 * rfixed * rrandomscale * var_wb
@@ -128,5 +128,5 @@ function gelmandiag_multivariate(
     nt = (; :parameters => names(_chains), :psrf => results.psrf, sym => results.psrfci)
 
     return ChainDataFrame("Gelman, Rubin, and Brooks Diagnostic", nt),
-        results.multivariate
+        results.psrfmultivariate
 end

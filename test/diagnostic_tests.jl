@@ -120,18 +120,21 @@ end
     @test eltype(discretediag(chn_disc[:,2:2,:])) <: ChainDataFrame
 
     gelman = gelmandiag(tchain)
+    gelmanmv = gelmandiag_multivariate(tchain)
     geweke = gewekediag(tchain)
     heidel = heideldiag(tchain)
     raferty = rafterydiag(tchain)
 
     # test raw return values
     @test typeof(gelman) <: ChainDataFrame
+    @test typeof(gelmanmv) <: Tuple{ChainDataFrame,Float64}
     @test typeof(geweke) <: Array{<:ChainDataFrame}
     @test typeof(heidel) <: Array{<:ChainDataFrame}
     @test typeof(raferty) <: Array{<:ChainDataFrame}
 
     # test ChainDataFrame sizes
     @test size(gelman) == (2,3)
+    @test size(gelmanmv[1]) == (2,3)
     @test size(geweke[1]) == (2,3)
     @test size(heidel[1]) == (2,7)
     @test size(raferty[1]) == (2,6)

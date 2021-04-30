@@ -581,7 +581,7 @@ function link(c::Chains)
   for j in axes(cc, 2)
     x = cc[:, j, :]
     if minimum(x) > 0.0
-      cc[:, j, :] = maximum(x) < 1.0 ? logit.(x) : log.(x)
+      cc[:, j, :] = maximum(x) < 1.0 ? StatsFuns.logit.(x) : log.(x)
     end
   end
   cc

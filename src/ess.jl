@@ -143,15 +143,15 @@ function mean_autocov(k::Int, cache::ESSCache)
     firstrange = 1:(niter - k)
     lastrange = (k + 1):niter
     s = mean(1:nchains) do i
-        if eltype(samples) isa BlasReal
+        if eltype(samples) isa LinearAlgebra.BlasReal
             # call into BLAS if possible
-            x = dot(samples, firstrange, samples, lastrange)
+            x = LinearAlgebra.dot(samples, firstrange, samples, lastrange)
             firstrange = firstrange .+ niter
             lastrange = lastrange .+ niter
             return x
         else
             # otherwise use views
-            return dot(view(samples, firstrange, i), view(samples, lastrange, i))
+            return LinearAlgebra.dot(view(samples, firstrange, i), view(samples, lastrange, i))
         end
     end
 
