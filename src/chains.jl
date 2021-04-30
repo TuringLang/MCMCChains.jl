@@ -382,10 +382,10 @@ It is assumed that the start times are stored in `chain.info.stop_time` as
 function max_stop(c::Chains)
     return if :stop_time in keys(c.info)
         # We've got some times, return the minimum.
-        max_datetime(c.info.stop_time)
+        return max_datetime(c.info.stop_time)
     else
         # Times not found -- spit out missing.
-        missing
+        return missing
     end
 end
 
@@ -401,11 +401,12 @@ function wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
     # DateTime - DateTime returns a Millisecond value,
     # divide by 1k to get seconds.
     return if start === missing || stop === missing
-        missing
+        return missing
     else
-        Dates.value(stop - start) / 1000
+        return Dates.value(stop - start) / 1000
     end
 end
+
 #################### Auxilliary Functions ####################
 
 """

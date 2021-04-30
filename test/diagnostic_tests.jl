@@ -67,6 +67,23 @@ end
     @test MCMCChains.max_stop(chn_timed) == unix2datetime(t2)
     @test MCMCChains.min_start(chn_timed) == unix2datetime(t1)
     @test MCMCChains.wall_duration(chn_timed) <= 1.6
+
+    n1 = now()
+    n2 = now() + Second(1)
+    unix1 = datetime2unix(n1)
+    unix2 = datetime2unix(n2)
+
+    @test MCMCChains.min_datetime(n1) == n1
+    @test MCMCChains.min_datetime([n1, n2]) == n1
+    @test MCMCChains.min_datetime(unix1) == n1
+    @test MCMCChains.min_datetime([unix1, unix2]) == n1
+    @test MCMCChains.min_datetime("red") === missing
+
+    @test MCMCChains.max_datetime(n1) == n1
+    @test MCMCChains.max_datetime([n1, n2]) == n2
+    @test MCMCChains.max_datetime(unix1) == n1
+    @test MCMCChains.max_datetime([unix1, unix2]) == n2
+    @test MCMCChains.max_datetime("red") === missing
 end
 
 @testset "indexing tests" begin
