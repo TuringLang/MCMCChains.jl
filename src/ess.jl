@@ -211,8 +211,15 @@ function ess(
     # estimate the effective sample size and rhat
     ess, rhat = ess_rhat(_chains.value.data; kwargs...)
 
+    # Calculate ESS/minute if available
+    dur = wall_duration(chains)
+
     # convert to namedtuple
-    nt = merge((parameters = names(_chains),), (ess = ess, rhat = rhat))
+    nt = if dur === missing
+        merge((parameters = names(_chains),), (ess = ess, rhat = rhat))
+    else
+        merge((parameters = names(_chains),), (ess = ess, rhat = rhat, ess_per_sec=ess/dur))
+    end
 
     return ChainDataFrame("ESS", nt)
 end

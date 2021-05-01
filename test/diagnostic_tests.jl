@@ -1,5 +1,6 @@
 using MCMCChains
 using AbstractMCMC: AbstractChains
+using Dates
 using Test
 
 ## CHAIN TESTS
@@ -56,6 +57,33 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test mean(chn) isa ChainDataFrame
     @test mean(chn, ["param_1", "param_3"]) isa ChainDataFrame
     @test 0.95 ≤ mean(chn, "param_1") ≤ 1.05
+end
+
+@testset "Chain times" begin
+    t1 = time()
+    t2 = t1 + 1.5
+    chn_timed = Chains(val, info = (start_time=t1, stop_time=t2))
+
+    @test MCMCChains.max_stop(chn_timed) == unix2datetime(t2)
+    @test MCMCChains.min_start(chn_timed) == unix2datetime(t1)
+    @test MCMCChains.wall_duration(chn_timed) <= 1.6
+
+    n1 = now()
+    n2 = now() + Second(1)
+    unix1 = datetime2unix(n1)
+    unix2 = datetime2unix(n2)
+
+    @test MCMCChains.min_datetime(n1) == n1
+    @test MCMCChains.min_datetime([n1, n2]) == n1
+    @test MCMCChains.min_datetime(unix1) == n1
+    @test MCMCChains.min_datetime([unix1, unix2]) == n1
+    @test MCMCChains.min_datetime("red") === missing
+
+    @test MCMCChains.max_datetime(n1) == n1
+    @test MCMCChains.max_datetime([n1, n2]) == n2
+    @test MCMCChains.max_datetime(unix1) == n1
+    @test MCMCChains.max_datetime([unix1, unix2]) == n2
+    @test MCMCChains.max_datetime("red") === missing
 end
 
 @testset "indexing tests" begin
@@ -146,4 +174,3 @@ end
     @test names(chn_sorted) == Symbol.([1, 2, 3])
     @test names(chn_unsorted) == Symbol.([2, 1, 3])
 end
-

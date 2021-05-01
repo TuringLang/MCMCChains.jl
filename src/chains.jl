@@ -333,6 +333,80 @@ Base.last(c::Chains) = last(c.value[Axis{:iter}].val)
 
 Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
+# Convenience functions to handle different types of 
+# timestamps.
+min_datetime(t::DateTime) = t
+min_datetime(ts::Vector{DateTime}) = minimum(ts)
+min_datetime(t::Float64) = unix2datetime(t)
+min_datetime(ts::Vector{Float64}) = unix2datetime(minimum(ts))
+min_datetime(ts) = missing_datetime(typeof(ts))
+
+max_datetime(t::DateTime) = t
+max_datetime(ts::Vector{DateTime}) = maximum(ts)
+max_datetime(t::Float64) = unix2datetime(t)
+max_datetime(ts::Vector{Float64}) = unix2datetime(maximum(ts))
+max_datetime(ts) = missing_datetime(typeof(ts))
+
+# does not specialize on `typeof(T)`
+function missing_datetime(T::Type)
+    @warn "timestamp of type $(T) unknown"
+    return missing
+end
+
+"""
+    min_start(c::Chains)
+
+Retrieve the minimum of the start times (as `DateTime`) from `chain.info`.
+
+It is assumed that the start times are stored in `chain.info.start_time` as
+`DateTime` or unix timestamps of type `Float64`.
+"""
+function min_start(c::Chains)
+    return if :start_time in keys(c.info)
+        # We've got some times, return the minimum.
+        min_datetime(c.info.start_time)
+    else
+        # Times not found -- spit out missing.
+        missing
+    end
+end
+
+"""
+    max_stop(c::Chains)
+
+Retrieve the maximum of the stop times (as `DateTime`) from `chain.info`.
+
+It is assumed that the start times are stored in `chain.info.stop_time` as
+`DateTime` or unix timestamps of type `Float64`.
+"""
+function max_stop(c::Chains)
+    return if :stop_time in keys(c.info)
+        # We've got some times, return the minimum.
+        return max_datetime(c.info.stop_time)
+    else
+        # Times not found -- spit out missing.
+        return missing
+    end
+end
+
+"""
+    wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
+
+Calculate the wall clock time for all chains in seconds.
+
+The duration is calculated as `stop - start`, where as default `stop`
+is the latest stopping time and `start` is the earliest starting time.
+"""
+function wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
+    # DateTime - DateTime returns a Millisecond value,
+    # divide by 1k to get seconds.
+    return if start === missing || stop === missing
+        return missing
+    else
+        return Dates.value(stop - start) / 1000
+    end
+end
+
 #################### Auxilliary Functions ####################
 
 """
@@ -450,6 +524,11 @@ function header(c::Chains; section=missing)
         "= $(join(map(string, arr), ", "))\n"
     )
 
+    # Get the wall time
+    start = min_start(c)
+    stop = max_stop(c)
+    wall = wall_duration(c; start=start, stop=stop)
+
     # Set up string array.
     section_strings = String[]
 
@@ -466,11 +545,12 @@ function header(c::Chains; section=missing)
         push!(section_strings, section_string)
     end
 
-    #
-
     # Return header.
     return string(
         ismissing(c.logevidence) ? "" : "Log evidence      = $(c.logevidence)\n",
+        ismissing(start) ? "" : "Start time        = $(start)\n",
+        ismissing(stop) ? "" : "Stop time         = $(stop)\n",
+        ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
         "Chains            = $(join(map(string, chains(c)), ", "))\n",
