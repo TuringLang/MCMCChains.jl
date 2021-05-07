@@ -13,7 +13,7 @@ using Test
     wall = MCMCChains.wall_duration(c)
     compute = MCMCChains.compute_duration(c)
 
-    @test wall ≈ round(c2.info.stop_time - c1.info.start_time, digits=3)
+    @test round(wall, digits=1) ≈ round(c2.info.stop_time - c1.info.start_time, digits=1)
     @test compute ≈ (MCMCChains.compute_duration(c1) + MCMCChains.compute_duration(c2))
     
     s = ess(c)
