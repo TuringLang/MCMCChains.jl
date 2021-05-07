@@ -337,7 +337,7 @@ Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 # timestamps.
 to_datetime(t::DateTime) = t
 to_datetime(t::Float64) = unix2datetime(t)
-to_datetime(t) = missing_datetime(t)
+to_datetime(t) = missing_datetime(typeof(t))
 to_datetime_vec(t::Union{Float64, DateTime}) = [to_datetime(t)]
 to_datetime_vec(t::DateTime) = [to_datetime(t)]
 to_datetime_vec(ts::Vector) = map(to_datetime, ts)
