@@ -7,14 +7,14 @@ using Test
 
 @testset "ESS per second" begin
     c1 = Chains(randn(100,5, 1), info = (start_time=time(), stop_time = time()+1))
-    c2 = Chains(randn(100,5, 1), info = (start_time=time(), stop_time = time()+1))
+    c2 = Chains(randn(100,5, 1), info = (start_time=time()+1, stop_time = time()+2))
     c = chainscat(c1, c2)
 
     wall = MCMCChains.wall_duration(c)
     compute = MCMCChains.compute_duration(c)
 
-    @test wall <= compute
-    @test compute == (MCMCChains.compute_duration(c1) + MCMCChains.compute_duration(c2))
+    @test wall ≈ (c2.info.stop_time - c1.info.start_time)
+    @test compute ≈ (MCMCChains.compute_duration(c1) + MCMCChains.compute_duration(c2))
     
     s = ess(c)
     @test length(s[:,:ess_per_sec]) == 5
