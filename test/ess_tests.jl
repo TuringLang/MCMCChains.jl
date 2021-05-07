@@ -5,6 +5,22 @@ using Random
 using Statistics
 using Test
 
+@testset "ESS per second" begin
+    c1 = Chains(randn(100,5, 1), info = (start_time=time(), stop_time = time()+1))
+    c2 = Chains(randn(100,5, 1), info = (start_time=time(), stop_time = time()+1))
+    c = chainscat(c1, c2)
+
+    wall = MCMCChains.wall_duration(c)
+    compute = MCMCChains.compute_duration(c)
+
+    @test wall <= compute
+    @test compute == (MCMCChains.compute_duration(c1) + MCMCChains.compute_duration(c2))
+    
+    s = ess(c)
+    @test length(s[:,:ess_per_sec]) == 5
+    @test all(map(!ismissing, s[:,:ess_per_sec]))
+end
+
 @testset "copy and split" begin
     # check a matrix with even number of rows
     x = rand(50, 20)

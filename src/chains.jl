@@ -335,17 +335,16 @@ Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
 # Convenience functions to handle different types of 
 # timestamps.
-min_datetime(t::DateTime) = t
-min_datetime(ts::Vector{DateTime}) = minimum(ts)
-min_datetime(t::Float64) = unix2datetime(t)
-min_datetime(ts::Vector{Float64}) = unix2datetime(minimum(ts))
-min_datetime(ts) = missing_datetime(typeof(ts))
+to_datetime(t::DateTime) = t
+to_datetime(t::Float64) = unix2datetime(t)
+to_datetime(t) = missing_datetime(t)
+to_datetime_vec(t::Union{Float64, DateTime}) = [to_datetime(t)]
+to_datetime_vec(t::DateTime) = [to_datetime(t)]
+to_datetime_vec(ts::Vector) = map(to_datetime, ts)
+to_datetime_vec(ts) = [missing]
 
-max_datetime(t::DateTime) = t
-max_datetime(ts::Vector{DateTime}) = maximum(ts)
-max_datetime(t::Float64) = unix2datetime(t)
-max_datetime(ts::Vector{Float64}) = unix2datetime(maximum(ts))
-max_datetime(ts) = missing_datetime(typeof(ts))
+min_datetime(ts) = minimum(to_datetime_vec(ts))
+max_datetime(ts) = maximum(to_datetime_vec(ts))
 
 # does not specialize on `typeof(T)`
 function missing_datetime(T::Type)
@@ -361,15 +360,7 @@ Retrieve the minimum of the start times (as `DateTime`) from `chain.info`.
 It is assumed that the start times are stored in `chain.info.start_time` as
 `DateTime` or unix timestamps of type `Float64`.
 """
-function min_start(c::Chains)
-    return if :start_time in keys(c.info)
-        # We've got some times, return the minimum.
-        min_datetime(c.info.start_time)
-    else
-        # Times not found -- spit out missing.
-        missing
-    end
-end
+min_start(c::Chains) = min_datetime(start_times(c))
 
 """
     max_stop(c::Chains)
@@ -379,15 +370,23 @@ Retrieve the maximum of the stop times (as `DateTime`) from `chain.info`.
 It is assumed that the start times are stored in `chain.info.stop_time` as
 `DateTime` or unix timestamps of type `Float64`.
 """
-function max_stop(c::Chains)
-    return if :stop_time in keys(c.info)
-        # We've got some times, return the minimum.
-        return max_datetime(c.info.stop_time)
-    else
-        # Times not found -- spit out missing.
-        return missing
-    end
-end
+max_stop(c::Chains) = max_datetime(stop_times(c))
+
+"""
+    start_times(c::Chains)
+
+Retrieve the contents of `c.info.start_time`, or `missing` if no 
+`start_time` is set.
+"""
+start_times(c::Chains) = to_datetime_vec(get(c.info, :start_time, missing))
+
+"""
+    stop_times(c::Chains)
+
+Retrieve the contents of `c.info.stop_time`, or `missing` if no 
+`stop_time` is set.
+"""
+stop_times(c::Chains) = to_datetime_vec(get(c.info, :stop_time, missing))
 
 """
     wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
@@ -404,6 +403,34 @@ function wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
         return missing
     else
         return Dates.value(stop - start) / 1000
+    end
+end
+
+"""
+    compute_duration(c::Chains; start=start_times(c), stop=stop_times(c))
+
+Calculate the compute time for all chains in seconds.
+
+The duration is calculated as the sum of `start - stop` in seconds. 
+
+`compute_duration` is more useful in cases of parallel sampling, where `wall_duration`
+may understate how much computation time was utilitzed.
+"""
+function compute_duration(
+    c::Chains; 
+    start=start_times(c), 
+    stop=stop_times(c)
+)
+    # Calculate total time for each chain, then add it up.
+    if start === missing || stop === missing
+        return missing
+    else
+        calc = sum(stop - start)
+        if calc === missing
+            return missing
+        else
+            return Dates.value(calc) / 1000
+        end
     end
 end
 
@@ -524,10 +551,9 @@ function header(c::Chains; section=missing)
         "= $(join(map(string, arr), ", "))\n"
     )
 
-    # Get the wall time
-    start = min_start(c)
-    stop = max_stop(c)
-    wall = wall_duration(c; start=start, stop=stop)
+    # Get the timing stats
+    wall = wall_duration(c)
+    compute = compute_duration(c)
 
     # Set up string array.
     section_strings = String[]
@@ -548,43 +574,44 @@ function header(c::Chains; section=missing)
     # Return header.
     return string(
         ismissing(c.logevidence) ? "" : "Log evidence      = $(c.logevidence)\n",
-        ismissing(start) ? "" : "Start time        = $(start)\n",
-        ismissing(stop) ? "" : "Stop time         = $(stop)\n",
-        ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
-        "Chains            = $(join(map(string, chains(c)), ", "))\n",
+        "Chains            = $(length(map(string, chains(c))))\n",
         "Samples per chain = $(length(range(c)))\n",
+        ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
+        ismissing(compute) ? "" : "Compute duration  = $(round(compute, digits=2)) seconds\n",
         section_strings...
     )
 end
 
-function indiscretesupport(c::Chains,
-                           bounds::Tuple{Real, Real}=(0, Inf))
-  nrows, nvars, nchains = size(c.value)
-  result = Array{Bool}(undef, nvars * (nrows > 0))
-  for i in 1:nvars
-    result[i] = true
-    for j in 1:nrows, k in 1:nchains
-      x = c.value[j, i, k]
-      if !isinteger(x) || x < bounds[1] || x > bounds[2]
-        result[i] = false
-        break
-      end
+function indiscretesupport(
+    c::Chains,
+    bounds::Tuple{Real, Real}=(0, Inf)
+)
+    nrows, nvars, nchains = size(c.value)
+    result = Array{Bool}(undef, nvars * (nrows > 0))
+    for i in 1:nvars
+        result[i] = true
+        for j in 1:nrows, k in 1:nchains
+            x = c.value[j, i, k]
+            if !isinteger(x) || x < bounds[1] || x > bounds[2]
+                result[i] = false
+                break
+            end
+        end
     end
-  end
-  result
+    return result
 end
 
 function link(c::Chains)
-  cc = copy(c.value.data)
-  for j in axes(cc, 2)
-    x = cc[:, j, :]
-    if minimum(x) > 0.0
-      cc[:, j, :] = maximum(x) < 1.0 ? StatsFuns.logit.(x) : log.(x)
+    cc = copy(c.value.data)
+    for j in axes(cc, 2)
+        x = cc[:, j, :]
+        if minimum(x) > 0.0
+            cc[:, j, :] = maximum(x) < 1.0 ? StatsFuns.logit.(x) : log.(x)
+        end
     end
-  end
-  cc
+    return cc
 end
 
 ### Chains specific functions ###
@@ -748,11 +775,18 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
     all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
 
     # concatenate all chains
-    data = mapreduce(c -> c.value.data, (x, y) -> cat(x, y; dims = 3), args;
-                     init = c1.value.data)
+    combined = [c1, args...]
+    data = mapreduce(c -> c.value.data, (x, y) -> cat(x, y; dims = 3), combined)
     value = AxisArray(data; iter = rng, var = nms, chain = 1:size(data, 3))
 
-    return Chains(value, missing, c1.name_map, c1.info)
+    # Concatenate times, if available
+    starts = mapreduce(c -> get(c.info, :start_time, nothing), vcat, combined)
+    stops = mapreduce(c -> get(c.info, :stop_time, nothing), vcat, combined)
+    nontime_props = filter(x -> !(x in [:start_time, :stop_time]), [propertynames(c1.info)...])
+    new_info = NamedTuple{tuple(nontime_props...)}(tuple([c1.info[n] for n in nontime_props]...))
+    new_info = merge(new_info, (start_time = starts, stop_time = stops))
+
+    return Chains(value, missing, c1.name_map, new_info)
 end
 
 function pool_chain(c::Chains)
