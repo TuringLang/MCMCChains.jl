@@ -576,7 +576,7 @@ function header(c::Chains; section=missing)
         ismissing(c.logevidence) ? "" : "Log evidence      = $(c.logevidence)\n",
         "Iterations        = $(first(c)):$(last(c))\n",
         "Thinning interval = $(step(c))\n",
-        "Chains            = $(length(map(string, chains(c))))\n",
+        "Number of chains  = $(size(c, 3))\n",
         "Samples per chain = $(length(range(c)))\n",
         ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
         ismissing(compute) ? "" : "Compute duration  = $(round(compute, digits=2)) seconds\n",
