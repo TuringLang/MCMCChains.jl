@@ -775,13 +775,27 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
     all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
 
     # concatenate all chains
-    combined = [c1, args...]
-    data = mapreduce(c -> c.value.data, (x, y) -> cat(x, y; dims = 3), combined)
+    data = mapreduce(
+        c -> c.value.data, 
+        (x, y) -> cat(x, y; dims = 3), 
+        args; 
+        init = c1.value.data
+    )
     value = AxisArray(data; iter = rng, var = nms, chain = 1:size(data, 3))
 
     # Concatenate times, if available
-    starts = mapreduce(c -> get(c.info, :start_time, nothing), vcat, combined)
-    stops = mapreduce(c -> get(c.info, :stop_time, nothing), vcat, combined)
+    starts = mapreduce(
+        c -> get(c.info, :start_time, nothing), 
+        vcat, 
+        args, 
+        init = get(c1.info, :start_time, nothing)
+    )
+    stops = mapreduce(
+        c -> get(c.info, :stop_time, nothing), 
+        vcat, 
+        args, 
+        init = get(c1.info, :stop_time, nothing)
+    )
     nontime_props = filter(x -> !(x in [:start_time, :stop_time]), [propertynames(c1.info)...])
     new_info = NamedTuple{tuple(nontime_props...)}(tuple([c1.info[n] for n in nontime_props]...))
     new_info = merge(new_info, (start_time = starts, stop_time = stops))
