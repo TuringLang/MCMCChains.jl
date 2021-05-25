@@ -196,13 +196,17 @@ function mean_autocov(k::Int, cache::BDAESSCache)
 end
 
 """
-    ess(chains::Chains; kwargs...)
+    ess(chains::Chains; duration=compute_duration, kwargs...)
 
 Estimate the effective sample size and the potential scale reduction.
+
+ESS per second options include `duration=MCMCChains.compute_duration` (the default) 
+and `duration=MCMCChains.wall_duration`.
 """
 function ess(
     chains::Chains;
     sections = _default_sections(chains),
+    duration = compute_duration,
     kwargs...
 )
     # subset the chain
@@ -212,7 +216,7 @@ function ess(
     ess, rhat = ess_rhat(_chains.value.data; kwargs...)
 
     # Calculate ESS/minute if available
-    dur = wall_duration(chains)
+    dur = duration(chains)
 
     # convert to namedtuple
     nt = if dur === missing
