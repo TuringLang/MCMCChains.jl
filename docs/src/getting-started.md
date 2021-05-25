@@ -123,6 +123,8 @@ serialize("chain-file.jls", chn)
 chn2 = deserialize("chain-file.jls")
 ```
 
+The [MCMCChainsStorage.jl](https://github.com/farr/MCMCChainsStorage.jl) package also provides the ability to serialize/deserialize a chain to an HDF5 file across different versions of Julia and/or different system images.
+
 ## Exporting Chains
 
 A few utility export functions have been provided to convert `Chains` objects to either an Array or a DataFrame:
