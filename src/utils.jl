@@ -96,7 +96,7 @@ function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
                 :(getfield(b, $(QuoteNode(n))))
             end
         end
-        
+
         return :(NamedTuple{$names,$types}(($(values...),)))
     else
         names = Base.merge_names(an, bn)
@@ -113,7 +113,7 @@ function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
                 getfield(b, n)
             end
         end
-        
+
         return NamedTuple{names,types}(values)
     end
 end
@@ -179,8 +179,8 @@ function concretize(x::AbstractArray)
         return x
     else
         xnew = map(concretize, x)
-        T = mapreduce(typeof, promote_type, xnew)
-        if T <: eltype(xnew)
+        T = mapreduce(typeof, promote_type, xnew; init=Union{})
+        if T <: eltype(xnew) && T !== Union{}
             return convert(AbstractArray{T}, xnew)
         else
             return xnew
