@@ -1,4 +1,4 @@
-function InferenceDiagnostics.heideldiag(
+function MCMCDiagnosticTools.heideldiag(
     chains::Chains; sections = _default_sections(chains), kwargs...
 )
     # Subset the chain.
@@ -8,7 +8,7 @@ function InferenceDiagnostics.heideldiag(
     chains_array = _chains.value.data
     results = map(axes(chains_array, 3)) do chain
         vec_of_namedtuples = map(axes(chains_array, 2)) do param
-            return InferenceDiagnostics.heideldiag(
+            return MCMCDiagnosticTools.heideldiag(
                 cskip(@view(_chains.value.data[:, param, chain])); kwargs...
             )
         end

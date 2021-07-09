@@ -1,4 +1,4 @@
-function InferenceDiagnostics.rafterydiag(
+function MCMCDiagnosticTools.rafterydiag(
     chains::Chains; sections = _default_sections(chains), kwargs...
 )
     # Subset the chain.
@@ -8,7 +8,7 @@ function InferenceDiagnostics.rafterydiag(
     chains_array = _chains.value.data
     results = map(axes(chains_array, 3)) do chain
         vec_of_namedtuples = map(axes(chains_array, 2)) do param
-            return InferenceDiagnostics.rafterydiag(
+            return MCMCDiagnosticTools.rafterydiag(
                 cskip(@view(_chains.value.data[:, param, chain])); kwargs...
             )
         end

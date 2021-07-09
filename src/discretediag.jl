@@ -4,7 +4,7 @@
 Discrete diagnostic where `method` can be
 `[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]`.
 """
-function InferenceDiagnostics.discretediag(
+function MCMCDiagnosticTools.discretediag(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
     kwargs...
@@ -13,7 +13,7 @@ function InferenceDiagnostics.discretediag(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Compute statistics.
-    between_chain_vals, within_chain_vals = InferenceDiagnostics.discretediag(
+    between_chain_vals, within_chain_vals = MCMCDiagnosticTools.discretediag(
         _chains.value.data; kwargs...
     )
 

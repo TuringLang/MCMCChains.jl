@@ -1,4 +1,4 @@
-function InferenceDiagnostics.gewekediag(
+function MCMCDiagnosticTools.gewekediag(
     chains::Chains;
     sections = _default_sections(chains),
     kwargs...
@@ -10,7 +10,7 @@ function InferenceDiagnostics.gewekediag(
     chains_array = _chains.value.data
     results = map(axes(chains_array, 3)) do chain
         vec_of_namedtuples = map(axes(chains_array, 2)) do param
-            return InferenceDiagnostics.gewekediag(
+            return MCMCDiagnosticTools.gewekediag(
                 cskip(@view(_chains.value.data[:, param, chain])); kwargs...
             )
         end

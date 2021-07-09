@@ -6,13 +6,13 @@ Compute the ``R^*`` convergence diagnostic of MCMC for the `chains`.
 The keyword arguments supported here are the same as those in `rstar` for arrays of samples
 and chain indices.
 """
-function InferenceDiagnostics.rstar(
+function MCMCDiagnosticTools.rstar(
     classif::MLJModelInterface.Supervised, chn::Chains; kwargs...
 )
-    return InferenceDiagnostics.rstar(Random.GLOBAL_RNG, classif, chn; kwargs...)
+    return MCMCDiagnosticTools.rstar(Random.GLOBAL_RNG, classif, chn; kwargs...)
 end
 
-function InferenceDiagnostics.rstar(
+function MCMCDiagnosticTools.rstar(
     rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, chn::Chains; kwargs...
 )
     nchains = size(chn, 3)
@@ -22,5 +22,5 @@ function InferenceDiagnostics.rstar(
     x = Array(chn)
     y = repeat(chains(chn); inner = size(chn,1))
 
-    return InferenceDiagnostics.rstar(rng, classif, x, y; kwargs...)
+    return MCMCDiagnosticTools.rstar(rng, classif, x, y; kwargs...)
 end

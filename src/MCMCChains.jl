@@ -12,7 +12,7 @@ using Formatting
 using Dates
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
-import InferenceDiagnostics
+import MCMCDiagnosticTools
 import MLJModelInterface
 import NaturalSort
 import PrettyTables
@@ -35,7 +35,7 @@ export ChainDataFrame
 export summarize
 
 # Reexport diagnostics functions
-using InferenceDiagnostics: discretediag, ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod,
+using MCMCDiagnosticTools: discretediag, ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod,
     gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag, rstar
 export discretediag
 export ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod

@@ -6,7 +6,7 @@ Estimate the effective sample size and the potential scale reduction.
 ESS per second options include `duration=MCMCChains.compute_duration` (the default)
 and `duration=MCMCChains.wall_duration`.
 """
-function InferenceDiagnostics.ess_rhat(
+function MCMCDiagnosticTools.ess_rhat(
     chains::Chains;
     sections = _default_sections(chains), duration = compute_duration, kwargs...
 )
@@ -14,7 +14,7 @@ function InferenceDiagnostics.ess_rhat(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Estimate the effective sample size and rhat
-    ess, rhat = InferenceDiagnostics.ess_rhat(_chains.value.data; kwargs...)
+    ess, rhat = MCMCDiagnosticTools.ess_rhat(_chains.value.data; kwargs...)
 
     # Calculate ESS/minute if available
     dur = duration(chains)

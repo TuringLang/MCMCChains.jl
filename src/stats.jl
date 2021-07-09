@@ -244,20 +244,20 @@ function summarystats(
     chains::Chains;
     sections = _default_sections(chains),
     append_chains::Bool = true,
-    method::InferenceDiagnostics.AbstractESSMethod = ESSMethod(),
+    method::MCMCDiagnosticTools.AbstractESSMethod = ESSMethod(),
     maxlag = 250,
     etype = :bm,
     kwargs...
 )
     # Store everything.
-    funs = [mean∘cskip, std∘cskip, sem∘cskip, x -> InferenceDiagnostics.mcse(cskip(x); method=etype, kwargs...)]
+    funs = [mean∘cskip, std∘cskip, sem∘cskip, x -> MCMCDiagnosticTools.mcse(cskip(x); method=etype, kwargs...)]
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    ess_df = InferenceDiagnostics.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
+    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
 
     # Summarize.
     summary_df = summarize(

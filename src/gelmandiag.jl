@@ -1,4 +1,4 @@
-function InferenceDiagnostics.gelmandiag(
+function MCMCDiagnosticTools.gelmandiag(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
     transform = false,
@@ -9,7 +9,7 @@ function InferenceDiagnostics.gelmandiag(
 
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
-    results = InferenceDiagnostics.gelmandiag(psi; kwargs...)
+    results = MCMCDiagnosticTools.gelmandiag(psi; kwargs...)
 
     # Create a data frame with the results.
     df = ChainDataFrame(
@@ -20,7 +20,7 @@ function InferenceDiagnostics.gelmandiag(
     return df
 end
 
-function InferenceDiagnostics.gelmandiag_multivariate(
+function MCMCDiagnosticTools.gelmandiag_multivariate(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
     transform = true,
@@ -31,7 +31,7 @@ function InferenceDiagnostics.gelmandiag_multivariate(
 
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
-    results = InferenceDiagnostics.gelmandiag_multivariate(psi; kwargs...)
+    results = MCMCDiagnosticTools.gelmandiag_multivariate(psi; kwargs...)
 
     # Create a data frame with the results.
     df = ChainDataFrame(
