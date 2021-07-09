@@ -63,7 +63,7 @@ function Base.Array(
 end
 
 function to_matrix(chain::Chains)
-    x = PermutedDimsArray(chain.value.data, (1, 3, 2))
+    x = permutedims(chain.value.data, (1, 3, 2))
     return Matrix(reshape(x, size(x, 1) * size(x, 2), size(x, 3)))
 end
 
