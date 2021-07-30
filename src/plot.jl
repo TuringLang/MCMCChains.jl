@@ -4,12 +4,14 @@
 @shorthands pooleddensity
 @shorthands traceplot
 @shorthands corner
+@shorthands ridgeline
 
 struct _TracePlot; c; val; end
 struct _MeanPlot; c; val;  end
 struct _DensityPlot; c; val;  end
 struct _HistogramPlot; c; val;  end
 struct _AutocorPlot; lags; val;  end
+struct _RidgelinePlot; par; val; end
 
 # define alias functions for old syntax
 const translationdict = Dict(
@@ -18,7 +20,8 @@ const translationdict = Dict(
                         :density => _DensityPlot,
                         :histogram => _HistogramPlot,
                         :autocorplot => _AutocorPlot,
-                        :pooleddensity => _DensityPlot
+                        :pooleddensity => _DensityPlot,
+                        :ridgeline => _RidgelinePlot
                       )
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
@@ -184,3 +187,88 @@ end
     ar = collect(Array(corner.c.value[:, corner.parameters,i]) for i in chains(corner.c))
     RecipesBase.recipetype(:cornerplot, vcat(ar...))
 end
+
+@recipe function f(
+    chains::Chains,
+    par_names = chains.name_map[:parameters],
+    q = [0.1, 0.9];
+    riser = 0.1,
+    spacer = 0.4,
+    barbounds = (-Inf, Inf),
+    #,
+    #show_mean = true,
+    #show_median = true,
+    #show_interval = true,
+    fill_q = true
+    )
+
+    st = get(plotattributes, :seriestype, :traceplot)
+    n_iter, n_par, n_chains = size(chains)
+    chain_arr = Array(chains, append_chains = true)
+    discrete = indiscretesupport(chains, barbounds)
+    s_type = [discrete[i] ? :histogram : :path for i in 1:length(par_names)]
+    if st == :ridgeline
+        k = 0
+        for i in 1:length(par_names)
+            h = riser + spacer*(i-1)
+            qs = quantile(chain_arr[:,i], q)
+            #chain_qs = filter(x -> q[1] <= x <= q[2], chain_arr[:,i])
+            k_density = KernelDensity.kde(chain_arr[:,i])
+            par = (fill_q ? filter(x -> qs[1] <= x <= qs[2], k_density.x) : k_density.x)
+            val = (fill_q ? (pdf(k_density, par) .+ h) : k_density.density .+ h)
+            chain_med = median(chain_arr[:,i])
+            chain_mean = mean(chain_arr[:,i])
+            min = minimum(k_density.density .+ h)
+            k = 1
+            @series begin
+                subplot := k
+                seriestype := :path
+                #yaxis --> "$(par_names[i])"
+                fillrange := min
+                #fill --> (0, 0.5)
+                label := nothing
+                yguide --> "$(par_names[i])"
+                par, val
+            end
+            @series begin
+                subplot := k
+                seriestype := :path
+                label := nothing
+                k_density.x, k_density.density .+ h
+            end
+            @series begin
+                subplot := k
+                seriestype := :hline
+                label := nothing
+                linecolor --> "#BBBBBB"
+                linewidth --> 1.1
+                [h]
+            end
+
+            @series begin
+                subplot := k
+                seriestype := :path
+                linecolor --> "dark red"
+                linewidth --> 1
+                label --> (i == 1 ? "Mean" : nothing)
+                #ylims := (minimum(val), maximum(val))
+                [chain_mean, chain_mean], [min, min + pdf(k_density, chain_mean)]
+            end
+
+            @series begin
+                subplot := k
+                seriestype := :path
+                linecolor --> "black"
+                linewidth --> 1
+                label --> (i == 1 ? "Median" : nothing)
+                #ylims := (minimum(val), maximum(val))
+                [chain_med, chain_med], [min, min + pdf(k_density, chain_med)]
+            end
+
+        end
+
+    else
+
+    end
+end
+
