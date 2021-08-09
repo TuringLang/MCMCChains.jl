@@ -4,14 +4,14 @@
 @shorthands pooleddensity
 @shorthands traceplot
 @shorthands corner
-@shorthands ridgeline
+#@shorthands ridgeline
+@userplot RidgelinePlot
 
 struct _TracePlot; c; val; end
 struct _MeanPlot; c; val;  end
 struct _DensityPlot; c; val;  end
 struct _HistogramPlot; c; val;  end
 struct _AutocorPlot; lags; val;  end
-struct _RidgelinePlot; par; val; end
 
 # define alias functions for old syntax
 const translationdict = Dict(
@@ -20,8 +20,7 @@ const translationdict = Dict(
                         :density => _DensityPlot,
                         :histogram => _HistogramPlot,
                         :autocorplot => _AutocorPlot,
-                        :pooleddensity => _DensityPlot,
-                        :ridgeline => _RidgelinePlot
+                        :pooleddensity => _DensityPlot
                       )
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
@@ -188,87 +187,160 @@ end
     RecipesBase.recipetype(:cornerplot, vcat(ar...))
 end
 
-@recipe function f(
+struct _plot_data; par; hpdi; lower_hpd; upper_hpd; h; qs; k_density; x_int; val; chain_med; chain_mean; min; q_int; end
+
+
+function _compute_plot_data(
+    i::Integer,
     chains::Chains,
-    par_names = chains.name_map[:parameters],
-    q = [0.1, 0.9];
-    riser = 0.1,
+    par_names::AbstractVector{Symbol},
+    plot_type::Symbol;
+    hpd_val = [0.05, 0.2],
+    q = [0.1, 0.9],
     spacer = 0.4,
+    riser = 0.2,
     barbounds = (-Inf, Inf),
-    #,
-    #show_mean = true,
-    #show_median = true,
-    #show_interval = true,
-    fill_q = true
+    show_mean = true,
+    show_median = true,
+    show_qi = false,
+    show_hpdi = true,
+    fill_q = true,
+    fill_hpd = false
     )
 
-    st = get(plotattributes, :seriestype, :traceplot)
-    n_iter, n_par, n_chains = size(chains)
-    chain_arr = Array(chains, append_chains = true)
-    discrete = indiscretesupport(chains, barbounds)
-    s_type = [discrete[i] ? :histogram : :path for i in 1:length(par_names)]
-    if st == :ridgeline
-        k = 0
-        for i in 1:length(par_names)
-            h = riser + spacer*(i-1)
-            qs = quantile(chain_arr[:,i], q)
-            #chain_qs = filter(x -> q[1] <= x <= q[2], chain_arr[:,i])
-            k_density = KernelDensity.kde(chain_arr[:,i])
-            par = (fill_q ? filter(x -> qs[1] <= x <= qs[2], k_density.x) : k_density.x)
-            val = (fill_q ? (pdf(k_density, par) .+ h) : k_density.density .+ h)
-            chain_med = median(chain_arr[:,i])
-            chain_mean = mean(chain_arr[:,i])
-            min = minimum(k_density.density .+ h)
-            k = 1
-            @series begin
-                subplot := k
-                seriestype := :path
-                #yaxis --> "$(par_names[i])"
-                fillrange := min
-                #fill --> (0, 0.5)
-                label := nothing
-                yguide --> "$(par_names[i])"
-                par, val
-            end
-            @series begin
-                subplot := k
-                seriestype := :path
-                label := nothing
-                k_density.x, k_density.density .+ h
-            end
-            @series begin
-                subplot := k
-                seriestype := :hline
-                label := nothing
-                linecolor --> "#BBBBBB"
-                linewidth --> 1.1
-                [h]
-            end
+    chain_dic = Dict(zip(quantile(chains)[:,1], quantile(chains)[:,4]))
+    sorted_chain = sort(collect(zip(values(chain_dic), keys(chain_dic))))
+    sorted_par = [sorted_chain[i][2] for i in 1:length(par_names)]
+    par = (plot_type == :caterpillar ? sorted_par : par_names)
+    hpdi = sort(hpd_val, rev = true)
+    #discrete = indiscretesupport(chains, barbounds)
+    #s_type = [discrete[i] ? :histogram : :path for i in 1:length(par_names)]
 
-            @series begin
-                subplot := k
-                seriestype := :path
-                linecolor --> "dark red"
-                linewidth --> 1
-                label --> (i == 1 ? "Mean" : nothing)
-                #ylims := (minimum(val), maximum(val))
-                [chain_mean, chain_mean], [min, min + pdf(k_density, chain_mean)]
-            end
-
-            @series begin
-                subplot := k
-                seriestype := :path
-                linecolor --> "black"
-                linewidth --> 1
-                label --> (i == 1 ? "Median" : nothing)
-                #ylims := (minimum(val), maximum(val))
-                [chain_med, chain_med], [min, min + pdf(k_density, chain_med)]
-            end
-
-        end
-
+    chain_sections = MCMCChains.group(chains, Symbol(par[i]))
+    chain_vec = vec(chain_sections.value.data)
+    lower_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower for j in 1:length(hpdi)]
+    upper_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper for j in 1:length(hpdi)]
+    h = riser + spacer*(i-1)
+    qs = quantile(chain_vec, q)
+    k_density = kde(chain_vec)
+    if fill_hpd
+        x_int = filter(x -> lower_hpd[1] <= x <= upper_hpd, k_density.x)
+        val = pdf(k_density, x_int) .+ h
+    elseif fill_q
+        x_int = filter(x -> qs[1] <= x <= qs[2], k_density.x)
+        val = pdf(k_density, x_int) .+ h
     else
-
+        x_int = k_density.x
+        val = k_density.density .+ h
     end
+    chain_med = median(chain_vec)
+    chain_mean = mean(chain_vec)
+    min = minimum(k_density.density .+ h)
+    q_int = (show_qi ? [qs[1], chain_med, qs[2]] : [chain_med])
+    return _plot_data(par, hpdi, lower_hpd, upper_hpd, h, qs, k_density,
+        x_int, val, chain_med, chain_mean, min, q_int)
 end
 
+@recipe function f(p::RidgelinePlot;
+    hpd_val = [0.05, 0.2],
+    q = [0.1, 0.9],
+    spacer = 0.5,
+    riser = 0.2,
+    #barbounds = (-Inf, Inf),
+    show_mean = true,
+    show_median = true,
+    show_qi = false,
+    show_hpdi = true,
+    fill_q = true,
+    fill_hpd = false
+    )
+
+    chn = p.args[1]
+    par_names = p.args[2]
+
+    for i in 1:length(par_names)
+        data = _compute_plot_data(i, chn, par_names, :ridge; hpd_val, q, spacer, riser,
+        show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd)
+
+        par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
+        min, q_int = data.par, data.hpdi, data.lower_hpd, data.upper_hpd, data.h, data.qs,
+        data.k_density, data.x_int, data.val, data.chain_med, data.chain_mean, data.min, data.q_int
+
+        yticks --> (length(par_names) > 1 ? (riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
+        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
+        grid --> false
+        @series begin
+            seriestype := :hline
+            label := nothing
+            linecolor := "#BBBBBB"
+            linewidth --> 1.2
+            [h]
+        end
+        @series begin
+            seriestype := :path
+            label := nothing
+            fillrange --> min
+            fillalpha --> 0.8
+            x_int, val
+        end
+        #if s_type[i] == :path
+        @series begin
+            seriestype := :path
+            label := nothing
+            linecolor --> "#000000"
+            k_density.x, k_density.density .+ h
+        end
+        #elseif s_type[i] == :histogram
+        #    @series begin
+        #        seriestype := :histogram
+        #        label := nothing
+        #        linecolor --> "#000000"
+        #        background_color_inside := nothing
+        #        bar_position := :stack
+        #        inset := (1, bbox(chain_med, h, 0.05, 0.25))#, :bottom, :right))
+        #        xaxis --> nothing
+        #        yaxis --> nothing
+        #        k_density.density
+        #    end
+        #else
+        #    throw(ArgumentError("O"))
+        #end
+        @series begin
+            seriestype := :path
+            label --> (i == 1 ? "Mean" : nothing)
+            linecolor --> "dark red"
+            linewidth --> (show_mean ? 1.2 : 0)
+            [chain_mean, chain_mean], [min, min + pdf(k_density, chain_mean)]
+        end
+        @series begin
+            seriestype := :path
+            label --> (i == 1 ? "Median" : nothing)
+            linecolor --> "#000000"
+            linewidth --> (show_median ? 1.2 : 0)
+            [chain_med, chain_med], [min, min + pdf(k_density, chain_med)]
+        end
+        @series begin
+            seriestype := :scatter
+            label := (show_qi ? (i == 1 ? "q$(q[1]), q$(q[2])" : nothing) : nothing)
+            markershape --> (show_qi ? :diamond : :circle)
+            markercolor --> "#000000"
+            markersize --> 2
+            q_int, [h]
+        end
+        @series begin
+            seriestype := :path
+            label := nothing
+            linecolor := "#000000"
+            linewidth --> (show_qi ? 1.2 : 0.0)
+            [qs[1], qs[2]], [h, h]
+        end
+        @series begin
+            seriestype := :path
+            label := (i == 1 ? "$((1-hpdi[1])*100) HPDI" : nothing)
+            linewidth --> 2
+            seriesalpha --> 0.80
+            linecolor --> :darkblue
+            [lower_hpd[1][1], upper_hpd[1][1]], [h, h]
+        end
+    end
+end
