@@ -193,8 +193,7 @@ struct _plot_data; par; hpdi; lower_hpd; upper_hpd; h; qs; k_density; x_int; val
 function _compute_plot_data(
     i::Integer,
     chains::Chains,
-    par_names::AbstractVector{Symbol},
-    plot_type::Symbol;
+    par_names::AbstractVector{Symbol};
     hpd_val = [0.05, 0.2],
     q = [0.1, 0.9],
     spacer = 0.4,
@@ -205,14 +204,20 @@ function _compute_plot_data(
     show_qi = false,
     show_hpdi = true,
     fill_q = true,
-    fill_hpd = false
+    fill_hpd = false,
+    ordered = false
     )
 
     chain_dic = Dict(zip(quantile(chains)[:,1], quantile(chains)[:,4]))
     sorted_chain = sort(collect(zip(values(chain_dic), keys(chain_dic))))
     sorted_par = [sorted_chain[i][2] for i in 1:length(par_names)]
+<<<<<<< HEAD
     par = (plot_type == :caterpillar ? sorted_par : par_names)
     hpdi = sort(hpd_val, rev = true)
+=======
+    par = (ordered ? sorted_par : par_names)
+    hpdi = sort(hpd_val)
+>>>>>>> eef6576 (Add recipe for forest and caterpillar plots)
     #discrete = indiscretesupport(chains, barbounds)
     #s_type = [discrete[i] ? :histogram : :path for i in 1:length(par_names)]
 
@@ -224,7 +229,7 @@ function _compute_plot_data(
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
     if fill_hpd
-        x_int = filter(x -> lower_hpd[1] <= x <= upper_hpd, k_density.x)
+        x_int = filter(x -> lower_hpd[1][1] <= x <= upper_hpd[1][1], k_density.x)
         val = pdf(k_density, x_int) .+ h
     elseif fill_q
         x_int = filter(x -> qs[1] <= x <= qs[2], k_density.x)
@@ -252,15 +257,25 @@ end
     show_qi = false,
     show_hpdi = true,
     fill_q = true,
+<<<<<<< HEAD
     fill_hpd = false
+=======
+    fill_hpd = false,
+    ordered = false
+>>>>>>> eef6576 (Add recipe for forest and caterpillar plots)
     )
 
     chn = p.args[1]
     par_names = p.args[2]
 
     for i in 1:length(par_names)
+<<<<<<< HEAD
         data = _compute_plot_data(i, chn, par_names, :ridge; hpd_val, q, spacer, riser,
         show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd)
+=======
+        data = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
+            show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd, ordered)
+>>>>>>> eef6576 (Add recipe for forest and caterpillar plots)
 
         par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
         min, q_int = data.par, data.hpdi, data.lower_hpd, data.upper_hpd, data.h, data.qs,
@@ -343,4 +358,82 @@ end
             [lower_hpd[1][1], upper_hpd[1][1]], [h, h]
         end
     end
+<<<<<<< HEAD
 end
+=======
+end
+
+@recipe function f(p::ForestPlot;
+    hpd_val = [0.05, 0.2],
+    q = [0.1, 0.9],
+    spacer = 0.5,
+    _riser = 0.2,
+    #barbounds = (-Inf, Inf),
+    show_mean = true,
+    show_median = true,
+    show_qi = false,
+    show_hpdi = true,
+    fill_q = true,
+    fill_hpd = false,
+    ordered = false
+    )
+
+    chn = p.args[1]
+    par_names = p.args[2]
+
+    for i in 1:length(par_names)
+        data = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
+            show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd, ordered)
+
+        par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
+        min, q_int = data.par, data.hpdi, data.lower_hpd, data.upper_hpd, data.h, data.qs,
+        data.k_density, data.x_int, data.val, data.chain_med, data.chain_mean, data.min, data.q_int
+
+        yticks --> (length(par_names) > 1 ? (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
+        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
+
+        for j in 1:length(hpdi)
+            @series begin
+                seriestype := :path
+                label := (i == 1 ? "$((1-hpdi[j])*100)% HPDI" : nothing)
+                linecolor --> j
+                linewidth --> 1.5*j
+                #linewidth --> 2*(length(hpdi)-j+1)
+                seriesalpha --> 0.80
+                [lower_hpd[j][1], upper_hpd[j][1]], [h, h]
+            end
+        end
+        @series begin
+            seriestype := :scatter
+            label := (show_median ? (i == 1 ? "Median" : nothing) : nothing)
+            markershape --> :diamond
+            markercolor --> "#000000"
+            markersize --> (show_median ? length(hpdi) : 0)
+            [chain_med], [h]
+        end
+        @series begin
+            seriestype := :scatter
+            label := (i == 1 ? "Mean" : nothing)
+            markershape --> :circle
+            markercolor --> :gray
+            markersize --> (show_mean ? length(hpdi) : 0)
+            [chain_mean], [h]
+        end
+        @series begin
+            seriestype := :scatter
+            label := (show_qi ? (i == 1 ? "q1 = $(q[1]), q3 = $(q[2])" : nothing) : nothing)
+            markershape --> (show_qi ? :diamond : :circle)
+            markercolor --> "#000000"
+            markersize --> (show_qi ? 2 : 0)
+            q_int, [h]
+        end
+        @series begin
+            seriestype := :path
+            label := nothing
+            linecolor := "#000000"
+            linewidth --> (show_qi ? 1.2 : 0.0)
+            [qs[1], qs[2]], [h, h]
+        end
+    end
+end
+>>>>>>> eef6576 (Add recipe for forest and caterpillar plots)
