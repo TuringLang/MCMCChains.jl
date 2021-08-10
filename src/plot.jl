@@ -4,8 +4,8 @@
 @shorthands pooleddensity
 @shorthands traceplot
 @shorthands corner
-#@shorthands ridgeline
 @userplot RidgelinePlot
+@userplot ForestPlot
 
 struct _TracePlot; c; val; end
 struct _MeanPlot; c; val;  end
@@ -197,7 +197,7 @@ function _compute_plot_data(
     hpd_val = [0.05, 0.2],
     q = [0.1, 0.9],
     spacer = 0.4,
-    riser = 0.2,
+    _riser = 0.2,
     barbounds = (-Inf, Inf),
     show_mean = true,
     show_median = true,
@@ -218,7 +218,7 @@ function _compute_plot_data(
     chain_vec = vec(chain_sections.value.data)
     lower_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower for j in 1:length(hpdi)]
     upper_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper for j in 1:length(hpdi)]
-    h = riser + spacer*(i-1)
+    h = _riser + spacer*(i-1)
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
     if fill_hpd
@@ -243,7 +243,7 @@ end
     hpd_val = [0.05, 0.2],
     q = [0.1, 0.9],
     spacer = 0.5,
-    riser = 0.2,
+    _riser = 0.2,
     show_mean = true,
     show_median = true,
     show_qi = false,
@@ -264,9 +264,8 @@ end
         min, q_int = data.par, data.hpdi, data.lower_hpd, data.upper_hpd, data.h, data.qs,
         data.k_density, data.x_int, data.val, data.chain_med, data.chain_mean, data.min, data.q_int
 
-        yticks --> (length(par_names) > 1 ? (riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
+        yticks --> (length(par_names) > 1 ? (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
-        grid --> false
         @series begin
             seriestype := :hline
             label := nothing
@@ -289,37 +288,37 @@ end
         end
         @series begin
             seriestype := :path
-            label --> (i == 1 ? "Mean" : nothing)
+            label --> (show_mean ? (i == 1 ? "Mean" : nothing) : nothing)
             linecolor --> "dark red"
             linewidth --> (show_mean ? 1.2 : 0)
             [chain_mean, chain_mean], [min, min + pdf(k_density, chain_mean)]
         end
         @series begin
             seriestype := :path
-            label --> (i == 1 ? "Median" : nothing)
+            label --> (show_median ? (i == 1 ? "Median" : nothing) : nothing)
             linecolor --> "#000000"
             linewidth --> (show_median ? 1.2 : 0)
             [chain_med, chain_med], [min, min + pdf(k_density, chain_med)]
         end
         @series begin
             seriestype := :scatter
-            label := (show_qi ? (i == 1 ? "q$(q[1]), q$(q[2])" : nothing) : nothing)
+            label := (show_qi ? (i == 1 ? "Q$(q[1]), Q$(q[2])" : nothing) : nothing)
             markershape --> (show_qi ? :diamond : :circle)
             markercolor --> "#000000"
-            markersize --> 2
+            markersize --> (show_qi ? 2 : 0)
             q_int, [h]
         end
         @series begin
             seriestype := :path
             label := nothing
             linecolor := "#000000"
-            linewidth --> (show_qi ? 1.2 : 0.0)
+            linewidth --> (show_qi ? 1.2 : 0)
             [qs[1], qs[2]], [h, h]
         end
         @series begin
             seriestype := :path
-            label := (i == 1 ? "$((1-hpdi[1])*100) HPDI" : nothing)
-            linewidth --> 2
+            label := (i == 1 ? "$(Integer((1-hpdi[1])*100))% HPDI" : nothing)
+            linewidth --> (show_hpdi ? 2 : 0)
             seriesalpha --> 0.80
             linecolor --> :darkblue
             [lower_hpd[1][1], upper_hpd[1][1]], [h, h]
@@ -358,9 +357,9 @@ end
         for j in 1:length(hpdi)
             @series begin
                 seriestype := :path
-                label := (i == 1 ? "$((1-hpdi[j])*100)% HPDI" : nothing)
+                label := (show_hpdi ? (i == 1 ? "$(Integer((1-hpdi[j])*100))% HPDI" : nothing) : nothing)
                 linecolor --> j
-                linewidth --> 1.5*j
+                linewidth --> (show_hpdi ? 1.5*j : 0)
                 seriesalpha --> 0.80
                 [lower_hpd[j][1], upper_hpd[j][1]], [h, h]
             end
@@ -375,7 +374,7 @@ end
         end
         @series begin
             seriestype := :scatter
-            label := (i == 1 ? "Mean" : nothing)
+            label := (show_mean ? (i == 1 ? "Mean" : nothing) : nothing)
             markershape --> :circle
             markercolor --> :gray
             markersize --> (show_mean ? length(hpdi) : 0)
@@ -383,7 +382,7 @@ end
         end
         @series begin
             seriestype := :scatter
-            label := (show_qi ? (i == 1 ? "q1 = $(q[1]), q3 = $(q[2])" : nothing) : nothing)
+            label := (show_qi ? (i == 1 ? "Q1 = $(q[1]), Q3 = $(q[2])" : nothing) : nothing)
             markershape --> (show_qi ? :diamond : :circle)
             markercolor --> "#000000"
             markersize --> (show_qi ? 2 : 0)
