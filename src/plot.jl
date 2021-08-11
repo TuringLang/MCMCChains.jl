@@ -325,7 +325,8 @@ end
     end
 end
 
-@recipe function f(p::ForestPlot;
+@recipe function f(
+    p::ForestPlot;
     hpd_val = [0.05, 0.2],
     q = [0.1, 0.9],
     spacer = 0.5,
