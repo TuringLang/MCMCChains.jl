@@ -187,9 +187,6 @@ end
     RecipesBase.recipetype(:cornerplot, vcat(ar...))
 end
 
-struct _plot_data; par; hpdi; lower_hpd; upper_hpd; h; qs; k_density; x_int; val; chain_med; chain_mean; min; q_int; end
-
-
 function _compute_plot_data(
     i::Integer,
     chains::Chains,
@@ -216,8 +213,10 @@ function _compute_plot_data(
 
     chain_sections = MCMCChains.group(chains, Symbol(par[i]))
     chain_vec = vec(chain_sections.value.data)
-    lower_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower for j in 1:length(hpdi)]
-    upper_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper for j in 1:length(hpdi)]
+    lower_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower
+        for j in 1:length(hpdi)]
+    upper_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper
+        for j in 1:length(hpdi)]
     h = _riser + spacer*(i-1)
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
@@ -235,8 +234,9 @@ function _compute_plot_data(
     chain_mean = mean(chain_vec)
     min = minimum(k_density.density .+ h)
     q_int = (show_qi ? [qs[1], chain_med, qs[2]] : [chain_med])
-    return _plot_data(par, hpdi, lower_hpd, upper_hpd, h, qs, k_density,
-        x_int, val, chain_med, chain_mean, min, q_int)
+
+    return par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med,
+        chain_mean, min, q_int
 end
 
 @recipe function f(p::RidgelinePlot;
@@ -257,14 +257,12 @@ end
     par_names = p.args[2]
 
     for i in 1:length(par_names)
-        data = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
+        par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
+            min, q_int = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
             show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd, ordered)
 
-        par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
-        min, q_int = data.par, data.hpdi, data.lower_hpd, data.upper_hpd, data.h, data.qs,
-        data.k_density, data.x_int, data.val, data.chain_med, data.chain_mean, data.min, data.q_int
-
-        yticks --> (length(par_names) > 1 ? (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
+        yticks --> (length(par_names) > 1 ?
+            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
         @series begin
             seriestype := :hline
@@ -317,7 +315,8 @@ end
         end
         @series begin
             seriestype := :path
-            label := (i == 1 ? "$(Integer((1-hpdi[1])*100))% HPDI" : nothing)
+            label := (show_hpdi ? (i == 1 ? "$(Integer((1-hpdi[1])*100))% HPDI" : nothing)
+                : nothing)
             linewidth --> (show_hpdi ? 2 : 0)
             seriesalpha --> 0.80
             linecolor --> :darkblue
@@ -344,20 +343,19 @@ end
     par_names = p.args[2]
 
     for i in 1:length(par_names)
-        data = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
-            show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd, ordered)
-
         par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
-        min, q_int = data.par, data.hpdi, data.lower_hpd, data.upper_hpd, data.h, data.qs,
-        data.k_density, data.x_int, data.val, data.chain_med, data.chain_mean, data.min, data.q_int
+        min, q_int = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
+        show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd, ordered)
 
-        yticks --> (length(par_names) > 1 ? (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
+        yticks --> (length(par_names) > 1 ?
+            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
 
         for j in 1:length(hpdi)
             @series begin
                 seriestype := :path
-                label := (show_hpdi ? (i == 1 ? "$(Integer((1-hpdi[j])*100))% HPDI" : nothing) : nothing)
+                label := (show_hpdi ?
+                    (i == 1 ? "$(Integer((1-hpdi[j])*100))% HPDI" : nothing) : nothing)
                 linecolor --> j
                 linewidth --> (show_hpdi ? 1.5*j : 0)
                 seriesalpha --> 0.80
