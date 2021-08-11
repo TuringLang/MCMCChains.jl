@@ -252,7 +252,7 @@ end
     fill_q = true,
     fill_hpd = false,
     ordered = false
-    )
+)
 
     chn = p.args[1]
     par_names = p.args[2]
