@@ -19,10 +19,10 @@ Random.seed!(0)
 @testset "MCMCChains" begin
     # MLJXGBoostInterface requires Julia >= 1.3
     # XGBoost errors on 32bit systems: https://github.com/dmlc/XGBoost.jl/issues/92
-    if VERSION >= v"1.3" && Sys.WORD_SIZE == 64
+    if VERSION >= v"1.3" && VERSION < v"1.7" && Sys.WORD_SIZE == 64
         # run tests related to rstar statistic
         println("Rstar")
-        Pkg.add("MLJModels")
+        Pkg.add("MLJBase")
         Pkg.add("MLJXGBoostInterface")
         @time include("rstar_tests.jl")
 
