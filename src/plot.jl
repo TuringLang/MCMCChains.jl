@@ -203,7 +203,7 @@ function _compute_plot_data(
     fill_q = true,
     fill_hpd = false,
     ordered = false
-    )
+)
 
     chain_dic = Dict(zip(quantile(chains)[:,1], quantile(chains)[:,4]))
     sorted_chain = sort(collect(zip(values(chain_dic), keys(chain_dic))))
