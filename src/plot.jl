@@ -190,7 +190,7 @@ end
 function _compute_plot_data(
     i::Integer,
     chains::Chains,
-    par_names::AbstractVector{Symbol};
+    par_names::AbstractVector{Symbol},
     hpd_val = [0.05, 0.2],
     q = [0.1, 0.9],
     spacer = 0.4,
@@ -258,7 +258,7 @@ end
 
     for i in 1:length(par_names)
         par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
-            min, q_int = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
+            min, q_int = _compute_plot_data(i, chn, par_names, hpd_val, q, spacer, _riser,
             show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd, ordered)
 
         yticks --> (length(par_names) > 1 ?
@@ -344,7 +344,7 @@ end
 
     for i in 1:length(par_names)
         par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
-        min, q_int = _compute_plot_data(i, chn, par_names; hpd_val, q, spacer, _riser,
+        min, q_int = _compute_plot_data(i, chn, par_names, hpd_val, q, spacer, _riser,
         show_mean, show_median, show_qi, show_hpdi, fill_q, fill_hpd, ordered)
 
         yticks --> (length(par_names) > 1 ?
