@@ -67,6 +67,11 @@ using MCMCChains, Test
         Array(chns[:a])
         Array(chns, [:parameters])
         Array(chns, [:parameters, :internals])
+
+        # empty chain: #317
+        empty_chain = chns[Symbol[]]
+        @test isempty(MCMCChains.to_matrix(empty_chain))
+        @test isempty(Array(empty_chain))
     end
     @testset "Accuracy" begin
         nchains = 5

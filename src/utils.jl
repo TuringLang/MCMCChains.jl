@@ -96,7 +96,7 @@ function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
                 :(getfield(b, $(QuoteNode(n))))
             end
         end
-        
+
         return :(NamedTuple{$names,$types}(($(values...),)))
     else
         names = Base.merge_names(an, bn)
@@ -113,7 +113,7 @@ function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
                 getfield(b, n)
             end
         end
-        
+
         return NamedTuple{names,types}(values)
     end
 end
@@ -179,8 +179,8 @@ function concretize(x::AbstractArray)
         return x
     else
         xnew = map(concretize, x)
-        T = mapreduce(typeof, promote_type, xnew)
-        if T <: eltype(xnew)
+        T = mapreduce(typeof, promote_type, xnew; init=Union{})
+        if T <: eltype(xnew) && T !== Union{}
             return convert(AbstractArray{T}, xnew)
         else
             return xnew
@@ -195,4 +195,18 @@ function concretize(x::Chains)
     else
         return Chains(concretize(value), x.logevidence, x.name_map, x.info)
     end
+end
+
+function isstrictlyincreasing(x::AbstractVector{Int})
+    return isempty(x) || _isstrictlyincreasing_nonempty(x)
+end
+
+_isstrictlyincreasing_nonempty(x::AbstractRange{Int}) = step(x) > 0
+function _isstrictlyincreasing_nonempty(x::AbstractVector{Int})
+    i = first(x)
+    for j in Iterators.drop(x, 1)
+        j > i || return false
+        i = j
+    end
+    return true
 end
