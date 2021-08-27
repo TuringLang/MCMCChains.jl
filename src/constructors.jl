@@ -63,7 +63,8 @@ function Base.Array(
 end
 
 function to_matrix(chain::Chains)
-    return Matrix(reshape(permutedims(chain.value.data, (1, 3, 2)), :, size(chain, 2)))
+    x = permutedims(chain.value.data, (1, 3, 2))
+    return Matrix(reshape(x, size(x, 1) * size(x, 2), size(x, 3)))
 end
 
 function to_vector(chain::Chains)
@@ -79,4 +80,3 @@ function to_vector_of_matrices(chain::Chains)
     data = chain.value.data
     return [Matrix(data[:, :, i]) for i in axes(data, 3)]
 end
-

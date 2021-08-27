@@ -166,8 +166,8 @@ function concretize(x::AbstractArray)
         return x
     else
         xnew = map(concretize, x)
-        T = mapreduce(typeof, promote_type, xnew)
-        if T <: eltype(xnew)
+        T = mapreduce(typeof, promote_type, xnew; init=Union{})
+        if T <: eltype(xnew) && T !== Union{}
             return convert(AbstractArray{T}, xnew)
         else
             return xnew

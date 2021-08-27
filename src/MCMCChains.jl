@@ -10,6 +10,7 @@ using RecipesBase
 using SpecialFunctions
 using Formatting
 using Dates
+using KernelDensity: kde, pdf
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
 import MCMCDiagnosticTools
