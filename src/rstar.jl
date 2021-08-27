@@ -1,17 +1,17 @@
 """
-    rstar([rng ,]classifier, chains::Chains; kwargs...)
+    rstar(rng=Random.GLOBAL_RNG, classifier, chains::Chains; kwargs...)
 
-Compute the ``R^*`` convergence diagnostic of MCMC for the `chains`.
+Compute the ``R^*`` convergence diagnostic of the MCMC `chains` with the `classifier`.
 
 The keyword arguments supported here are the same as those in `rstar` for arrays of samples
 and chain indices.
 
-# Example
+# Examples
 
 ```jldoctest rstar; setup = :(using Random; Random.seed!(100))
 julia> using MLJBase, MLJXGBoostInterface, Statistics
 
-julia> chains = Chains(fill(4, 100, 2, 3));
+julia> chains = Chains(fill(4.0, 100, 2, 3));
 ```
 
 One can compute the distribution of the ``R^*`` statistic with the probabilistic classifier.
@@ -30,7 +30,7 @@ julia> @pipeline XGBoostClassifier name = XGBoostDeterministic operation = predi
 
 julia> value = rstar(XGBoostDeterministic(), chains);
 
-julia> isapprox(value, 1; atol=0.1)
+julia> isapprox(value, 1; atol=0.2)
 true
 ```
 """
