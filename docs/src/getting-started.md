@@ -71,8 +71,8 @@ chn2 = set_section(chn, Dict(:internals => [:c, :d]))
 Note that only `a` and `b` are being shown. You can explicity retrieve
 an array of the summary statistics and the quantiles of the `:internals` section by
 calling `describe(chn; sections = :internals)`, or of all variables with
-`describe(chn; sections = nothing)`. Many functions such as [`MCMCChains.summarize`](@ref) or
-[`MCMCChains.gelmandiag`](@ref) support the `sections` keyword argument.
+`describe(chn; sections = nothing)`. Many functions such as [`MCMCChains.summarize`](@ref)
+support the `sections` keyword argument.
 
 ## Groups of parameters
 

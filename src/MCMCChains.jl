@@ -2,7 +2,6 @@ module MCMCChains
 
 using AxisArrays
 const axes = Base.axes
-using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat
 using Compat
@@ -14,6 +13,7 @@ using Dates
 using KernelDensity: kde, pdf
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
+import MCMCDiagnosticTools
 import MLJModelInterface
 import NaturalSort
 import PrettyTables
@@ -35,13 +35,18 @@ export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
 
-# Export diagnostics functions
-export discretediag, gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag
-export hpd, ess
-
+# Reexport diagnostics functions
+using MCMCDiagnosticTools: discretediag, ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod,
+    gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag, rstar
+export discretediag
+export ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod
+export gelmandiag, gelmandiag_multivariate
+export gewekediag
+export heideldiag
+export rafterydiag
 export rstar
 
-export ESSMethod, FFTESSMethod, BDAESSMethod
+export hpd
 
 """
     Chains
@@ -71,7 +76,6 @@ include("fileio.jl")
 include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
-include("mcse.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
