@@ -57,7 +57,7 @@ function Chains(
     end
 
     # Store unassigned variables.
-    unassigned = Set(Symbol[])
+    unassigned = OrderedCollections.OrderedSet{Symbol}()
 
     # Check that all parameters are assigned.
     for param in parameter_names

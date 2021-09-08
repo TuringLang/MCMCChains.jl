@@ -13,9 +13,11 @@ using Dates
 using KernelDensity: kde, pdf
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
+
 import MCMCDiagnosticTools
 import MLJModelInterface
 import NaturalSort
+import OrderedCollections
 import PrettyTables
 import StatsFuns
 import Tables
