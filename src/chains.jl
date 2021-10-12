@@ -121,7 +121,7 @@ Chains(chain::Chains, ::Nothing) = chain
 # Groups of parameters
 
 """
-    namesingroup(chains::Chains, sym::Union{String,Symbol}, groupby="[")
+    namesingroup(chains::Chains, sym::Union{String,Symbol}; groupby::String="[")
 
 Return the names of all parameters in a chain that belong to the group `sym`.
 
@@ -141,8 +141,8 @@ julia> namesingroup(chn, :A)
  Symbol("A[2]")
 ```
 """
-namesingroup(chains::Chains, sym::String, groupby="[") = namesingroup(chains, Symbol(sym), groupby)
-function namesingroup(chains::Chains, sym::Symbol, groupby="[")
+namesingroup(chains::Chains, sym::String; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
+function namesingroup(chains::Chains, sym::Symbol; groupby::String="[")
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
     regex = Regex("^$sym\$|^$sym\\$groupby")
@@ -151,14 +151,16 @@ function namesingroup(chains::Chains, sym::Symbol, groupby="[")
 end
 
 """
-    group(chains::Chains, name::Union{String,Symbol}; groupby="]")
+    group(chains::Chains, name::Union{String,Symbol}; groupby::String="[")
 
-Return a subset of the chain chain with all parameters in the group `Symbol(name)`. By default, 
-parameters are grouped by index brackets, such as name[index]. Use keyword groupby to specify alternative 
-grouping criteria. For example, groupby="." will group parameters according to "." indexing in Stan.
+Return a subset of the chain chain with all parameters in the group `Symbol(name)`.
+
+By default,  parameters are grouped by index brackets, such as `name[index]`. Use the keyword argument
+`groupby` to specify alternative grouping criteria. For example, `groupby="."` will group parameters of the
+form `name.index`.
 """
-function group(chains::Chains, name::Union{String,Symbol}; groupby="[")
-    return chains[:, namesingroup(chains, name, groupby), :]
+function group(chains::Chains, name::Union{String,Symbol}; kwargs...)
+    return chains[:, namesingroup(chains, name; kwargs...), :]
 end
 
 #################### Indexing ####################
