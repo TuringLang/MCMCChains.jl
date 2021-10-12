@@ -121,6 +121,9 @@ end
     chn3 = group(chn2, "param")
     @test names(chn3) == Symbol.(["param[2]", "param[3]"])
     @test chn3.value == chn[:, [:param_2, :param_3], :].value
+
+    stan_chn = Chains(rand(100, 3, 1), ["a.1", "a[2]", "b"])
+    @test namesingroup(stan_chn, "a", ".") == [Symbol("a.1")]
 end
 
 @testset "function tests" begin

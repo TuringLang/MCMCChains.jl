@@ -121,12 +121,13 @@ Chains(chain::Chains, ::Nothing) = chain
 # Groups of parameters
 
 """
-    namesingroup(chains::Chains, sym::Union{String,Symbol})
+    namesingroup(chains::Chains, sym::Union{String,Symbol}, groupby="[")
 
 Return the names of all parameters in a chain that belong to the group `sym`.
 
 This is based on the MCMCChains convention that parameters with names of the form `:sym[index]`
-belong to one group of parameters called `:sym`.
+belong to one group of parameters called `:sym`. The default can be overwritten by passing a different
+value to `groupby`.
 
 If the chain contains a parameter of name `:sym` it will be returned as well.
 
@@ -140,22 +141,24 @@ julia> namesingroup(chn, :A)
  Symbol("A[2]")
 ```
 """
-namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
-function namesingroup(chains::Chains, sym::Symbol)
+namesingroup(chains::Chains, sym::String, groupby="[") = namesingroup(chains, Symbol(sym), groupby)
+function namesingroup(chains::Chains, sym::Symbol, groupby="[")
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
-    regex = Regex("^$sym\$|^$sym\\[")
+    regex = Regex("^$sym\$|^$sym\\$groupby")
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
 
 """
-    group(chains::Chains, name::Union{String,Symbol})
+    group(chains::Chains, name::Union{String,Symbol}; groupby="]")
 
-Return a subset of the chain chain with all parameters in the group `Symbol(name)`.
+Return a subset of the chain chain with all parameters in the group `Symbol(name)`. By default, 
+parameters are grouped by index brackets, such as name[index]. Use keyword groupby to specify alternative 
+grouping criteria. For example, groupby="." will group parameters according to "." indexing in Stan.
 """
-function group(chains::Chains, name::Union{String,Symbol})
-    return chains[:, namesingroup(chains, name), :]
+function group(chains::Chains, name::Union{String,Symbol}; groupby="[")
+    return chains[:, namesingroup(chains, name, groupby), :]
 end
 
 #################### Indexing ####################
