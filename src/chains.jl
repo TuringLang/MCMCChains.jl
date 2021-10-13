@@ -121,13 +121,12 @@ Chains(chain::Chains, ::Nothing) = chain
 # Groups of parameters
 
 """
-    namesingroup(chains::Chains, sym::Union{String,Symbol}; groupby::String="[")
+    namesingroup(chains::Chains, sym::Union{String,Symbol}; index_type::String="[")
 
-Return the names of all parameters in a chain that belong to the group `sym`.
-
-This is based on the MCMCChains convention that parameters with names of the form `:sym[index]`
-belong to one group of parameters called `:sym`. The default can be overwritten by passing a different
-value to `groupby`.
+Return the parameters with the same name `sym`, but have a different index. Bracket indexing format
+in the form of `:sym[index]` is assumed by default. The default can be overwritten with 
+the keyword `index_type`, which requires the prefix of the indexing format. For the default braket 
+notation (i.e. `:sym[index]`), index_type="[". For "." indexing (i.e. `:sym.index`), index_type=".".
 
 If the chain contains a parameter of name `:sym` it will be returned as well.
 
@@ -142,22 +141,22 @@ julia> namesingroup(chn, :A)
 ```
 """
 namesingroup(chains::Chains, sym::String; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
-function namesingroup(chains::Chains, sym::Symbol; groupby::String="[")
+function namesingroup(chains::Chains, sym::Symbol; index_type::String="[")
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
-    regex = Regex("^$sym\$|^$sym\\$groupby")
+    regex = Regex("^$sym\$|^$sym\\$index_type")
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
 
 """
-    group(chains::Chains, name::Union{String,Symbol}; groupby::String="[")
+    group(chains::Chains, name::Union{String,Symbol}; index_type::String="[")
 
-Return a subset of the chain chain with all parameters in the group `Symbol(name)`.
+Return a subset of the chain containing parameters with the same `name`, but a different index.
 
-By default,  parameters are grouped by index brackets, such as `name[index]`. Use the keyword argument
-`groupby` to specify alternative grouping criteria. For example, `groupby="."` will group parameters of the
-form `name.index`.
+Bracket indexing format in the form of `:name[index]` is assumed by default. The default can be overwritten 
+with the keyword `index_type`, which requires the prefix of the indexing format. For the default braket 
+notation (i.e. `:name[index]`), index_type="[". For "." indexing (i.e. `:name.index`), index_type=".".
 """
 function group(chains::Chains, name::Union{String,Symbol}; kwargs...)
     return chains[:, namesingroup(chains, name; kwargs...), :]
