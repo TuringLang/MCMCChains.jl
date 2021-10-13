@@ -139,6 +139,14 @@ julia> namesingroup(chn, :A)
  Symbol("A[1]")
  Symbol("A[2]")
 ```
+```jldoctest
+julia> chn = Chains(rand(100, 3, 2), ["A.1", "A.2", "B"]);
+
+julia> namesingroup(chn, :A; index_type=".")
+2-element Vector{Symbol}:
+ Symbol("A.1")
+ Symbol("A.2")
+```
 """
 namesingroup(chains::Chains, sym::String; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
 function namesingroup(chains::Chains, sym::Symbol; index_type::String="[")
