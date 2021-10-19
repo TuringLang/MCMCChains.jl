@@ -121,12 +121,11 @@ Chains(chain::Chains, ::Nothing) = chain
 # Groups of parameters
 
 """
-    namesingroup(chains::Chains, sym::Union{String,Symbol}; index_type::String="[")
+    namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
 
 Return the parameters with the same name `sym`, but have a different index. Bracket indexing format
-in the form of `:sym[index]` is assumed by default. The default can be overwritten with 
-the keyword `index_type`, which requires the prefix of the indexing format. For the default braket 
-notation (i.e. `:sym[index]`), index_type="[". For "." indexing (i.e. `:sym.index`), index_type=".".
+in the form of `:sym[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
+indexing, i.e. `:sym.index`.
 
 If the chain contains a parameter of name `:sym` it will be returned as well.
 
@@ -142,29 +141,32 @@ julia> namesingroup(chn, :A)
 ```jldoctest
 julia> chn = Chains(rand(100, 3, 2), ["A.1", "A.2", "B"]);
 
-julia> namesingroup(chn, :A; index_type=".")
+julia> namesingroup(chn, :A; index_type=:dot)
 2-element Vector{Symbol}:
  Symbol("A.1")
  Symbol("A.2")
 ```
 """
 namesingroup(chains::Chains, sym::String; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
-function namesingroup(chains::Chains, sym::Symbol; index_type::String="[")
+function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
+    if index_type ∉ [:bracket, :dot]
+        error("index_type must be :bracket or :dot")
+    end
+    idx_str = index_type == :bracket ? "[" : "."
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
-    regex = Regex("^$sym\$|^$sym\\$index_type")
+    regex = Regex("^$sym\$|^$sym\\$idx_str")
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
 
 """
-    group(chains::Chains, name::Union{String,Symbol}; index_type::String="[")
+    group(chains::Chains, name::Union{String,Symbol}; index_type::Symbol=:bracket)
 
 Return a subset of the chain containing parameters with the same `name`, but a different index.
 
-Bracket indexing format in the form of `:name[index]` is assumed by default. The default can be overwritten 
-with the keyword `index_type`, which requires the prefix of the indexing format. For the default braket 
-notation (i.e. `:name[index]`), index_type="[". For "." indexing (i.e. `:name.index`), index_type=".".
+Bracket indexing format in the form of `:name[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
+indexing, i.e. `:sym.index`.
 """
 function group(chains::Chains, name::Union{String,Symbol}; kwargs...)
     return chains[:, namesingroup(chains, name; kwargs...), :]
