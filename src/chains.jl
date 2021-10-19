@@ -149,7 +149,7 @@ julia> namesingroup(chn, :A; index_type=:dot)
 """
 namesingroup(chains::Chains, sym::String; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
 function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
-    if index_type ∉ [:bracket, :dot]
+    if index_type !== :bracket && index_type !== :dot
         error("index_type must be :bracket or :dot")
     end
     idx_str = index_type == :bracket ? "[" : "."
