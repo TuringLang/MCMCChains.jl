@@ -1,4 +1,13 @@
+# Activate test environment on older Julia versions
+if VERSION < v"1.2"
+    using Pkg
+    Pkg.activate(@__DIR__)
+    Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
+    Pkg.instantiate()
+end
+
 using MCMCChains
+using Documenter
 
 using Test
 using Random
@@ -7,26 +16,6 @@ using Random
 Random.seed!(0)
 
 @testset "MCMCChains" begin
-    # MLJXGBoostInterface requires Julia >= 1.3
-    # Array printing depends on Julia version, therefore we only test Julia >= 1.7
-    # XGBoost errors on 32bit systems: https://github.com/dmlc/XGBoost.jl/issues/92
-    if VERSION >= v"1.7" && Sys.WORD_SIZE == 64
-        # run tests related to rstar statistic
-        println("Rstar")
-        @time include("rstar_tests.jl")
-
-
-        # run doctests (including rstar statistic!)
-        using Documenter
-        DocMeta.setdocmeta!(
-            MCMCChains,
-            :DocTestSetup,
-            :(using MCMCChains);
-            recursive=true
-        )
-        doctest(MCMCChains)
-    end
-
     # run tests for effective sample size
     println("ESS")
     @time include("ess_tests.jl")
@@ -79,4 +68,19 @@ Random.seed!(0)
     println("Concatenation")
     @time include("concatenation_tests.jl")
 
+    # run tests related to rstar statistic
+    println("Rstar")
+    @time include("rstar_tests.jl")
+
+    # Array printing depends on Julia version, therefore we only test Julia >= 1.7
+    if VERSION >= v"1.7"
+        # run doctests (including rstar statistic!)
+        DocMeta.setdocmeta!(
+            MCMCChains,
+            :DocTestSetup,
+            :(using MCMCChains);
+            recursive = true
+        )
+        doctest(MCMCChains)
+    end
 end
