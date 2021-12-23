@@ -1,14 +1,4 @@
-using Pkg
-
-# Activate test environment on older Julia versions
-if VERSION < v"1.2"
-    Pkg.activate(@__DIR__)
-    Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
-    Pkg.instantiate()
-end
-
 using MCMCChains
-using Documenter
 
 using Test
 using Random
@@ -23,19 +13,17 @@ Random.seed!(0)
     if VERSION >= v"1.7" && Sys.WORD_SIZE == 64
         # run tests related to rstar statistic
         println("Rstar")
-        Pkg.add([
-            Pkg.PackageSpec(; name="MLJBase", version="0.18"),
-            Pkg.PackageSpec(; name="MLJXGBoostInterface", version="0.1.5"),
-        ])
         @time include("rstar_tests.jl")
 
+
+        # run doctests (including rstar statistic!)
+        using Documenter
         DocMeta.setdocmeta!(
             MCMCChains,
             :DocTestSetup,
             :(using MCMCChains);
             recursive=true
         )
-
         doctest(MCMCChains)
     end
 
