@@ -23,8 +23,10 @@ Random.seed!(0)
     if VERSION >= v"1.7" && Sys.WORD_SIZE == 64
         # run tests related to rstar statistic
         println("Rstar")
-        Pkg.add("MLJBase")
-        Pkg.add("MLJXGBoostInterface")
+        Pkg.add([
+            Pkg.PackageSpec(; name="MLJBase", version="0.18"),
+            Pkg.PackageSpec(; name="MLJXGBoostInterface", version="0.1.5"),
+        ])
         @time include("rstar_tests.jl")
 
         DocMeta.setdocmeta!(
