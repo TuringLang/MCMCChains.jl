@@ -8,7 +8,7 @@ and chain indices.
 
 # Examples
 
-```jldoctest rstar; setup = :(using Random; Random.seed!(100))
+```jldoctest rstar; setup = :(using Random; Random.seed!(200))
 julia> using MLJBase, MLJXGBoostInterface, Statistics
 
 julia> chains = Chains(fill(4.0, 100, 2, 3));

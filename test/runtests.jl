@@ -18,8 +18,9 @@ Random.seed!(0)
 
 @testset "MCMCChains" begin
     # MLJXGBoostInterface requires Julia >= 1.3
+    # Array printing depends on Julia version, therefore we only test Julia >= 1.7
     # XGBoost errors on 32bit systems: https://github.com/dmlc/XGBoost.jl/issues/92
-    if VERSION >= v"1.3" && VERSION < v"1.7" && Sys.WORD_SIZE == 64
+    if VERSION >= v"1.7" && Sys.WORD_SIZE == 64
         # run tests related to rstar statistic
         println("Rstar")
         Pkg.add("MLJBase")
@@ -33,15 +34,7 @@ Random.seed!(0)
             recursive=true
         )
 
-        doctest(
-            MCMCChains;
-            # https://github.com/JuliaLang/julia/pull/37085#issuecomment-683356098
-            doctestfilters = [
-                r"{([a-zA-Z0-9]+,\s?)+[a-zA-Z0-9]+}",
-                r"(Array{[a-zA-Z0-9]+,\s?1}|Vector{[a-zA-Z0-9]+})",
-                r"(Array{[a-zA-Z0-9]+,\s?2}|Matrix{[a-zA-Z0-9]+})",
-            ],
-        )
+        doctest(MCMCChains)
     end
 
     # run tests for effective sample size
