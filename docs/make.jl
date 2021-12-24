@@ -15,6 +15,7 @@ makedocs(
         "Getting started" => "getting-started.md",
         "Plotting" => [
             "StatsPlots.jl" => "statsplots.md",
+            "Makie.jl" => "makie.md",
             "Gadfly.jl" => "gadfly.md"
         ],
         "API" => [
