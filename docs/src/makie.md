@@ -1,7 +1,7 @@
 # Makie.jl plots
 
 Compared to Gadfly.jl and StatsPlots.jl, Makie.jl is the most flexible plotting library that you can use.
-On this page is an example implementation for plotting with Makie.jl which you can use to further tweak to your needs.
+On this page is an example function for plotting with Makie.jl which you can use directly or further tweak to your needs.
 
 ```@example makie
 using CairoMakie
@@ -10,8 +10,6 @@ using MCMCChains
 
 chns = Chains(randn(300, 5, 3), [:A, :B, :C, :D, :E])
 ```
-
-Usually, it's nice to be able to compare multiple chain outputs, so let's define a function for plotting via Makie:
 
 ```@example makie
 function plot_chains(chns; density_func=density!)
@@ -24,7 +22,7 @@ function plot_chains(chns; density_func=density!)
     # Alternatively, use `CategoricalArrays.categorical`.
     df[!, :chain] = string.(df.chain)
 
-    fig = Figure()
+    fig = Figure(; resolution=(1_000, 800))
 
     # Create and store separate axes for showing iterations.
     values_axs = [Axis(fig[i, 1]; ylabel=string(c)) for (i, c) in enumerate(params)]
