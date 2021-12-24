@@ -8,8 +8,8 @@ and chain indices.
 
 # Examples
 
-```jldoctest rstar; setup = :(using Random; Random.seed!(100))
-julia> using MLJBase, MLJXGBoostInterface, Statistics
+```jldoctest rstar; setup = :(using Random; Random.seed!(200))
+julia> using MLJBase, MLJDecisionTreeInterface, Statistics
 
 julia> chains = Chains(fill(4.0, 100, 2, 3));
 ```
@@ -17,7 +17,7 @@ julia> chains = Chains(fill(4.0, 100, 2, 3));
 One can compute the distribution of the ``R^*`` statistic with the probabilistic classifier.
 
 ```jldoctest rstar
-julia> distribution = rstar(XGBoostClassifier(), chains);
+julia> distribution = rstar(DecisionTreeClassifier(), chains);
 
 julia> isapprox(mean(distribution), 1; atol=0.1)
 true
@@ -26,9 +26,9 @@ true
 For deterministic classifiers, a single ``R^*`` statistic is returned.
 
 ```jldoctest rstar
-julia> @pipeline XGBoostClassifier name = XGBoostDeterministic operation = predict_mode;
+julia> @pipeline DecisionTreeClassifier name = DecisionTreeDeterministic operation = predict_mode;
 
-julia> value = rstar(XGBoostDeterministic(), chains);
+julia> value = rstar(DecisionTreeDeterministic(), chains);
 
 julia> isapprox(value, 1; atol=0.2)
 true

@@ -210,10 +210,10 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 julia> chn = Chains([1:2 3:4]);
 
 julia> get(chn, :param_1)
-(param_1 = [1; 2],)
+(param_1 = [1; 2;;],)
 
 julia> get(chn, [:param_2])
-(param_2 = [3; 4],)
+(param_2 = [3; 4;;],)
 
 julia> get(chn, :param_1; flatten=true)
 (param_1 = 1,)
@@ -258,10 +258,10 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 julia> chn = Chains([1:2 3:4], [:a, :b], Dict(:internals => [:a]));
 
 julia> get(chn; section=:parameters)
-(b = [3; 4],)
+(b = [3; 4;;],)
 
 julia> get(chn; section=[:internals])
-(a = [1; 2],)
+(a = [1; 2;;],)
 ```
 """
 function Base.get(
