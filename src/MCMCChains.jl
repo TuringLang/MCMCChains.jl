@@ -7,7 +7,6 @@ import AbstractMCMC: chainscat
 using Compat
 using Distributions
 using RecipesBase
-using SpecialFunctions
 using Formatting
 using Dates
 using KernelDensity: kde, pdf
