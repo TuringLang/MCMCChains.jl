@@ -15,7 +15,7 @@ Colors depict different chains.
 
 ```@example makie
 using CairoMakie
-CairoMakie.activate!(type = "svg")
+CairoMakie.activate!(; type="svg")
 
 params = names(chns, :parameters)
 
