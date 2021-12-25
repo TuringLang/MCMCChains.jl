@@ -11,7 +11,7 @@ chns = Chains(randn(300, 5, 3), [:A, :B, :C, :D, :E])
 ```
 
 A basic way to visualize the chains is to show the drawn samples at each iteration.
-Colors depict different chains:
+Colors depict different chains.
 
 ```@example makie
 using CairoMakie
@@ -24,19 +24,20 @@ n_samples = length(chns)
 
 fig = Figure(; resolution=(1_000, 800))
 
-# Create and store separate axes for showing iterations.
-values_axs = [Axis(fig[i, 1]; ylabel=string(c)) for (i, c) in enumerate(params)]
-for (ax, param) in zip(values_axs, params)
+for (i, param) in enumerate(params)
+    ax = Axis(fig[i, 1]; ylabel=string(param))
     for chain in 1:n_chains
         values = chns[:, param, chain]
         lines!(ax, 1:n_samples, values; label=string(chain))
     end
-end
 
-# Thanks to having stored the axes before, we can apply some extra tweaks.
-# These tweaks usually depend on the kind of model being fitted.
-values_axs[end].xlabel = "Iteration"
-hidexdecorations!.(values_axs[1:end-1]; grid=false)
+    hideydecorations!(ax; label=false)
+    if i < length(params)
+        hidexdecorations!(ax; grid=false)
+    else
+        ax.xlabel = "Iteration"
+    end
+end
 
 fig
 ```
@@ -44,22 +45,23 @@ fig
 Next, we can add a second row of plots next to it which show the density estimate for these samples:
 
 ```@example makie
-density_axs = [Axis(fig[i, 2]; ylabel=string(c)) for (i, c) in enumerate(params)]
-for (ax, param) in zip(density_axs, params)
+for (i, param) in enumerate(params)
+    ax = Axis(fig[i, 2]; ylabel=string(param))
     for chain in 1:n_chains
         values = chns[:, param, chain]
         density!(ax, values; label=string(chain))
     end
+
+    hideydecorations!(ax)
+    if i < length(params)
+        hidexdecorations!(ax; grid=false)
+    else
+        ax.xlabel = "Parameter estimate"
+    end
 end
 
-# Just like above, we add some extra tweaks.
-density_axs[end].xlabel = "Parameter estimate"
-linkxaxes!(density_axs...)
-hideydecorations!.(density_axs)
-hidexdecorations!.(density_axs[1:end-1]; grid=false)
-
-# And we can also drop the y ticks for the plots on the left.
-hideydecorations!.(values_axs; label=false)
+axes = [only(contents(fig[i, 2])) for i in 1:length(params)]
+linkxaxes!(axes...)
 
 fig
 ```
@@ -68,7 +70,7 @@ Finally, let's add a simple legend.
 Thanks to setting `label` above, this legend will have the right labels:
 
 ```@example makie
-axislegend(first(density_axs))
+axislegend(first(axes))
 
 fig
 ```
