@@ -220,7 +220,7 @@ julia> get(chn, :param_1; flatten=true)
 (param_1 = 1,)
 ```
 """
-function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
+function Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
     pairs = Dict()
     for v in vs
         syms = namesingroup(c, v)
@@ -244,9 +244,9 @@ function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
     end
     return _dict2namedtuple(pairs)
 end
-Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)
-function Base.get(c::Chains, v::Symbol, chain::Int; flatten = false)
-    return get(c, v)[v][:, chain]
+Base.get(c::Chains, v::Symbol; flatten=false) = get(c, [v]; flatten=flatten)
+function Base.get(c::Chains, v::Symbol, chain::Int; flatten=false)
+    return get(c, v; flatten=flatten)[v][:, chain]
 end
 
 """
