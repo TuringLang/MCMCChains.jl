@@ -24,15 +24,11 @@ n_samples = length(chns)
 
 fig = Figure(; resolution=(1_000, 800))
 
-function chain_values(chns, chain::Int, param::Symbol)
-    return get(chns, param)[param][:, chain]
-end
-
 # Create and store separate axes for showing iterations.
 values_axs = [Axis(fig[i, 1]; ylabel=string(c)) for (i, c) in enumerate(params)]
 for (ax, param) in zip(values_axs, params)
     for chain in 1:n_chains
-        values = chain_values(chns, chain, param)
+        values = chns[:, param, chain]
         lines!(ax, 1:n_samples, values; label=string(chain))
     end
 end
@@ -51,7 +47,7 @@ Next, we can add a second row of plots next to it which show the density estimat
 density_axs = [Axis(fig[i, 2]; ylabel=string(c)) for (i, c) in enumerate(params)]
 for (ax, param) in zip(density_axs, params)
     for chain in 1:n_chains
-        values = chain_values(chns, chain, param)
+        values = chns[:, param, chain]
         density!(ax, values; label=string(chain))
     end
 end
