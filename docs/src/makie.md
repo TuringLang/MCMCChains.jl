@@ -5,7 +5,6 @@ The example is meant to provide an useful basis to build upon.
 Let's define some random chain and load the required packages:
 
 ```@example makie
-using CairoMakie
 using MCMCChains
 
 chns = Chains(randn(300, 5, 3), [:A, :B, :C, :D, :E])
@@ -15,6 +14,9 @@ A basic way to visualize the chains is to show the drawn samples at each iterati
 Colors depict different chains:
 
 ```@example makie
+using CairoMakie
+CairoMakie.activate!(type = "svg")
+
 params = names(chns, :parameters)
 
 n_chains = length(chains(chns))
