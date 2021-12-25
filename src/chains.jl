@@ -246,7 +246,7 @@ end
 Base.get(c::Chains, v::Symbol; flatten=false) = get(c, [v]; flatten=flatten)
 
 """
-    get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}; flatten=false}
+    get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}; flatten=false)
 
 Return all parameters in a given section(s) as a `NamedTuple`.
 
