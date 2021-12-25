@@ -199,7 +199,7 @@ Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
-Return a `NamedTuple` with `v` as the key, and matching paramter
+Return a `NamedTuple` with `v` as the key, and matching parameter
 names as the values.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.

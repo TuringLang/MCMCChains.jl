@@ -6,7 +6,6 @@ Let's define some random chain and load the required packages:
 
 ```@example makie
 using CairoMakie
-using DataFrames
 using MCMCChains
 
 chns = Chains(randn(300, 5, 3), [:A, :B, :C, :D, :E])
@@ -18,22 +17,21 @@ Colors depict different chains:
 ```@example makie
 params = names(chns, :parameters)
 
-df = DataFrame(chns)
-n_chains = length(unique(df.chain))
-n_samples = nrow(df) / n_chains
-
-# Alternatively, use `CategoricalArrays.categorical`.
-df[!, :chain] = string.(df.chain)
+n_chains = length(chains(chns))
+n_samples = length(chns)
 
 fig = Figure(; resolution=(1_000, 800))
 
+function chain_values(chns, chain::Int, param::Symbol)
+    return get(chns, param)[param][:, chain]
+end
+
 # Create and store separate axes for showing iterations.
 values_axs = [Axis(fig[i, 1]; ylabel=string(c)) for (i, c) in enumerate(params)]
-for (ax, col) in zip(values_axs, params)
-    for i in 1:n_chains
-        chain = string(i)
-        values = filter(:chain => ==(chain), df)[:, col]
-        lines!(ax, 1:n_samples, values; label=chain)
+for (ax, param) in zip(values_axs, params)
+    for chain in 1:n_chains
+        values = chain_values(chns, chain, param)
+        lines!(ax, 1:n_samples, values; label=string(chain))
     end
 end
 
@@ -49,11 +47,10 @@ Next, we can add a second row of plots next to it which show the density estimat
 
 ```@example makie
 density_axs = [Axis(fig[i, 2]; ylabel=string(c)) for (i, c) in enumerate(params)]
-for (ax, col) in zip(density_axs, params)
-    for i in 1:n_chains
-        chain = string(i)
-        values = filter(:chain => ==(chain), df)[:, col]
-        density!(ax, values; label=chain)
+for (ax, param) in zip(density_axs, params)
+    for chain in 1:n_chains
+        values = chain_values(chns, chain, param)
+        density!(ax, values; label=string(chain))
     end
 end
 
@@ -70,7 +67,7 @@ fig
 ```
 
 Finally, let's add a simple legend.
-Thanks to setting `label` above, this legend will have the right entries:
+Thanks to setting `label` above, this legend will have the right labels:
 
 ```@example makie
 axislegend(first(density_axs))
