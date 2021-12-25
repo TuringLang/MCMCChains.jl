@@ -197,7 +197,6 @@ Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
 
 """
     Base.get(c::Chains, v::Symbol; flatten=false)
-    Base.get(c::Chains, v::Symbol, chain::Int; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
 Return a `NamedTuple` with `v` as the key, and matching paramter
@@ -245,9 +244,6 @@ function Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
     return _dict2namedtuple(pairs)
 end
 Base.get(c::Chains, v::Symbol; flatten=false) = get(c, [v]; flatten=flatten)
-function Base.get(c::Chains, v::Symbol, chain::Int; flatten=false)
-    return get(c, v; flatten=flatten)[v][:, chain]
-end
 
 """
     get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}; flatten=false}

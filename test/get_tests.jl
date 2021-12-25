@@ -36,8 +36,4 @@ Random.seed!(20)
     getall = get_params(chn)
     @test getall == get(chn, section = [:parameters])
     @test length(keys(getall)) == 2
-
-    n_chains = 3
-    chn = Chains(randn(100, 2, n_chains), [:A, :B])
-    @test length(get(chn, :A, n_chains)) == 100
 end
