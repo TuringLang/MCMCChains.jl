@@ -26,9 +26,12 @@ true
 For deterministic classifiers, a single ``R^*`` statistic is returned.
 
 ```jldoctest rstar
-julia> @pipeline DecisionTreeClassifier name = DecisionTreeDeterministic operation = predict_mode;
+julia> decisiontree_deterministic = Pipeline(
+           DecisionTreeClassifier();
+           operation=predict_mode,
+       );
 
-julia> value = rstar(DecisionTreeDeterministic(), chains);
+julia> value = rstar(decisiontree_deterministic, chains);
 
 julia> isapprox(value, 1; atol=0.2)
 true
