@@ -9,15 +9,6 @@ using Gadfly
 write_svg(path, p; w=6inch, h=4inch) = Gadfly.draw(Gadfly.SVG(path, w, h), p) # hide
 using MCMCChains
 
-# Define the experiment.
-n_iter = 100
-n_name = 3
-n_chain = 2
-
-# Experiment results.
-val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
-val = hcat(val, rand(1:2, n_iter, 1, n_chain))
-
 chn = Chains(randn(100, 2, 3), [:A, :B])
 df = DataFrame(chn)
 df[!, :chain] = categorical(df.chain)
