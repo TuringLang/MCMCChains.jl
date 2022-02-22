@@ -836,8 +836,7 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
     new_info = NamedTuple{tuple(nontime_props...)}(tuple([c1.info[n] for n in nontime_props]...))
     new_info = merge(new_info, (start_time = starts, stop_time = stops))
 
-    weights = UnitWeights{eltype(value)}(size(value, 1))
-    return Chains(value, missing, c1.name_map, new_info, weights)
+    return Chains(value, missing, c1.name_map, new_info, w)
 end
 
 function pool_chain(c::Chains)

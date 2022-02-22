@@ -191,26 +191,16 @@ function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
 end
 
 """
-    quantile(chains, q = [0.025, 0.25, 0.5, 0.75, 0.975]; alpha, beta, kwargs...)
-    quantile(chains; q, alpha, beta, kwargs...)
+    quantile(chains::Chains; q::AbstractVector = [0.025, 0.25, 0.5, 0.75, 0.975], kwargs...)
 
-Compute the quantiles for each parameter in the chain.
+Compute the quantiles `q` for each parameter in the `chains`.
 
-Setting `append_chains=false` will return a vector of dataframes containing the quantiles
-for each chain.
-
-# Arguments
-
-- `chains`: A `Chains` object.
-- `q`: A vector of quantiles.
-- `alpha`, `beta`: See `?quantile` for details.
-- `kwargs...`: A set of keyword arguments to be passed to `summarize`.
+The remaining keyword arguments are forwarded to [`summarize`](@ref).
+Setting `append_chains=false` will return a vector of dataframes containing the quantiles for each chain.
 """
 function quantile(
     chains::Chains;
     q::AbstractVector=[0.025, 0.25, 0.5, 0.75, 0.975],
-    alpha::Real=0,
-    beta::Real=alpha,
     kwargs...
 )
     # compute quantiles
@@ -271,7 +261,7 @@ function summarystats(
 
     # Calculate ESS separately.
     # TODO: Fix ESS for weighted chains.
-    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections=nothing, method=method, maxlag=maxlag)
+    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
 
     # Summarize.
     summary_df = summarize(

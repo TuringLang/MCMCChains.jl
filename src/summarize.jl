@@ -134,7 +134,7 @@ Summarize `chains` in a `ChainsDataFrame`.
 * `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
 function summarize(
-    chains::Chains{T,A,L,K,I,W}, funs::Base.Callable...;
+    chains::Chains{T,A,L,K,I,W}, funs...;
     sections = _default_sections(chains),
     func_names::AbstractVector{Symbol} = Symbol[],
     append_chains::Bool = true,
