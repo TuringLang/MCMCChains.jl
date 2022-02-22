@@ -4,14 +4,13 @@ using AxisArrays
 const axes = Base.axes
 import AbstractMCMC
 import AbstractMCMC: chainscat
-using ConcreteStructs
 using Compat
 using Distributions
 using RecipesBase
 using Formatting
 using Dates
 using KernelDensity: kde, pdf
-import StatsBase: autocov, counts, sem, AbstractWeights, UnitWeights, ProbabilityWeights,
+import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
 
 import MCMCDiagnosticTools
