@@ -191,30 +191,39 @@ function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
 end
 
 """
-    quantile(chains[; q = [0.025, 0.25, 0.5, 0.75, 0.975], append_chains = true, kwargs...])
+    quantile(chains, q = [0.025, 0.25, 0.5, 0.75, 0.975]; alpha, beta, kwargs...)
+    quantile(chains; q, alpha, beta, kwargs...)
 
 Compute the quantiles for each parameter in the chain.
 
 Setting `append_chains=false` will return a vector of dataframes containing the quantiles
 for each chain.
+
+# Arguments
+
+- `chains`: A `Chains` object.
+- `q`: A vector of quantiles.
+- `alpha`, `beta`: See `?quantile` for details.
+- `kwargs...`: A set of keyword arguments to be passed to `summarize`.
 """
 function quantile(
     chains::Chains;
-    q::AbstractVector = [0.025, 0.25, 0.5, 0.75, 0.975],
-    append_chains = true,
+    q::AbstractVector=[0.025, 0.25, 0.5, 0.75, 0.975],
+    alpha::Real=0,
+    beta::Real=alpha,
     kwargs...
 )
     # compute quantiles
     funs = Function[]
     func_names = @. Symbol(100 * q, :%)
-    for i in q
-        push!(funs, x -> quantile(cskip(x), i))
+
+    for prob in q
+        push!(funs, x -> quantile(cskip(x), chains.weights, prob; alpha=alpha, beta=beta))
     end
 
     return summarize(
         chains, funs...;
         func_names = func_names,
-        append_chains = append_chains,
         name = "Quantiles",
         kwargs...
     )
@@ -250,14 +259,19 @@ function summarystats(
     kwargs...
 )
     # Store everything.
-    funs = [mean∘cskip, std∘cskip, sem∘cskip, x -> MCMCDiagnosticTools.mcse(cskip(x); method=etype, kwargs...)]
-    func_names = [:mean, :std, :naive_se, :mcse]
+    funs = [
+        x -> mean(cskip(x), chains.weights), 
+        x -> std(cskip(x), chains.weights),
+        x -> MCMCDiagnosticTools.mcse(cskip(x); method=etype, kwargs...)
+    ]
+    func_names = [:mean, :std, :mcse]
 
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
+    # TODO: Fix ESS for weighted chains.
+    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections=nothing, method=method, maxlag=maxlag)
 
     # Summarize.
     summary_df = summarize(

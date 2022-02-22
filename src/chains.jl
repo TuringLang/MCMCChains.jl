@@ -26,15 +26,16 @@ end
 
 # Generic chain constructor.
 function Chains(
-    val::AbstractArray{<:Union{Missing, Real},3},
+    val::AbstractArray{T,3},
     parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
-    name_map = (parameters = parameter_names,);
+    name_map = (parameters = parameter_names,),
+    weights=UnitWeights{T}(size(val, 1));
     start::Int = 1,
     thin::Int = 1,
     iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
     evidence = missing,
     info::NamedTuple = NamedTuple()
-)
+) where T<:Union{Missing, Real}
     # Check that iteration numbers are reasonable
     if length(iterations) != size(val, 1)
         error("length of `iterations` (", length(iterations),
@@ -76,7 +77,7 @@ function Chains(
                     chain = 1:size(val, 3))
 
     # Create the new chain.
-    return Chains(arr, evidence, _name_map, info)
+    return Chains(arr, evidence, _name_map, info, weights)
 end
 
 """
@@ -114,7 +115,7 @@ function Chains(chn::Chains, sections)
     value = chn.value[:, reduce(vcat, name_map), :]
 
     # Create the new chain.
-    return Chains(value, chn.logevidence, name_map, chn.info)
+    return Chains(value, chn.logevidence, name_map, chn.info, chn.weights)
 end
 Chains(chain::Chains, ::Nothing) = chain
 
@@ -175,7 +176,7 @@ _getindex(::Chains, data) = data
 function _getindex(chains::Chains, data::AxisArray{<:Any,3})
     names = data.axes[2].val
     namemap = namemap_intersect(chains.name_map, names)
-    return Chains(data, chains.logevidence, namemap, chains.info)
+    return Chains(data, chains.logevidence, namemap, chains.info, chains.weights)
 end
 
 # convert strings to symbols but try to keep all dimensions for multiple parameters
@@ -476,7 +477,7 @@ function setrange(chains::Chains, range::AbstractVector{Int})
     value = AxisArray(chains.value.data;
                       iter = range, var = names(chains), chain = MCMCChains.chains(chains))
 
-    return Chains(value, chains.logevidence, chains.name_map, chains.info)
+    return Chains(value, chains.logevidence, chains.name_map, chains.info, chains.weights)
 end
 
 """
@@ -658,7 +659,7 @@ function Base.sort(c::Chains; lt = NaturalSort.natural)
         sort!(names, by=string, lt=lt)
     end
 
-    return Chains(aa, c.logevidence, namemap, c.info)
+    return Chains(aa, c.logevidence, namemap, c.info, c.weights)
 end
 
 """
@@ -671,9 +672,7 @@ Return a new `Chains` object with a `NamedTuple` type `n` placed in the `info` f
 new_chn = setinfo(chn, NamedTuple{(:a, :b)}((1, 2)))
 ```
 """
-function setinfo(c::Chains, n::NamedTuple)
-    return Chains(c.value, c.logevidence, c.name_map, n)
-end
+setinfo(c::Chains, n::NamedTuple) = Chains(c.value, c.logevidence, c.name_map, n, c.weights)
 
 """
     set_section(chains::Chains, namemap)
@@ -708,7 +707,7 @@ function set_section(chains::Chains, namemap)
         end
     end
 
-    return Chains(chains.value, chains.logevidence, _namemap, chains.info)
+    return Chains(chains.value, chains.logevidence, _namemap, chains.info, chains.weights)
 end
 
 _default_sections(c::Chains) = haskey(c.name_map, :parameters) ? :parameters : nothing
@@ -757,9 +756,23 @@ function _cat(::Val{1}, c1::Chains, args::Chains...)
                       iter = mapreduce(range, vcat, args; init=range(c1)),
                       var = nms,
                       chain = chns)
+    weights = _weights_cat(c1.weights, getproperty.(args, :weights)...)
 
-    return Chains(value, missing, c1.name_map, c1.info)
+    return Chains(value, missing, c1.name_map, c1.info, weights)
 end
+
+function _weights_cat(w::UnitWeights...) 
+    # TODO: deal with case that weights are not one-dimensional
+    T = promote_type(eltype.(w)...)
+    return UnitWeights{T}(sum(x->size(x, 1), w))
+end
+
+function _weights_cat(w::UnitWeights...) 
+    # TODO: deal with case that weights are not one-dimensional
+    w = reduce(vcat, w)
+    return ProbabilityWeights(w)
+end
+
 
 function _cat(::Val{2}, c1::Chains, args::Chains...)
     # check inputs
@@ -783,10 +796,15 @@ function _cat(::Val{2}, c1::Chains, args::Chains...)
     data = mapreduce(c -> c.value.data, hcat, args; init = c1.value.data)
     value = AxisArray(data; iter = rng, var = nms, chain = chns)
 
-    return Chains(value, missing, name_map, c1.info)
+    return Chains(value, missing, name_map, c1.info, c1.weights)
 end
 
 function _cat(::Val{3}, c1::Chains, args::Chains...)
+    # TODO: Deal with the case that some chains have non-unit weights.
+    # Requires implementing array-like weights for StatsBase (#748)
+    if !all(c -> typeof(c.weights)<:UnitWeights, args)
+        throw(ArgumentError("all chains must have unit weights to concatenate"))
+    end
     # check inputs
     rng = range(c1)
     all(c -> range(c) == rng, args) || throw(ArgumentError("chain ranges differ"))
@@ -819,7 +837,8 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
     new_info = NamedTuple{tuple(nontime_props...)}(tuple([c1.info[n] for n in nontime_props]...))
     new_info = merge(new_info, (start_time = starts, stop_time = stops))
 
-    return Chains(value, missing, c1.name_map, new_info)
+    weights = UnitWeights{eltype(value)}(size(value, 1))
+    return Chains(value, missing, c1.name_map, new_info, weights)
 end
 
 function pool_chain(c::Chains)
@@ -873,5 +892,5 @@ function replacenames(chains::Chains, old_new::Pair...)
         iter = range(chains), var = names_of_params, chain = 1:size(chains, 3)
     )
 
-    return Chains(value, chains.logevidence, namemap, chains.info)
+    return Chains(value, chains.logevidence, namemap, chains.info, chains.weights)
 end

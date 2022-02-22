@@ -180,7 +180,7 @@ function concretize(x::Chains)
     if isconcretetype_recursive(value)
         return x
     else
-        return Chains(concretize(value), x.logevidence, x.name_map, x.info)
+        return Chains(concretize(value), x.logevidence, x.name_map, x.info, x.weights)
     end
 end
 

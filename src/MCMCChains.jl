@@ -4,6 +4,7 @@ using AxisArrays
 const axes = Base.axes
 import AbstractMCMC
 import AbstractMCMC: chainscat
+using ConcreteStructs
 using Compat
 using Distributions
 using RecipesBase
@@ -11,7 +12,7 @@ using SpecialFunctions
 using Formatting
 using Dates
 using KernelDensity: kde, pdf
-import StatsBase: autocov, counts, sem, AbstractWeights,
+import StatsBase: autocov, counts, sem, AbstractWeights, UnitWeights, ProbabilityWeights,
     autocor, describe, quantile, sample, summarystats, cov
 
 import MCMCDiagnosticTools
@@ -61,12 +62,21 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple} <: AbstractMCMC.AbstractChains
+struct Chains{T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple,W<:AbstractWeights} <: AbstractMCMC.AbstractChains
     value::A
     logevidence::L
     name_map::K
     info::I
+    weights::W
 end
+
+# @concrete struct Chains{T} <: AbstractMCMC.AbstractChains
+#     value<:AxisArray{T,3}
+#     logevidence<:Union{Missing, Real}
+#     name_map<:NamedTuple
+#     info<:NamedTuple
+#     weights<:AbstractWeights
+# end
 
 include("utils.jl")
 include("chains.jl")
