@@ -68,14 +68,6 @@ struct Chains{T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple,W<:AbstractWeigh
     weights::W
 end
 
-# @concrete struct Chains{T} <: AbstractMCMC.AbstractChains
-#     value<:AxisArray{T,3}
-#     logevidence<:Union{Missing, Real}
-#     name_map<:NamedTuple
-#     info<:NamedTuple
-#     weights<:AbstractWeights
-# end
-
 include("utils.jl")
 include("chains.jl")
 include("constructors.jl")

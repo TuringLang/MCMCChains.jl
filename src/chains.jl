@@ -26,16 +26,16 @@ end
 
 # Generic chain constructor.
 function Chains(
-    val::AbstractArray{T,3},
+    val::AbstractArray{<:Union{Missing,Real},3},
     parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
     name_map = (parameters = parameter_names,),
-    weights=UnitWeights{T}(size(val, 1));
+    weights=UnitWeights{Bool}(size(val, 1));
     start::Int = 1,
     thin::Int = 1,
     iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
     evidence = missing,
     info::NamedTuple = NamedTuple()
-) where T<:Union{Missing, Real}
+)
     # Check that iteration numbers are reasonable
     if length(iterations) != size(val, 1)
         error("length of `iterations` (", length(iterations),
@@ -763,14 +763,13 @@ end
 
 function _weights_cat(w::UnitWeights...) 
     # TODO: deal with case that weights are not one-dimensional
-    T = promote_type(eltype.(w)...)
-    return UnitWeights{T}(sum(x->size(x, 1), w))
+    T = mapreduce(eltype, promote_type, w)
+    return UnitWeights{T}(sum(length, w))
 end
 
-function _weights_cat(w::UnitWeights...) 
+function _weights_cat(w::ProbabilityWeights...) 
     # TODO: deal with case that weights are not one-dimensional
-    w = reduce(vcat, w)
-    return ProbabilityWeights(w)
+    return ProbabilityWeights(reduce(vcat, w))
 end
 
 
