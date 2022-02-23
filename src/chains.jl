@@ -799,11 +799,9 @@ function _cat(::Val{2}, c1::Chains, args::Chains...)
 end
 
 function _cat(::Val{3}, c1::Chains, args::Chains...)
-    # TODO: Deal with the case that some chains have non-unit weights.
-    # Requires implementing array-like weights for StatsBase (#748)
-    if !all(c -> typeof(c.weights)<:UnitWeights, args)
-        throw(ArgumentError("all chains must have unit weights to concatenate"))
-    end
+    # check weights
+    w = c1.weights
+    all(c -> c.weights == w, args) || throw(ArgumentError("all chains must have unit weights to concatenate"))
     # check inputs
     rng = range(c1)
     all(c -> range(c) == rng, args) || throw(ArgumentError("chain ranges differ"))
