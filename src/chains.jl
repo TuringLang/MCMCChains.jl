@@ -29,7 +29,7 @@ function Chains(
     val::AbstractArray{<:Union{Missing,Real},3},
     parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
     name_map = (parameters = parameter_names,),
-    weights=UnitWeights{Bool}(size(val, 1));
+    weights=StatsBase.UnitWeights{Bool}(size(val, 1));
     start::Int = 1,
     thin::Int = 1,
     iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
@@ -761,13 +761,13 @@ function _cat(::Val{1}, c1::Chains, args::Chains...)
     return Chains(value, missing, c1.name_map, c1.info, weights)
 end
 
-function _weights_cat(w::UnitWeights...) 
+function _weights_cat(w::StatsBase.UnitWeights...) 
     # TODO: deal with case that weights are not one-dimensional
     T = mapreduce(eltype, promote_type, w)
-    return UnitWeights{T}(sum(length, w))
+    return StatsBase.UnitWeights{T}(sum(length, w))
 end
 
-function _weights_cat(w::ProbabilityWeights...) 
+function _weights_cat(w::StatsBase.ProbabilityWeights...) 
     # TODO: deal with case that weights are not one-dimensional
     return ProbabilityWeights(reduce(vcat, w))
 end

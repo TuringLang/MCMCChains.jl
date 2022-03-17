@@ -208,7 +208,7 @@ function quantile(
     func_names = @. Symbol(100 * q, :%)
 
     for prob in q
-        push!(funs, x -> quantile(cskip(x), chains.weights, prob; alpha=alpha, beta=beta))
+        push!(funs, x -> StatsBase.quantile(x, chains.weights, prob))
     end
 
     return summarize(
@@ -250,8 +250,8 @@ function summarystats(
 )
     # Store everything.
     funs = [
-        x -> mean(cskip(x), chains.weights), 
-        x -> std(cskip(x), chains.weights),
+        x -> mean(x, chains.weights), 
+        x -> std(x, chains.weights),
         x -> MCMCDiagnosticTools.mcse(cskip(x); method=etype, kwargs...)
     ]
     func_names = [:mean, :std, :mcse]
@@ -283,7 +283,7 @@ Calculate the mean of a chain.
 """
 function mean(chains::Chains; kwargs...)
     # Store everything.
-    funs = [mean∘cskip]
+    funs = [mean]
     func_names = [:mean]
 
     # Summarize.

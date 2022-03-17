@@ -140,7 +140,7 @@ function summarize(
     append_chains::Bool = true,
     name::String = "",
     additional_df = nothing
-) where {T,A,L,K,I,W<:UnitWeights}
+) where {T,A,L,K,I,W<:StatsBase.UnitWeights}
     # If we weren't given any functions, fall back to summary stats.
     if isempty(funs)
         return summarystats(chains; sections = sections)
@@ -215,30 +215,30 @@ function summarize(
 
     # TODO: Handle multiple weighted chains.
     # if append_chains
-    #     # Evaluate the functions.
-    #     data = to_matrix(chn)
-    #     fvals = [[f(data[:, i], chains.weights) for i in axes(data, 2)] for f in funs]
+        # Evaluate the functions.
+        data = to_matrix(chn)
+        fvals = [[f(data[:, i], chains.weights) for i in axes(data, 2)] for f in funs]
 
-    #     # Build the ChainDataFrame.
-    #     nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-    #     df = ChainDataFrame(name, nt)
+        # Build the ChainDataFrame.
+        nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
+        df = ChainDataFrame(name, nt)
 
-    #     return df
+        return df
     # else
         # Evaluate the functions.
-        data = to_vector_of_matrices(chn)
-        vector_of_fvals = [[[f(x[:, i], chains.weights) for i in axes(x, 2)] for f in funs] for x in data]
+        # data = to_vector_of_matrices(chn)
+        # vector_of_fvals = [[[f(x[:, i], chains.weights) for i in axes(x, 2)] for f in funs] for x in data]
 
-        # Build the ChainDataFrames.
-        vector_of_nt = [
-            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-            for fvals in vector_of_fvals
-        ]
-        vector_of_df = [
-            ChainDataFrame(name * " (Chain $i)", nt)
-            for (i, nt) in enumerate(vector_of_nt)
-        ]
+        # # Build the ChainDataFrames.
+        # vector_of_nt = [
+        #     merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
+        #     for fvals in vector_of_fvals
+        # ]
+        # vector_of_df = [
+        #     ChainDataFrame(name * " (Chain $i)", nt)
+        #     for (i, nt) in enumerate(vector_of_nt)
+        # ]
 
-        return vector_of_df
+        # return vector_of_df
     #end
 end

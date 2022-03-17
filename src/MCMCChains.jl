@@ -10,9 +10,8 @@ using RecipesBase
 using Formatting
 using Dates
 using KernelDensity: kde, pdf
-import StatsBase: autocov, counts, sem, AbstractWeights,
-    autocor, describe, quantile, sample, summarystats, cov
 
+import StatsBase
 import MCMCDiagnosticTools
 import MLJModelInterface
 import NaturalSort
@@ -32,7 +31,7 @@ export Chains, chains, chainscat
 export setrange, resetrange
 export set_section, get_params, sections, sort_sections, setinfo
 export replacenames, namesingroup, group
-export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
+export autocor, describe, sample, summarystats, mean, quantile
 export ChainDataFrame
 export summarize
 
@@ -60,7 +59,9 @@ Parameters:
 - `info` : A `NamedTuple` containing miscellaneous information relevant to the chain.
 The `info` field can be set using `setinfo(c::Chains, n::NamedTuple)`.
 """
-struct Chains{T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple,W<:AbstractWeights} <: AbstractMCMC.AbstractChains
+struct Chains{
+    T,A<:AxisArray{T,3},L,K<:NamedTuple,I<:NamedTuple,W<:StatsBase.AbstractWeights
+} <: AbstractMCMC.AbstractChains
     value::A
     logevidence::L
     name_map::K
