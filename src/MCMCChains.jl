@@ -11,6 +11,8 @@ using Formatting
 using Dates
 using KernelDensity: kde, pdf
 
+import StatsBase: autocov, counts, sem, AbstractWeights,
+    autocor, describe, quantile, sample, summarystats, cov
 import StatsBase
 import MCMCDiagnosticTools
 import MLJModelInterface
@@ -31,7 +33,7 @@ export Chains, chains, chainscat
 export setrange, resetrange
 export set_section, get_params, sections, sort_sections, setinfo
 export replacenames, namesingroup, group
-export autocor, describe, sample, summarystats, mean, quantile
+export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
 

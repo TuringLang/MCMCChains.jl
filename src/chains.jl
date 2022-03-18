@@ -28,8 +28,8 @@ end
 function Chains(
     val::AbstractArray{<:Union{Missing,Real},3},
     parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
-    name_map = (parameters = parameter_names,),
-    weights=StatsBase.UnitWeights{Bool}(size(val, 1));
+    name_map = (parameters = parameter_names,);
+    weights=StatsBase.UnitWeights{Bool}(length(val)),  # TODO: Multiple weighted chains
     start::Int = 1,
     thin::Int = 1,
     iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
@@ -79,6 +79,16 @@ function Chains(
     # Create the new chain.
     return Chains(arr, evidence, _name_map, info, weights)
 end
+
+function Chains(
+    value::AxisArray{<:Union{Missing,Real},3}, 
+    logevidence::Union{Missing,Real}, 
+    name_map::NamedTuple, 
+    info::NamedTuple
+)
+    return Chains(value, logevidence, name_map, info, StatsBase.UnitWeights{Bool}(length(value)))
+end
+
 
 """
     Chains(c::Chains, section::Union{Symbol,String})
@@ -799,14 +809,10 @@ function _cat(::Val{2}, c1::Chains, args::Chains...)
 end
 
 function _cat(::Val{3}, c1::Chains, args::Chains...)
-    # check weights
-    w = c1.weights
-    all(c -> c.weights == w, args) || throw(ArgumentError("all chains must have unit weights to concatenate"))
     # check inputs
-    rng = range(c1)
-    all(c -> range(c) == rng, args) || throw(ArgumentError("chain ranges differ"))
-    nms = names(c1)
-    all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
+    all(c -> c.weights == c1.weights, args) || throw(ArgumentError("chain weights differ"))
+    all(c -> range(c) == range(c1), args) || throw(ArgumentError("chain ranges differ"))
+    all(c -> names(c) == names(c1), args) || throw(ArgumentError("chain names differ"))
 
     # concatenate all chains
     data = mapreduce(
@@ -815,7 +821,7 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
         args; 
         init = c1.value.data
     )
-    value = AxisArray(data; iter = rng, var = nms, chain = 1:size(data, 3))
+    value = AxisArray(data; iter = range(c1), var = names(c1), chain = 1:size(data, 3))
 
     # Concatenate times, if available
     starts = mapreduce(
@@ -834,7 +840,7 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
     new_info = NamedTuple{tuple(nontime_props...)}(tuple([c1.info[n] for n in nontime_props]...))
     new_info = merge(new_info, (start_time = starts, stop_time = stops))
 
-    return Chains(value, missing, c1.name_map, new_info, w)
+    return Chains(value, missing, c1.name_map, new_info, c1.weights)
 end
 
 function pool_chain(c::Chains)

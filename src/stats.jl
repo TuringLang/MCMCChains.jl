@@ -18,7 +18,7 @@ function autocor(
     funs = Function[]
     func_names = @. Symbol("lag ", lags)
     for i in lags
-        push!(funs, x -> autocor(x, [i], demean=demean)[1])
+        push!(funs, x -> StatsBase.autocor(x, [i], demean=demean)[1])
     end
 
     return summarize(
@@ -198,7 +198,7 @@ Compute the quantiles `q` for each parameter in the `chains`.
 The remaining keyword arguments are forwarded to [`summarize`](@ref).
 Setting `append_chains=false` will return a vector of dataframes containing the quantiles for each chain.
 """
-function quantile(
+function StatsBase.quantile(
     chains::Chains;
     q::AbstractVector=[0.025, 0.25, 0.5, 0.75, 0.975],
     kwargs...
@@ -208,7 +208,7 @@ function quantile(
     func_names = @. Symbol(100 * q, :%)
 
     for prob in q
-        push!(funs, x -> StatsBase.quantile(x, chains.weights, prob))
+        push!(funs, Base.Fix2(StatsBase.quantile, prob))
     end
 
     return summarize(
@@ -227,8 +227,6 @@ end
         append_chains= true,
         method::AbstractESSMethod = ESSMethod(),
         maxlag = 250,
-        etype = :bm,
-        kwargs...
     )
 
 Compute the mean, standard deviation, naive standard error, Monte Carlo standard error,
@@ -245,14 +243,14 @@ function summarystats(
     append_chains::Bool = true,
     method::MCMCDiagnosticTools.AbstractESSMethod = ESSMethod(),
     maxlag = 250,
-    etype = :bm,
+    skip_missing=true,
     kwargs...
 )
     # Store everything.
     funs = [
-        x -> mean(x, chains.weights), 
-        x -> std(x, chains.weights),
-        x -> MCMCDiagnosticTools.mcse(cskip(x); method=etype, kwargs...)
+        mean, 
+        std,
+        MCMCDiagnosticTools.mcse,
     ]
     func_names = [:mean, :std, :mcse]
 
@@ -260,8 +258,9 @@ function summarystats(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    # TODO: Fix ESS for weighted chains.
-    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
+    ess_df = MCMCDiagnosticTools.ess_rhat(
+        _chains; sections = nothing, method = method, maxlag = maxlag
+    )
 
     # Summarize.
     summary_df = summarize(

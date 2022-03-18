@@ -122,7 +122,7 @@ function Base.convert(::Type{Array}, cs::Array{ChainDataFrame{T},1}) where T<:Na
 end
 
 """
-    summarize(chains, funs...[; sections, weights, func_names = []])
+    summarize(chains, funs...[; sections, func_names = []])
 
 Summarize `chains` in a `ChainsDataFrame`.
 
@@ -134,61 +134,8 @@ Summarize `chains` in a `ChainsDataFrame`.
 * `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
 function summarize(
-    chains::Chains{T,A,L,K,I,W}, funs...;
-    sections = _default_sections(chains),
-    func_names::AbstractVector{Symbol} = Symbol[],
-    append_chains::Bool = true,
-    name::String = "",
-    additional_df = nothing
-) where {T,A,L,K,I,W<:StatsBase.UnitWeights}
-    # If we weren't given any functions, fall back to summary stats.
-    if isempty(funs)
-        return summarystats(chains; sections = sections)
-    end
-
-    # Generate a chain to work on.
-    chn = Chains(chains, _clean_sections(chains, sections))
-
-    # Obtain names of parameters.
-    names_of_params = names(chn)
-
-    # If no function names were given, make a new list.
-    fnames = isempty(func_names) ? collect(nameof.(funs)) : func_names
-
-    # Obtain the additional named tuple.
-    additional_nt = additional_df === nothing ? NamedTuple() : additional_df.nt
-
-    if append_chains
-        # Evaluate the functions.
-        data = to_matrix(chn)
-        fvals = [[f(data[:, i]) for i in axes(data, 2)] for f in funs]
-
-        # Build the ChainDataFrame.
-        nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-        df = ChainDataFrame(name, nt)
-
-        return df
-    else
-        # Evaluate the functions.
-        data = to_vector_of_matrices(chn)
-        vector_of_fvals = [[[f(x[:, i]) for i in axes(x, 2)] for f in funs] for x in data]
-
-        # Build the ChainDataFrames.
-        vector_of_nt = [
-            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-            for fvals in vector_of_fvals
-        ]
-        vector_of_df = [
-            ChainDataFrame(name * " (Chain $i)", nt)
-            for (i, nt) in enumerate(vector_of_nt)
-        ]
-
-        return vector_of_df
-    end
-end
-
-function summarize(
     chains::Chains, funs::Base.Callable...;
+    skip_missing=true,
     sections = _default_sections(chains),
     func_names::AbstractVector{Symbol}=Symbol[],
     append_chains::Bool=true,
@@ -214,31 +161,46 @@ function summarize(
     additional_nt = additional_df === nothing ? NamedTuple() : additional_df.nt
 
     # TODO: Handle multiple weighted chains.
-    # if append_chains
+    if append_chains
         # Evaluate the functions.
         data = to_matrix(chn)
-        fvals = [[f(data[:, i], chains.weights) for i in axes(data, 2)] for f in funs]
+
+        if chains.weights isa StatsBase.UnitWeights
+            fvals = [[f(data[:, i]) for i in axes(data, 2)] for f in funs]
+        else 
+            fvals = [[f(data[:, i], chains.weights) for i in axes(data, 2)] for f in funs]
+        end
 
         # Build the ChainDataFrame.
         nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
         df = ChainDataFrame(name, nt)
 
         return df
-    # else
+    else
         # Evaluate the functions.
-        # data = to_vector_of_matrices(chn)
-        # vector_of_fvals = [[[f(x[:, i], chains.weights) for i in axes(x, 2)] for f in funs] for x in data]
+        data = to_vector_of_matrices(chn)
 
-        # # Build the ChainDataFrames.
-        # vector_of_nt = [
-        #     merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-        #     for fvals in vector_of_fvals
-        # ]
-        # vector_of_df = [
-        #     ChainDataFrame(name * " (Chain $i)", nt)
-        #     for (i, nt) in enumerate(vector_of_nt)
-        # ]
+        if chains.weights isa StatsBase.UnitWeights
+            vector_of_fvals = [
+                [[f(x[:, i]) for i in axes(x, 2)] for f in funs] for x in data
+            ]
+        else
+            vector_of_fvals = [
+                [[f(x[:, i], chains.weights) for i in axes(x, 2)] for f in funs] 
+                for x in data
+            ]
+        end
+    
+        # Build the ChainDataFrames.
+        vector_of_nt = [
+            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
+            for fvals in vector_of_fvals
+        ]
+        vector_of_df = [
+            ChainDataFrame(name * " (Chain $i)", nt)
+            for (i, nt) in enumerate(vector_of_nt)
+        ]
 
-        # return vector_of_df
-    #end
+        return vector_of_df
+    end
 end
