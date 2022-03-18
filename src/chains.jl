@@ -29,7 +29,7 @@ function Chains(
     val::AbstractArray{<:Union{Missing,Real},3},
     parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
     name_map = (parameters = parameter_names,);
-    weights=StatsBase.UnitWeights{Bool}(length(val)),  # TODO: Multiple weighted chains
+    weights=StatsBase.UnitWeights{Bool}(size(val, 1)),  # TODO: Multiple weighted chains
     start::Int = 1,
     thin::Int = 1,
     iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
@@ -86,7 +86,9 @@ function Chains(
     name_map::NamedTuple, 
     info::NamedTuple
 )
-    return Chains(value, logevidence, name_map, info, StatsBase.UnitWeights{Bool}(length(value)))
+    return Chains(
+        value, logevidence, name_map, info, StatsBase.UnitWeights{Bool}(size(value, 1))
+    )
 end
 
 
@@ -810,9 +812,9 @@ end
 
 function _cat(::Val{3}, c1::Chains, args::Chains...)
     # check inputs
-    all(c -> c.weights == c1.weights, args) || throw(ArgumentError("chain weights differ"))
     all(c -> range(c) == range(c1), args) || throw(ArgumentError("chain ranges differ"))
     all(c -> names(c) == names(c1), args) || throw(ArgumentError("chain names differ"))
+    all(c -> c.weights == c1.weights, args) || throw(ArgumentError("chain weights differ"))
 
     # concatenate all chains
     data = mapreduce(
