@@ -200,7 +200,7 @@ Setting `append_chains=false` will return a vector of dataframes containing the 
 """
 function StatsBase.quantile(
     chains::Chains;
-    q::AbstractVector=[0.025, 0.25, 0.5, 0.75, 0.975],
+    q::AbstractVector = [0.025, 0.25, 0.5, 0.75, 0.975],
     kwargs...
 )
     # compute quantiles
@@ -258,9 +258,7 @@ function summarystats(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    ess_df = MCMCDiagnosticTools.ess_rhat(
-        _chains; sections = nothing, method = method, maxlag = maxlag
-    )
+    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
 
     # Summarize.
     summary_df = summarize(

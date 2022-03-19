@@ -134,18 +134,16 @@ Summarize `chains` in a `ChainsDataFrame`.
 * `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
 function summarize(
-    chains::Chains, funs::Base.Callable...;
-    skip_missing=true,
+    chains::Chains, funs...;
     sections = _default_sections(chains),
-    func_names::AbstractVector{Symbol}=Symbol[],
-    append_chains::Bool=true,
-    name::String="",
+    func_names::AbstractVector{Symbol} = Symbol[],
+    append_chains::Bool = true,
+    name::String = "",
     additional_df = nothing
 )
-
     # If we weren't given any functions, fall back to summary stats.
     if isempty(funs)
-        return summarystats(chains; sections=sections)
+        return summarystats(chains; sections = sections)
     end
 
     # Generate a chain to work on.

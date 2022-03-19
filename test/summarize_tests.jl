@@ -26,7 +26,7 @@ using Statistics: std
     @test parm_df[[:a, :b], :][:,:parameters] == [:a, :b]
 
     all_sections_df = summarize(chns, sections=[:parameters, :internals])
-    @test all_sections_df[:, :parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
+    @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
     @test size(all_sections_df) == (8, 6)
 
     two_parms_two_funs_df = summarize(chns[[:a, :b]], mean, std)

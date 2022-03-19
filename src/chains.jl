@@ -29,7 +29,7 @@ function Chains(
     val::AbstractArray{<:Union{Missing,Real},3},
     parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
     name_map = (parameters = parameter_names,);
-    weights=StatsBase.UnitWeights{Bool}(size(val, 1)),  # TODO: Multiple weighted chains
+    weights=StatsBase.UnitWeights{Bool}(size(val, 1)),  # TODO: Different weights per chain (StatsBase only supports weight vectors currently)
     start::Int = 1,
     thin::Int = 1,
     iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
