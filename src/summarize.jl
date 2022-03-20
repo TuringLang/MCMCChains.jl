@@ -163,10 +163,16 @@ function summarize(
         # Evaluate the functions.
         data = to_matrix(chn)
 
+        # nm = nonmissing
+        weights = [chains.weights[nm] for nm in mapslices(x->x.!==missing, data; dims=2)]
+
         if chains.weights isa StatsBase.UnitWeights
-            fvals = [[f(data[:, i]) for i in axes(data, 2)] for f in funs]
+            fvals = [[f(cskip(data[:, i])) for i in axes(data, 2)] for f in funs]
         else 
-            fvals = [[f(data[:, i], chains.weights) for i in axes(data, 2)] for f in funs]
+            fvals = [[
+                f(cskip(data[:, i]), chains.weights[!ismissing.(data[:, i])]) 
+                for i in axes(data, 2)
+            ] for f in funs]
         end
 
         # Build the ChainDataFrame.
@@ -184,7 +190,12 @@ function summarize(
             ]
         else
             vector_of_fvals = [
-                [[f(x[:, i], chains.weights) for i in axes(x, 2)] for f in funs] 
+                [
+                    [
+                    f(x[:, i], chains.weights[!ismissing.(data[:, i])]) for i in axes(x, 2)
+                    ] 
+                    for f in funs
+                ] 
                 for x in data
             ]
         end
@@ -201,4 +212,13 @@ function summarize(
 
         return vector_of_df
     end
+end
+
+"""
+    parameter_view(chain::Chains)
+
+Return a lazy view of a chain as a sequence of parameters.
+"""
+function parameter_view(chain::AbstractArray)
+    chain[]
 end

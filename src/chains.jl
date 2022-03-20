@@ -768,20 +768,21 @@ function _cat(::Val{1}, c1::Chains, args::Chains...)
                       iter = mapreduce(range, vcat, args; init=range(c1)),
                       var = nms,
                       chain = chns)
-    weights = _weights_cat(c1.weights, getproperty.(args, :weights)...)
+    weights = _weights_cat(c1.weights, getproperty.(args, :weights))
 
     return Chains(value, missing, c1.name_map, c1.info, weights)
 end
 
-function _weights_cat(w::StatsBase.UnitWeights...) 
+function _weights_cat(w1::W, w::NTuple{N,W}) where {N, W<:StatsBase.UnitWeights}
     # TODO: deal with case that weights are not one-dimensional
     T = mapreduce(eltype, promote_type, w)
+    T = promote_type(eltype(w1), T)
     return StatsBase.UnitWeights{T}(sum(length, w))
 end
 
-function _weights_cat(w::StatsBase.ProbabilityWeights...) 
+function _weights_cat(w1::W, w::NTuple{N, W}) where {N, W<:StatsBase.ProbabilityWeights}
     # TODO: deal with case that weights are not one-dimensional
-    return ProbabilityWeights(reduce(vcat, w))
+    return StatsBase.ProbabilityWeights(vcat(w1, reduce(vcat, w)))
 end
 
 

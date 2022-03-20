@@ -154,7 +154,6 @@ describe(c::Chains; args...) = describe(stdout, c; args...)
 """
     describe(io, chains[;
              q = [0.025, 0.25, 0.5, 0.75, 0.975],
-             etype = :bm,
              kwargs...])
 
 Print the summary statistics and quantiles for the chain.
@@ -163,10 +162,9 @@ function describe(
     io::IO,
     chains::Chains;
     q = [0.025, 0.25, 0.5, 0.75, 0.975],
-    etype = :bm,
     kwargs...
 )
-    dfs = vcat(summarystats(chains; etype = etype, kwargs...),
+    dfs = vcat(summarystats(chains; kwargs...),
                quantile(chains; q = q, kwargs...))
     return dfs
 end
@@ -226,7 +224,8 @@ end
         sections = _default_sections(chains),
         append_chains= true,
         method::AbstractESSMethod = ESSMethod(),
-        maxlag = 250,
+        maxlag=250,
+        kwargs...
     )
 
 Compute the mean, standard deviation, naive standard error, Monte Carlo standard error,
@@ -240,10 +239,9 @@ When estimating the effective sample size, autocorrelations are computed for at 
 function summarystats(
     chains::Chains;
     sections = _default_sections(chains),
-    append_chains::Bool = true,
+    append_chains::Bool=true,
     method::MCMCDiagnosticTools.AbstractESSMethod = ESSMethod(),
-    maxlag = 250,
-    skip_missing=true,
+    maxlag=250,
     kwargs...
 )
     # Store everything.
@@ -267,7 +265,8 @@ function summarystats(
         append_chains = append_chains,
         additional_df = ess_df,
         name = "Summary Statistics",
-        sections = nothing
+        sections = nothing,
+        kwargs...
     )
 
     return summary_df
