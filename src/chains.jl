@@ -785,6 +785,25 @@ function _weights_cat(w1::W, w::NTuple{N, W}) where {N, W<:StatsBase.Probability
     return StatsBase.ProbabilityWeights(vcat(w1, reduce(vcat, w)))
 end
 
+function _weights_cat(w1::W, w::NTuple{N, W}) where {N, W<:StatsBase.Weights}
+    # TODO: deal with case that weights are not one-dimensional
+    return StatsBase.Weights(vcat(w1, reduce(vcat, w)))
+end
+
+function _weights_cat(w1::W, w::NTuple{N, W}) where {N, W<:StatsBase.FrequencyWeights}
+    # TODO: deal with case that weights are not one-dimensional
+    return StatsBase.FrequencyWeights(vcat(w1, reduce(vcat, w)))
+end
+
+function _weights_cat(w1::W, w::NTuple{N, W}) where {N, W<:StatsBase.AnalyticWeights}
+    # TODO: deal with case that weights are not one-dimensional
+    return StatsBase.AnalyticWeights(vcat(w1, reduce(vcat, w)))
+end
+
+function _weights_cat(w1, w)
+    throw(ArgumentError("cannot concatenate chains with weights of different types"))
+end
+
 
 function _cat(::Val{2}, c1::Chains, args::Chains...)
     # check inputs
