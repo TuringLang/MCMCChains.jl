@@ -38,6 +38,7 @@ Return a subset of samples.
 function subset(chn::Chains, samples)
     data = AxisArray(chn.value[samples, :, :].data;
                      iter = 1:length(samples), var = names(chn), chain = chains(chn))
+    weights = chn.weights[samples]
 
-    return Chains(data, missing, chn.name_map, chn.info)
+    return Chains(data, missing, chn.name_map, chn.info, weights)
 end

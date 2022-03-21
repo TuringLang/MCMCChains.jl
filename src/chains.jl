@@ -80,17 +80,6 @@ function Chains(
     return Chains(arr, evidence, _name_map, info, weights)
 end
 
-function Chains(
-    value::AxisArray{<:Union{Missing,Real},3}, 
-    logevidence::Union{Missing,Real}, 
-    name_map::NamedTuple, 
-    info::NamedTuple
-)
-    return Chains(
-        value, logevidence, name_map, info, StatsBase.UnitWeights{Bool}(size(value, 1))
-    )
-end
-
 
 """
     Chains(c::Chains, section::Union{Symbol,String})
