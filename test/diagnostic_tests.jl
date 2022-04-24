@@ -173,7 +173,7 @@ end
             end
         end
         @test autocor(c) isa ChainDataFrame
-        @test Array(autcor(c)) == Array(autocor(c; append_chains=true))
+        @test Array(autocor(c)) == Array(autocor(c; append_chains=true))
     end
 
     @test MCMCChains.cor(chn) isa ChainDataFrame
