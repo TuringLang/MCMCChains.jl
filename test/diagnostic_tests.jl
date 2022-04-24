@@ -166,13 +166,14 @@ end
             ncols = length(lags) + 1
             if append_chains
                 @test acor isa ChainDataFrame
-                @test size(acor, 2) == ncols
+                @test size(acor)[2] == ncols
             else
                 @test acor isa Vector{<:ChainDataFrame}
-                @test all(size(a, 2) == ncols for a in acor)
+                @test all(size(a)[2] == ncols for a in acor)
             end
         end
-        @test autocor(c) == autocor(c; append_chains=true)
+        @test autocor(c) isa ChainDataFrame
+        @test Array(autcor(c)) == Array(autocor(c; append_chains=true))
     end
 
     @test MCMCChains.cor(chn) isa ChainDataFrame
