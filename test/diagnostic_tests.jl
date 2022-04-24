@@ -153,18 +153,23 @@ end
     # issue #363 (short chains)
     for c in (chn, chn[1:10, :, :])
         for append_chains in (true, false)
+            # Number of samples for estimation
             carray = Array(c; append_chains=append_chains)
+            n = append_chains ? size(carray, 1) : size(first(carray), 1)
             
+            # Default lags
             lags = MCMCChains._default_lags(c, append_chains)
-            @test lags == filter!(x -> x < size(carray, 1), [1, 5, 10, 50])
+            @test lags == filter!(x -> x < n, [1, 5, 10, 50])
 
             acor = autocor(c; append_chains=append_chains)
+            # Number of columns in the ChainDataFrame(s): lags + parameters
+            ncols = length(lags) + 1
             if append_chains
                 @test acor isa ChainDataFrame
-                @test length(acor.nt) == length(lags)
+                @test size(acor, 2) == ncols
             else
                 @test acor isa Vector{<:ChainDataFrame}
-                @test all(length(a.nt) == length(lags) for a in acor)
+                @test all(size(a, 2) == ncols for a in acor)
             end
         end
         @test autocor(c) == autocor(c; append_chains=true)
