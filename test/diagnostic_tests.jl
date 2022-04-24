@@ -150,8 +150,25 @@ end
 end
 
 @testset "stats tests" begin
-    @test autocor(chn) isa Vector{<:ChainDataFrame}
-    @test autocor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+    # issue #363 (short chains)
+    for c in (chn, chn[1:10, :, :])
+        for append_chains in (true, false)
+            carray = Array(c; append_chains=append_chains)
+            
+            lags = MCMCChains._default_lags(c, append_chains)
+            @test lags == filter!(x -> x < size(carray, 1), [1, 5, 10, 50])
+
+            acor = autocor(c; append_chains=append_chains)
+            if append_chains
+                @test acor isa ChainDataFrame
+                @test length(acor.nt) == length(lags)
+            else
+                @test acor isa Vector{<:ChainDataFrame}
+                @test all(length(a.nt) == length(lags) for a in acor)
+            end
+        end
+        @test autocor(c) == autocor(c; append_chains=true)
+    end
 
     @test MCMCChains.cor(chn) isa ChainDataFrame
     @test MCMCChains.cor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
