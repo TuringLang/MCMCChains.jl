@@ -169,8 +169,7 @@ See also `?DataFrame` and `?Array` for more help.
 MCMCChains overloads several `sample` methods as defined in StatsBase:
 
 ```@docs
-MCMCChains.sample(::Chains, ::Any)
-MCMCChains.subset
+MCMCChains.sample(::Chains, ::Integer)
 ```
 
 See `?sample` for additional help on sampling.
