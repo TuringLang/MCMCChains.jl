@@ -12,7 +12,7 @@ If specified, sampling probabilities are proportional to weights `wv`.
     ```jldoctest
     julia> chn = Chains(randn(11, 4, 3));
 
-    julia> size(sample(chn, 7)) == (7, 4)
+    julia> size(sample(chn, 7)) == (7, 4, 1)
     true
     ```
 """
