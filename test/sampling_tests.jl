@@ -28,12 +28,12 @@ Random.seed!(20)
 
 	for kwargs in ((), (replace=true,), (replace=false,), (ordered=false,), (ordered=true,))
             # without weights
-	    @test sample(chn, 5; kwargs...) isa Chains
-	    @test size(sample(chn, 5; kwargs...)) == (5, 4, 1)
+            @test sample(chn, 5; kwargs...) isa Chains
+            @test size(sample(chn, 5; kwargs...)) == (5, 4, 1)
 
             # with weights
-	    @test sample(chn, wv, 5; kwargs...) isa Chains
-	    @test size(sample(chn, wv, 5; kwargs...)) == (5, 4, 1)
-	end
+            @test sample(chn, wv, 5; kwargs...) isa Chains
+            @test size(sample(chn, wv, 5; kwargs...)) == (5, 4, 1)
+        end
     end
 end
