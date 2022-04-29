@@ -3,8 +3,8 @@
 
 Sample `n` samples from the pooled (!) chain `chn`.
 
-Based on the keyword arguments `replace` and `ordered` sampling is performed with replacement and the sample is ordered, respectively.
-Optionally, sampling probabilities are proportional to weights `wv`.
+The keyword arguments `replace` and `ordered` determine whether sampling is performed with replacement and whether the sample is ordered, respectively.
+If specified, sampling probabilities are proportional to weights `wv`.
 
 !!! note
     If `chn` contains multiple chains, they are pooled (i.e., appended) before sampling.
@@ -14,6 +14,7 @@ Optionally, sampling probabilities are proportional to weights `wv`.
 
     julia> size(sample(chn, 7)) == (7, 4)
     true
+    ```
 """
 function sample(chn::Chains, n::Integer; replace::Bool=true, ordered::Bool=false)
     return sample(Random.GLOBAL_RNG, chn, n; replace=replace, ordered=ordered)
