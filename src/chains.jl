@@ -213,7 +213,7 @@ Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
-Return a `NamedTuple` with `v` as the key, and matching paramter
+Return a `NamedTuple` with `v` as the key, and matching parameter
 names as the values.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
@@ -224,17 +224,16 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 julia> chn = Chains([1:2 3:4]);
 
 julia> get(chn, :param_1)
-(param_1 = [1; 2],)
+(param_1 = [1; 2;;],)
 
 julia> get(chn, [:param_2])
-(param_2 = [3; 4],)
+(param_2 = [3; 4;;],)
 
 julia> get(chn, :param_1; flatten=true)
 (param_1 = 1,)
 ```
 """
-Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)
-function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
+function Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
     pairs = Dict()
     for v in vs
         syms = namesingroup(c, v)
@@ -258,9 +257,10 @@ function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
     end
     return _dict2namedtuple(pairs)
 end
+Base.get(c::Chains, v::Symbol; flatten=false) = get(c, [v]; flatten=flatten)
 
 """
-    get(c::Chains; section::Union{Vector{Symbol}, Symbol; flatten=false}
+    get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}; flatten=false)
 
 Return all parameters in a given section(s) as a `NamedTuple`.
 
@@ -272,10 +272,10 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 julia> chn = Chains([1:2 3:4], [:a, :b], Dict(:internals => [:a]));
 
 julia> get(chn; section=:parameters)
-(b = [3; 4],)
+(b = [3; 4;;],)
 
 julia> get(chn; section=[:internals])
-(a = [1; 2],)
+(a = [1; 2;;],)
 ```
 """
 function Base.get(

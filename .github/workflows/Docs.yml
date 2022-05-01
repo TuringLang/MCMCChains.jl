@@ -16,8 +16,10 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
-      - run: julia --project=docs docs/make.jl
+      - name: Install dependencies
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+      - name: Build and deploy
+        run: julia --project=docs docs/make.jl
         env:
           GKSwstype: nul
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

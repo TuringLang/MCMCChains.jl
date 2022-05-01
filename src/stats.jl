@@ -1,18 +1,25 @@
 #################### Posterior Statistics ####################
 
 """
-    autocor(chains[; lags = [1, 5, 10, 50], demean = true, append_chains = true, kwargs...])
+    autocor(
+        chains;
+        append_chains = true,
+        demean = true,
+        [lags,]
+        kwargs...,
+    )
 
 Compute the autocorrelation of each parameter for the chain.
 
-Setting `append_chains=false` will return a vector of dataframes containing the
-autocorrelations for each chain.
+The default `lags` are `[1, 5, 10, 50]`, upper-bounded by `n - 1` where `n` is the number of samples used in the estimation.
+
+Setting `append_chains=false` will return a vector of dataframes containing the autocorrelations for each chain.
 """
 function autocor(
     chains::Chains;
-    lags::AbstractVector{<:Integer} = [1, 5, 10, 50],
+    append_chains = true,
     demean::Bool = true,
-    append_chains = false,
+    lags::AbstractVector{<:Integer} = _default_lags(chains, append_chains),
     kwargs...
 )
     funs = Function[]
@@ -28,6 +35,21 @@ function autocor(
         name = "Autocorrelation",
         kwargs...
     )
+end
+
+"""
+    _default_lags(chains::Chains, append_chains::Bool)
+
+Compute the vector of default lags for estimating the autocorrelation of the samples in `chains`.
+
+The default lags are `[1, 5, 10, 50]`, upper-bounded by `n - 1` where `n` is the number of samples used in the estimation.
+I.e., `n = size(chains, 1)` if `append_chains = false`, and `n = size(chains, 1) * size(chains, 3)` otherwise.
+"""
+function _default_lags(chains::Chains, append_chains::Bool)
+    # Number of samples used for estimating the autocorrelation
+    n = append_chains ? size(chains, 1) * size(chains, 3) : size(chains, 1)
+
+    return [lag for lag in (1, 5, 10, 50) if lag < n]
 end
 
 """

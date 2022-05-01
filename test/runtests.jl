@@ -1,7 +1,6 @@
-using Pkg
-
 # Activate test environment on older Julia versions
 if VERSION < v"1.2"
+    using Pkg
     Pkg.activate(@__DIR__)
     Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
     Pkg.instantiate()
@@ -17,33 +16,6 @@ using Random
 Random.seed!(0)
 
 @testset "MCMCChains" begin
-    # MLJXGBoostInterface requires Julia >= 1.3
-    # XGBoost errors on 32bit systems: https://github.com/dmlc/XGBoost.jl/issues/92
-    if VERSION >= v"1.3" && VERSION < v"1.7" && Sys.WORD_SIZE == 64
-        # run tests related to rstar statistic
-        println("Rstar")
-        Pkg.add("MLJBase")
-        Pkg.add("MLJXGBoostInterface")
-        @time include("rstar_tests.jl")
-
-        DocMeta.setdocmeta!(
-            MCMCChains,
-            :DocTestSetup,
-            :(using MCMCChains);
-            recursive=true
-        )
-
-        doctest(
-            MCMCChains;
-            # https://github.com/JuliaLang/julia/pull/37085#issuecomment-683356098
-            doctestfilters = [
-                r"{([a-zA-Z0-9]+,\s?)+[a-zA-Z0-9]+}",
-                r"(Array{[a-zA-Z0-9]+,\s?1}|Vector{[a-zA-Z0-9]+})",
-                r"(Array{[a-zA-Z0-9]+,\s?2}|Matrix{[a-zA-Z0-9]+})",
-            ],
-        )
-    end
-
     # run tests for effective sample size
     println("ESS")
     @time include("ess_tests.jl")
@@ -96,4 +68,19 @@ Random.seed!(0)
     println("Concatenation")
     @time include("concatenation_tests.jl")
 
+    # run tests related to rstar statistic
+    println("Rstar")
+    @time include("rstar_tests.jl")
+
+    # Array printing depends on Julia version and architecture,
+    # therefore we only run doctests with Julia >= 1.7 and on 64bit where `Int === Int64`
+    if VERSION >= v"1.7" && Sys.WORD_SIZE == 64
+        DocMeta.setdocmeta!(
+            MCMCChains,
+            :DocTestSetup,
+            :(using MCMCChains);
+            recursive = true
+        )
+        doctest(MCMCChains)
+    end
 end

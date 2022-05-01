@@ -39,11 +39,11 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
     if colordim == :parameter
         title --> "Chain $(MCMCChains.chains(c)[i])"
-        label --> string.(names(c))
+        label --> permutedims(map(string, names(c)))
         val = c.value[:, :, i]
     elseif colordim == :chain
         title --> string(names(c)[i])
-        label --> map(x -> "Chain $x", MCMCChains.chains(c))
+        label --> permutedims(map(x -> "Chain $x", MCMCChains.chains(c)))
         val = c.value[:, i, :]
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
@@ -62,7 +62,8 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
 
     if st == :autocorplot
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
-        ac = autocor(c; sections = nothing, lags = lags)
+        # Chains are already appended in `c` if desired, hence we use `append_chains=false`
+        ac = autocor(c; sections = nothing, lags = lags, append_chains=false)
         ac_mat = convert(Array, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
