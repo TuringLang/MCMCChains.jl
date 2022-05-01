@@ -121,6 +121,13 @@ end
     chn3 = group(chn2, "param")
     @test names(chn3) == Symbol.(["param[2]", "param[3]"])
     @test chn3.value == chn[:, [:param_2, :param_3], :].value
+
+    stan_chn = Chains(rand(100, 3, 1), ["a.1", "a[2]", "b"])
+    @test namesingroup(stan_chn, "a"; index_type=:dot) == [Symbol("a.1")]
+    @test namesingroup(stan_chn, :a; index_type=:dot) == [Symbol("a.1")]
+    @test names(group(stan_chn, :a; index_type=:dot)) == [Symbol("a.1")]
+    @test_throws Exception namesingroup(stan_chn, :a; index_type=:x)
+    @test_throws Exception group(stan_chn, :a; index_type=:x)
 end
 
 @testset "function tests" begin

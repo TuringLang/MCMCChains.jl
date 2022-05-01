@@ -121,12 +121,11 @@ Chains(chain::Chains, ::Nothing) = chain
 # Groups of parameters
 
 """
-    namesingroup(chains::Chains, sym::Union{String,Symbol})
+    namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
 
-Return the names of all parameters in a chain that belong to the group `sym`.
-
-This is based on the MCMCChains convention that parameters with names of the form `:sym[index]`
-belong to one group of parameters called `:sym`.
+Return the parameters with the same name `sym`, but have a different index. Bracket indexing format
+in the form of `:sym[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
+indexing, i.e. `:sym.index`.
 
 If the chain contains a parameter of name `:sym` it will be returned as well.
 
@@ -139,23 +138,38 @@ julia> namesingroup(chn, :A)
  Symbol("A[1]")
  Symbol("A[2]")
 ```
+```jldoctest
+julia> chn = Chains(rand(100, 3, 2), ["A.1", "A.2", "B"]);
+
+julia> namesingroup(chn, :A; index_type=:dot)
+2-element Vector{Symbol}:
+ Symbol("A.1")
+ Symbol("A.2")
+```
 """
-namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
-function namesingroup(chains::Chains, sym::Symbol)
+namesingroup(chains::Chains, sym::String; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
+function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
+    if index_type !== :bracket && index_type !== :dot
+        error("index_type must be :bracket or :dot")
+    end
+    idx_str = index_type == :bracket ? "[" : "."
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
-    regex = Regex("^$sym\$|^$sym\\[")
+    regex = Regex("^$sym\$|^$sym\\$idx_str")
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
 
 """
-    group(chains::Chains, name::Union{String,Symbol})
+    group(chains::Chains, name::Union{String,Symbol}; index_type::Symbol=:bracket)
 
-Return a subset of the chain chain with all parameters in the group `Symbol(name)`.
+Return a subset of the chain containing parameters with the same `name`, but a different index.
+
+Bracket indexing format in the form of `:name[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
+indexing, i.e. `:sym.index`.
 """
-function group(chains::Chains, name::Union{String,Symbol})
-    return chains[:, namesingroup(chains, name), :]
+function group(chains::Chains, name::Union{String,Symbol}; kwargs...)
+    return chains[:, namesingroup(chains, name; kwargs...), :]
 end
 
 #################### Indexing ####################
