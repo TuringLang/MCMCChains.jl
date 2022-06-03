@@ -364,7 +364,7 @@ Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 # timestamps.
 to_datetime(t::DateTime) = t
 to_datetime(t::Float64) = unix2datetime(t)
-to_datetime(t) = missing_datetime(typeof(t))
+to_datetime(t) = missing
 to_datetime_vec(t::Union{Float64, DateTime}) = [to_datetime(t)]
 to_datetime_vec(t::DateTime) = [to_datetime(t)]
 to_datetime_vec(ts::Vector) = map(to_datetime, ts)
@@ -373,11 +373,6 @@ to_datetime_vec(ts) = [missing]
 min_datetime(ts) = minimum(to_datetime_vec(ts))
 max_datetime(ts) = maximum(to_datetime_vec(ts))
 
-# does not specialize on `typeof(T)`
-function missing_datetime(T::Type)
-    @warn "timestamp of type $(T) unknown"
-    return missing
-end
 
 """
     min_start(c::Chains)
