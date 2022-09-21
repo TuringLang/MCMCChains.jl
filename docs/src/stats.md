@@ -8,4 +8,5 @@ describe
 mean
 summarystats
 quantile
+hpd
 ```
