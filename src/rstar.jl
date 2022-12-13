@@ -44,12 +44,17 @@ function MCMCDiagnosticTools.rstar(
 end
 
 function MCMCDiagnosticTools.rstar(
-    rng::Random.AbstractRNG, classif::MLJModelInterface.Supervised, chn::Chains; kwargs...
+    rng::Random.AbstractRNG,
+    classif::MLJModelInterface.Supervised,
+    chn::Chains;
+    sections = _default_sections(chn),
+    kwargs...
 )
     nchains = size(chn, 3)
     nchains <= 1 && throw(DimensionMismatch())
 
-    x = _permutedims_diagnostics(Array(chn))
+    _chn = Chains(chn, _clean_sections(chn, sections))
+    x = _permutedims_diagnostics(_chn.value.data)
 
     return MCMCDiagnosticTools.rstar(rng, classif, x; kwargs...)
 end
