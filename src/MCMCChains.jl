@@ -4,7 +4,6 @@ using AxisArrays
 const axes = Base.axes
 import AbstractMCMC
 import AbstractMCMC: chainscat
-using Compat
 using Distributions
 using RecipesBase
 using Formatting
