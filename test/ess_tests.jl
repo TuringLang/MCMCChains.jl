@@ -30,7 +30,7 @@ end
         ess_df = ess_rhat(chain; method = method)
 
         # analyze array
-        ess_array, rhat_array = ess_rhat(x; method = method)
+        ess_array, rhat_array = ess_rhat(permutedims(x, (1, 3, 2)); method = method)
 
         @test ess_df[:,2] == ess_array
         @test ess_df[:,3] == rhat_array
@@ -46,7 +46,7 @@ end
         ess_df = ess_rhat(chain; method = method)
 
         # analyze array
-        ess_array, rhat_array = ess_rhat(val; method = method)
+        ess_array, rhat_array = ess_rhat(permutedims(val, (1, 3, 2)); method = method)
 
         @test ismissing(ess_df[:,2][1]) # since min(maxlag, niter - 1) = 0
         @test ismissing(ess_df[:,3][1])

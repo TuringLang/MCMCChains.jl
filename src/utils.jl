@@ -197,3 +197,6 @@ function _isstrictlyincreasing_nonempty(x::AbstractVector{Int})
     end
     return true
 end
+
+# permute dims to match the dimension order of MCMCDiagnosticsTools
+_permutedims_diagnostics(x) = PermutedDimsArray(x, (1, 3, 2))

@@ -1,11 +1,3 @@
-# Activate test environment on older Julia versions
-if VERSION < v"1.2"
-    using Pkg
-    Pkg.activate(@__DIR__)
-    Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
-    Pkg.instantiate()
-end
-
 using MCMCChains
 using Documenter
 

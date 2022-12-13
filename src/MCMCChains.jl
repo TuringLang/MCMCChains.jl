@@ -4,7 +4,6 @@ using AxisArrays
 const axes = Base.axes
 import AbstractMCMC
 import AbstractMCMC: chainscat
-using Compat
 using Distributions
 using RecipesBase
 using Formatting
@@ -91,26 +90,13 @@ include("rstar.jl")
 # so we use the following hack
 const _read = Base.read
 const _write = Base.write
-@static if VERSION < v"1.1"
-    Base.@deprecate _read(
-        f::AbstractString,
-        ::Type{T}
-    ) where {T<:Chains} open(Serialization.deserialize, f, "r") false
-    Base.@deprecate _write(
-        f::AbstractString,
-        c::Chains
-    ) open(f, "w") do io
-        Serialization.serialize(io, c)
-    end false
-else
-    Base.@deprecate _read(
-        f::AbstractString,
-        ::Type{T}
-    ) where {T<:Chains} Serialization.deserialize(f) false
-    Base.@deprecate _write(
-        f::AbstractString,
-        c::Chains
-    ) Serialization.serialize(f, c) false
-end
+Base.@deprecate _read(
+    f::AbstractString,
+    ::Type{T}
+) where {T<:Chains} Serialization.deserialize(f) false
+Base.@deprecate _write(
+    f::AbstractString,
+    c::Chains
+) Serialization.serialize(f, c) false
 
 end # module
