@@ -14,7 +14,10 @@ function MCMCDiagnosticTools.ess_rhat(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Estimate the effective sample size and rhat
-    ess, rhat = MCMCDiagnosticTools.ess_rhat(_chains.value.data; kwargs...)
+    ess, rhat = MCMCDiagnosticTools.ess_rhat(
+        _permutedims_diagnostics(_chains.value.data);
+        kwargs...,
+    )
 
     # Calculate ESS/minute if available
     dur = duration(chains)

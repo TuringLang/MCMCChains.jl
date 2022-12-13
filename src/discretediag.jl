@@ -14,7 +14,7 @@ function MCMCDiagnosticTools.discretediag(
 
     # Compute statistics.
     between_chain_vals, within_chain_vals = MCMCDiagnosticTools.discretediag(
-        _chains.value.data; kwargs...
+        _permutedims_diagnostics(_chains.value.data); kwargs...
     )
 
     # Create dataframes

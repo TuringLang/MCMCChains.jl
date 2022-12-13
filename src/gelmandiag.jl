@@ -9,7 +9,7 @@ function MCMCDiagnosticTools.gelmandiag(
 
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
-    results = MCMCDiagnosticTools.gelmandiag(psi; kwargs...)
+    results = MCMCDiagnosticTools.gelmandiag(_permutedims_diagnostics(psi); kwargs...)
 
     # Create a data frame with the results.
     df = ChainDataFrame(
@@ -31,7 +31,10 @@ function MCMCDiagnosticTools.gelmandiag_multivariate(
 
     # Compute the potential scale reduction factor.
     psi = transform ? link(_chains) : _chains.value.data
-    results = MCMCDiagnosticTools.gelmandiag_multivariate(psi; kwargs...)
+    results = MCMCDiagnosticTools.gelmandiag_multivariate(
+        _permutedims_diagnostics(psi);
+        kwargs...,
+    )
 
     # Create a data frame with the results.
     df = ChainDataFrame(

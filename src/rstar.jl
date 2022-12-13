@@ -50,8 +50,8 @@ function MCMCDiagnosticTools.rstar(
     nchains <= 1 && throw(DimensionMismatch())
 
     # collect data
-    x = Array(chn)
     y = repeat(chains(chn); inner = size(chn,1))
+    x = _permutedims_diagnostics(Array(chn))
 
     return MCMCDiagnosticTools.rstar(rng, classif, x, y; kwargs...)
 end
