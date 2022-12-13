@@ -10,7 +10,7 @@ MLJDecisionTreeInterface = "c6f25543-311c-4c74-83dc-3ea6d1015661"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 
 [compat]
-CairoMakie = "0.6, 0.7, 0.8, 0.9"
+CairoMakie = "0.6, 0.7, 0.8, 0.9, 0.10"
 CategoricalArrays = "0.8, 0.9, 0.10"
 DataFrames = "0.22, 1"
 Documenter = "0.26, 0.27"
