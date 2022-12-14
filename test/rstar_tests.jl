@@ -31,6 +31,6 @@ classif = DecisionTreeClassifier()
     chn_notmixed = Chains(val)
 
     # Restuling R value should be close to two, i.e. the classifier should be able to learn an almost perfect decision boundary between chains.
-    R = rstar(classif, chn_notmixed)
+    R = rstar(classif, chn_notmixed; split_chains=1)
     @test mean(R) ≈ 2 atol=0.1
 end
