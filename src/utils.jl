@@ -27,13 +27,13 @@ end
 
 Convert strings to symbols.
 
-If `x isa String`, the corresponding `Symbol` is returned. Likewise, if
-`x isa AbstractVector{String}`, the corresponding vector of `Symbol`s is returned. In all
-other cases, input `x` is returned.
+If `x isa AbstractString`, the corresponding `Symbol` is returned.
+Likewise, if `x isa AbstractVector{<:AbstractString}`, the corresponding vector of `Symbol`s is returned.
+In all other cases, input `x` is returned.
 """
 string2symbol(x) = x
-string2symbol(x::String) = Symbol(x)
-string2symbol(x::AbstractVector{String}) = Symbol.(x)
+string2symbol(x::AbstractString) = Symbol(x)
+string2symbol(x::AbstractVector{<:AbstractString}) = Symbol.(x)
 
 #################### Mathematical Operators ####################
 function cummean(x::AbstractArray)
