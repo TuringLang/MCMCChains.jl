@@ -101,13 +101,42 @@ end
 end
 
 @testset "indexing tests" begin
-    @test chn[:,1,:] isa AbstractMatrix
-    @test chn[200:300, "param_1", :] isa AbstractMatrix
-    @test chn[200:300, ["param_1", "param_3"], :] isa Chains
-    @test chn[200:300, "param_1", 1] isa AbstractVector
-    @test size(chn[:,1,:]) == (niter, nchains)
-    @test chn[:,1,1] == val[:,1,1]
-    @test chn[:,1,2] == val[:,1,2]
+    c = chn[:, 1, :]
+    @test c isa AbstractMatrix
+    @test size(c) == (niter, nchains)
+    @test c == val[:, 1, :]
+
+    for i in 1:2
+        c = chn[:, 1, i]
+        @test c isa AbstractVector
+        @test length(c) == niter
+        @test c == val[:, 1, i]
+    end
+
+    for p in (:param_1, "param_1", SubString("param_1", 1))
+        c = chn[200:300, p, :]
+        @test c isa AbstractMatrix
+        @test size(c) == (101, size(chn, 3))
+        @test c == val[200:300, 1, :]
+
+        c = chn[200:300, p, 1]
+        @test c isa AbstractVector
+        @test length(c) == 101
+        @test c == val[200:300, 1, 1]
+    end
+
+    for ps in (
+        [:param_1, :param_3],
+        ["param_1", "param_3"],
+        [SubString("param_1", 1), "param_3"],
+        ["param_1", SubString("param_3", 1)],
+        [SubString("param_1", 1), SubString("param_3", 1)],
+    )
+        c = chn[200:300, ps, :]
+        @test c isa Chains
+        @test size(c) == (101, 2, nchains)
+        @test c.value.data == val[200:300, [1, 3], :]
+    end
 end
 
 @testset "names and groups tests" begin
@@ -116,18 +145,23 @@ end
         (@inferred replacenames(chn, Dict("param_2" => "param[2]",
                                           "param_3" => "param[3]"))).value
     @test names(chn2) == [:param_1, Symbol("param[2]"), Symbol("param[3]"), :param_4]
-    @test namesingroup(chn2, "param") == Symbol.(["param[2]", "param[3]"])
+    for p in (:param, "param", SubString("param", 1))
+        @test namesingroup(chn2, p) == Symbol.(["param[2]", "param[3]"])
+    end
 
-    chn3 = group(chn2, "param")
-    @test names(chn3) == Symbol.(["param[2]", "param[3]"])
-    @test chn3.value == chn[:, [:param_2, :param_3], :].value
+    for p in (:param, "param", SubString("param", 1))
+        chn3 = group(chn2, p)
+        @test names(chn3) == Symbol.(["param[2]", "param[3]"])
+        @test chn3.value == chn[:, [:param_2, :param_3], :].value
+    end
 
     stan_chn = Chains(rand(100, 3, 1), ["a.1", "a[2]", "b"])
-    @test namesingroup(stan_chn, "a"; index_type=:dot) == [Symbol("a.1")]
-    @test namesingroup(stan_chn, :a; index_type=:dot) == [Symbol("a.1")]
-    @test names(group(stan_chn, :a; index_type=:dot)) == [Symbol("a.1")]
-    @test_throws Exception namesingroup(stan_chn, :a; index_type=:x)
-    @test_throws Exception group(stan_chn, :a; index_type=:x)
+    for p in (:a, "a", SubString("a", 1))
+        @test namesingroup(stan_chn, p; index_type=:dot) == [Symbol("a.1")]
+        @test names(group(stan_chn, p; index_type=:dot)) == [Symbol("a.1")]
+        @test_throws Exception namesingroup(stan_chn, p; index_type=:x)
+        @test_throws Exception group(stan_chn, p; index_type=:x)    
+    end
 end
 
 @testset "function tests" begin
