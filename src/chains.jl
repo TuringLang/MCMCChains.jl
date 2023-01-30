@@ -137,6 +137,12 @@ julia> namesingroup(chn, :A)
 2-element Vector{Symbol}:
  Symbol("A[1]")
  Symbol("A[2]")
+
+julia> # Also works for specific elements.
+       namesingroup(chn, Symbol("A[1]"))
+1-element Vector{Symbol}:
+ Symbol("A[1]")
+
 ```
 ```jldoctest
 julia> chn = Chains(rand(100, 3, 2), ["A.1", "A.2", "B"]);
@@ -155,7 +161,7 @@ function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
     idx_str = index_type == :bracket ? "[" : "."
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
-    regex = Regex("^$sym\$|^$sym\\$idx_str")
+    regex = Regex("^\\Q$sym\\E\$|^\\Q$sym$idx_str\\E")
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
