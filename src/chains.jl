@@ -80,7 +80,7 @@ function Chains(
 end
 
 """
-    Chains(c::Chains, section::Union{Symbol,String})
+    Chains(c::Chains, section::Union{Symbol,AbstractString})
     Chains(c::Chains, sections)
 
 Return a new chain with only a specific `section` or multiple `sections` pulled out.
@@ -101,7 +101,7 @@ julia> names(chn2)
  :a
 ```
 """
-Chains(c::Chains, section::Union{Symbol,String}) = Chains(c, (section,))
+Chains(c::Chains, section::Union{Symbol,AbstractString}) = Chains(c, (section,))
 function Chains(chn::Chains, sections)
     # Make sure the sections exist first.
 	  all(haskey(chn.name_map, Symbol(x)) for x in sections) ||
@@ -121,7 +121,7 @@ Chains(chain::Chains, ::Nothing) = chain
 # Groups of parameters
 
 """
-    namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
+    namesingroup(chains::Chains, sym::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)
 
 Return the parameters with the same name `sym`, but have a different index. Bracket indexing format
 in the form of `:sym[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
@@ -147,7 +147,7 @@ julia> namesingroup(chn, :A; index_type=:dot)
  Symbol("A.2")
 ```
 """
-namesingroup(chains::Chains, sym::String; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
+namesingroup(chains::Chains, sym::AbstractString; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
 function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
     if index_type !== :bracket && index_type !== :dot
         error("index_type must be :bracket or :dot")
@@ -161,14 +161,14 @@ function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
 end
 
 """
-    group(chains::Chains, name::Union{String,Symbol}; index_type::Symbol=:bracket)
+    group(chains::Chains, name::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)
 
 Return a subset of the chain containing parameters with the same `name`, but a different index.
 
 Bracket indexing format in the form of `:name[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
 indexing, i.e. `:sym.index`.
 """
-function group(chains::Chains, name::Union{String,Symbol}; kwargs...)
+function group(chains::Chains, name::Union{AbstractString,Symbol}; kwargs...)
     return chains[:, namesingroup(chains, name; kwargs...), :]
 end
 
@@ -177,8 +177,8 @@ end
 Base.getindex(c::Chains, i::Integer) = c[i, :, :]
 Base.getindex(c::Chains, i::AbstractVector{<:Integer}) = c[i, :, :]
 
-Base.getindex(c::Chains, v::String) = c[:, Symbol(v), :]
-Base.getindex(c::Chains, v::AbstractVector{String}) = c[:, Symbol.(v), :]
+Base.getindex(c::Chains, v::AbstractString) = c[:, Symbol(v), :]
+Base.getindex(c::Chains, v::AbstractVector{<:AbstractString}) = c[:, Symbol.(v), :]
 
 Base.getindex(c::Chains, v::Symbol) = c[:, v, :]
 Base.getindex(c::Chains, v::AbstractVector{Symbol}) = c[:, v, :]
@@ -199,7 +199,7 @@ _toindex(i, j, k::Integer) = (i, string2symbol(j), k:k)
 _toindex(i::Integer, j, k::Integer) = (i:i, string2symbol(j), k:k)
 
 # return an array or a number if a single parameter is specified
-const SingleIndex = Union{Symbol,String,Integer}
+const SingleIndex = Union{Symbol,AbstractString,Integer}
 _toindex(i, j::SingleIndex, k) = (i, string2symbol(j), k)
 _toindex(i::Integer, j::SingleIndex, k) = (i, string2symbol(j), k)
 _toindex(i, j::SingleIndex, k::Integer) = (i, string2symbol(j), k)
@@ -542,7 +542,7 @@ Return multiple `Chains` objects, each containing only a single section.
 function get_sections(chains::Chains, sections = keys(chains.name_map))
     return [Chains(chains, section) for section in sections]
 end
-get_sections(chains::Chains, section::Union{Symbol, String}) = Chains(chains, section)
+get_sections(chains::Chains, section::Union{Symbol, AbstractString}) = Chains(chains, section)
 
 """
     sections(c::Chains)
@@ -727,7 +727,7 @@ function _clean_sections(chains::Chains, sections)
         haskey(chains.name_map, Symbol(section))
     end
 end
-function _clean_sections(chains::Chains, section::Union{String,Symbol})
+function _clean_sections(chains::Chains, section::Union{AbstractString,Symbol})
     return haskey(chains.name_map, Symbol(section)) ? section : ()
 end
 _clean_sections(::Chains, ::Nothing) = nothing
