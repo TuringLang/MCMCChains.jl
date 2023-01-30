@@ -161,7 +161,7 @@ function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
     idx_str = index_type == :bracket ? "[" : "."
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
-    regex = Regex("^\\Q$sym\\E\$|^\\Q$sym\\E\\$idx_str")
+    regex = Regex("^\\Q$sym\\E\$|^\\Q$sym$idx_str\\E")
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
