@@ -1,18 +1,25 @@
 #################### Posterior Statistics ####################
 
 """
-    autocor(chains[; lags = [1, 5, 10, 50], demean = true, append_chains = true, kwargs...])
+    autocor(
+        chains;
+        append_chains = true,
+        demean = true,
+        [lags,]
+        kwargs...,
+    )
 
 Compute the autocorrelation of each parameter for the chain.
 
-Setting `append_chains=false` will return a vector of dataframes containing the
-autocorrelations for each chain.
+The default `lags` are `[1, 5, 10, 50]`, upper-bounded by `n - 1` where `n` is the number of samples used in the estimation.
+
+Setting `append_chains=false` will return a vector of dataframes containing the autocorrelations for each chain.
 """
 function autocor(
     chains::Chains;
-    lags::AbstractVector{<:Integer} = [1, 5, 10, 50],
+    append_chains = true,
     demean::Bool = true,
-    append_chains = false,
+    lags::AbstractVector{<:Integer} = _default_lags(chains, append_chains),
     kwargs...
 )
     funs = Function[]
@@ -28,6 +35,21 @@ function autocor(
         name = "Autocorrelation",
         kwargs...
     )
+end
+
+"""
+    _default_lags(chains::Chains, append_chains::Bool)
+
+Compute the vector of default lags for estimating the autocorrelation of the samples in `chains`.
+
+The default lags are `[1, 5, 10, 50]`, upper-bounded by `n - 1` where `n` is the number of samples used in the estimation.
+I.e., `n = size(chains, 1)` if `append_chains = false`, and `n = size(chains, 1) * size(chains, 3)` otherwise.
+"""
+function _default_lags(chains::Chains, append_chains::Bool)
+    # Number of samples used for estimating the autocorrelation
+    n = append_chains ? size(chains, 1) * size(chains, 3) : size(chains, 1)
+
+    return [lag for lag in (1, 5, 10, 50) if lag < n]
 end
 
 """
@@ -183,6 +205,28 @@ function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
     return [a[i], b[i]]
 end
 
+"""
+    hpd(chn::Chains; alpha::Real=0.05, kwargs...)
+
+Return the highest posterior density interval representing `1-alpha` probability mass.
+
+Note that this will return a single interval and will not return multiple intervals for discontinuous regions.
+
+# Examples
+
+```julia-repl
+julia> val = rand(500, 2, 3);
+julia> chn = Chains(val, [:a, :b]);
+
+julia> hpd(chn)
+HPD
+  parameters     lower     upper 
+      Symbol   Float64   Float64 
+
+           a    0.0554    0.9944
+           b    0.0114    0.9460
+```
+"""
 function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
     labels = [:lower, :upper]
     l(x) = _hpd(x, alpha=alpha)[1]
@@ -244,20 +288,20 @@ function summarystats(
     chains::Chains;
     sections = _default_sections(chains),
     append_chains::Bool = true,
-    method::AbstractESSMethod = ESSMethod(),
+    method::MCMCDiagnosticTools.AbstractESSMethod = ESSMethod(),
     maxlag = 250,
     etype = :bm,
     kwargs...
 )
     # Store everything.
-    funs = [mean∘cskip, std∘cskip, sem∘cskip, x -> mcse(cskip(x), etype; kwargs...)]
+    funs = [mean∘cskip, std∘cskip, sem∘cskip, x -> MCMCDiagnosticTools.mcse(cskip(x); method=etype, kwargs...)]
     func_names = [:mean, :std, :naive_se, :mcse]
 
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate ESS separately.
-    ess_df = ess(_chains; sections = nothing, method = method, maxlag = maxlag)
+    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
 
     # Summarize.
     summary_df = summarize(

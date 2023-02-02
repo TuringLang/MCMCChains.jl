@@ -31,9 +31,22 @@ function Chains(
     name_map = (parameters = parameter_names,);
     start::Int = 1,
     thin::Int = 1,
+    iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
     evidence = missing,
     info::NamedTuple = NamedTuple()
 )
+    # Check that iteration numbers are reasonable
+    if length(iterations) != size(val, 1)
+        error("length of `iterations` (", length(iterations),
+              ") is not equal to the number of iterations (", size(val, 1), ")")
+    end
+    if !isempty(iterations) && first(iterations) < 1
+        error("iteration numbers must be positive integers")
+    end
+    if !isstrictlyincreasing(iterations)
+        error("iteration numbers must be strictly increasing")
+    end
+
     # Make sure that we have a `:parameters` index and # Copying can avoid state mutation.
     _name_map = initnamemap(name_map)
 
@@ -44,7 +57,7 @@ function Chains(
     end
 
     # Store unassigned variables.
-    unassigned = Set(Symbol[])
+    unassigned = OrderedCollections.OrderedSet{Symbol}()
 
     # Check that all parameters are assigned.
     for param in parameter_names
@@ -58,7 +71,7 @@ function Chains(
 
     # Construct the AxisArray.
     arr = AxisArray(val;
-                    iter = range(start, step=thin, length=size(val, 1)),
+                    iter = iterations,
                     var = parameter_names,
                     chain = 1:size(val, 3))
 
@@ -67,7 +80,7 @@ function Chains(
 end
 
 """
-    Chains(c::Chains, section::Union{Symbol,String})
+    Chains(c::Chains, section::Union{Symbol,AbstractString})
     Chains(c::Chains, sections)
 
 Return a new chain with only a specific `section` or multiple `sections` pulled out.
@@ -88,7 +101,7 @@ julia> names(chn2)
  :a
 ```
 """
-Chains(c::Chains, section::Union{Symbol,String}) = Chains(c, (section,))
+Chains(c::Chains, section::Union{Symbol,AbstractString}) = Chains(c, (section,))
 function Chains(chn::Chains, sections)
     # Make sure the sections exist first.
 	  all(haskey(chn.name_map, Symbol(x)) for x in sections) ||
@@ -108,12 +121,11 @@ Chains(chain::Chains, ::Nothing) = chain
 # Groups of parameters
 
 """
-    namesingroup(chains::Chains, sym::Union{String,Symbol})
+    namesingroup(chains::Chains, sym::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)
 
-Return the names of all parameters in a chain that belong to the group `sym`.
-
-This is based on the MCMCChains convention that parameters with names of the form `:sym[index]`
-belong to one group of parameters called `:sym`.
+Return the parameters with the same name `sym`, but have a different index. Bracket indexing format
+in the form of `:sym[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
+indexing, i.e. `:sym.index`.
 
 If the chain contains a parameter of name `:sym` it will be returned as well.
 
@@ -125,24 +137,45 @@ julia> namesingroup(chn, :A)
 2-element Vector{Symbol}:
  Symbol("A[1]")
  Symbol("A[2]")
+
+julia> # Also works for specific elements.
+       namesingroup(chn, Symbol("A[1]"))
+1-element Vector{Symbol}:
+ Symbol("A[1]")
+
+```
+```jldoctest
+julia> chn = Chains(rand(100, 3, 2), ["A.1", "A.2", "B"]);
+
+julia> namesingroup(chn, :A; index_type=:dot)
+2-element Vector{Symbol}:
+ Symbol("A.1")
+ Symbol("A.2")
 ```
 """
-namesingroup(chains::Chains, sym::String) = namesingroup(chains, Symbol(sym))
-function namesingroup(chains::Chains, sym::Symbol)
+namesingroup(chains::Chains, sym::AbstractString; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
+function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
+    if index_type !== :bracket && index_type !== :dot
+        error("index_type must be :bracket or :dot")
+    end
+    idx_str = index_type == :bracket ? "[" : "."
     # Start by looking up the symbols in the list of parameter names.
     names_of_params = names(chains)
-    regex = Regex("^$sym\$|^$sym\\[")
+    regex = Regex("^\\Q$sym\\E\$|^\\Q$sym$idx_str\\E")
     indices = findall(x -> match(regex, string(x)) !== nothing, names(chains))
     return names_of_params[indices]
 end
 
 """
-    group(chains::Chains, name::Union{String,Symbol})
+    group(chains::Chains, name::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)
 
-Return a subset of the chain chain with all parameters in the group `Symbol(name)`.
+Return a subset of the chain containing parameters with the same `name`, but a different index.
+
+Bracket indexing format in the form of `:name[index]` is assumed by default. Use `index_type=:dot` for parameters with dot 
+indexing, i.e. `:sym.index`.
 """
-function group(chains::Chains, name::Union{String,Symbol})
-    return chains[:, namesingroup(chains, name), :]
+function group(chains::Chains, name::Union{AbstractString,Symbol}; kwargs...)
+    return chains[:, namesingroup(chains, name; kwargs...), :]
 end
 
 #################### Indexing ####################
@@ -150,8 +183,8 @@ end
 Base.getindex(c::Chains, i::Integer) = c[i, :, :]
 Base.getindex(c::Chains, i::AbstractVector{<:Integer}) = c[i, :, :]
 
-Base.getindex(c::Chains, v::String) = c[:, Symbol(v), :]
-Base.getindex(c::Chains, v::AbstractVector{String}) = c[:, Symbol.(v), :]
+Base.getindex(c::Chains, v::AbstractString) = c[:, Symbol(v), :]
+Base.getindex(c::Chains, v::AbstractVector{<:AbstractString}) = c[:, Symbol.(v), :]
 
 Base.getindex(c::Chains, v::Symbol) = c[:, v, :]
 Base.getindex(c::Chains, v::AbstractVector{Symbol}) = c[:, v, :]
@@ -172,7 +205,7 @@ _toindex(i, j, k::Integer) = (i, string2symbol(j), k:k)
 _toindex(i::Integer, j, k::Integer) = (i:i, string2symbol(j), k:k)
 
 # return an array or a number if a single parameter is specified
-const SingleIndex = Union{Symbol,String,Integer}
+const SingleIndex = Union{Symbol,AbstractString,Integer}
 _toindex(i, j::SingleIndex, k) = (i, string2symbol(j), k)
 _toindex(i::Integer, j::SingleIndex, k) = (i, string2symbol(j), k)
 _toindex(i, j::SingleIndex, k::Integer) = (i, string2symbol(j), k)
@@ -186,7 +219,7 @@ Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
-Return a `NamedTuple` with `v` as the key, and matching paramter
+Return a `NamedTuple` with `v` as the key, and matching parameter
 names as the values.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
@@ -197,17 +230,16 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 julia> chn = Chains([1:2 3:4]);
 
 julia> get(chn, :param_1)
-(param_1 = [1; 2],)
+(param_1 = [1; 2;;],)
 
 julia> get(chn, [:param_2])
-(param_2 = [3; 4],)
+(param_2 = [3; 4;;],)
 
 julia> get(chn, :param_1; flatten=true)
 (param_1 = 1,)
 ```
 """
-Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v], flatten=flatten)
-function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
+function Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
     pairs = Dict()
     for v in vs
         syms = namesingroup(c, v)
@@ -231,9 +263,10 @@ function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
     end
     return _dict2namedtuple(pairs)
 end
+Base.get(c::Chains, v::Symbol; flatten=false) = get(c, [v]; flatten=flatten)
 
 """
-    get(c::Chains; section::Union{Vector{Symbol}, Symbol; flatten=false}
+    get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}; flatten=false)
 
 Return all parameters in a given section(s) as a `NamedTuple`.
 
@@ -245,10 +278,10 @@ Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 julia> chn = Chains([1:2 3:4], [:a, :b], Dict(:internals => [:a]));
 
 julia> get(chn; section=:parameters)
-(b = [3; 4],)
+(b = [3; 4;;],)
 
 julia> get(chn; section=[:internals])
-(a = [1; 2],)
+(a = [1; 2;;],)
 ```
 """
 function Base.get(
@@ -337,7 +370,7 @@ Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 # timestamps.
 to_datetime(t::DateTime) = t
 to_datetime(t::Float64) = unix2datetime(t)
-to_datetime(t) = missing_datetime(typeof(t))
+to_datetime(t) = missing
 to_datetime_vec(t::Union{Float64, DateTime}) = [to_datetime(t)]
 to_datetime_vec(t::DateTime) = [to_datetime(t)]
 to_datetime_vec(ts::Vector) = map(to_datetime, ts)
@@ -346,11 +379,6 @@ to_datetime_vec(ts) = [missing]
 min_datetime(ts) = minimum(to_datetime_vec(ts))
 max_datetime(ts) = maximum(to_datetime_vec(ts))
 
-# does not specialize on `typeof(T)`
-function missing_datetime(T::Type)
-    @warn "timestamp of type $(T) unknown"
-    return missing
-end
 
 """
     min_start(c::Chains)
@@ -444,17 +472,21 @@ Return the range of iteration indices of the `chains`.
 Base.range(chains::Chains) = chains.value[Axis{:iter}].val
 
 """
-    setrange(chains::Chains, range)
+    setrange(chains::Chains, range::AbstractVector{Int})
 
 Generate a new chain from `chains` with iterations indexed by `range`.
 
 The new chain and `chains` share the same data in memory.
 """
-function setrange(chains::Chains, range::AbstractRange{<:Integer})
+function setrange(chains::Chains, range::AbstractVector{Int})
     if length(chains) != length(range)
         error("length of `range` (", length(range),
               ") is not equal to the number of iterations (", length(chains), ")")
     end
+    if !isempty(range) && first(range) < 1
+        error("iteration numbers must be positive integers")
+    end
+    isstrictlyincreasing(range) || error("iteration numbers must be strictly increasing")
 
     value = AxisArray(chains.value.data;
                       iter = range, var = names(chains), chain = MCMCChains.chains(chains))
@@ -516,7 +548,7 @@ Return multiple `Chains` objects, each containing only a single section.
 function get_sections(chains::Chains, sections = keys(chains.name_map))
     return [Chains(chains, section) for section in sections]
 end
-get_sections(chains::Chains, section::Union{Symbol, String}) = Chains(chains, section)
+get_sections(chains::Chains, section::Union{Symbol, AbstractString}) = Chains(chains, section)
 
 """
     sections(c::Chains)
@@ -574,8 +606,7 @@ function header(c::Chains; section=missing)
     # Return header.
     return string(
         ismissing(c.logevidence) ? "" : "Log evidence      = $(c.logevidence)\n",
-        "Iterations        = $(first(c)):$(last(c))\n",
-        "Thinning interval = $(step(c))\n",
+        "Iterations        = $(range(c))\n",
         "Number of chains  = $(size(c, 3))\n",
         "Samples per chain = $(length(range(c)))\n",
         ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
@@ -702,7 +733,7 @@ function _clean_sections(chains::Chains, sections)
         haskey(chains.name_map, Symbol(section))
     end
 end
-function _clean_sections(chains::Chains, section::Union{String,Symbol})
+function _clean_sections(chains::Chains, section::Union{AbstractString,Symbol})
     return haskey(chains.name_map, Symbol(section)) ? section : ()
 end
 _clean_sections(::Chains, ::Nothing) = nothing
@@ -725,8 +756,11 @@ _cat(dim::Int, cs::Chains...) = _cat(Val(dim), cs...)
 
 function _cat(::Val{1}, c1::Chains, args::Chains...)
     # check inputs
-    thin = step(c1)
-    all(c -> step(c) == thin, args) || throw(ArgumentError("chain thinning differs"))
+    lastiter = last(c1)
+    for c in args
+        first(c) > lastiter || throw(ArgumentError("iterations have to be sorted"))
+        lastiter = last(c)
+    end
     nms = names(c1)
     all(c -> names(c) == nms, args) || throw(ArgumentError("chain names differ"))
     chns = chains(c1)
@@ -735,7 +769,7 @@ function _cat(::Val{1}, c1::Chains, args::Chains...)
     # concatenate all chains
     data = mapreduce(c -> c.value.data, vcat, args; init = c1.value.data)
     value = AxisArray(data;
-                      iter = range(first(c1); length = size(data, 1), step = thin),
+                      iter = mapreduce(range, vcat, args; init=range(c1)),
                       var = nms,
                       chain = chns)
 

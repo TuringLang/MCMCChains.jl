@@ -20,4 +20,20 @@ Random.seed!(20)
     c = kde(vec(chn[:s]))
     chn_weighted_sample = sample(c.x, Weights(c.density), 100000)
     @test mean(chn_weighted_sample) ≈ 5.0 atol=0.1
+
+    # issue #223
+    @testset "multiple chains" begin
+	chn = Chains(randn(11, 4, 3))
+	wv = pweights(rand(33))
+
+	for kwargs in ((), (replace=true,), (replace=false,), (ordered=false,), (ordered=true,))
+            # without weights
+            @test sample(chn, 5; kwargs...) isa Chains
+            @test size(sample(chn, 5; kwargs...)) == (5, 4, 1)
+
+            # with weights
+            @test sample(chn, wv, 5; kwargs...) isa Chains
+            @test size(sample(chn, wv, 5; kwargs...)) == (5, 4, 1)
+        end
+    end
 end

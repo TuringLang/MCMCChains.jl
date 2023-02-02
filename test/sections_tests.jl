@@ -1,5 +1,11 @@
 using  MCMCChains, Test
 
+# https://github.com/TuringLang/AdvancedMH.jl/pull/63
+@testset "order of parameters" begin
+    chains = Chains(rand(2, 10, 4), vcat(["μ[$i]" for i in 1:9], :lp), (internals=[:lp],))
+    @test names(chains, :parameters) == [Symbol("μ[$i]") for i in 1:9]
+end
+
 @testset "describe sections" begin
 
     a3d = rand(500, 9, 4)

@@ -27,13 +27,13 @@ end
 
 Convert strings to symbols.
 
-If `x isa String`, the corresponding `Symbol` is returned. Likewise, if
-`x isa AbstractVector{String}`, the corresponding vector of `Symbol`s is returned. In all
-other cases, input `x` is returned.
+If `x isa AbstractString`, the corresponding `Symbol` is returned.
+Likewise, if `x isa AbstractVector{<:AbstractString}`, the corresponding vector of `Symbol`s is returned.
+In all other cases, input `x` is returned.
 """
 string2symbol(x) = x
-string2symbol(x::String) = Symbol(x)
-string2symbol(x::AbstractVector{String}) = Symbol.(x)
+string2symbol(x::AbstractString) = Symbol(x)
+string2symbol(x::AbstractVector{<:AbstractString}) = Symbol.(x)
 
 #################### Mathematical Operators ####################
 function cummean(x::AbstractArray)
@@ -54,19 +54,6 @@ function cummean(x::AbstractVector)
         y[i] = xs / c
     end
     return y
-end
-
-## Csorgo S and Faraway JJ. The exact and asymptotic distributions of the
-## Cramer-von Mises statistic. Journal of the Royal Statistical Society,
-## Series B, 58: 221-234, 1996.
-function pcramer(q::Real)
-    p = 0.0
-    for k in 0:3
-        c1 = 4.0 * k + 1.0
-        c2 = c1^2 / (16.0 * q)
-        p += gamma(k + 0.5) / factorial(k) * sqrt(c1) * exp(-c2) * besselk(0.25, c2)
-    end
-    return p / (pi^1.5 * sqrt(q))
 end
 
 function _dict2namedtuple(d::Dict)
@@ -96,7 +83,7 @@ function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
                 :(getfield(b, $(QuoteNode(n))))
             end
         end
-        
+
         return :(NamedTuple{$names,$types}(($(values...),)))
     else
         names = Base.merge_names(an, bn)
@@ -113,7 +100,7 @@ function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
                 getfield(b, n)
             end
         end
-        
+
         return NamedTuple{names,types}(values)
     end
 end
@@ -179,8 +166,8 @@ function concretize(x::AbstractArray)
         return x
     else
         xnew = map(concretize, x)
-        T = mapreduce(typeof, promote_type, xnew)
-        if T <: eltype(xnew)
+        T = mapreduce(typeof, promote_type, xnew; init=Union{})
+        if T <: eltype(xnew) && T !== Union{}
             return convert(AbstractArray{T}, xnew)
         else
             return xnew
@@ -196,3 +183,20 @@ function concretize(x::Chains)
         return Chains(concretize(value), x.logevidence, x.name_map, x.info)
     end
 end
+
+function isstrictlyincreasing(x::AbstractVector{Int})
+    return isempty(x) || _isstrictlyincreasing_nonempty(x)
+end
+
+_isstrictlyincreasing_nonempty(x::AbstractRange{Int}) = step(x) > 0
+function _isstrictlyincreasing_nonempty(x::AbstractVector{Int})
+    i = first(x)
+    for j in Iterators.drop(x, 1)
+        j > i || return false
+        i = j
+    end
+    return true
+end
+
+# permute dims to match the dimension order of MCMCDiagnosticsTools
+_permutedims_diagnostics(x) = PermutedDimsArray(x, (1, 3, 2))

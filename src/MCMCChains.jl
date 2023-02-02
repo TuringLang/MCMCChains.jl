@@ -2,19 +2,20 @@ module MCMCChains
 
 using AxisArrays
 const axes = Base.axes
-using AbstractFFTs
 import AbstractMCMC
 import AbstractMCMC: chainscat
-using Compat
 using Distributions
 using RecipesBase
-using SpecialFunctions
 using Formatting
 using Dates
+using KernelDensity: kde, pdf
 import StatsBase: autocov, counts, sem, AbstractWeights,
     autocor, describe, quantile, sample, summarystats, cov
+
+import MCMCDiagnosticTools
 import MLJModelInterface
 import NaturalSort
+import OrderedCollections
 import PrettyTables
 import StatsFuns
 import Tables
@@ -34,13 +35,18 @@ export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
 
-# Export diagnostics functions
-export discretediag, gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag
-export hpd, ess
-
+# Reexport diagnostics functions
+using MCMCDiagnosticTools: discretediag, ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod,
+    gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag, rstar
+export discretediag
+export ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod
+export gelmandiag, gelmandiag_multivariate
+export gewekediag
+export heideldiag
+export rafterydiag
 export rstar
 
-export ESSMethod, FFTESSMethod, BDAESSMethod
+export hpd
 
 """
     Chains
@@ -70,7 +76,6 @@ include("fileio.jl")
 include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
-include("mcse.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
@@ -85,26 +90,13 @@ include("rstar.jl")
 # so we use the following hack
 const _read = Base.read
 const _write = Base.write
-@static if VERSION < v"1.1"
-    Base.@deprecate _read(
-        f::AbstractString,
-        ::Type{T}
-    ) where {T<:Chains} open(Serialization.deserialize, f, "r") false
-    Base.@deprecate _write(
-        f::AbstractString,
-        c::Chains
-    ) open(f, "w") do io
-        Serialization.serialize(io, c)
-    end false
-else
-    Base.@deprecate _read(
-        f::AbstractString,
-        ::Type{T}
-    ) where {T<:Chains} Serialization.deserialize(f) false
-    Base.@deprecate _write(
-        f::AbstractString,
-        c::Chains
-    ) Serialization.serialize(f, c) false
-end
+Base.@deprecate _read(
+    f::AbstractString,
+    ::Type{T}
+) where {T<:Chains} Serialization.deserialize(f) false
+Base.@deprecate _write(
+    f::AbstractString,
+    c::Chains
+) Serialization.serialize(f, c) false
 
 end # module

@@ -24,29 +24,37 @@ Logging.disable_logging(Logging.Warn)
     println("traceplot")
     display(traceplot(chn, 1))
     println()
-    
+
     println("meanplot")
     display(meanplot(chn, 1))
     println()
-    
+
     println("density")
     display(density(chn, 1))
     display(density(chn, 1, append_chains=true))
     println()
-    
+
     println("autocorplot")
     display(autocorplot(chn, 1))
     println()
-    
+
+    println("ridgelineplot")
+    display(ridgelineplot(chn,chn.name_map[:parameters]))
+    println()
+
+    println("forestplot")
+    display(forestplot(chn,chn.name_map[:parameters]))
+    println()
+
     #ps_contour = plot(chn, :contour)
 
     println("histogram")
     display(histogram(chn, 1))
     println()
-    
+
     println("\nmixeddensity")
     display(mixeddensity(chn, 1))
-    
+
     # plotting combinations
     display(plot(chn))
     display(plot(chn, append_chains=true))
@@ -54,7 +62,7 @@ Logging.disable_logging(Logging.Warn)
 
     # Test plotting using colordim keyword
     display(plot(chn, colordim = :parameter))
-    
+
     # Test if plotting a sub-set work.s
     display(plot(chn, 2))
     display(plot(chn, 2, colordim = :parameter))

@@ -15,6 +15,12 @@ val = hcat(val, rand(1:2, niter, 1, nchains))
 
 # construct a Chains object
 chn = Chains(val, start = 1, thin = 2)
+@test_throws ErrorException Chains(val; start=0, thin=2)
+@test_throws ErrorException Chains(val; start=niter, thin=-1)
+@test_throws ErrorException Chains(val; iterations=1:(niter - 1))
+@test_throws ErrorException Chains(val; iterations=range(0; step=2, length=niter))
+@test_throws ErrorException Chains(val; iterations=niter:-1:1)
+@test_throws ErrorException Chains(val; iterations=ones(Int, niter))
 
 # Chains object for discretediag
 val_disc = rand(Int16, 200, nparams, nchains)
@@ -29,18 +35,26 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test keys(chn) == names(chn) == [:param_1, :param_2, :param_3, :param_4]
 
     @test range(chn) == range(1; step = 2, length = niter)
+    @test range(chn) == range(Chains(val; iterations=range(chn)))
+    @test range(chn) == range(Chains(val; iterations=collect(range(chn))))
 
     @test_throws ErrorException setrange(chn, 1:10)
+    @test_throws ErrorException setrange(chn, 0:(niter - 1))
+    @test_throws ErrorException setrange(chn, niter:-1:1)
+    @test_throws ErrorException setrange(chn, ones(Int, niter))
     @test_throws MethodError setrange(chn, float.(range(chn)))
 
-    chn2 = setrange(chn, range(1; step = 10, length = niter))
-    @test range(chn2) == range(1; step = 10, length = niter)
-    @test names(chn2) === names(chn)
-    @test chains(chn2) === chains(chn)
-    @test chn2.value.data === chn.value.data
-    @test chn2.logevidence === chn.logevidence
-    @test chn2.name_map === chn.name_map
-    @test chn2.info == chn.info
+    chn2a = setrange(chn, range(1; step = 10, length = niter))
+    chn2b = setrange(chn, collect(range(1; step = 10, length = niter)))
+    for chn2 in (chn2a, chn2b)
+        @test range(chn2) == range(1; step = 10, length = niter)
+        @test names(chn2) === names(chn)
+        @test chains(chn2) === chains(chn)
+        @test chn2.value.data === chn.value.data
+        @test chn2.logevidence === chn.logevidence
+        @test chn2.name_map === chn.name_map
+        @test chn2.info == chn.info
+    end
 
     chn3 = resetrange(chn)
     @test range(chn3) == 1:niter
@@ -87,13 +101,42 @@ end
 end
 
 @testset "indexing tests" begin
-    @test chn[:,1,:] isa AbstractMatrix
-    @test chn[200:300, "param_1", :] isa AbstractMatrix
-    @test chn[200:300, ["param_1", "param_3"], :] isa Chains
-    @test chn[200:300, "param_1", 1] isa AbstractVector
-    @test size(chn[:,1,:]) == (niter, nchains)
-    @test chn[:,1,1] == val[:,1,1]
-    @test chn[:,1,2] == val[:,1,2]
+    c = chn[:, 1, :]
+    @test c isa AbstractMatrix
+    @test size(c) == (niter, nchains)
+    @test c == val[:, 1, :]
+
+    for i in 1:2
+        c = chn[:, 1, i]
+        @test c isa AbstractVector
+        @test length(c) == niter
+        @test c == val[:, 1, i]
+    end
+
+    for p in (:param_1, "param_1", SubString("param_1", 1))
+        c = chn[200:300, p, :]
+        @test c isa AbstractMatrix
+        @test size(c) == (101, size(chn, 3))
+        @test c == val[200:300, 1, :]
+
+        c = chn[200:300, p, 1]
+        @test c isa AbstractVector
+        @test length(c) == 101
+        @test c == val[200:300, 1, 1]
+    end
+
+    for ps in (
+        [:param_1, :param_3],
+        ["param_1", "param_3"],
+        [SubString("param_1", 1), "param_3"],
+        ["param_1", SubString("param_3", 1)],
+        [SubString("param_1", 1), SubString("param_3", 1)],
+    )
+        c = chn[200:300, ps, :]
+        @test c isa Chains
+        @test size(c) == (101, 2, nchains)
+        @test c.value.data == val[200:300, [1, 3], :]
+    end
 end
 
 @testset "names and groups tests" begin
@@ -102,20 +145,27 @@ end
         (@inferred replacenames(chn, Dict("param_2" => "param[2]",
                                           "param_3" => "param[3]"))).value
     @test names(chn2) == [:param_1, Symbol("param[2]"), Symbol("param[3]"), :param_4]
-    @test namesingroup(chn2, "param") == Symbol.(["param[2]", "param[3]"])
+    for p in (:param, "param", SubString("param", 1))
+        @test namesingroup(chn2, p) == Symbol.(["param[2]", "param[3]"])
+    end
 
-    chn3 = group(chn2, "param")
-    @test names(chn3) == Symbol.(["param[2]", "param[3]"])
-    @test chn3.value == chn[:, [:param_2, :param_3], :].value
+    for p in (:param, "param", SubString("param", 1))
+        chn3 = group(chn2, p)
+        @test names(chn3) == Symbol.(["param[2]", "param[3]"])
+        @test chn3.value == chn[:, [:param_2, :param_3], :].value
+    end
+
+    stan_chn = Chains(rand(100, 3, 1), ["a.1", "a[2]", "b"])
+    for p in (:a, "a", SubString("a", 1))
+        @test namesingroup(stan_chn, p; index_type=:dot) == [Symbol("a.1")]
+        @test names(group(stan_chn, p; index_type=:dot)) == [Symbol("a.1")]
+        @test_throws Exception namesingroup(stan_chn, p; index_type=:x)
+        @test_throws Exception group(stan_chn, p; index_type=:x)    
+    end
 end
 
 @testset "function tests" begin
     tchain = Chains(rand(niter, nparams, nchains), ["a", "b", "c"], Dict(:internals => ["c"]))
-
-    # the following tests only check if the function calls work!
-    @test MCMCChains.diag_all(rand(50, 2), :weiss, 1, 1, 1) != nothing
-    @test MCMCChains.diag_all(rand(50, 2), :hangartner, 1, 1, 1) != nothing
-    @test MCMCChains.diag_all(rand(50, 2), :billingsley, 1, 1, 1) != nothing
 
     @test eltype(discretediag(chn_disc[:,2:2,:])) <: ChainDataFrame
 
@@ -141,8 +191,31 @@ end
 end
 
 @testset "stats tests" begin
-    @test autocor(chn) isa Vector{<:ChainDataFrame}
-    @test autocor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+    # issue #363 (short chains)
+    for c in (chn, chn[1:10, :, :])
+        for append_chains in (true, false)
+            # Number of samples for estimation
+            carray = Array(c; append_chains=append_chains)
+            n = append_chains ? size(carray, 1) : size(first(carray), 1)
+            
+            # Default lags
+            lags = MCMCChains._default_lags(c, append_chains)
+            @test lags == filter!(x -> x < n, [1, 5, 10, 50])
+
+            acor = autocor(c; append_chains=append_chains)
+            # Number of columns in the ChainDataFrame(s): lags + parameters
+            ncols = length(lags) + 1
+            if append_chains
+                @test acor isa ChainDataFrame
+                @test size(acor)[2] == ncols
+            else
+                @test acor isa Vector{<:ChainDataFrame}
+                @test all(size(a)[2] == ncols for a in acor)
+            end
+        end
+        @test autocor(c) isa ChainDataFrame
+        @test convert(Array, autocor(c)) == convert(Array, autocor(c; append_chains=true))
+    end
 
     @test MCMCChains.cor(chn) isa ChainDataFrame
     @test MCMCChains.cor(chn; append_chains = false) isa Vector{<:ChainDataFrame}

@@ -1,5 +1,6 @@
 using MCMCChains
-using MLJModels
+using MLJBase
+using MLJDecisionTreeInterface
 using Test
 
 N = 1000
@@ -8,8 +9,7 @@ colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
 internal_colnames = ["c", "d", "e", "f", "g", "h"]
 chn = Chains(val, colnames, Dict(:internals => internal_colnames))
 
-XGBoost = @load XGBoostClassifier
-classif = XGBoost()
+classif = DecisionTreeClassifier()
 
 @testset "R star test" begin
     # Compute R* statistic for a mixed chain.
@@ -31,6 +31,6 @@ classif = XGBoost()
     chn_notmixed = Chains(val)
 
     # Restuling R value should be close to two, i.e. the classifier should be able to learn an almost perfect decision boundary between chains.
-    R = rstar(classif, chn_notmixed)
+    R = rstar(classif, chn_notmixed; split_chains=1)
     @test mean(R) ≈ 2 atol=0.1
 end
