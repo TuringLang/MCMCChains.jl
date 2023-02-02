@@ -164,5 +164,5 @@ All the values in `hpd_val` will be used to construct the intervals with `MCMCCh
 ## Caterpillar
 
 ```@example statsplots
-forestplot(chn, chn.name_map[:parameters], hpd_val = [0.05, 0.15, 0.25], ordered = True)
+forestplot(chn, chn.name_map[:parameters], hpd_val = [0.05, 0.15, 0.25], ordered = true)
 ```
