@@ -25,12 +25,12 @@ end
     x = rand(10_000, 40, 10)
     chain = Chains(x)
 
-    for method in (ESSMethod(), FFTESSMethod(), BDAESSMethod())
+    for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod()), kind in (:rank, :basic)
         # analyze chain
-        ess_df = ess_rhat(chain; method = method)
+        ess_df = ess_rhat(chain; autocov_method = autocov_method)
 
         # analyze array
-        ess_array, rhat_array = ess_rhat(permutedims(x, (1, 3, 2)); method = method)
+        ess_array, rhat_array = ess_rhat(permutedims(x, (1, 3, 2)); autocov_method = autocov_method)
 
         @test ess_df[:,2] == ess_array
         @test ess_df[:,3] == rhat_array
@@ -41,14 +41,8 @@ end
     val = rand(1, 5, 3)
     chain = Chains(val, ["a", "b", "c", "d", "e"])
 
-    for method in (ESSMethod(), FFTESSMethod(), BDAESSMethod())
+    for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod())
         # analyze chain
-        ess_df = ess_rhat(chain; method = method)
-
-        # analyze array
-        ess_array, rhat_array = ess_rhat(permutedims(val, (1, 3, 2)); method = method)
-
-        @test ismissing(ess_df[:,2][1]) # since min(maxlag, niter - 1) = 0
-        @test ismissing(ess_df[:,3][1])
+        @test_throws ArgumentError ess_rhat(chain; autocov_method = autocov_method)
     end
 end
