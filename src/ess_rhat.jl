@@ -26,7 +26,7 @@ function MCMCDiagnosticTools.ess(
     nt = if dur === missing
         merge((parameters = names(_chains),), (; ess))
     else
-        ess_per_sec = ess_rhat.ess/dur
+        ess_per_sec = ess/dur
         merge((parameters = names(_chains),), (; ess, ess_per_sec))
     end
 
