@@ -44,6 +44,7 @@ export ess, ess_rhat, rhat, AutocovMethod, FFTAutocovMethod, BDAAutocovMethod
 export gelmandiag, gelmandiag_multivariate
 export gewekediag
 export heideldiag
+export mcse
 export rafterydiag
 export rstar
 
@@ -77,6 +78,7 @@ include("fileio.jl")
 include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
+include("mcse.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
