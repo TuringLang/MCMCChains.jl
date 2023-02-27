@@ -3,7 +3,7 @@ uuid = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
 keywords = ["markov chain monte carlo", "probablistic programming"]
 license = "MIT"
 desc = "Chain types and utility functions for MCMC simulations."
-version = "5.7.1"
+version = "6.0.0"
 
 [deps]
 AbstractMCMC = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
