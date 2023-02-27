@@ -308,11 +308,14 @@ function summarystats(
     ess_tail_df = MCMCDiagnosticTools.ess(
         _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:tail
     )
-    nt_additional = (
-        mcse=mcse_df.nt.mcse,
-        ess_bulk=ess_rhat_rank_df.nt.ess,
-        ess_tail=ess_tail_df.nt.ess,
-        rhat=ess_rhat_rank_df.nt.rhat,
+    nt_additional = merge(
+        (
+            mcse=mcse_df.nt.mcse,
+            ess_bulk=ess_rhat_rank_df.nt.ess,
+            ess_tail=ess_tail_df.nt.ess,
+            rhat=ess_rhat_rank_df.nt.rhat,
+        ),
+        haskey(ess_rhat_rank_df.nt, :ess_per_sec) ? (ess_per_sec=ess_rhat_rank_df.nt.ess_per_sec,) : (),
     )
     additional_df = ChainDataFrame("Additional", nt_additional)
 
