@@ -16,24 +16,29 @@ using Test
     @test round(wall, digits=1) ≈ round(c2.info.stop_time - c1.info.start_time, digits=1)
     @test compute ≈ (MCMCChains.compute_duration(c1) + MCMCChains.compute_duration(c2))
 
-    s = ess_rhat(c)
-    @test length(s[:,:ess_per_sec]) == 5
-    @test all(map(!ismissing, s[:,:ess_per_sec]))
+    for f in (ess, ess_rhat)
+        s = f(c)
+        @test length(s[:,:ess_per_sec]) == 5
+        @test all(map(!ismissing, s[:,:ess_per_sec]))
+    end
 end
 
-@testset "ESS and R̂ (chains)" begin
+@testset "ess/rhat/ess_rhat (chains)" begin
     x = rand(10_000, 40, 10)
     chain = Chains(x)
 
-    for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod()), kind in (:rank, :basic)
+    for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod()), kind in (:bulk, :basic), f in (ess, ess_rhat, rhat)
         # analyze chain
-        ess_df = ess_rhat(chain; autocov_method = autocov_method)
+        ess_df = ess(chain; autocov_method = autocov_method, kind = kind)
+        rhat_df = rhat(chain; kind = kind)
+        ess_rhat_df = ess_rhat(chain; autocov_method = autocov_method, kind = kind)
 
         # analyze array
-        ess_array, rhat_array = ess_rhat(permutedims(x, (1, 3, 2)); autocov_method = autocov_method)
-
-        @test ess_df[:,2] == ess_array
-        @test ess_df[:,3] == rhat_array
+        ess_array, rhat_array = ess_rhat(
+            permutedims(x, (1, 3, 2)); autocov_method = autocov_method, kind = kind,
+        )
+        @test ess_df[:,2] == ess_rhat_df[:,2] == ess_array
+        @test rhat_df[:,2] == ess_rhat_df[:,3] == rhat_array
     end
 end
 
@@ -43,6 +48,8 @@ end
 
     for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod())
         # analyze chain
+        @test_throws ArgumentError ess(chain; autocov_method = autocov_method)
         @test_throws ArgumentError ess_rhat(chain; autocov_method = autocov_method)
     end
+    @test all(isnan, rhat(chain)[:, 2])
 end
