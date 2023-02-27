@@ -87,19 +87,4 @@ include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
 
-# deprecations
-# TODO: Remove dependency on Serialization if this deprecation is removed
-# somehow `@deprecate` doesn't work with qualified function names,
-# so we use the following hack
-const _read = Base.read
-const _write = Base.write
-Base.@deprecate _read(
-    f::AbstractString,
-    ::Type{T}
-) where {T<:Chains} Serialization.deserialize(f) false
-Base.@deprecate _write(
-    f::AbstractString,
-    c::Chains
-) Serialization.serialize(f, c) false
-
 end # module
