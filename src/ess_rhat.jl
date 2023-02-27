@@ -23,12 +23,8 @@ function MCMCDiagnosticTools.ess(
     dur = duration(chains)
 
     # Convert to NamedTuple
-    nt = if dur === missing
-        merge((parameters = names(_chains),), (; ess))
-    else
-        ess_per_sec = ess/dur
-        merge((parameters = names(_chains),), (; ess, ess_per_sec))
-    end
+    ess_per_sec = ess ./ dur
+    nt = merge((parameters = names(_chains),), (; ess, ess_per_sec))
 
     return ChainDataFrame("ESS", nt)
 end
@@ -82,12 +78,8 @@ function MCMCDiagnosticTools.ess_rhat(
     dur = duration(chains)
 
     # Convert to NamedTuple
-    nt = if dur === missing
-        merge((parameters = names(_chains),), ess_rhat)
-    else
-        ess_per_sec = ess_rhat.ess/dur
-        merge((parameters = names(_chains),), ess_rhat, (; ess_per_sec))
-    end
+    ess_per_sec = ess_rhat.ess ./ dur
+    nt = merge((parameters = names(_chains),), ess_rhat, (; ess_per_sec))
 
     return ChainDataFrame("ESS/R-hat", nt)
 end
