@@ -12,6 +12,10 @@ Random.seed!(0)
     println("ESS/R-hat")
     @time include("ess_rhat_tests.jl")
 
+    # run tests for mcse
+    println("MCSE")
+    @time include("mcse_tests.jl")
+
     # run plotting tests
     println("Plotting")
     @time include("plot_test.jl")
