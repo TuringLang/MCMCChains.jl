@@ -36,10 +36,11 @@ export ChainDataFrame
 export summarize
 
 # Reexport diagnostics functions
-using MCMCDiagnosticTools: discretediag, ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod,
-    gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag, rstar
+using MCMCDiagnosticTools: discretediag, ess, ess_rhat, AutocovMethod, FFTAutocovMethod,
+    BDAAutocovMethod, gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, mcse,
+    rafterydiag, rhat, rstar
 export discretediag
-export ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod
+export ess, ess_rhat, rhat, AutocovMethod, FFTAutocovMethod, BDAAutocovMethod
 export gelmandiag, gelmandiag_multivariate
 export gewekediag
 export heideldiag
