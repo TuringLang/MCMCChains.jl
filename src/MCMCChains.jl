@@ -24,7 +24,6 @@ import IteratorInterfaceExtensions
 
 import LinearAlgebra
 import Random
-import Serialization
 import Statistics: std, cor, mean, var, mean!
 
 export Chains, chains, chainscat
