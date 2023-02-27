@@ -8,9 +8,9 @@ using Random
 Random.seed!(0)
 
 @testset "MCMCChains" begin
-    # run tests for effective sample size
-    println("ESS")
-    @time include("ess_tests.jl")
+    # run tests for effective sample size and R-hat
+    println("ESS/R-hat")
+    @time include("ess_rhat_tests.jl")
 
     # run plotting tests
     println("Plotting")

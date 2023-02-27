@@ -71,7 +71,7 @@ end
 include("utils.jl")
 include("chains.jl")
 include("constructors.jl")
-include("ess.jl")
+include("ess_rhat.jl")
 include("summarize.jl")
 include("discretediag.jl")
 include("fileio.jl")
