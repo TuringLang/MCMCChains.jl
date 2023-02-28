@@ -21,7 +21,7 @@ using Statistics: std
     @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess_bulk, :ess_tail, :rhat, :ess_per_sec]
 
     # Indexing tests
-    @test convert(Array, parm_df[:a, :]) == convert(Array, parm_df[:a])
+    @test isequal(convert(Array, parm_df[:a, :]), convert(Array, parm_df[:a]))
     @test parm_df[:a, :][:,:parameters] == :a
     @test parm_df[[:a, :b], :][:,:parameters] == [:a, :b]
 
