@@ -16,6 +16,10 @@ Random.seed!(0)
     println("MCSE")
     @time include("mcse_tests.jl")
 
+    # run tests for tables interfaces
+    println("Tables interfaces")
+    @time include("tables_tests.jl")
+
     # run plotting tests
     println("Plotting")
     @time include("plot_test.jl")
@@ -47,10 +51,6 @@ Random.seed!(0)
     # run tests for array constructor
     println("Array")
     @time include("arrayconstructor_tests.jl")
-
-    # run tests for tables interfaces
-    println("Tables interfaces")
-    @time include("tables_tests.jl")
 
     # run tests for dataframe summary
     println("Summary")
