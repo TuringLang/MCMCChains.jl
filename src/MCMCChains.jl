@@ -24,7 +24,6 @@ import IteratorInterfaceExtensions
 
 import LinearAlgebra
 import Random
-import Serialization
 import Statistics: std, cor, mean, var, mean!
 
 export Chains, chains, chainscat
@@ -36,13 +35,15 @@ export ChainDataFrame
 export summarize
 
 # Reexport diagnostics functions
-using MCMCDiagnosticTools: discretediag, ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod,
-    gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, rafterydiag, rstar
+using MCMCDiagnosticTools: discretediag, ess, ess_rhat, AutocovMethod, FFTAutocovMethod,
+    BDAAutocovMethod, gelmandiag, gelmandiag_multivariate, gewekediag, heideldiag, mcse,
+    rafterydiag, rhat, rstar
 export discretediag
-export ess_rhat, ESSMethod, FFTESSMethod, BDAESSMethod
+export ess, ess_rhat, rhat, AutocovMethod, FFTAutocovMethod, BDAAutocovMethod
 export gelmandiag, gelmandiag_multivariate
 export gewekediag
 export heideldiag
+export mcse
 export rafterydiag
 export rstar
 
@@ -69,13 +70,14 @@ end
 include("utils.jl")
 include("chains.jl")
 include("constructors.jl")
-include("ess.jl")
+include("ess_rhat.jl")
 include("summarize.jl")
 include("discretediag.jl")
 include("fileio.jl")
 include("gelmandiag.jl")
 include("gewekediag.jl")
 include("heideldiag.jl")
+include("mcse.jl")
 include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
@@ -83,20 +85,5 @@ include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
-
-# deprecations
-# TODO: Remove dependency on Serialization if this deprecation is removed
-# somehow `@deprecate` doesn't work with qualified function names,
-# so we use the following hack
-const _read = Base.read
-const _write = Base.write
-Base.@deprecate _read(
-    f::AbstractString,
-    ::Type{T}
-) where {T<:Chains} Serialization.deserialize(f) false
-Base.@deprecate _write(
-    f::AbstractString,
-    c::Chains
-) Serialization.serialize(f, c) false
 
 end # module

@@ -125,7 +125,7 @@ using DataFrames
             @inferred DataFrame(chn)
             @test DataFrame(chn) isa DataFrame
             df = DataFrame(chn)
-            @test Tables.columntable(df) == Tables.columntable(chn)
+            @test isequal(Tables.columntable(df), Tables.columntable(chn))
         end
     end
 
@@ -144,7 +144,7 @@ using DataFrames
                 @test Tables.columns(cdf) === cdf
                 @test Tables.columnnames(cdf) == keys(cdf.nt)
                 for (k, v) in pairs(cdf.nt)
-                    @test Tables.getcolumn(cdf, k) == v
+                    @test isequal(Tables.getcolumn(cdf, k), v)
                 end
                 @test Tables.getcolumn(cdf, 1) == Tables.getcolumn(cdf, keys(cdf.nt)[1])
                 @test Tables.getcolumn(cdf, 2) == Tables.getcolumn(cdf, keys(cdf.nt)[2])
@@ -163,22 +163,25 @@ using DataFrames
                     row = rows[i]
                     @test Tables.columnnames(row) == keys(cdf.nt)
                     for j in length(cdf.nt)
-                        @test Tables.getcolumn(row, j) == cdf.nt[j][i]
-                        @test Tables.getcolumn(row, keys(cdf.nt)[j]) == cdf.nt[j][i]
+                        @test isequal(Tables.getcolumn(row, j), cdf.nt[j][i])
+                        @test isequal(Tables.getcolumn(row, keys(cdf.nt)[j]), cdf.nt[j][i])
                     end
                 end
             end
 
             @testset "integration tests" begin
                 @test length(Tables.rowtable(cdf)) == length(cdf.nt[1])
-                @test Tables.columntable(cdf) == cdf.nt
+                @test isequal(Tables.columntable(cdf), cdf.nt)
                 nt = Tables.rowtable(cdf)[1]
-                @test nt == (; (k => v[1] for (k, v) in pairs(cdf.nt))...)
-                @test nt == collect(Iterators.take(Tables.namedtupleiterator(cdf), 1))[1]
+                @test isequal(nt, (; (k => v[1] for (k, v) in pairs(cdf.nt))...))
+                @test isequal(nt, collect(Iterators.take(Tables.namedtupleiterator(cdf), 1))[1])
                 nt = Tables.rowtable(cdf)[2]
-                @test nt == (; (k => v[2] for (k, v) in pairs(cdf.nt))...)
-                @test nt == collect(Iterators.take(Tables.namedtupleiterator(cdf), 2))[2]
-                @test Tables.matrix(Tables.rowtable(cdf)) == Tables.matrix(Tables.columntable(cdf))
+                @test isequal(nt, (; (k => v[2] for (k, v) in pairs(cdf.nt))...))
+                @test isequal(nt, collect(Iterators.take(Tables.namedtupleiterator(cdf), 2))[2])
+                @test isequal(
+                    Tables.matrix(Tables.rowtable(cdf)),
+                    Tables.matrix(Tables.columntable(cdf)),
+                )
             end
 
             @testset "schema" begin
@@ -192,16 +195,16 @@ using DataFrames
             @test IteratorInterfaceExtensions.isiterable(cdf)
             @test TableTraits.isiterabletable(cdf)
             nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 1))[1]
-            @test nt == (; (k => v[1] for (k, v) in pairs(cdf.nt))...)
+            @test isequal(nt, (; (k => v[1] for (k, v) in pairs(cdf.nt))...))
             nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 2))[2]
-            @test nt == (; (k => v[2] for (k, v) in pairs(cdf.nt))...)
+            @test isequal(nt, (; (k => v[2] for (k, v) in pairs(cdf.nt))...))
         end
 
         @testset "DataFrames.DataFrame constructor" begin
             @inferred DataFrame(cdf)
             df = DataFrame(cdf)
             @test df isa DataFrame
-            @test Tables.columntable(df) == cdf.nt
+            @test isequal(Tables.columntable(df), cdf.nt)
         end
     end
 end
