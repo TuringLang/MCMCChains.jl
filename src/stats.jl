@@ -275,8 +275,8 @@ end
         kwargs...
     )
 
-Compute the mean, standard deviation, naive standard error, Monte Carlo standard error,
-and effective sample size for each parameter in the chain.
+Compute the mean, standard deviation, Monte Carlo standard error, bulk- and tail- effective
+sample size, and ``\\widehat{R}`` diagnostic for each parameter in the chain.
 
 Setting `append_chains=false` will return a vector of dataframes containing the summary
 statistics for each chain.
@@ -292,8 +292,8 @@ function summarystats(
     kwargs...
 )
     # Store everything.
-    funs = [mean∘cskip, std∘cskip, sem∘cskip]
-    func_names = [:mean, :std, :naive_se]
+    funs = [mean∘cskip, std∘cskip]
+    func_names = [:mean, :std]
 
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
