@@ -56,8 +56,9 @@ Logging.disable_logging(Logging.Warn)
     display(mixeddensity(chn, 1))
 
     println("corner")
-    display(corner(chn[:, 1:2, :], labels=["x", "y"]))
-    display(corner(chn[:, 1:2, 2:3], labels=["x", "y"]))
+    display(corner(chn[:, 1:2, :]))
+    # https://github.com/TuringLang/MCMCChains.jl/issues/413
+    display(corner(chn[:, 1:2, 2:3]))
 
     # plotting combinations
     display(plot(chn))

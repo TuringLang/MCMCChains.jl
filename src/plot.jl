@@ -181,7 +181,8 @@ struct Corner
 end
 
 @recipe function f(corner::Corner)
-    label --> permutedims(corner.parameters)
+    # Convert labels to string because `Symbol` is not supported generally supported.
+    label --> permutedims(map(string, corner.parameters))
     compact --> true
     size --> (600, 600)
     # NOTE: Don't use the indices from `chains(chains)`.
