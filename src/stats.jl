@@ -299,22 +299,49 @@ function summarystats(
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Calculate MCSE and ESS/R-hat separately.
-    mcse_df = MCMCDiagnosticTools.mcse(
-        _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag,
-    )
-    ess_rhat_rank_df = MCMCDiagnosticTools.ess_rhat(
-        _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:rank
-    )
-    ess_tail_df = MCMCDiagnosticTools.ess(
-        _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:tail
-    )
-    nt_additional = (
-        mcse=mcse_df.nt.mcse,
-        ess_bulk=ess_rhat_rank_df.nt.ess,
-        ess_tail=ess_tail_df.nt.ess,
-        rhat=ess_rhat_rank_df.nt.rhat,
-        ess_per_sec=ess_rhat_rank_df.nt.ess_per_sec,
-    )
+    nt_additional = NamedTuple()
+    try
+        mcse_df = MCMCDiagnosticTools.mcse(
+            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag,
+        )
+        nt_additional = merge(nt_additional, (; mcse=mcse_df.nt.mcse,))
+    catch e
+        @warn "MCSE calculation failed: $e"
+    end
+
+    try
+        ess_tail_df = MCMCDiagnosticTools.ess(
+            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:tail
+        )
+        nt_additional = merge(nt_additional, (ess_tail = ess_tail_df.nt.ess,))
+    catch e
+        @warn "Tail ESS calculation failed: $e"
+    end
+
+    try
+        ess_rhat_rank_df = MCMCDiagnosticTools.ess_rhat(
+            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:rank
+        )
+        # Preserve order.
+        nt_ess_rhat_rank = if haskey(nt_additional, :ess_tail)
+            (
+                ess_bulk=ess_rhat_rank_df.nt.ess,
+                ess_tail=nt_additional.ess_tail,
+                rhat=ess_rhat_rank_df.nt.rhat,
+                ess_per_sec=ess_rhat_rank_df.nt.ess_per_sec
+            )
+        else
+            (
+                ess_bulk=ess_rhat_rank_df.nt.ess,
+                rhat=ess_rhat_rank_df.nt.rhat,
+                ess_per_sec=ess_rhat_rank_df.nt.ess_per_sec
+            )
+        end
+        nt_additional = merge(nt_additional, nt_ess_rhat_rank)
+    catch e
+        @warn "Bulk ESS/R-hat calculation failed: $e"
+    end
+
     additional_df = ChainDataFrame("Additional", nt_additional)
 
     # Summarize.
