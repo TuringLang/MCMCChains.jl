@@ -184,7 +184,9 @@ end
     label --> permutedims(corner.parameters)
     compact --> true
     size --> (600, 600)
-    ar = collect(Array(corner.c.value[:, corner.parameters,i]) for i in chains(corner.c))
+    # NOTE: Don't use the indices from `chains(chains)`.
+    # See https://github.com/TuringLang/MCMCChains.jl/issues/413.
+    ar = collect(Array(corner.c.value[:, corner.parameters, i]) for i in 1:length(chains(corner.c)))
     RecipesBase.recipetype(:cornerplot, vcat(ar...))
 end
 
