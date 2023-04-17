@@ -321,6 +321,7 @@ function summarystats(
     try
         ess_rhat_rank_df = MCMCDiagnosticTools.ess_rhat(
             _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:rank
+        )
         nt_ess_rhat_rank = (
             ess_bulk=ess_rhat_rank_df.nt.ess,
             rhat=ess_rhat_rank_df.nt.rhat,
