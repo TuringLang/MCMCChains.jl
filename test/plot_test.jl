@@ -8,7 +8,7 @@ unicodeplots()
 
 n_iter = 500
 n_name = 3
-n_chain = 2
+n_chain = 3
 
 val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
 val = hcat(val, rand(1:2, n_iter, 1, n_chain))
@@ -54,6 +54,11 @@ Logging.disable_logging(Logging.Warn)
 
     println("\nmixeddensity")
     display(mixeddensity(chn, 1))
+
+    println("corner")
+    display(corner(chn[:, 1:2, :]))
+    # https://github.com/TuringLang/MCMCChains.jl/issues/413
+    display(corner(chn[:, 1:2, 2:3]))
 
     # plotting combinations
     display(plot(chn))
