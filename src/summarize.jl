@@ -122,7 +122,7 @@ function Base.convert(::Type{Array}, cs::Array{ChainDataFrame{T},1}) where T<:Na
 end
 
 """
-    summarize(chains, funs...[; sections, func_names = []])
+    summarize(chains, funs...[; sections, func_names = [], name = "", append_chains = true])
 
 Summarize `chains` in a `ChainsDataFrame`.
 
@@ -143,7 +143,7 @@ function summarize(
 )
     # If we weren't given any functions, fall back to summary stats.
     if isempty(funs)
-        return summarystats(chains; sections = sections)
+        return summarystats(chains; sections, append_chains, name)
     end
 
     # Generate a chain to work on.

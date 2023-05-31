@@ -289,6 +289,7 @@ function summarystats(
     append_chains::Bool = true,
     autocov_method::MCMCDiagnosticTools.AbstractAutocovMethod = AutocovMethod(),
     maxlag = 250,
+    name = "Summary Statistics",
     kwargs...
 )
     # Store everything.
@@ -339,10 +340,10 @@ function summarystats(
     # Summarize.
     summary_df = summarize(
         _chains, funs...;
-        func_names = func_names,
-        append_chains = append_chains,
-        additional_df = additional_df,
-        name = "Summary Statistics",
+        func_names,
+        append_chains,
+        additional_df,
+        name,
         sections = nothing
     )
 

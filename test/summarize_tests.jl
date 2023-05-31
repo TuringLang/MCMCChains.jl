@@ -26,8 +26,18 @@ using Statistics: std
     @test parm_df[[:a, :b], :][:,:parameters] == [:a, :b]
 
     all_sections_df = summarize(chns, sections=[:parameters, :internals])
+    @test all_sections_df isa ChainDataFrame
     @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
     @test size(all_sections_df) == (8, 8)
+    @test all_sections_df.name == "Summary Statistics"
+
+    all_sections_dfs = summarize(chns, sections=[:parameters, :internals], name = "Summary", append_chains = false)
+    @test all_sections_dfs isa Vector{<:ChainDataFrame}
+    for (i, all_sections_df) in enumerate(all_sections_dfs)
+        @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
+        @test size(all_sections_df) == (8, 8)
+        @test all_sections_df.name == "Summary (Chain $i)"
+    end
 
     two_parms_two_funs_df = summarize(chns[[:a, :b]], mean, std)
     @test two_parms_two_funs_df[:, :parameters] == [:a, :b]
