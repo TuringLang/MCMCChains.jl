@@ -29,7 +29,7 @@ using Statistics: std
     @test all_sections_df isa ChainDataFrame
     @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
     @test size(all_sections_df) == (8, 8)
-    @test all_sections_df.name == "Summary Statistics"
+    @test all_sections_df.name == ""
 
     all_sections_dfs = summarize(chns, sections=[:parameters, :internals], name = "Summary", append_chains = false)
     @test all_sections_dfs isa Vector{<:ChainDataFrame}
