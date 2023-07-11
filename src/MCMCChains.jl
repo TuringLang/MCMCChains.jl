@@ -48,6 +48,7 @@ export rafterydiag
 export rstar
 
 export hpd
+export p_direction
 
 """
     Chains
@@ -85,5 +86,6 @@ include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
+include("significance.jl")
 
 end # module
