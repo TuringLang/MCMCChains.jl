@@ -208,7 +208,7 @@ end
 @deprecate hpd(chn::Chains; alpha::Real=0.05, kwargs...) hdi(chn; prob=1 - alpha, kwargs...)
 
 """
-    quantile(chains[; q = [0.025, 0.25, 0.5, 0.75, 0.975], append_chains = true, kwargs...])
+    quantile(chains[; q = (0.025, 0.25, 0.5, 0.75, 0.975), append_chains = true, kwargs...])
 
 Compute the quantiles for each parameter in the chain.
 
@@ -217,15 +217,17 @@ for each chain.
 """
 function quantile(
     chains::Chains;
-    q::AbstractVector = [0.025, 0.25, 0.5, 0.75, 0.975],
+    q::Union{Tuple,AbstractVector} = (0.025, 0.25, 0.5, 0.75, 0.975),
     kwargs...
 )
     # compute quantiles
-    stats_funs = map(q) do qi
-        nm = Symbol(100 * qi, :%)
-        return nm => Base.Fix2(quantile, qi) ∘ cskip
-    end
-    return summarize(chains, stats_funs...; name = "Quantiles", kwargs...)
+    func_names = Tuple(Symbol.(100 .* q, :%))
+    return summarize(
+        chains,
+        func_names => (Base.Fix2(quantile, q) ∘ cskip);
+        name="Quantiles",
+        kwargs...,
+    )
 end
 
 
