@@ -22,10 +22,9 @@ function autocor(
     lags::AbstractVector{<:Integer} = _default_lags(chains, append_chains),
     kwargs...
 )
-    funs = map(lags) do lag
-        return Symbol("lag ", lag) => (x -> autocor(x, [i], demean=demean)[1])
-    end
-    return summarize(chains, funs...; name = "Autocorrelation", kwargs...)
+    fun_names = Tuple(Symbol.("lag", lags))
+    fun = (x -> autocor(x, lags; demean=demean))
+    return summarize(chains, fun_names => fun; name = "Autocorrelation", append_chains, kwargs...)
 end
 
 """
