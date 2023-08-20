@@ -42,7 +42,7 @@ function PosteriorStats.summarize(
 
     if append_chains
         # Evaluate the functions.
-        data = _permutedims_diagnostics(chains.value.data)
+        data = _permutedims_diagnostics(chn.value.data)
         summarize(data, funs...; var_names=names_of_params, kwargs...)
     else
         # Evaluate the functions.
