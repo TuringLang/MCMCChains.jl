@@ -64,7 +64,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
         # Chains are already appended in `c` if desired, hence we use `append_chains=false`
         ac = autocor(c; sections = nothing, lags = lags, append_chains=false)
-        ac_mat = convert(Array, ac)
+        ac_mat = cat(reduce.(hcat, Iterators.drop.(ac, 1))...; dims=3)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ supportedplots
@@ -209,7 +209,7 @@ function _compute_plot_data(
     ordered = false
 )
 
-    chain_dic = Dict(zip(quantile(chains)[:,1], quantile(chains)[:,4]))
+    chain_dic = Dict(zip(quantile(chains)[2], quantile(chains)[5]))
     sorted_chain = sort(collect(zip(values(chain_dic), keys(chain_dic))))
     sorted_par = [sorted_chain[i][2] for i in 1:length(par_names)]
     par = (ordered ? sorted_par : par_names)
@@ -217,9 +217,9 @@ function _compute_plot_data(
 
     chain_sections = MCMCChains.group(chains, Symbol(par[i]))
     chain_vec = vec(chain_sections.value.data)
-    lower_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower
+    lower_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j])[:lower]
         for j in 1:length(hpdi)]
-    upper_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper
+    upper_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j])[:upper]
         for j in 1:length(hpdi)]
     h = _riser + spacer*(i-1)
     qs = quantile(chain_vec, q)
