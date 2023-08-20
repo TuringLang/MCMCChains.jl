@@ -245,23 +245,14 @@ for each chain.
 function quantile(
     chains::Chains;
     q::AbstractVector = [0.025, 0.25, 0.5, 0.75, 0.975],
-    append_chains = true,
     kwargs...
 )
     # compute quantiles
-    funs = Function[]
-    func_names = @. Symbol(100 * q, :%)
-    for i in q
-        push!(funs, x -> quantile(cskip(x), i))
+    stats_funs = map(q) do qi
+        nm = Symbol(100 * qi, :%)
+        return nm => Base.Fix2(quantile, qi) ∘ cskip
     end
-
-    return summarize(
-        chains, funs...;
-        func_names = func_names,
-        append_chains = append_chains,
-        name = "Quantiles",
-        kwargs...
-    )
+    return summarize(chains, stats_funs...; name = "Quantiles", kwargs...)
 end
 
 
