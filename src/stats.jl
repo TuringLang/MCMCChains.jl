@@ -23,7 +23,7 @@ function autocor(
     kwargs...
 )
     fun_names = Tuple(Symbol.("lag", lags))
-    fun = (x -> autocor(x, lags; demean=demean))
+    fun = (x -> autocor(vec(x), lags; demean=demean))
     return summarize(chains, fun_names => fun; name = "Autocorrelation", append_chains, kwargs...)
 end
 
