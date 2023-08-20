@@ -63,11 +63,11 @@ function cor(
     names_of_params = names(_chains)
 
     if append_chains
-        df = chaindataframe_cor("Correlation", names_of_params, to_matrix(_chains))
+        df = summarystats_cor("Correlation", names_of_params, to_matrix(_chains))
         return df
     else
         vector_of_df = [
-            chaindataframe_cor(
+            summarystats_cor(
                 "Correlation - Chain $i", names_of_params, data
             )
             for (i, data) in enumerate(to_vector_of_matrices(_chains))
@@ -76,16 +76,16 @@ function cor(
     end
 end
 
-function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwargs...)
+function summarystats_cor(name, names_of_params, chains::AbstractMatrix; kwargs...)
     # Compute the correlation matrix.
     cormat = cor(chains)
 
     # Summarize the results in a named tuple.
-    nt = (; parameters = names_of_params,
+    nt = (; parameter = names_of_params,
           zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...)
 
-    # Create a ChainDataFrame.
-    return ChainDataFrame(name, nt; kwargs...)
+    # Create a SummaryStats.
+    return SummaryStats(name, nt; kwargs...)
 end
 
 """
@@ -109,28 +109,28 @@ function changerate(
     names_of_params = names(_chains)
 
     if append_chains
-        df = chaindataframe_changerate("Change Rate", names_of_params, _chains.value.data)
-        return df
+        stats = summarystats_changerate("Change Rate", names_of_params, _chains.value.data)
+        return stats
     else
-        vector_of_df = [
-            chaindataframe_changerate(
+        vector_of_stats = [
+            summarystats_changerate(
                 "Change Rate - Chain $i", names_of_params, data
             )
             for (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
-        return vector_of_df
+        return vector_of_stats
     end
 end
 
-function chaindataframe_changerate(name, names_of_params, chains; kwargs...)
+function summarystats_changerate(name, names_of_params, chains; kwargs...)
     # Compute the change rates.
     changerates, mvchangerate = changerate(chains)
 
     # Summarize the results in a named tuple.
-    nt = (; zip(names_of_params, changerates)..., multivariate = mvchangerate)
+    nt = (; parameter=names_of_params, changerate=changerates)
 
-    # Create a ChainDataFrame.
-    return ChainDataFrame(name, nt; kwargs...)
+    # Create a SummaryStats.
+    return SummaryStats(name, nt; kwargs...), mvchangerate
 end
 
 changerate(chains::AbstractMatrix{<:Real}) = changerate(reshape(chains, Val(3)))
