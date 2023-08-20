@@ -193,45 +193,29 @@ function describe(
     return dfs
 end
 
-function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
-    n = length(x)
-    m = max(1, ceil(Int, alpha * n))
-
-    y = sort(x)
-    a = y[1:m]
-    b = y[(n - m + 1):n]
-    _, i = findmin(b - a)
-
-    return [a[i], b[i]]
-end
-
 """
-    hpd(chn::Chains; alpha::Real=0.05, kwargs...)
+    hdi(chn::Chains; prob::Real=0.94, kwargs...)
 
-Return the highest posterior density interval representing `1-alpha` probability mass.
+Return the unimodal highest density interval (HDI) representing `prob` probability mass.
 
 Note that this will return a single interval and will not return multiple intervals for discontinuous regions.
 
 # Examples
 
-```julia-repl
-julia> val = rand(500, 2, 3);
+```jldoctest; setup = :(using Random; Random.seed!(582))
+julia> val = rand(500, 2, 3)
+
 julia> chn = Chains(val, [:a, :b]);
 
-julia> hpd(chn)
-HPD
-  parameters     lower     upper 
-      Symbol   Float64   Float64 
-
-           a    0.0554    0.9944
-           b    0.0114    0.9460
+julia> hdi(chn)
+HDI
+      lower  upper
+ a  0.0749   0.999
+ b  0.00531  0.940
 ```
 """
-function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
-    labels = [:lower, :upper]
-    l(x) = _hpd(x, alpha=alpha)[1]
-    u(x) = _hpd(x, alpha=alpha)[2]
-    return summarize(chn, l, u; name = "HPD", func_names = labels, kwargs...)
+function PosteriorStats.hdi(chn::Chains; prob::Real=0.94, kwargs...)
+    return summarize(chn, (:lower, :upper) => (x -> hdi(x; prob)); name = "HDI", kwargs...)
 end
 
 """
