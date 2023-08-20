@@ -17,24 +17,14 @@ Setting `append_chains=false` will return a vector of dataframes containing the 
 """
 function autocor(
     chains::Chains;
-    append_chains = true,
     demean::Bool = true,
     lags::AbstractVector{<:Integer} = _default_lags(chains, append_chains),
     kwargs...
 )
-    funs = Function[]
-    func_names = @. Symbol("lag ", lags)
-    for i in lags
-        push!(funs, x -> autocor(x, [i], demean=demean)[1])
+    funs = map(lags) do lag
+        return Symbol("lag ", lag) => (x -> autocor(x, [i], demean=demean)[1])
     end
-
-    return summarize(
-        chains, funs...;
-        func_names = func_names,
-        append_chains = append_chains,
-        name = "Autocorrelation",
-        kwargs...
-    )
+    return summarize(chains, funs...; name = "Autocorrelation", kwargs...)
 end
 
 """
