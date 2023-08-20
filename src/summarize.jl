@@ -32,6 +32,7 @@ function PosteriorStats.summarize(
     sections = _default_sections(chains),
     append_chains::Bool = true,
     var_names=nothing,
+    name::AbstractString = "SummaryStats",
     kwargs...
 )
     # Generate a chain to work on.
@@ -43,13 +44,14 @@ function PosteriorStats.summarize(
     if append_chains
         # Evaluate the functions.
         data = _permutedims_diagnostics(chn.value.data)
-        summarize(data, funs...; var_names=names_of_params, kwargs...)
+        summarize(data, funs...; var_names=names_of_params, name, kwargs...)
     else
         # Evaluate the functions.
         data = to_vector_of_matrices(chn)
-        return map(data) do x
+        return map(enumerate(data)) do (i, x)
             z = reshape(x, size(x, 1), 1, size(x, 2))
-            summarize(z, funs...; var_names=names_of_params, kwargs...)
+            name_chain = name * " (Chain $i)"
+            summarize(z, funs...; var_names=names_of_params, name=name_chain, kwargs...)
         end
     end
 end
