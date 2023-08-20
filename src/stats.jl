@@ -17,6 +17,7 @@ Setting `append_chains=false` will return a vector of dataframes containing the 
 """
 function autocor(
     chains::Chains;
+    append_chains::Bool = true,
     demean::Bool = true,
     lags::AbstractVector{<:Integer} = _default_lags(chains, append_chains),
     kwargs...
