@@ -176,9 +176,8 @@ function describe(
     q = [0.025, 0.25, 0.5, 0.75, 0.975],
     kwargs...
 )
-    dfs = vcat(summarystats(chains; etype = etype, kwargs...),
-               quantile(chains; q = q, kwargs...))
-    return dfs
+    stats = [summarystats(chains; kwargs...), quantile(chains; q = q, kwargs...)]
+    return stats
 end
 
 """
