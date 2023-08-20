@@ -190,7 +190,7 @@ Note that this will return a single interval and will not return multiple interv
 # Examples
 
 ```jldoctest; setup = :(using Random; Random.seed!(582))
-julia> val = rand(500, 2, 3)
+julia> val = rand(500, 2, 3);
 
 julia> chn = Chains(val, [:a, :b]);
 
