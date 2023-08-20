@@ -1,8 +1,11 @@
 # Summarize
 
-The methods listed below are defined in `src/summarize.jl`.
+The methods listed below are related to summarizing chains.
 
-```@autodocs
-Modules = [MCMCChains]
-Pages = ["summarize.jl"]
+```@docs
+SummaryStats
+summarize
+default_summary_stats
+default_stats
+default_diagnostics
 ```
