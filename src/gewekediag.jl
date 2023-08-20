@@ -18,12 +18,12 @@ function MCMCDiagnosticTools.gewekediag(
         return namedtuple_of_vecs
     end
 
-    # Create data frames.
-    parameters = (parameters = names(_chains),)
-    dfs = [
-        ChainDataFrame("Geweke diagnostic - Chain $i", merge(parameters, result))
+    # Create SummaryStats.
+    parameters = (parameter = names(_chains),)
+    stats = [
+        SummaryStats("Geweke diagnostic - Chain $i", merge(parameters, result))
         for (i, result) in enumerate(results)
     ]
 
-    return dfs
+    return stats
 end

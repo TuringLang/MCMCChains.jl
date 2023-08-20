@@ -24,9 +24,9 @@ function MCMCDiagnosticTools.ess(
 
     # Convert to NamedTuple
     ess_per_sec = ess ./ dur
-    nt = merge((parameters = names(_chains),), (; ess, ess_per_sec))
+    nt = merge((parameter = names(_chains),), (; ess, ess_per_sec))
 
-    return ChainDataFrame("ESS", nt)
+    return SummaryStats("ESS", nt)
 end
 
 """
@@ -48,9 +48,9 @@ function MCMCDiagnosticTools.rhat(
     )
 
     # Convert to NamedTuple
-    nt = merge((parameters = names(_chains),), (; rhat))
+    nt = merge((parameter = names(_chains),), (; rhat))
 
-    return ChainDataFrame("R-hat", nt)
+    return SummaryStats("R-hat", nt)
 end
 
 """
@@ -79,7 +79,7 @@ function MCMCDiagnosticTools.ess_rhat(
 
     # Convert to NamedTuple
     ess_per_sec = ess_rhat.ess ./ dur
-    nt = merge((parameters = names(_chains),), ess_rhat, (; ess_per_sec))
+    nt = merge((parameter = names(_chains),), ess_rhat, (; ess_per_sec))
 
-    return ChainDataFrame("ESS/R-hat", nt)
+    return SummaryStats("ESS/R-hat", nt)
 end

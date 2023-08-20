@@ -12,12 +12,12 @@ function MCMCDiagnosticTools.gelmandiag(
     results = MCMCDiagnosticTools.gelmandiag(_permutedims_diagnostics(psi); kwargs...)
 
     # Create a data frame with the results.
-    df = ChainDataFrame(
+    stats = SummaryStats(
         "Gelman, Rubin, and Brooks diagnostic",
-        merge((parameters = names(_chains),), results),
+        merge((parameter = names(_chains),), results),
     )
 
-    return df
+    return stats
 end
 
 function MCMCDiagnosticTools.gelmandiag_multivariate(
@@ -36,11 +36,11 @@ function MCMCDiagnosticTools.gelmandiag_multivariate(
         kwargs...,
     )
 
-    # Create a data frame with the results.
-    df = ChainDataFrame(
+    # Create SummaryStats with the results.
+    stats = SummaryStats(
         "Gelman, Rubin, and Brooks diagnostic",
-        (parameters = names(_chains), psrf = results.psrf, psrfci = results.psrfci),
+        (parameter = names(_chains), psrf = results.psrf, psrfci = results.psrfci),
     )
 
-    return df, results.psrfmultivariate
+    return stats, results.psrfmultivariate
 end

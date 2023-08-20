@@ -16,14 +16,14 @@ function MCMCDiagnosticTools.heideldiag(
         return namedtuple_of_vecs
     end
 
-    # Create data frames.
-    parameters = (parameters = names(_chains),)
-    dfs = [
-        ChainDataFrame(
+    # Create SummaryStats.
+    parameters = (parameter = names(_chains),)
+    stats = [
+        SummaryStats(
             "Heidelberger and Welch diagnostic - Chain $i", merge(parameters, result)
         )
         for (i, result) in enumerate(results)
     ]
 
-    return dfs
+    return stats
 end
