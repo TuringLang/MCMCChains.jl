@@ -283,19 +283,7 @@ end
 Calculate the mean of a chain.
 """
 function mean(chains::Chains; kwargs...)
-    # Store everything.
-    funs = [mean∘cskip]
-    func_names = [:mean]
-
-    # Summarize.
-    summary_df = summarize(
-        chains, funs...;
-        func_names = func_names,
-        name = "Mean",
-        kwargs...
-    )
-
-    return summary_df
+    return summarize(chains, :mean => mean ∘ cskip; name = "Mean", kwargs...)
 end
 
 mean(chn::Chains, syms) = mean(chn[:, syms, :])
