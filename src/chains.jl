@@ -352,6 +352,7 @@ function Base.show(io::IO, mime::MIME"text/plain", chains::Chains)
     summaries = describe(chains)
     for summary in summaries
         println(io)
+        println(io)
         show(io, mime, summary)
     end
 end
