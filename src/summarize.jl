@@ -6,7 +6,7 @@
         [sections, var_names],
     )
 
-Summarize `chains` in a `PosteriorStats.SummaryStats`.
+Summarize `chains` in a [`SummaryStats`](@ref).
 
 `stats_funs` is a collection of functions that reduces a matrix with shape `(draws, chains)`
 to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` may be a
