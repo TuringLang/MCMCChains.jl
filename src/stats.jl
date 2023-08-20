@@ -218,6 +218,8 @@ function PosteriorStats.hdi(chn::Chains; prob::Real=0.94, kwargs...)
     return summarize(chn, (:lower, :upper) => (x -> hdi(x; prob)); name = "HDI", kwargs...)
 end
 
+@deprecate hpd(chn::Chains; alpha::Real=0.05, kwargs...) hdi(chn; prob=1 - alpha, kwargs...)
+
 """
     quantile(chains[; q = [0.025, 0.25, 0.5, 0.75, 0.975], append_chains = true, kwargs...])
 

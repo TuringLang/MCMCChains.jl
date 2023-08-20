@@ -47,7 +47,6 @@ export mcse
 export rafterydiag
 export rstar
 
-export hpd
 # Reexport stats functions
 using PosteriorStats: default_diagnostics, default_stats, default_summary_stats, hdi,
     summarize
