@@ -122,9 +122,9 @@ function Base.convert(::Type{Array}, cs::Array{ChainDataFrame{T},1}) where T<:Na
 end
 
 """
-    summarize(chains, funs...[; sections, func_names = [], name = "", append_chains = true])
+    summarize(chains, funs...[; sections, name = "", append_chains = true])
 
-Summarize `chains` in a `ChainsDataFrame`.
+Summarize `chains` in a `PosteriorStats.SummaryStats`.
 
 # Examples
 
