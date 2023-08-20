@@ -133,56 +133,28 @@ Summarize `chains` in a `ChainsDataFrame`.
 * `summarize(chns; sections=[:parameters])`  : Chain summary of :parameters section
 * `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
-function summarize(
+function PosteriorStats.summarize(
     chains::Chains, funs...;
     sections = _default_sections(chains),
-    func_names::AbstractVector{Symbol} = Symbol[],
     append_chains::Bool = true,
-    name::String = "",
-    additional_df = nothing
+    kwargs...
 )
-    # If we weren't given any functions, fall back to summary stats.
-    if isempty(funs)
-        return summarystats(chains; sections, append_chains, name)
-    end
-
     # Generate a chain to work on.
     chn = Chains(chains, _clean_sections(chains, sections))
 
     # Obtain names of parameters.
     names_of_params = names(chn)
 
-    # If no function names were given, make a new list.
-    fnames = isempty(func_names) ? collect(nameof.(funs)) : func_names
-
-    # Obtain the additional named tuple.
-    additional_nt = additional_df === nothing ? NamedTuple() : additional_df.nt
-
     if append_chains
         # Evaluate the functions.
-        data = to_matrix(chn)
-        fvals = [[f(data[:, i]) for i in axes(data, 2)] for f in funs]
-
-        # Build the ChainDataFrame.
-        nt = merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-        df = ChainDataFrame(name, nt)
-
-        return df
+        data = _permutedims_diagnostics(chains.value.data)
+        summarize(data, funs...; var_names=names_of_params, kwargs...)
     else
         # Evaluate the functions.
         data = to_vector_of_matrices(chn)
-        vector_of_fvals = [[[f(x[:, i]) for i in axes(x, 2)] for f in funs] for x in data]
-
-        # Build the ChainDataFrames.
-        vector_of_nt = [
-            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-            for fvals in vector_of_fvals
-        ]
-        vector_of_df = [
-            ChainDataFrame(name * " (Chain $i)", nt)
-            for (i, nt) in enumerate(vector_of_nt)
-        ]
-
-        return vector_of_df
+        return map(data) do x
+            z = reshape(x, size(x, 1), 1, size(x, 2))
+            summarize(z, funs...; var_names=names_of_params, kwargs...)
+        end
     end
 end
