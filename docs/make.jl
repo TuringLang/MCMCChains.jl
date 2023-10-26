@@ -28,7 +28,6 @@ makedocs(
     ],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     modules = [MCMCChains],
-    strict = true,
     checkdocs = :exports,
 )
 
