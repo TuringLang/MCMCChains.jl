@@ -109,7 +109,7 @@ function summarystats_cor(name, names_of_params, chains::AbstractMatrix)
     cormat = cor(chains)
 
     # Summarize the results in a dict
-    dict = OrderedCollections.OrderedDict(zip(names_of_params, eachcol(cormat)))
+    dict = OrderedCollections.OrderedDict(k => v for (k, v) in zip(names_of_params, eachcol(cormat)))
 
     # Create a SummaryStats.
     return SummaryStats(name, dict, names_of_params)
