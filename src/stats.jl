@@ -17,14 +17,43 @@ Setting `append_chains=false` will return a vector of dataframes containing the 
 """
 function autocor(
     chains::Chains;
+    sections = _default_sections(chains),
     append_chains::Bool = true,
     demean::Bool = true,
     lags::AbstractVector{<:Integer} = _default_lags(chains, append_chains),
-    kwargs...
+    var_names = nothing,
+    kwargs...,
 )
-    fun_names = Tuple(Symbol.("lag", lags))
-    fun = (x -> autocor(vec(x), lags; demean=demean))
-    return summarize(chains, fun_names => fun; name = "Autocorrelation", append_chains, kwargs...)
+    chn = Chains(chains, _clean_sections(chains, sections))
+
+    # Obtain names of parameters.
+    names_of_params = var_names === nothing ? names(chn) : var_names
+
+    # set up the functions to be evaluated
+    col_names = Symbol.("lag", lags)
+
+    # avoids using summarize directly to support simultaneously computing a large number of
+    # lags without constructing a huge NamedTuple
+    if append_chains
+        # Evaluate the functions.
+        data = _permutedims_diagnostics(chn.value.data)
+        vals = stack(map(eachslice(data; dims=3)) do x
+            return autocor(vec(x), lags; demean=demean)
+        end)
+        table = Tables.table(vals'; header=col_names)
+        return SummaryStats("Autocorrelation", table, names_of_params)
+    else
+        # Evaluate the functions.
+        data = to_vector_of_matrices(chn)
+        return map(enumerate(data)) do (i, x)
+            name_chain = "Autocorrelation (Chain $i)"
+            vals = stack(map(eachslice(x; dims=2)) do xi
+                return autocor(xi, lags; demean=demean)
+            end)
+            table = Tables.table(vals'; header=col_names)
+            return SummaryStats(name_chain, table, names_of_params)
+        end
+    end
 end
 
 """
