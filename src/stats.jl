@@ -215,16 +215,18 @@ Note that this will return a single interval and will not return multiple interv
 
 # Examples
 
-```jldoctest; setup = :(using Random; Random.seed!(582))
-julia> val = rand(500, 2, 3);
+```jldoctest
+julia> using StableRNGs; rng = StableRNG(42);
+
+julia> val = rand(rng, 500, 2, 3);
 
 julia> chn = Chains(val, [:a, :b]);
 
 julia> hdi(chn)
 HDI
-      lower  upper
- a  0.0749   0.999
- b  0.00531  0.940
+     lower  upper
+ a  0.0630  0.994
+ b  0.0404  0.968
 ```
 """
 function PosteriorStats.hdi(chn::Chains; prob::Real=0.94, kwargs...)
