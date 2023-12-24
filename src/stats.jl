@@ -76,16 +76,15 @@ function cor(
     end
 end
 
-function summarystats_cor(name, names_of_params, chains::AbstractMatrix; kwargs...)
+function summarystats_cor(name, names_of_params, chains::AbstractMatrix)
     # Compute the correlation matrix.
     cormat = cor(chains)
 
-    # Summarize the results in a named tuple.
-    nt = (; parameter = names_of_params,
-          zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...)
+    # Summarize the results in a dict
+    dict = OrderedCollections.OrderedDict(zip(names_of_params, eachcol(cormat)))
 
     # Create a SummaryStats.
-    return SummaryStats(name, nt; kwargs...)
+    return SummaryStats(name, dict, names_of_params)
 end
 
 """
