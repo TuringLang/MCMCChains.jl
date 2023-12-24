@@ -1,5 +1,6 @@
 module MCMCChains
 
+using Compat: stack
 using AxisArrays
 const axes = Base.axes
 import AbstractMCMC
