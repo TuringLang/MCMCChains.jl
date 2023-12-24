@@ -43,7 +43,7 @@ function _default_lags(chains::Chains, append_chains::Bool)
 end
 
 """
-    cor(chains[; sections, append_chains = true, kwargs...])
+    cor(chains[; sections, append_chains = true])
 
 Compute the Pearson correlation matrix for the chain.
 
@@ -54,7 +54,6 @@ function cor(
     chains::Chains;
     sections = _default_sections(chains),
     append_chains = true,
-    kwargs...
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
@@ -88,7 +87,7 @@ function summarystats_cor(name, names_of_params, chains::AbstractMatrix)
 end
 
 """
-    changerate(chains[; sections, append_chains = true, kwargs...])
+    changerate(chains[; sections, append_chains = true])
 
 Compute the change rate for the chain.
 
@@ -99,7 +98,6 @@ function changerate(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
     append_chains = true,
-    kwargs...
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
