@@ -14,7 +14,8 @@ function MCMCDiagnosticTools.gelmandiag(
     # Create a data frame with the results.
     stats = SummaryStats(
         "Gelman, Rubin, and Brooks diagnostic",
-        merge((parameter = names(_chains),), results),
+        results,
+        names(_chains),
     )
 
     return stats
@@ -39,7 +40,8 @@ function MCMCDiagnosticTools.gelmandiag_multivariate(
     # Create SummaryStats with the results.
     stats = SummaryStats(
         "Gelman, Rubin, and Brooks diagnostic",
-        (parameter = names(_chains), psrf = results.psrf, psrfci = results.psrfci),
+        (psrf = results.psrf, psrfci = results.psrfci),
+        names(_chains),
     )
 
     return stats, results.psrfmultivariate

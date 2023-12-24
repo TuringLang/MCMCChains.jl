@@ -16,7 +16,7 @@ function MCMCDiagnosticTools.mcse(
         kwargs...,
     )
 
-    nt = merge((parameter = names(_chains),), (; mcse))
+    nt = (; mcse)
 
-    return SummaryStats("MCSE", nt)
+    return SummaryStats("MCSE", nt, names(_chains))
 end

@@ -122,15 +122,15 @@ function changerate(
     end
 end
 
-function summarystats_changerate(name, names_of_params, chains; kwargs...)
+function summarystats_changerate(name, names_of_params, chains)
     # Compute the change rates.
     changerates, mvchangerate = changerate(chains)
 
     # Summarize the results in a named tuple.
-    nt = (; parameter=names_of_params, changerate=changerates)
+    nt = (; changerate=changerates)
 
     # Create a SummaryStats.
-    return SummaryStats(name, nt; kwargs...), mvchangerate
+    return SummaryStats(name, nt, names_of_params), mvchangerate
 end
 
 changerate(chains::AbstractMatrix{<:Real}) = changerate(reshape(chains, Val(3)))

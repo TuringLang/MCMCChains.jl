@@ -17,10 +17,9 @@ function MCMCDiagnosticTools.heideldiag(
     end
 
     # Create SummaryStats.
-    parameters = (parameter = names(_chains),)
     stats = [
         SummaryStats(
-            "Heidelberger and Welch diagnostic - Chain $i", merge(parameters, result)
+            "Heidelberger and Welch diagnostic - Chain $i", result, names(_chains),
         )
         for (i, result) in enumerate(results)
     ]
