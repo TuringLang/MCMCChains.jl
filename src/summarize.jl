@@ -104,8 +104,11 @@ function Base.lastindex(c::ChainDataFrame, i::Integer)
     end
 end
 
-function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
+function Base.convert(::Type{Array}, c::ChainDataFrame)
     T = promote_eltype_namedtuple_tail(c.nt)
+    return convert(Array{T}, c)
+end
+function Base.convert(::Type{Array{T}}, c::ChainDataFrame) where {T}
     arr = Array{T, 2}(undef, c.nrows, c.ncols - 1)
 
     for (i, k) in enumerate(Iterators.drop(keys(c.nt), 1))
@@ -115,9 +118,13 @@ function Base.convert(::Type{Array}, c::C) where C<:ChainDataFrame
     return arr
 end
 
-function Base.convert(::Type{Array}, cs::Array{ChainDataFrame{T},1}) where T<:NamedTuple
+function Base.convert(::Type{Array}, cs::Vector{ChainDataFrame{NamedTuple{K,V}}}) where {K,V}
+    T = promote_eltype_tuple_type(Base.tuple_type_tail(V))
+    return convert(Array{T}, cs)
+end
+function Base.convert(::Type{Array{T}}, cs::Vector{<:ChainDataFrame}) where {T}
     return mapreduce((x, y) -> cat(x, y; dims = Val(3)), cs) do c
-        reshape(convert(Array, c), Val(3))
+        reshape(convert(Array{T}, c), Val(3))
     end
 end
 
