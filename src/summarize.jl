@@ -118,11 +118,11 @@ function Base.convert(::Type{Array{T}}, c::ChainDataFrame) where {T}
     return arr
 end
 
-function Base.convert(::Type{Array}, cs::Vector{ChainDataFrame{NamedTuple{<:Any,V}}}) where {V}
+function Base.convert(::Type{Array}, cs::Vector{ChainDataFrame{NamedTuple{K,V}}}) where {K,V}
     T = promote_eltype_tuple_type(Base.tuple_type_tail(V))
     return convert(Array{T}, cs)
 end
-function Base.convert(::Type{Array{T}}, cs::Vector{ChainDataFrame{<:NamedTuple}}) where {T}
+function Base.convert(::Type{Array{T}}, cs::Vector{<:ChainDataFrame}) where {T}
     return mapreduce((x, y) -> cat(x, y; dims = Val(3)), cs) do c
         reshape(convert(Array{T}, c), Val(3))
     end
