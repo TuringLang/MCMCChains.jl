@@ -50,8 +50,7 @@ export rstar
 # Reexport stats functions
 using PosteriorStats: SummaryStats, default_diagnostics, default_stats,
     default_summary_stats, hdi, summarize
-export SummaryStats, default_diagnostics, default_stats, default_summary_stats, hdi,
-    summarize
+export SummaryStats, hdi, summarize
 
 """
     Chains

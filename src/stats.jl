@@ -29,13 +29,12 @@ function autocor(
     # Obtain names of parameters.
     names_of_params = var_names === nothing ? names(chn) : var_names
 
-    # set up the functions to be evaluated
+    # Construct column names for lags.
     col_names = Symbol.("lag", lags)
 
     # avoids using summarize directly to support simultaneously computing a large number of
     # lags without constructing a huge NamedTuple
     if append_chains
-        # Evaluate the functions.
         data = _permutedims_diagnostics(chn.value.data)
         vals = stack(map(eachslice(data; dims=3)) do x
             return autocor(vec(x), lags; demean=demean)
@@ -43,7 +42,6 @@ function autocor(
         table = Tables.table(vals'; header=col_names)
         return SummaryStats("Autocorrelation", table, names_of_params)
     else
-        # Evaluate the functions.
         data = to_vector_of_matrices(chn)
         return map(enumerate(data)) do (i, x)
             name_chain = "Autocorrelation (Chain $i)"
