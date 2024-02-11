@@ -26,7 +26,7 @@ function MCMCDiagnosticTools.discretediag(
         vals = map(val -> val[:, i], within_chain_vals)
         return SummaryStats("Chisq diagnostic - Chain $i", vals, param_names)
     end
-    stats = [between_chain_stats, within_chain_stats...]
+    stats = vcat([between_chain_stats], within_chain_stats)
 
     return stats
 end
