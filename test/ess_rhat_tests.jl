@@ -18,8 +18,8 @@ using Test
 
     for f in (ess, ess_rhat)
         s = f(c)
-        @test length(s[:,:ess_per_sec]) == 5
-        @test all(map(!ismissing, s[:,:ess_per_sec]))
+        @test length(s[:ess_per_sec]) == 5
+        @test all(map(!ismissing, s[:ess_per_sec]))
     end
 end
 
@@ -37,8 +37,8 @@ end
         ess_array, rhat_array = ess_rhat(
             permutedims(x, (1, 3, 2)); autocov_method = autocov_method, kind = kind,
         )
-        @test ess_df[:,2] == ess_rhat_df[:,2] == ess_array
-        @test rhat_df[:,2] == ess_rhat_df[:,3] == rhat_array
+        @test ess_df[:ess] == ess_rhat_df[:ess] == ess_array
+        @test rhat_df[:rhat] == ess_rhat_df[:rhat] == rhat_array
     end
 end
 
@@ -51,5 +51,5 @@ end
         @test_throws ArgumentError ess(chain; autocov_method = autocov_method)
         @test_throws ArgumentError ess_rhat(chain; autocov_method = autocov_method)
     end
-    @test all(isnan, rhat(chain)[:, 2])
+    @test all(isnan, rhat(chain)[:rhat])
 end
