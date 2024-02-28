@@ -48,8 +48,16 @@ end
 
     for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod())
         # analyze chain
-        @test_throws ArgumentError ess(chain; autocov_method = autocov_method)
-        @test_throws ArgumentError ess_rhat(chain; autocov_method = autocov_method)
+        ess_df = ess(chain; autocov_method = autocov_method)
+        @test isequal(ess_df[:, :ess], fill(NaN, 5))
+        @test isequal(ess_df[:, :ess_per_sec], fill(missing, 5))
+        
+        ess_rhat_df = ess_rhat(chain; autocov_method = autocov_method)
+        @test isequal(ess_rhat_df[:, :ess], fill(NaN, 5))
+        @test isequal(ess_rhat_df[:, :rhat], fill(NaN, 5))
+        @test isequal(ess_rhat_df[:, :ess_per_sec], fill(missing, 5))
     end
-    @test all(isnan, rhat(chain)[:, 2])
+
+    rhat_df = rhat(chain)
+    @test isequal(rhat_df[:, :rhat], fill(NaN, 5))
 end
