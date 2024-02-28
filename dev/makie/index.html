@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Makie.jl · MCMCChains.jl</title><meta name="title" content="Makie.jl · MCMCChains.jl"/><meta property="og:title" content="Makie.jl · MCMCChains.jl"/><meta property="twitter:title" content="Makie.jl · MCMCChains.jl"/><meta name="description" content="Documentation for MCMCChains.jl."/><meta property="og:description" content="Documentation for MCMCChains.jl."/><meta property="twitter:description" content="Documentation for MCMCChains.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">MCMCChains.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">MCMCChains</a></li><li><a class="tocitem" href="../getting-started/">Getting started</a></li><li><span class="tocitem">Plotting</span><ul><li><a class="tocitem" href="../statsplots/">StatsPlots.jl</a></li><li class="is-active"><a class="tocitem" href>Makie.jl</a></li><li><a class="tocitem" href="../gadfly/">Gadfly.jl</a></li></ul></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../chains/">Chains</a></li><li><a class="tocitem" href="../diagnostics/">Diagnostics</a></li><li><a class="tocitem" href="../stats/">Posterior statistics</a></li><li><a class="tocitem" href="../modelstats/">Model selection</a></li><li><a class="tocitem" href="../summarize/">Summarize</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Plotting</a></li><li class="is-active"><a href>Makie.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Makie.jl</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/TuringLang/MCMCChains.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/TuringLang/MCMCChains.jl/blob/master/docs/src/makie.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Makie.jl-plots"><a class="docs-heading-anchor" href="#Makie.jl-plots">Makie.jl plots</a><a id="Makie.jl-plots-1"></a><a class="docs-heading-anchor-permalink" href="#Makie.jl-plots" title="Permalink"></a></h1><p>This page shows an example of plotting MCMCChains.jl with Makie.jl. The example is meant to provide an useful basis to build upon. Let&#39;s define some random chain and load the required packages:</p><pre><code class="language-julia hljs">using MCMCChains
+
+chns = Chains(randn(300, 5, 3), [:A, :B, :C, :D, :E])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Chains MCMC chain (300×5×3 Array{Float64, 3}):
+
+Iterations        = 1:1:300
+Number of chains  = 3
+Samples per chain = 300
+parameters        = A, B, C, D, E
+
+Summary Statistics
+ <span class="sgr1"> parameters      mean       std      mcse    ess_bulk   ess_tail      rhat    ⋯
+ <span class="sgr90">     Symbol   Float64   Float64   Float64     Float64    Float64   Float64    ⋯
+
+           A    0.0324    1.0226    0.0340    903.2697   869.7326    1.0016    ⋯
+           B    0.0080    0.9717    0.0337    830.5137   877.8688    1.0015    ⋯
+           C    0.0038    1.0124    0.0343    867.8475   848.6913    0.9999    ⋯
+           D   -0.0481    0.9906    0.0327    918.1466   839.6162    1.0011    ⋯
+           E    0.0060    0.9734    0.0302   1038.5941   912.3222    1.0003    ⋯
+</span><span class="sgr36">                                                                1 column omitted
+
+Quantiles
+  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
+ </span><span class="sgr90">     Symbol   Float64   Float64   Float64   Float64   Float64
+
+           A   -2.0496   -0.6946    0.0758    0.7028    2.1171
+           B   -1.8296   -0.6719    0.0039    0.6825    1.9137
+           C   -1.9518   -0.6502   -0.0133    0.6851    1.9428
+           D   -2.0363   -0.6882   -0.0158    0.6090    1.8324
+           E   -1.8552   -0.6468    0.0328    0.6693    1.8702
+</span></span></code></pre><p>A basic way to visualize the chains is to show the drawn samples at each iteration. Colors depict different chains.</p><pre><code class="language-julia hljs">using CairoMakie
+CairoMakie.activate!(; type=&quot;svg&quot;)
+
+params = names(chns, :parameters)
+
+n_chains = length(chains(chns))
+n_samples = length(chns)
+
+fig = Figure(; resolution=(1_000, 800))
+
+for (i, param) in enumerate(params)
+    ax = Axis(fig[i, 1]; ylabel=string(param))
+    for chain in 1:n_chains
+        values = chns[:, param, chain]
+        lines!(ax, 1:n_samples, values; label=string(chain))
+    end
+
+    hideydecorations!(ax; label=false)
+    if i &lt; length(params)
+        hidexdecorations!(ax; grid=false)
+    else
+        ax.xlabel = &quot;Iteration&quot;
+    end
+end
+
+fig</code></pre><img src="e681919c.svg" alt="Example block output"/><p>Next, we can add a second row of plots next to it which show the density estimate for these samples:</p><pre><code class="language-julia hljs">for (i, param) in enumerate(params)
+    ax = Axis(fig[i, 2]; ylabel=string(param))
+    for chain in 1:n_chains
+        values = chns[:, param, chain]
+        density!(ax, values; label=string(chain))
+    end
+
+    hideydecorations!(ax)
+    if i &lt; length(params)
+        hidexdecorations!(ax; grid=false)
+    else
+        ax.xlabel = &quot;Parameter estimate&quot;
+    end
+end
+
+axes = [only(contents(fig[i, 2])) for i in 1:length(params)]
+linkxaxes!(axes...)
+
+fig</code></pre><img src="94321066.svg" alt="Example block output"/><p>Finally, let&#39;s add a simple legend. Thanks to setting <code>label</code> above, this legend will have the right labels:</p><pre><code class="language-julia hljs">axislegend(first(axes))
+
+fig</code></pre><img src="3349842c.svg" alt="Example block output"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../statsplots/">« StatsPlots.jl</a><a class="docs-footer-nextpage" href="../gadfly/">Gadfly.jl »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Wednesday 28 February 2024 13:45">Wednesday 28 February 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
