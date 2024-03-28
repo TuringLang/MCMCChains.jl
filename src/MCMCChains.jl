@@ -85,4 +85,9 @@ include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
 
+
+export myplot
+
+# functions with no methods
+function myplot end
 end # module
