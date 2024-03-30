@@ -4,8 +4,8 @@ import MCMCChains
 import Makie
 
 
-function MCMCChains.myplot(chns::T) where {T<:MCMCChains.Chains}
-    params = names(chns, :parameters)
+function MCMCChains.trace(chns::T) where {T<:MCMCChains.Chains}
+    params = MCMCChains.names(chns, :parameters)
 
     n_chains = length(MCMCChains.chains(chns))
     n_samples = length(chns)
