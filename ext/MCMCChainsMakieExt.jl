@@ -4,18 +4,32 @@ import MCMCChains
 import Makie
 
 
-function MCMCChains.trace(chns::T) where {T<:MCMCChains.Chains}
+function MCMCChains.trace(chns::T; figure=(;), colormap=Makie.to_colormap(:tol_vibrant)) where {T<:MCMCChains.Chains}
     params = MCMCChains.names(chns, :parameters)
 
     n_chains = length(MCMCChains.chains(chns))
     n_samples = length(chns)
     n_params = length(params)
 
-    colors = Makie.to_colormap(:tol_vibrant)
-    width = 600
-    height = max(400, 80 * n_params)
 
-    fig = Makie.Figure(; size=(width, height))
+    colormap = if colormap isa Symbol
+        Makie.to_colormap(colormap)
+    else
+        colormap
+    end
+    @show length(colormap)
+    colorindex(i) =
+        mod(i - 1, length(colormap)) + 1
+
+    # set size if not provided
+    figure = let
+        width = 600
+        height = max(400, 80 * n_params)
+        nt = (size=(width, height),)
+        merge(nt, figure)
+    end
+
+    fig = Makie.Figure(; figure...)
 
     for (i, param) in enumerate(params)
         ax = Makie.Axis(fig[i+1, 1]; ylabel=string(param))
@@ -26,7 +40,7 @@ function MCMCChains.trace(chns::T) where {T<:MCMCChains.Chains}
                 1:n_samples,
                 values;
                 label=string(chain),
-                color=(colors[chain], 0.7),
+                color=(colormap[colorindex(chain)], 0.7),
                 linewidth=0.7
             )
         end
@@ -47,9 +61,9 @@ function MCMCChains.trace(chns::T) where {T<:MCMCChains.Chains}
                 ax,
                 values;
                 label=string(chain),
-                color=(colors[chain], 0.1),
+                color=(colormap[colorindex(chain)], 0.1),
                 strokewidth=1,
-                strokecolor=(colors[chain], 0.7)
+                strokecolor=(colormap[colorindex(chain)], 0.7)
             )
         end
 
