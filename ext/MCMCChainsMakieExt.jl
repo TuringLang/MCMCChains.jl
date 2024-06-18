@@ -96,23 +96,21 @@ end
 
 # If we want to use the `color` attribute in the conversion, we have to
 # mark it via `used_attributes`
-Makie.used_attributes(::T) where {T<:MCMCChains.Chains} = (:linewidth)
+Makie.used_attributes(::T) where {T<:MCMCChains.Chains} = (:linewidth, :alpha)
 
 # The conversion method creates a grid of `Axis` objects with `Lines` plot inside
 # We restrict to Plot{plot}, so that only `plot(PlotGrid(...))` works, but not e.g. `scatter(PlotGrid(...))`.
-function Makie.convert_arguments(::Type{Makie.Plot{Makie.plot}}, chn::T; linewidth=0.7) where {T<:MCMCChains.Chains}
-    @show size
-    n_iterations, n_params, n_chains = Base.size(chn)
+function Makie.convert_arguments(::Type{Makie.Plot{Makie.plot}}, chn::T; linewidth=0.7, alpha=0.6) where {T<:MCMCChains.Chains}
+    n_iterations, n_params, n_chains = size(chn)
     axes_left = [
-        S.Axis(plots=[S.Lines(chn.value[:, p, i]; linewidth, label=string(i)) for i in 1:n_chains])
+        S.Axis(plots=[S.Lines(chn.value[:, p, i]; linewidth, alpha, label=string(i)) for i in 1:n_chains])
         for p in 1:n_params
     ]
     axes_right = [
-        S.Axis(plots=[S.Density(chn.value[:, p, i]; label=string(i)) for i in 1:n_chains])
+        S.Axis(plots=[S.Density(chn.value[:, p, i]; alpha, label=string(i)) for i in 1:n_chains])
         for p in 1:n_params
     ]
     return S.GridLayout(hcat(axes_left, axes_right))
-
 end
 
 end
