@@ -85,4 +85,34 @@ function MCMCChains.trace(chns::T; figure=(;), colormap=Makie.to_colormap(:tol_v
 
     return fig
 end
+
+# https://docs.makie.org/stable/explanations/specapi#convert_arguments-for-GridLayoutSpec
+import Makie.SpecApi as S
+
+# Our custom type we want to write a conversion method for
+struct PlotGrid
+    nplots::Tuple{Int,Int}
+end
+
+# If we want to use the `color` attribute in the conversion, we have to
+# mark it via `used_attributes`
+Makie.used_attributes(::T) where {T<:MCMCChains.Chains} = (:linewidth)
+
+# The conversion method creates a grid of `Axis` objects with `Lines` plot inside
+# We restrict to Plot{plot}, so that only `plot(PlotGrid(...))` works, but not e.g. `scatter(PlotGrid(...))`.
+function Makie.convert_arguments(::Type{Makie.Plot{Makie.plot}}, chn::T; linewidth=0.7) where {T<:MCMCChains.Chains}
+    @show size
+    n_iterations, n_params, n_chains = Base.size(chn)
+    axes_left = [
+        S.Axis(plots=[S.Lines(chn.value[:, p, i]; linewidth, label=string(i)) for i in 1:n_chains])
+        for p in 1:n_params
+    ]
+    axes_right = [
+        S.Axis(plots=[S.Density(chn.value[:, p, i]; label=string(i)) for i in 1:n_chains])
+        for p in 1:n_params
+    ]
+    return S.GridLayout(hcat(axes_left, axes_right))
+
+end
+
 end
