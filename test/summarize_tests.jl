@@ -18,16 +18,26 @@ using Statistics: std
     show(stdout, "text/plain", parm_df)
 
     @test 0.48 < parm_df[:a, :mean][1] < 0.52
-    @test names(parm_df) == [:parameters, :mean, :std, :naive_se, :mcse, :ess, :rhat]
+    @test names(parm_df) == [:parameters, :mean, :std, :mcse, :ess_bulk, :ess_tail, :rhat, :ess_per_sec]
 
     # Indexing tests
-    @test convert(Array, parm_df[:a, :]) == convert(Array, parm_df[:a])
+    @test isequal(convert(Array, parm_df[:a, :]), convert(Array, parm_df[:a]))
     @test parm_df[:a, :][:,:parameters] == :a
     @test parm_df[[:a, :b], :][:,:parameters] == [:a, :b]
 
     all_sections_df = summarize(chns, sections=[:parameters, :internals])
+    @test all_sections_df isa ChainDataFrame
     @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
-    @test size(all_sections_df) == (8, 7)
+    @test size(all_sections_df) == (8, 8)
+    @test all_sections_df.name == ""
+
+    all_sections_dfs = summarize(chns, sections=[:parameters, :internals], name = "Summary", append_chains = false)
+    @test all_sections_dfs isa Vector{<:ChainDataFrame}
+    for (i, all_sections_df) in enumerate(all_sections_dfs)
+        @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
+        @test size(all_sections_df) == (8, 8)
+        @test all_sections_df.name == "Summary (Chain $i)"
+    end
 
     two_parms_two_funs_df = summarize(chns[[:a, :b]], mean, std)
     @test two_parms_two_funs_df[:, :parameters] == [:a, :b]

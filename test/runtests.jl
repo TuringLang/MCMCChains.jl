@@ -8,9 +8,17 @@ using Random
 Random.seed!(0)
 
 @testset "MCMCChains" begin
-    # run tests for effective sample size
-    println("ESS")
-    @time include("ess_tests.jl")
+    # run tests for effective sample size and R-hat
+    println("ESS/R-hat")
+    @time include("ess_rhat_tests.jl")
+
+    # run tests for mcse
+    println("MCSE")
+    @time include("mcse_tests.jl")
+
+    # run tests for tables interfaces
+    println("Tables interfaces")
+    @time include("tables_tests.jl")
 
     # run plotting tests
     println("Plotting")
@@ -43,10 +51,6 @@ Random.seed!(0)
     # run tests for array constructor
     println("Array")
     @time include("arrayconstructor_tests.jl")
-
-    # run tests for tables interfaces
-    println("Tables interfaces")
-    @time include("tables_tests.jl")
 
     # run tests for dataframe summary
     println("Summary")

@@ -270,14 +270,13 @@ end
         chains;
         sections = _default_sections(chains),
         append_chains= true,
-        method::AbstractESSMethod = ESSMethod(),
+        autocov_method::AbstractAutocovMethod = AutocovMethod(),
         maxlag = 250,
-        etype = :bm,
         kwargs...
     )
 
-Compute the mean, standard deviation, naive standard error, Monte Carlo standard error,
-and effective sample size for each parameter in the chain.
+Compute the mean, standard deviation, Monte Carlo standard error, bulk- and tail- effective
+sample size, and ``\\widehat{R}`` diagnostic for each parameter in the chain.
 
 Setting `append_chains=false` will return a vector of dataframes containing the summary
 statistics for each chain.
@@ -288,28 +287,63 @@ function summarystats(
     chains::Chains;
     sections = _default_sections(chains),
     append_chains::Bool = true,
-    method::MCMCDiagnosticTools.AbstractESSMethod = ESSMethod(),
+    autocov_method::MCMCDiagnosticTools.AbstractAutocovMethod = AutocovMethod(),
     maxlag = 250,
-    etype = :bm,
+    name = "Summary Statistics",
     kwargs...
 )
     # Store everything.
-    funs = [mean∘cskip, std∘cskip, sem∘cskip, x -> MCMCDiagnosticTools.mcse(cskip(x); method=etype, kwargs...)]
-    func_names = [:mean, :std, :naive_se, :mcse]
+    funs = [mean∘cskip, std∘cskip]
+    func_names = [:mean, :std]
 
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
-    # Calculate ESS separately.
-    ess_df = MCMCDiagnosticTools.ess_rhat(_chains; sections = nothing, method = method, maxlag = maxlag)
+    # Calculate MCSE and ESS/R-hat separately.
+    nt_additional = NamedTuple()
+    try
+        mcse_df = MCMCDiagnosticTools.mcse(
+            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag,
+        )
+        nt_additional = merge(nt_additional, (; mcse=mcse_df.nt.mcse))
+    catch e
+        @warn "MCSE calculation failed: $e"
+    end
+
+    try
+        ess_tail_df = MCMCDiagnosticTools.ess(
+            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:tail
+        )
+        nt_additional = merge(nt_additional, (ess_tail=ess_tail_df.nt.ess,))
+    catch e
+        @warn "Tail ESS calculation failed: $e"
+    end
+
+    try
+        ess_rhat_rank_df = MCMCDiagnosticTools.ess_rhat(
+            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:rank
+        )
+        nt_ess_rhat_rank = (
+            ess_bulk=ess_rhat_rank_df.nt.ess,
+            rhat=ess_rhat_rank_df.nt.rhat,
+            ess_per_sec=ess_rhat_rank_df.nt.ess_per_sec
+        )
+        nt_additional = merge(nt_additional, nt_ess_rhat_rank)
+    catch e
+        @warn "Bulk ESS/R-hat calculation failed: $e"
+    end
+
+    # Possibly re-order the columns to stay backwards-compatible.
+    additional_keys = (:mcse, :ess_bulk, :ess_tail, :rhat, :ess_per_sec)
+    additional_df = ChainDataFrame("Additional", (; ((k, nt_additional[k]) for k in additional_keys if k ∈ keys(nt_additional))...))
 
     # Summarize.
     summary_df = summarize(
         _chains, funs...;
-        func_names = func_names,
-        append_chains = append_chains,
-        additional_df = ess_df,
-        name = "Summary Statistics",
+        func_names,
+        append_chains,
+        additional_df,
+        name,
         sections = nothing
     )
 

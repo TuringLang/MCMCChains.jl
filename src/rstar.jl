@@ -38,14 +38,14 @@ true
 ```
 """
 function MCMCDiagnosticTools.rstar(
-    classif::MLJModelInterface.Supervised, chn::Chains; kwargs...
+    classif, chn::Chains; kwargs...
 )
     return MCMCDiagnosticTools.rstar(Random.GLOBAL_RNG, classif, chn; kwargs...)
 end
 
 function MCMCDiagnosticTools.rstar(
     rng::Random.AbstractRNG,
-    classif::MLJModelInterface.Supervised,
+    classif,
     chn::Chains;
     sections = _default_sections(chn),
     kwargs...

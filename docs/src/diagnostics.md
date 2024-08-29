@@ -9,6 +9,7 @@ Pages = [
   "heideldiag.jl",
   "rafterydiag.jl",
   "rstar.jl",
-  "ess.jl"
+  "ess_rhat.jl",
+  "mcse.jl",
 ]
 ```
