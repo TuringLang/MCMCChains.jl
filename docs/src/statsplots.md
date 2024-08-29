@@ -90,7 +90,6 @@ corner(chn)
 ```
 
 For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
-Please see the docstrings for a detailed description of these functions.
 
 ## Ridgeline
 
@@ -108,4 +107,13 @@ forestplot(chn, [:C, :B, :A], hpd_val = [0.05, 0.15, 0.25])
 
 ```@example statsplots
 forestplot(chn, chn.name_map[:parameters], hpd_val = [0.05, 0.15, 0.25], ordered = true)
+```
+
+## API
+
+```@docs
+ridgelineplot
+ridgelineplot!
+forestplot
+forestplot!
 ```
