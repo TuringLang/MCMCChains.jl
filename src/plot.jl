@@ -34,7 +34,7 @@ The following options are available:
 
 - `hpd_val` (default: `[0.05, 0.2]`): The complementary probability mass(es) of the highest posterior density intervals that are plotted if `fill_hpd = true` or `show_hpdi = true`.
 
-    !!! note
+!!! note
     If a single parameter is provided, the generated plot is a density plot with all the elements described above.
 """
 @userplot RidgelinePlot
