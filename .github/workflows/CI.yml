@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - lts
+          - '1.6'
           - '1'
           - pre
         os:
