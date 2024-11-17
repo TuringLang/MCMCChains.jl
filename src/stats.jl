@@ -235,8 +235,11 @@ HDI
 ```
 """
 function PosteriorStats.hdi(chn::Chains; prob::Real=0.94, kwargs...)
-    return summarize(chn, (:lower, :upper) => (x -> hdi(x; prob)); name = "HDI", kwargs...)
+    hdi_name = Symbol("hdi_$(_prob_to_string(prob))%")
+    return summarize(chn, hdi_name => (x -> hdi(x; prob)); name = "HDI", kwargs...)
 end
+
+_prob_to_string(prob; digits=2) = replace(string(round(100 * prob; digits)), r"\.0+$" => "")
 
 @deprecate hpd(chn::Chains; alpha::Real=0.05, kwargs...) hdi(chn; prob=1 - alpha, kwargs...)
 
