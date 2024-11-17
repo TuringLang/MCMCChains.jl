@@ -49,15 +49,15 @@ end
     for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod())
         # analyze chain
         ess_df = ess(chain; autocov_method = autocov_method)
-        @test isequal(ess_df[:, :ess], fill(NaN, 5))
-        @test isequal(ess_df[:, :ess_per_sec], fill(missing, 5))
+        @test isequal(ess_df[:ess], fill(NaN, 5))
+        @test isequal(ess_df[:ess_per_sec], fill(missing, 5))
         
         ess_rhat_df = ess_rhat(chain; autocov_method = autocov_method)
-        @test isequal(ess_rhat_df[:, :ess], fill(NaN, 5))
-        @test isequal(ess_rhat_df[:, :rhat], fill(NaN, 5))
-        @test isequal(ess_rhat_df[:, :ess_per_sec], fill(missing, 5))
+        @test isequal(ess_rhat_df[:ess], fill(NaN, 5))
+        @test isequal(ess_rhat_df[:rhat], fill(NaN, 5))
+        @test isequal(ess_rhat_df[:ess_per_sec], fill(missing, 5))
     end
 
     rhat_df = rhat(chain)
-    @test isequal(rhat_df[:, :rhat], fill(NaN, 5))
+    @test isequal(rhat_df[:rhat], fill(NaN, 5))
 end
