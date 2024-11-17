@@ -7,7 +7,6 @@ import AbstractMCMC
 import AbstractMCMC: chainscat
 using Distributions
 using RecipesBase
-using Formatting
 using Dates
 using KernelDensity: kde, pdf
 import StatsBase: autocov, counts, sem, AbstractWeights,

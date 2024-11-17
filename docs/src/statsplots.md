@@ -2,7 +2,7 @@
 
 MCMCChains implements many functions for plotting via [StatsPlots.jl](https://github.com/JuliaPlots/StatsPlots.jl).
 
-## Simple example 
+## Simple example
 
 The following simple example illustrates how to use Chain to visually summarize a MCMC simulation:
 
@@ -30,13 +30,11 @@ savefig(filename); nothing # hide
 ```
 
 ![Default plot for Chains](default_plot.svg)
-\
 
 ```@example statsplots
 plot(chn, colordim = :parameter; size=(840, 400))
 ```
 
-\
 Note that the plot function takes the additional arguments described in the [Plots.jl](https://github.com/JuliaPlots/Plots.jl) package.
 
 ## Mixed density
@@ -89,4 +87,33 @@ autocorplot(chn)
 
 ```@example statsplots
 corner(chn)
+```
+
+For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
+
+## Ridgeline
+
+```@example statsplots
+ridgelineplot(chn, [:C, :B, :A])
+```
+
+## Forest
+
+```@example statsplots
+forestplot(chn, [:C, :B, :A], hpd_val = [0.05, 0.15, 0.25])
+```
+
+## Caterpillar
+
+```@example statsplots
+forestplot(chn, chn.name_map[:parameters], hpd_val = [0.05, 0.15, 0.25], ordered = true)
+```
+
+## API
+
+```@docs
+ridgelineplot
+ridgelineplot!
+forestplot
+forestplot!
 ```
