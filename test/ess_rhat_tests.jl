@@ -18,8 +18,8 @@ using Test
 
     for f in (ess, ess_rhat)
         s = f(c)
-        @test length(s[:,:ess_per_sec]) == 5
-        @test all(map(!ismissing, s[:,:ess_per_sec]))
+        @test length(s[:ess_per_sec]) == 5
+        @test all(map(!ismissing, s[:ess_per_sec]))
     end
 end
 
@@ -37,8 +37,8 @@ end
         ess_array, rhat_array = ess_rhat(
             permutedims(x, (1, 3, 2)); autocov_method = autocov_method, kind = kind,
         )
-        @test ess_df[:,2] == ess_rhat_df[:,2] == ess_array
-        @test rhat_df[:,2] == ess_rhat_df[:,3] == rhat_array
+        @test ess_df[:ess] == ess_rhat_df[:ess] == ess_array
+        @test rhat_df[:rhat] == ess_rhat_df[:rhat] == rhat_array
     end
 end
 
@@ -49,15 +49,15 @@ end
     for autocov_method in (AutocovMethod(), FFTAutocovMethod(), BDAAutocovMethod())
         # analyze chain
         ess_df = ess(chain; autocov_method = autocov_method)
-        @test isequal(ess_df[:, :ess], fill(NaN, 5))
-        @test isequal(ess_df[:, :ess_per_sec], fill(missing, 5))
+        @test isequal(ess_df[:ess], fill(NaN, 5))
+        @test isequal(ess_df[:ess_per_sec], fill(missing, 5))
         
         ess_rhat_df = ess_rhat(chain; autocov_method = autocov_method)
-        @test isequal(ess_rhat_df[:, :ess], fill(NaN, 5))
-        @test isequal(ess_rhat_df[:, :rhat], fill(NaN, 5))
-        @test isequal(ess_rhat_df[:, :ess_per_sec], fill(missing, 5))
+        @test isequal(ess_rhat_df[:ess], fill(NaN, 5))
+        @test isequal(ess_rhat_df[:rhat], fill(NaN, 5))
+        @test isequal(ess_rhat_df[:ess_per_sec], fill(missing, 5))
     end
 
     rhat_df = rhat(chain)
-    @test isequal(rhat_df[:, :rhat], fill(NaN, 5))
+    @test isequal(rhat_df[:rhat], fill(NaN, 5))
 end

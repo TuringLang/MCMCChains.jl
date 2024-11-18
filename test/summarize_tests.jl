@@ -1,54 +1,55 @@
 using MCMCChains, Test
 using Statistics: std
 
-@testset "Summarize to DataFrame tests" begin
+@testset "Summarize tests" begin
     val = rand(1000, 8, 4)
+    parm_names = ["a", "b", "c", "d", "e", "f", "g", "h"]
     chns = Chains(
         val,
-        ["a", "b", "c", "d", "e", "f", "g", "h"],
+        parm_names,
         Dict(:internals => ["c", "d", "e", "f", "g", "h"])
     )
 
     parm_df = summarize(chns, sections=[:parameters])
+    parm_array_df = summarize(PermutedDimsArray(val[:, 1:2, :], (1, 3, 2)); var_names=[:a, :b])
 
-    # check that display of ChainDataFrame does not error
+    # check that display of SummaryStats does not error
     println("compact display:")
     show(stdout, parm_df)
     println("\nverbose display:")
     show(stdout, "text/plain", parm_df)
 
-    @test 0.48 < parm_df[:a, :mean][1] < 0.52
-    @test names(parm_df) == [:parameters, :mean, :std, :mcse, :ess_bulk, :ess_tail, :rhat, :ess_per_sec]
+    @test 0.48 < parm_df[:mean][1] < 0.52
+    @test parm_df == parm_array_df
 
     # Indexing tests
-    @test isequal(convert(Array, parm_df[:a, :]), convert(Array, parm_df[:a]))
-    @test parm_df[:a, :][:,:parameters] == :a
-    @test parm_df[[:a, :b], :][:,:parameters] == [:a, :b]
+    @test parm_df[:parameter] == [:a, :b]
 
     all_sections_df = summarize(chns, sections=[:parameters, :internals])
-    @test all_sections_df isa ChainDataFrame
-    @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
-    @test size(all_sections_df) == (8, 8)
-    @test all_sections_df.name == ""
+    all_sections_array_df = summarize(PermutedDimsArray(val, (1, 3, 2)); var_names=Symbol.(parm_names))
+    @test all_sections_df isa SummaryStats
+    @test all_sections_df[:parameter] == Symbol.(parm_names)
+    @test all_sections_array_df == all_sections_df
+    @test all_sections_df.name == "SummaryStats"
 
     all_sections_dfs = summarize(chns, sections=[:parameters, :internals], name = "Summary", append_chains = false)
-    @test all_sections_dfs isa Vector{<:ChainDataFrame}
+    @test all_sections_dfs isa Vector{<:SummaryStats}
     for (i, all_sections_df) in enumerate(all_sections_dfs)
-        @test all_sections_df[:,:parameters] == [:a, :b, :c, :d, :e, :f, :g, :h]
-        @test size(all_sections_df) == (8, 8)
+        @test all_sections_df[:parameter] == Symbol.(parm_names)
+        @test length(keys(all_sections_df)) == length(keys(all_sections_array_df))
         @test all_sections_df.name == "Summary (Chain $i)"
     end
 
     two_parms_two_funs_df = summarize(chns[[:a, :b]], mean, std)
-    @test two_parms_two_funs_df[:, :parameters] == [:a, :b]
-    @test size(two_parms_two_funs_df) == (2, 3)
+    @test two_parms_two_funs_df[:parameter] == [:a, :b]
+    @test keys(two_parms_two_funs_df) == (:parameter, :mean, :std)
 
     three_parms_df = summarize(chns[[:a, :b, :c]], mean, std, sections=[:parameters, :internals])
-    @test three_parms_df[:, :parameters] == [:a, :b, :c]
-    @test size(three_parms_df) == (3, 3)
+    @test three_parms_df[:parameter] == [:a, :b, :c]
+    @test keys(three_parms_df) == (:parameter, :mean, :std)
 
-    three_parms_df_2 = summarize(chns[[:a, :b, :g]], mean, std,
-    sections=[:parameters, :internals], func_names=[:mean, :sd])
-    @test three_parms_df_2[:, :parameters] == [:a, :b, :g]
-    @test size(three_parms_df_2) == (3, 3)
+    three_parms_df_2 = summarize(chns[[:a, :b, :g]], :mymean => mean, :mystd => std,
+    sections=[:parameters, :internals])
+    @test three_parms_df_2[:parameter] == [:a, :b, :g]
+    @test keys(three_parms_df_2) == (:parameter, :mymean, :mystd)
 end
