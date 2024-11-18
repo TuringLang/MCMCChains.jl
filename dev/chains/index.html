@@ -1,463 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Chains · MCMCChains.jl</title><meta name="title" content="Chains · MCMCChains.jl"/><meta property="og:title" content="Chains · MCMCChains.jl"/><meta property="twitter:title" content="Chains · MCMCChains.jl"/><meta name="description" content="Documentation for MCMCChains.jl."/><meta property="og:description" content="Documentation for MCMCChains.jl."/><meta property="twitter:description" content="Documentation for MCMCChains.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body>
-<!-- NAVBAR START -->
-<style>
-    html {
-        scroll-padding-top: calc(55px + 1rem);
-    }
-
-    /* Documenter css tweaks */
-    .docs-sidebar {
-        margin-top: 3.75rem;
-    }
-
-    #documenter {
-        margin-top: 3.75rem;
-    }
-
-    .docs-version-selector {
-        margin-bottom: 60px !important;
-    }
-
-    @media screen and (max-width: 1056px) {
-        .docs-version-selector {
-            margin-bottom: 60px !important;
-        }
-
-        .docs-sidebar {
-            margin-top: 0 !important;
-        }
-    }
-    /* Documenter css tweaks ends here */
-
-    :root {
-        --heading-color: white;
-        --item-color: rgb(165, 165, 165);
-        --primary-bg: #073c44;
-        --hover-color: #8faad2;
-    }
-
-    .ext-navigation {
-        position: fixed;
-        height: 3.75rem;
-        top: 0;
-        width: 100%;
-        background-color: var(--primary-bg);
-        z-index: 1000;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        padding: 0 1.0625rem;
-        transition: transform 0.3s;
-    }
-
-    .ext-navbar-logo {
-        margin-left: 0.625rem;
-    }
-
-    .ext-nav-links {
-        display: flex;
-        align-items: center;
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-        flex-grow: 1;
-    }
-
-    .ext-nav-links li {
-        margin-left: 1rem !important;
-    }
-
-    .ext-nav-link {
-        color: white !important;
-        text-decoration: none;
-        font-size: 1.0625rem !important;
-        transition: color 0.2s ease;
-        cursor: pointer;
-    }
-
-    .ext-nav-link:hover,
-    .ext-navbar-item-single a:hover {
-        color: var(--hover-color) !important;
-    }
-
-    .ext-navbar-item-single a {
-        color: #fff !important;
-    }
-
-    .ext-menu-toggle {
-        display: none;
-        font-size: 1.5rem;
-        color: white;
-        cursor: pointer;
-    }
-
-    .ext-dropdown {
-        display: none;
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-        grid-template-rows: auto auto auto;
-        padding: 1.875rem;
-        position: absolute;
-        width: 100%;
-        left: 0;
-        background-color: #083c44;
-        line-height: 1.875rem;
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        transform: translateY(-0.625rem);
-    }
-
-    #library-handler::after {
-        content: "▼";
-        font-size: 0.6875rem;
-        margin-left: 0.3125rem;
-        transition: transform 0.3s ease-in-out;
-    }
-
-    #library-handler.open::after {
-        content: "▲";
-    }
-
-    .ext-dropdown.show {
-        display: grid;
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .ext-dropdown ul {
-        height: auto;
-        width: 12.5rem;
-        margin-bottom: 1.25rem;
-    }
-
-    .ext-dropdown ul li {
-        text-align: left;
-    }
-
-    .navbar-sub-item {
-        list-style: none;
-    }
-
-    .ext-dropdown ul a li {
-        color: var(--item-color);
-        width: 15.625rem;
-        border-radius: 3px;
-        padding: 0.125rem 0.625rem;
-        transition: background-color 0.2s ease;
-    }
-
-    .ext-dropdown ul a li:hover {
-        background-color: rgba(107, 107, 107, 0.5);
-    }
-
-    .ext-dropdown-item-heading {
-        color: var(--heading-color);
-        text-align: center;
-    }
-
-    /* Responsive styling */
-    @media (max-width: 966px) {
-        .ext-dropdown {
-            grid-template-columns: 1fr 1fr 1fr;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .ext-nav-links {
-            display: none;
-            flex-direction: column;
-            width: 100%;
-            background-color: var(--primary-bg);
-            position: absolute;
-            top: 3.75rem;
-            left: 0;
-            padding: 0.625rem 0;
-            height: auto;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: rgb(141, 141, 141) grey;
-        }
-
-        .ext-nav-links.show {
-            display: flex;
-        }
-
-        .ext-nav-links li {
-            margin: 0.625rem 0;
-            text-align: center;
-        }
-
-        .ext-menu-toggle {
-            display: block;
-            margin-left: auto;
-        }
-
-        .ext-navigation.hide {
-            transform: translateY(-3.75rem);
-        }
-
-        .ext-dropdown {
-            place-content: center;
-            text-align: center;
-            grid-template-columns: 1fr;
-            line-height: 1.25rem;
-            padding: 0.625rem;
-        }
-
-        .ext-dropdown ul {
-            width: 100%;
-            text-align: center;
-            margin-bottom: 0.3125rem;
-        }
-
-        .ext-dropdown ul li {
-            text-align: center;
-        }
-
-        .ext-dropdown ul a li {
-            width: 100%;
-        }
-
-        .ext-dropdown ul a li:hover {
-            background-color: var(--primary-bg);
-            color: #fff;
-        }
-
-        /* Modified scroll bar */
-        .ext-nav-links::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .ext-nav-links::-webkit-scrollbar-track {
-            box-shadow: inset 0 0 5px grey;
-        }
-
-        .ext-nav-links::-webkit-scrollbar-thumb {
-            background: rgb(141, 141, 141);
-            border-radius: 3px;
-        }
-
-        .ext-nav-links::-webkit-scrollbar-thumb:hover {
-            background: #9b9b9b;
-        }
-    }
-</style>
-<nav class="ext-navigation">
-    <a href="https://turinglang.org/">
-        <img src="https://turinglang.org/assets/images/turing-logo.svg" alt="Turing Logo" class="ext-navbar-logo" height="24px" width="40px">
-    </a>
-    <a style="color: white !important; font-size: 21.25px !important; margin-left: 10px;" href="https://turinglang.org/">Turing.jl</a>
-    <ul class="ext-nav-links">
-        <li>
-            <a class="ext-nav-link" href="https://turinglang.org/docs/tutorials/docs-00-getting-started/">Get Started</a>
-        </li>
-        <li>
-            <a class="ext-nav-link" href="https://turinglang.org/docs/tutorials/00-introduction/">Tutorials</a>
-        </li>
-        <li>
-            <p class="ext-nav-link" id="library-handler">Libraries</p>
-            <div class="ext-dropdown" id="ext-dropdown-items">
-                <ul>
-                    <li class="ext-dropdown-item-heading">Modelling Languages</li>
-                    <a href="https://turinglang.org/DynamicPPL.jl/">
-                        <li>DynamicPPL</li>
-                    </a>
-                    <a href="https://turinglang.org/JuliaBUGS.jl/">
-                        <li>JuliaBUGS</li>
-                    </a>
-                    <a href="https://turinglang.org/TuringGLM.jl/">
-                        <li>TuringGLM</li>
-                    </a>
-                </ul>
-                <ul>
-                    <li class="ext-dropdown-item-heading">MCMC</li>
-                    <a href="https://turinglang.org/AdvancedHMC.jl/">
-                        <li>AdvancedHMC</li>
-                    </a>
-                    <a href="https://turinglang.org/AbstractMCMC.jl/">
-                        <li>AbstractMCMC</li>
-                    </a>
-                    <a href="https://github.com/theogf/ThermodynamicIntegration.jl">
-                        <li>ThermodynamicIntegration</li>
-                    </a>
-                    <a href="https://turinglang.org/AdvancedPS.jl/">
-                        <li>AdvancedPS</li>
-                    </a>
-                    <a href="https://turinglang.org/SliceSampling.jl/">
-                        <li>SliceSampling</li>
-                    </a>
-                    <a href="https://turinglang.org/EllipticalSliceSampling.jl/">
-                        <li>EllipticalSliceSampling</li>
-                    </a>
-                    <a href="https://turinglang.org/NestedSamplers.jl/">
-                        <li>NestedSamplers</li>
-                    </a>
-                </ul>
-                <ul>
-                    <li class="ext-dropdown-item-heading">Diagnostics</li>
-                    <a href="https://turinglang.org/MCMCChains.jl/">
-                        <li>MCMCChains</li>
-                    </a>
-                    <a href="https://turinglang.org/MCMCDiagnosticTools.jl/">
-                        <li>MCMCDiagnosticTools</li>
-                    </a>
-                    <a href="https://turinglang.org/ParetoSmooth.jl/">
-                        <li>ParetoSmooth</li>
-                    </a>
-                </ul>
-                <ul>
-                    <li class="ext-dropdown-item-heading">Gaussion Processes</li>
-                    <a href="https://juliagaussianprocesses.github.io/AbstractGPs.jl/">
-                        <li>AbstractGPs</li>
-                    </a>
-                    <a href="https://juliagaussianprocesses.github.io/KernelFunctions.jl/">
-                        <li>KernelFunctions</li>
-                    </a>
-                    <a href="https://juliagaussianprocesses.github.io/ApproximateGPs.jl/">
-                        <li>ApproximateGPs</li>
-                    </a>
-                </ul>
-                <ul>
-                    <li class="ext-dropdown-item-heading ext-navbar-item-single">
-                        <a href="https://turinglang.org/Bijectors.jl/">Bijectors</a>
-                    </li>
-                </ul>
-                <ul>
-                    <li class="ext-dropdown-item-heading ext-navbar-item-single">
-                        <a href="https://turinglang.org/TuringCallbacks.jl/">TuringCallbacks</a>
-                    </li>
-                </ul>
-                <ul>
-                    <li class="ext-dropdown-item-heading ext-navbar-item-single">
-                        <a href="https://turinglang.org/TuringBenchmarking.jl/">TuringBenchmarking</a>
-                    </li>
-                </ul>
-            </div>
-        </li>
-        <li>
-            <a class="ext-nav-link" href="https://turinglang.org/news/">News</a>
-        </li>
-        <li>
-            <a class="ext-nav-link" href="https://turinglang.org/team/">Team</a>
-        </li>
-    </ul>
-    <a href="https://x.com/TuringLang" style="margin-left: 15px; padding-top: 2px">
-        <svg fill="#ffffff" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32px" height="32px" viewBox="-209.92 -209.92 931.84 931.84" xml:space="preserve" stroke="#ffffff">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-                <g id="7935ec95c421cee6d86eb22ecd12f847">
-                    <path style="display: inline"
-                        d="M459.186,151.787c0.203,4.501,0.305,9.023,0.305,13.565 c0,138.542-105.461,298.285-298.274,298.285c-59.209,0-114.322-17.357-160.716-47.104c8.212,0.973,16.546,1.47,25.012,1.47 c49.121,0,94.318-16.759,130.209-44.884c-45.887-0.841-84.596-31.154-97.938-72.804c6.408,1.227,12.968,1.886,19.73,1.886 c9.55,0,18.816-1.287,27.617-3.68c-47.955-9.633-84.1-52.001-84.1-102.795c0-0.446,0-0.882,0.011-1.318 c14.133,7.847,30.294,12.562,47.488,13.109c-28.134-18.796-46.637-50.885-46.637-87.262c0-19.212,5.16-37.218,14.193-52.7 c51.707,63.426,128.941,105.156,216.072,109.536c-1.784-7.675-2.718-15.674-2.718-23.896c0-57.891,46.941-104.832,104.832-104.832 c30.173,0,57.404,12.734,76.525,33.102c23.887-4.694,46.313-13.423,66.569-25.438c-7.827,24.485-24.434,45.025-46.089,58.002 c21.209-2.535,41.426-8.171,60.222-16.505C497.448,118.542,479.666,137.004,459.186,151.787z">
-                    </path>
-                </g>
-            </g>
-        </svg>
-    </a>
-    <a href="https://github.com/TuringLang/Turing.jl">
-        <svg width="32px" height="32px" viewBox="-8.2 -8.2 36.40 36.40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000">
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-            <g id="SVGRepo_iconCarrier">
-                <title>github [#142]</title>
-                <desc>Created with Sketch.</desc>
-                <defs></defs>
-                <g id="Page-1" stroke-width="0.0002" fill="none" fill-rule="evenodd">
-                    <g id="Dribbble-Light-Preview" transform="translate(-140.000000, -7559.000000)" fill="#ffffff">
-                        <g id="icons" transform="translate(56.000000, 160.000000)">
-                            <path
-                                d="M94,7399 C99.523,7399 104,7403.59 104,7409.253 C104,7413.782 101.138,7417.624 97.167,7418.981 C96.66,7419.082 96.48,7418.762 96.48,7418.489 C96.48,7418.151 96.492,7417.047 96.492,7415.675 C96.492,7414.719 96.172,7414.095 95.813,7413.777 C98.04,7413.523 100.38,7412.656 100.38,7408.718 C100.38,7407.598 99.992,7406.684 99.35,7405.966 C99.454,7405.707 99.797,7404.664 99.252,7403.252 C99.252,7403.252 98.414,7402.977 96.505,7404.303 C95.706,7404.076 94.85,7403.962 94,7403.958 C93.15,7403.962 92.295,7404.076 91.497,7404.303 C89.586,7402.977 88.746,7403.252 88.746,7403.252 C88.203,7404.664 88.546,7405.707 88.649,7405.966 C88.01,7406.684 87.619,7407.598 87.619,7408.718 C87.619,7412.646 89.954,7413.526 92.175,7413.785 C91.889,7414.041 91.63,7414.493 91.54,7415.156 C90.97,7415.418 89.522,7415.871 88.63,7414.304 C88.63,7414.304 88.101,7413.319 87.097,7413.247 C87.097,7413.247 86.122,7413.234 87.029,7413.87 C87.029,7413.87 87.684,7414.185 88.139,7415.37 C88.139,7415.37 88.726,7417.2 91.508,7416.58 C91.513,7417.437 91.522,7418.245 91.522,7418.489 C91.522,7418.76 91.338,7419.077 90.839,7418.982 C86.865,7417.627 84,7413.783 84,7409.253 C84,7403.59 88.478,7399 94,7399"
-                                id="github-[#142]">
-                            </path>
-                        </g>
-                    </g>
-                </g>
-            </g>
-        </svg>
-    </a>
-    <span class="ext-menu-toggle">&#9776;</span>
-</nav>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const menuToggle = document.querySelector(".ext-menu-toggle");
-        const navLinks = document.querySelector(".ext-nav-links");
-        const nav = document.querySelector(".ext-navigation");
-        const navigationHandler = document.getElementById("library-handler");
-        const navigationItemsContainer =
-            document.getElementById("ext-dropdown-items");
-        let lastScrollY = window.scrollY;
-
-        function setAppropriateHeight() {
-            if (window.innerWidth <= 768) {
-                const viewportHeight = window.innerHeight;
-                const navHeight = nav.offsetHeight;
-                navLinks.style.maxHeight = `${viewportHeight - navHeight}px`;
-                navLinks.style.overflowY = "auto";
-            } else {
-                navLinks.style.maxHeight = "";
-                navLinks.style.overflowY = "";
-            }
-        }
-
-        // Toggle main menu for mobile
-        menuToggle.addEventListener("click", () => {
-            navLinks.classList.toggle("show");
-            if (navLinks.classList.contains("show")) {
-                setAppropriateHeight();
-                // Ensure the dropdown is hidden when menu is first opened
-                navigationItemsContainer.style.display = "none";
-                navigationItemsContainer.classList.remove("show");
-            }
-        });
-
-        // Close menus if clicked outside
-        document.addEventListener("click", (event) => {
-            if (
-                !navLinks.contains(event.target) &&
-                !menuToggle.contains(event.target)
-            ) {
-                navLinks.classList.remove("show");
-                navigationItemsContainer.classList.remove("show");
-                navigationHandler.classList.remove("open");
-            }
-        });
-
-        // Hide navigation bar on scroll down in mobile view
-        window.addEventListener("scroll", () => {
-            if (window.innerWidth <= 768) {
-                nav.classList.toggle("hide", window.scrollY > lastScrollY);
-                lastScrollY = window.scrollY;
-            }
-        });
-
-        // Library API script
-        navigationHandler.addEventListener("click", (event) => {
-            event.preventDefault(); // Prevent default action of the link
-            if (navigationItemsContainer.classList.contains("show")) {
-                navigationItemsContainer.classList.remove("show");
-                navigationHandler.classList.remove("open");
-                setTimeout(() => {
-                    navigationItemsContainer.style.display = "none";
-                }, 500); // Match the timeout to the CSS transition duration
-            } else {
-                navigationItemsContainer.style.display = "grid";
-                navigationHandler.classList.add("open");
-                setTimeout(() => {
-                    navigationItemsContainer.classList.add("show");
-                }, 10); // Delay to ensure the display change takes effect before adding class
-            }
-            setAppropriateHeight(); // Recalculate height when dropdown changes
-        });
-
-        // Handle window resize
-        window.addEventListener("resize", setAppropriateHeight);
-
-        // Initial setup
-        setAppropriateHeight();
-    });
-</script>
-<!-- NAVBAR END -->
-<div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">MCMCChains.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">MCMCChains</a></li><li><a class="tocitem" href="../getting-started/">Getting started</a></li><li><span class="tocitem">Plotting</span><ul><li><a class="tocitem" href="../statsplots/">StatsPlots.jl</a></li><li><a class="tocitem" href="../makie/">Makie.jl</a></li><li><a class="tocitem" href="../gadfly/">Gadfly.jl</a></li></ul></li><li><span class="tocitem">API</span><ul><li class="is-active"><a class="tocitem" href>Chains</a></li><li><a class="tocitem" href="../diagnostics/">Diagnostics</a></li><li><a class="tocitem" href="../stats/">Posterior statistics</a></li><li><a class="tocitem" href="../modelstats/">Model selection</a></li><li><a class="tocitem" href="../summarize/">Summarize</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API</a></li><li class="is-active"><a href>Chains</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Chains</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/TuringLang/MCMCChains.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/TuringLang/MCMCChains.jl/blob/master/docs/src/chains.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Chains"><a class="docs-heading-anchor" href="#Chains">Chains</a><a id="Chains-1"></a><a class="docs-heading-anchor-permalink" href="#Chains" title="Permalink"></a></h1><p>The methods listed below are defined in <code>src/chains.jl</code>.</p><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.Chains-Tuple{Chains, Union{AbstractString, Symbol}}" href="#MCMCChains.Chains-Tuple{Chains, Union{AbstractString, Symbol}}"><code>MCMCChains.Chains</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">Chains(c::Chains, section::Union{Symbol,AbstractString})
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Chains · MCMCChains.jl</title><meta name="title" content="Chains · MCMCChains.jl"/><meta property="og:title" content="Chains · MCMCChains.jl"/><meta property="twitter:title" content="Chains · MCMCChains.jl"/><meta name="description" content="Documentation for MCMCChains.jl."/><meta property="og:description" content="Documentation for MCMCChains.jl."/><meta property="twitter:description" content="Documentation for MCMCChains.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">MCMCChains.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">MCMCChains</a></li><li><a class="tocitem" href="../getting-started/">Getting started</a></li><li><span class="tocitem">Plotting</span><ul><li><a class="tocitem" href="../statsplots/">StatsPlots.jl</a></li><li><a class="tocitem" href="../makie/">Makie.jl</a></li><li><a class="tocitem" href="../gadfly/">Gadfly.jl</a></li></ul></li><li><span class="tocitem">API</span><ul><li class="is-active"><a class="tocitem" href>Chains</a></li><li><a class="tocitem" href="../diagnostics/">Diagnostics</a></li><li><a class="tocitem" href="../stats/">Posterior statistics</a></li><li><a class="tocitem" href="../modelstats/">Model selection</a></li><li><a class="tocitem" href="../summarize/">Summarize</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API</a></li><li class="is-active"><a href>Chains</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Chains</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/TuringLang/MCMCChains.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/TuringLang/MCMCChains.jl/blob/master/docs/src/chains.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Chains"><a class="docs-heading-anchor" href="#Chains">Chains</a><a id="Chains-1"></a><a class="docs-heading-anchor-permalink" href="#Chains" title="Permalink"></a></h1><p>The methods listed below are defined in <code>src/chains.jl</code>.</p><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.Chains-Tuple{Chains, Union{AbstractString, Symbol}}" href="#MCMCChains.Chains-Tuple{Chains, Union{AbstractString, Symbol}}"><code>MCMCChains.Chains</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">Chains(c::Chains, section::Union{Symbol,AbstractString})
 Chains(c::Chains, sections)</code></pre><p>Return a new chain with only a specific <code>section</code> or multiple <code>sections</code> pulled out.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains(rand(100, 2, 1), [:a, :b], Dict(:internals =&gt; [:a]));
 
 julia&gt; names(chn)
@@ -469,7 +11,7 @@ julia&gt; chn2 = Chains(chn, :internals);
 
 julia&gt; names(chn2)
 1-element Vector{Symbol}:
- :a</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L82-L103">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.get-Tuple{Chains, Vector{Symbol}}" href="#Base.get-Tuple{Chains, Vector{Symbol}}"><code>Base.get</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">Base.get(c::Chains, v::Symbol; flatten=false)
+ :a</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L82-L103">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.get-Tuple{Chains, Vector{Symbol}}" href="#Base.get-Tuple{Chains, Vector{Symbol}}"><code>Base.get</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">Base.get(c::Chains, v::Symbol; flatten=false)
 Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)</code></pre><p>Return a <code>NamedTuple</code> with <code>v</code> as the key, and matching parameter names as the values.</p><p>Passing <code>flatten=true</code> will return a <code>NamedTuple</code> with keys ungrouped.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains([1:2 3:4]);
 
 julia&gt; get(chn, :param_1)
@@ -479,13 +21,13 @@ julia&gt; get(chn, [:param_2])
 (param_2 = [3; 4;;],)
 
 julia&gt; get(chn, :param_1; flatten=true)
-(param_1 = 1,)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L218-L241">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.get-Tuple{Chains}" href="#Base.get-Tuple{Chains}"><code>Base.get</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}, flatten=false)</code></pre><p>Return all parameters in a given section(s) as a <code>NamedTuple</code>.</p><p>Passing <code>flatten=true</code> will return a <code>NamedTuple</code> with keys ungrouped.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains([1:2 3:4], [:a, :b], Dict(:internals =&gt; [:a]));
+(param_1 = 1,)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L218-L241">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.get-Tuple{Chains}" href="#Base.get-Tuple{Chains}"><code>Base.get</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}, flatten=false)</code></pre><p>Return all parameters in a given section(s) as a <code>NamedTuple</code>.</p><p>Passing <code>flatten=true</code> will return a <code>NamedTuple</code> with keys ungrouped.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains([1:2 3:4], [:a, :b], Dict(:internals =&gt; [:a]));
 
 julia&gt; get(chn; section=:parameters)
 (b = [3; 4;;],)
 
 julia&gt; get(chn; section=[:internals])
-(a = [1; 2;;],)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L268-L286">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.names-Tuple{Chains, Any}" href="#Base.names-Tuple{Chains, Any}"><code>Base.names</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">names(chains::Chains, sections)</code></pre><p>Return the parameter names of the <code>sections</code> in the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L530-L534">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.names-Tuple{Chains, Symbol}" href="#Base.names-Tuple{Chains, Symbol}"><code>Base.names</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">names(chains::Chains, section::Symbol)</code></pre><p>Return the parameter names of a <code>section</code> in the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L523-L527">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.names-Tuple{Chains}" href="#Base.names-Tuple{Chains}"><code>Base.names</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">names(chains::Chains)</code></pre><p>Return the parameter names in the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L516-L520">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.range-Tuple{Chains}" href="#Base.range-Tuple{Chains}"><code>Base.range</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">range(chains::Chains)</code></pre><p>Return the range of iteration indices of the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L467-L471">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.sort-Tuple{Chains}" href="#Base.sort-Tuple{Chains}"><code>Base.sort</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">sort(c::Chains[; lt=NaturalSort.natural])</code></pre><p>Return a new column-sorted version of <code>c</code>.</p><p>By default the columns are sorted in natural sort order.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L650-L656">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.chains-Tuple{Chains}" href="#MCMCChains.chains-Tuple{Chains}"><code>MCMCChains.chains</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">chains(c::Chains)</code></pre><p>Return the names or symbols of each chain in a <code>Chains</code> object.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L507-L511">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.compute_duration-Tuple{Chains}" href="#MCMCChains.compute_duration-Tuple{Chains}"><code>MCMCChains.compute_duration</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">compute_duration(c::Chains; start=start_times(c), stop=stop_times(c))</code></pre><p>Calculate the compute time for all chains in seconds.</p><p>The duration is calculated as the sum of <code>start - stop</code> in seconds. </p><p><code>compute_duration</code> is more useful in cases of parallel sampling, where <code>wall_duration</code> may understate how much computation time was utilitzed.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L437-L446">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.get_params-Tuple{Chains}" href="#MCMCChains.get_params-Tuple{Chains}"><code>MCMCChains.get_params</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">get_params(c::Chains; flatten=false)</code></pre><p>Return all parameters packaged as a <code>NamedTuple</code>. Variables with a bracket in their name (as in &quot;P[1]&quot;) will be grouped into the returned value as P.</p><p>Passing <code>flatten=true</code> will return a <code>NamedTuple</code> with keys ungrouped.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains(1:5);
+(a = [1; 2;;],)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L268-L286">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.names-Tuple{Chains, Any}" href="#Base.names-Tuple{Chains, Any}"><code>Base.names</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">names(chains::Chains, sections)</code></pre><p>Return the parameter names of the <code>sections</code> in the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L530-L534">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.names-Tuple{Chains, Symbol}" href="#Base.names-Tuple{Chains, Symbol}"><code>Base.names</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">names(chains::Chains, section::Symbol)</code></pre><p>Return the parameter names of a <code>section</code> in the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L523-L527">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.names-Tuple{Chains}" href="#Base.names-Tuple{Chains}"><code>Base.names</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">names(chains::Chains)</code></pre><p>Return the parameter names in the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L516-L520">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.range-Tuple{Chains}" href="#Base.range-Tuple{Chains}"><code>Base.range</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">range(chains::Chains)</code></pre><p>Return the range of iteration indices of the <code>chains</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L467-L471">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="Base.sort-Tuple{Chains}" href="#Base.sort-Tuple{Chains}"><code>Base.sort</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">sort(c::Chains[; lt=NaturalSort.natural])</code></pre><p>Return a new column-sorted version of <code>c</code>.</p><p>By default the columns are sorted in natural sort order.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L650-L656">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.chains-Tuple{Chains}" href="#MCMCChains.chains-Tuple{Chains}"><code>MCMCChains.chains</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">chains(c::Chains)</code></pre><p>Return the names or symbols of each chain in a <code>Chains</code> object.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L507-L511">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.compute_duration-Tuple{Chains}" href="#MCMCChains.compute_duration-Tuple{Chains}"><code>MCMCChains.compute_duration</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">compute_duration(c::Chains; start=start_times(c), stop=stop_times(c))</code></pre><p>Calculate the compute time for all chains in seconds.</p><p>The duration is calculated as the sum of <code>start - stop</code> in seconds. </p><p><code>compute_duration</code> is more useful in cases of parallel sampling, where <code>wall_duration</code> may understate how much computation time was utilitzed.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L437-L446">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.get_params-Tuple{Chains}" href="#MCMCChains.get_params-Tuple{Chains}"><code>MCMCChains.get_params</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">get_params(c::Chains; flatten=false)</code></pre><p>Return all parameters packaged as a <code>NamedTuple</code>. Variables with a bracket in their name (as in &quot;P[1]&quot;) will be grouped into the returned value as P.</p><p>Passing <code>flatten=true</code> will return a <code>NamedTuple</code> with keys ungrouped.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains(1:5);
 
 julia&gt; x = get_params(chn);
 
@@ -498,11 +40,11 @@ And data, a 5×1 Matrix{Int64}:
  2
  3
  4
- 5</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L313-L339">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.get_sections" href="#MCMCChains.get_sections"><code>MCMCChains.get_sections</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">get_sections(chains[, sections])</code></pre><p>Return multiple <code>Chains</code> objects, each containing only a single section.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L543-L547">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.group-Tuple{Chains, Union{AbstractString, Symbol}}" href="#MCMCChains.group-Tuple{Chains, Union{AbstractString, Symbol}}"><code>MCMCChains.group</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">group(chains::Chains, name::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)</code></pre><p>Return a subset of the chain containing parameters with the same <code>name</code>, but a different index.</p><p>Bracket indexing format in the form of <code>:name[index]</code> is assumed by default. Use <code>index_type=:dot</code> for parameters with dot  indexing, i.e. <code>:sym.index</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L169-L176">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.header-Tuple{Chains}" href="#MCMCChains.header-Tuple{Chains}"><code>MCMCChains.header</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">header(c::Chains; section=missing)</code></pre><p>Return a string containing summary information for a <code>Chains</code> object. If the <code>section</code> keyword is used, this function prints only the relevant section header.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Printing the whole header.
+ 5</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L313-L339">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.get_sections" href="#MCMCChains.get_sections"><code>MCMCChains.get_sections</code></a> — <span class="docstring-category">Function</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">get_sections(chains[, sections])</code></pre><p>Return multiple <code>Chains</code> objects, each containing only a single section.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L543-L547">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.group-Tuple{Chains, Union{AbstractString, Symbol}}" href="#MCMCChains.group-Tuple{Chains, Union{AbstractString, Symbol}}"><code>MCMCChains.group</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">group(chains::Chains, name::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)</code></pre><p>Return a subset of the chain containing parameters with the same <code>name</code>, but a different index.</p><p>Bracket indexing format in the form of <code>:name[index]</code> is assumed by default. Use <code>index_type=:dot</code> for parameters with dot  indexing, i.e. <code>:sym.index</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L169-L176">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.header-Tuple{Chains}" href="#MCMCChains.header-Tuple{Chains}"><code>MCMCChains.header</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">header(c::Chains; section=missing)</code></pre><p>Return a string containing summary information for a <code>Chains</code> object. If the <code>section</code> keyword is used, this function prints only the relevant section header.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs"># Printing the whole header.
 header(chn)
 
 # Print only one section&#39;s header.
-header(chn, section = :parameter)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L560-L575">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.max_stop-Tuple{Chains}" href="#MCMCChains.max_stop-Tuple{Chains}"><code>MCMCChains.max_stop</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">max_stop(c::Chains)</code></pre><p>Retrieve the maximum of the stop times (as <code>DateTime</code>) from <code>chain.info</code>.</p><p>It is assumed that the start times are stored in <code>chain.info.stop_time</code> as <code>DateTime</code> or unix timestamps of type <code>Float64</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L393-L400">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.min_start-Tuple{Chains}" href="#MCMCChains.min_start-Tuple{Chains}"><code>MCMCChains.min_start</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">min_start(c::Chains)</code></pre><p>Retrieve the minimum of the start times (as <code>DateTime</code>) from <code>chain.info</code>.</p><p>It is assumed that the start times are stored in <code>chain.info.start_time</code> as <code>DateTime</code> or unix timestamps of type <code>Float64</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L383-L390">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.namesingroup-Tuple{Chains, AbstractString}" href="#MCMCChains.namesingroup-Tuple{Chains, AbstractString}"><code>MCMCChains.namesingroup</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">namesingroup(chains::Chains, sym::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)</code></pre><p>Return the parameters with the same name <code>sym</code>, but have a different index. Bracket indexing format in the form of <code>:sym[index]</code> is assumed by default. Use <code>index_type=:dot</code> for parameters with dot  indexing, i.e. <code>:sym.index</code>.</p><p>If the chain contains a parameter of name <code>:sym</code> it will be returned as well.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains(rand(100, 2, 2), [&quot;A[1]&quot;, &quot;A[2]&quot;]);
+header(chn, section = :parameter)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L560-L575">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.max_stop-Tuple{Chains}" href="#MCMCChains.max_stop-Tuple{Chains}"><code>MCMCChains.max_stop</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">max_stop(c::Chains)</code></pre><p>Retrieve the maximum of the stop times (as <code>DateTime</code>) from <code>chain.info</code>.</p><p>It is assumed that the start times are stored in <code>chain.info.stop_time</code> as <code>DateTime</code> or unix timestamps of type <code>Float64</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L393-L400">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.min_start-Tuple{Chains}" href="#MCMCChains.min_start-Tuple{Chains}"><code>MCMCChains.min_start</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">min_start(c::Chains)</code></pre><p>Retrieve the minimum of the start times (as <code>DateTime</code>) from <code>chain.info</code>.</p><p>It is assumed that the start times are stored in <code>chain.info.start_time</code> as <code>DateTime</code> or unix timestamps of type <code>Float64</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L383-L390">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.namesingroup-Tuple{Chains, AbstractString}" href="#MCMCChains.namesingroup-Tuple{Chains, AbstractString}"><code>MCMCChains.namesingroup</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">namesingroup(chains::Chains, sym::Union{AbstractString,Symbol}; index_type::Symbol=:bracket)</code></pre><p>Return the parameters with the same name <code>sym</code>, but have a different index. Bracket indexing format in the form of <code>:sym[index]</code> is assumed by default. Use <code>index_type=:dot</code> for parameters with dot  indexing, i.e. <code>:sym.index</code>.</p><p>If the chain contains a parameter of name <code>:sym</code> it will be returned as well.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains(rand(100, 2, 2), [&quot;A[1]&quot;, &quot;A[2]&quot;]);
 
 julia&gt; namesingroup(chn, :A)
 2-element Vector{Symbol}:
@@ -518,7 +60,7 @@ julia&gt; # Also works for specific elements.
 julia&gt; namesingroup(chn, :A; index_type=:dot)
 2-element Vector{Symbol}:
  Symbol(&quot;A.1&quot;)
- Symbol(&quot;A.2&quot;)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L123-L155">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.replacenames-Tuple{Chains, AbstractDict}" href="#MCMCChains.replacenames-Tuple{Chains, AbstractDict}"><code>MCMCChains.replacenames</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">replacenames(chains::Chains, dict::AbstractDict)</code></pre><p>Replace parameter names by creating a new <code>Chains</code> object that shares the same underlying data.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains(rand(100, 2, 2), [&quot;one&quot;, &quot;two&quot;]);
+ Symbol(&quot;A.2&quot;)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L123-L155">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.replacenames-Tuple{Chains, AbstractDict}" href="#MCMCChains.replacenames-Tuple{Chains, AbstractDict}"><code>MCMCChains.replacenames</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">replacenames(chains::Chains, dict::AbstractDict)</code></pre><p>Replace parameter names by creating a new <code>Chains</code> object that shares the same underlying data.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; chn = Chains(rand(100, 2, 2), [&quot;one&quot;, &quot;two&quot;]);
 
 julia&gt; chn2 = replacenames(chn, &quot;one&quot; =&gt; &quot;A&quot;);
 
@@ -532,5 +74,4 @@ julia&gt; chn3 = replacenames(chn2, Dict(&quot;A&quot; =&gt; &quot;one&quot;, &q
 julia&gt; names(chn3) 
 2-element Vector{Symbol}:
  :one
- :B</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L846-L869">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.resetrange-Tuple{Chains}" href="#MCMCChains.resetrange-Tuple{Chains}"><code>MCMCChains.resetrange</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">resetrange(chains::Chains)</code></pre><p>Generate a new chain from <code>chains</code> with iterations indexed by <code>1:n</code>, where <code>n</code> is the number of samples per chain.</p><p>The new chain and <code>chains</code> share the same data in memory.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L497-L504">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.sections-Tuple{Chains}" href="#MCMCChains.sections-Tuple{Chains}"><code>MCMCChains.sections</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">sections(c::Chains)</code></pre><p>Retrieve a list of the sections in a chain.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L553-L557">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.set_section-Tuple{Chains, Any}" href="#MCMCChains.set_section-Tuple{Chains, Any}"><code>MCMCChains.set_section</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">set_section(chains::Chains, namemap)</code></pre><p>Create a new <code>Chains</code> object from <code>chains</code> with the provided <code>namemap</code> mapping of parameter names.</p><p>Both chains share the same underlying data. Any parameters in the chain that are unassigned will be placed into the <code>:parameters</code> section.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L693-L701">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.setinfo-Tuple{Chains, NamedTuple}" href="#MCMCChains.setinfo-Tuple{Chains, NamedTuple}"><code>MCMCChains.setinfo</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">setinfo(c::Chains, n::NamedTuple)</code></pre><p>Return a new <code>Chains</code> object with a <code>NamedTuple</code> type <code>n</code> placed in the <code>info</code> field.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">new_chn = setinfo(chn, NamedTuple{(:a, :b)}((1, 2)))</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L679-L688">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.setrange-Tuple{Chains, AbstractVector{Int64}}" href="#MCMCChains.setrange-Tuple{Chains, AbstractVector{Int64}}"><code>MCMCChains.setrange</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">setrange(chains::Chains, range::AbstractVector{Int})</code></pre><p>Generate a new chain from <code>chains</code> with iterations indexed by <code>range</code>.</p><p>The new chain and <code>chains</code> share the same data in memory.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L474-L480">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.start_times-Tuple{Chains}" href="#MCMCChains.start_times-Tuple{Chains}"><code>MCMCChains.start_times</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">start_times(c::Chains)</code></pre><p>Retrieve the contents of <code>c.info.start_time</code>, or <code>missing</code> if no  <code>start_time</code> is set.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L403-L408">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.stop_times-Tuple{Chains}" href="#MCMCChains.stop_times-Tuple{Chains}"><code>MCMCChains.stop_times</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">stop_times(c::Chains)</code></pre><p>Retrieve the contents of <code>c.info.stop_time</code>, or <code>missing</code> if no  <code>stop_time</code> is set.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L411-L416">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.wall_duration-Tuple{Chains}" href="#MCMCChains.wall_duration-Tuple{Chains}"><code>MCMCChains.wall_duration</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))</code></pre><p>Calculate the wall clock time for all chains in seconds.</p><p>The duration is calculated as <code>stop - start</code>, where as default <code>stop</code> is the latest stopping time and <code>start</code> is the earliest starting time.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/6cbe2a3d38a488fed44654013dca187db5906c8b/src/chains.jl#L419-L426">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gadfly/">« Gadfly.jl</a><a class="docs-footer-nextpage" href="../diagnostics/">Diagnostics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 18 November 2024 11:24">Monday 18 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
-
+ :B</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L846-L869">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.resetrange-Tuple{Chains}" href="#MCMCChains.resetrange-Tuple{Chains}"><code>MCMCChains.resetrange</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">resetrange(chains::Chains)</code></pre><p>Generate a new chain from <code>chains</code> with iterations indexed by <code>1:n</code>, where <code>n</code> is the number of samples per chain.</p><p>The new chain and <code>chains</code> share the same data in memory.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L497-L504">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.sections-Tuple{Chains}" href="#MCMCChains.sections-Tuple{Chains}"><code>MCMCChains.sections</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">sections(c::Chains)</code></pre><p>Retrieve a list of the sections in a chain.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L553-L557">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.set_section-Tuple{Chains, Any}" href="#MCMCChains.set_section-Tuple{Chains, Any}"><code>MCMCChains.set_section</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">set_section(chains::Chains, namemap)</code></pre><p>Create a new <code>Chains</code> object from <code>chains</code> with the provided <code>namemap</code> mapping of parameter names.</p><p>Both chains share the same underlying data. Any parameters in the chain that are unassigned will be placed into the <code>:parameters</code> section.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L693-L701">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.setinfo-Tuple{Chains, NamedTuple}" href="#MCMCChains.setinfo-Tuple{Chains, NamedTuple}"><code>MCMCChains.setinfo</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">setinfo(c::Chains, n::NamedTuple)</code></pre><p>Return a new <code>Chains</code> object with a <code>NamedTuple</code> type <code>n</code> placed in the <code>info</code> field.</p><p><strong>Example</strong></p><pre><code class="language-julia hljs">new_chn = setinfo(chn, NamedTuple{(:a, :b)}((1, 2)))</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L679-L688">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.setrange-Tuple{Chains, AbstractVector{Int64}}" href="#MCMCChains.setrange-Tuple{Chains, AbstractVector{Int64}}"><code>MCMCChains.setrange</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">setrange(chains::Chains, range::AbstractVector{Int})</code></pre><p>Generate a new chain from <code>chains</code> with iterations indexed by <code>range</code>.</p><p>The new chain and <code>chains</code> share the same data in memory.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L474-L480">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.start_times-Tuple{Chains}" href="#MCMCChains.start_times-Tuple{Chains}"><code>MCMCChains.start_times</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">start_times(c::Chains)</code></pre><p>Retrieve the contents of <code>c.info.start_time</code>, or <code>missing</code> if no  <code>start_time</code> is set.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L403-L408">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.stop_times-Tuple{Chains}" href="#MCMCChains.stop_times-Tuple{Chains}"><code>MCMCChains.stop_times</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">stop_times(c::Chains)</code></pre><p>Retrieve the contents of <code>c.info.stop_time</code>, or <code>missing</code> if no  <code>stop_time</code> is set.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L411-L416">source</a></section></article><article class="docstring"><header><a class="docstring-article-toggle-button fa-solid fa-chevron-down" href="javascript:;" title="Collapse docstring"></a><a class="docstring-binding" id="MCMCChains.wall_duration-Tuple{Chains}" href="#MCMCChains.wall_duration-Tuple{Chains}"><code>MCMCChains.wall_duration</code></a> — <span class="docstring-category">Method</span><span class="is-flex-grow-1 docstring-article-toggle-button" title="Collapse docstring"></span></header><section><div><pre><code class="language-julia hljs">wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))</code></pre><p>Calculate the wall clock time for all chains in seconds.</p><p>The duration is calculated as <code>stop - start</code>, where as default <code>stop</code> is the latest stopping time and <code>start</code> is the earliest starting time.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/aa6161b5ead6d3c6705dde45c7858c50d55ca8c1/src/chains.jl#L419-L426">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gadfly/">« Gadfly.jl</a><a class="docs-footer-nextpage" href="../diagnostics/">Diagnostics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 18 November 2024 11:44">Monday 18 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
