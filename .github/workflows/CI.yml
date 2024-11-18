@@ -50,7 +50,7 @@ jobs:
       - uses: codecov/codecov-action@v5
         if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         with:
-          file: lcov.info
+          files: lcov.info
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
       - uses: coverallsapp/github-action@v2
