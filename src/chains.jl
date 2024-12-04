@@ -240,7 +240,7 @@ julia> get(chn, :param_1; flatten=true)
 ```
 """
 function Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
-    pairs = Dict()
+    pairs = OrderedCollections.OrderedDict()
     for v in vs
         syms = namesingroup(c, v)
         len = length(syms)
@@ -289,7 +289,7 @@ function Base.get(
     section::Union{Symbol,AbstractVector{Symbol}},
     flatten = false
 )
-    names = Set(Symbol[])
+    names = OrderedCollections.OrderedSet(Symbol[])
     regex = r"[^\[]*"
     _section = section isa Symbol ? (section,) : section
     for v in _section
