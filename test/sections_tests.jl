@@ -1,9 +1,12 @@
 using  MCMCChains, Test
 
 # https://github.com/TuringLang/AdvancedMH.jl/pull/63
+# https://github.com/TuringLang/MCMCChains.jl/issues/443
 @testset "order of parameters" begin
-    chains = Chains(rand(2, 10, 4), vcat(["μ[$i]" for i in 1:9], :lp), (internals=[:lp],))
-    @test names(chains, :parameters) == [Symbol("μ[$i]") for i in 1:9]
+    params = vcat(["μ[$i]" for i in 1:9], :p1, :p2, :p3)
+    chains = Chains(rand(2, length(params)+1, 4), vcat(params, :lp), (internals=[:lp],))
+    @test names(chains, :parameters) == map(Symbol, params)
+    @test collect(keys(get(chains; section=:parameters))) == [:μ, :p1, :p2, :p3]
 end
 
 @testset "describe sections" begin
