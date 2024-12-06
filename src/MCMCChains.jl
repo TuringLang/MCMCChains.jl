@@ -47,6 +47,7 @@ export rafterydiag
 export rstar
 
 export hpd
+export trace
 
 """
     Chains
@@ -84,5 +85,21 @@ include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
+
+
+### trace function via Extensions still needs to define a base function
+function trace end
+
+function __init__()
+
+    Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, kwargs
+        if exc.f in [trace]
+            if isempty(methods(exc.f))
+                print(io, "\n$(exc.f) has no methods, yet. Makie has to be loaded for the plotting extension to be activated. Run `using Makie`, `using CairoMakie`, `using GLMakie` or any other package that also loads Makie.")
+            end
+        end
+    end
+end
+
 
 end # module
