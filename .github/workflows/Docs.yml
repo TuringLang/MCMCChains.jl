@@ -24,3 +24,5 @@ jobs:
     steps:
       - name: Build and deploy Documenter.jl docs
         uses: TuringLang/actions/DocsDocumenter@main
+        env:
+          GKSwstype: nul
