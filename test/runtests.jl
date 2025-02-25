@@ -68,9 +68,9 @@ Random.seed!(0)
     println("Rstar")
     @time include("rstar_tests.jl")
 
-    # Array printing depends on Julia version and architecture,
-    # therefore we only run doctests with Julia >= 1.7 and on 64bit where `Int === Int64`
-    if VERSION >= v"1.7" && Sys.WORD_SIZE == 64
+    # Array printing depends on Julia version, so only do doctests on newer
+    # versions
+    if VERSION >= v"1.7"
         DocMeta.setdocmeta!(
             MCMCChains,
             :DocTestSetup,
