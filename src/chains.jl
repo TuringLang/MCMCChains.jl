@@ -359,7 +359,7 @@ Base.last(c::Chains) = last(c.value[Axis{:iter}].val)
 
 Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 
-# Convenience functions to handle different types of
+# Convenience functions to handle different types of 
 # timestamps.
 to_datetime(t::DateTime) = t
 to_datetime(t::Float64) = unix2datetime(t)
@@ -396,7 +396,7 @@ max_stop(c::Chains) = max_datetime(stop_times(c))
 """
     start_times(c::Chains)
 
-Retrieve the contents of `c.info.start_time`, or `missing` if no
+Retrieve the contents of `c.info.start_time`, or `missing` if no 
 `start_time` is set.
 """
 start_times(c::Chains) = to_datetime_vec(get(c.info, :start_time, missing))
@@ -404,7 +404,7 @@ start_times(c::Chains) = to_datetime_vec(get(c.info, :start_time, missing))
 """
     stop_times(c::Chains)
 
-Retrieve the contents of `c.info.stop_time`, or `missing` if no
+Retrieve the contents of `c.info.stop_time`, or `missing` if no 
 `stop_time` is set.
 """
 stop_times(c::Chains) = to_datetime_vec(get(c.info, :stop_time, missing))
@@ -432,14 +432,14 @@ end
 
 Calculate the compute time for all chains in seconds.
 
-The duration is calculated as the sum of `start - stop` in seconds.
+The duration is calculated as the sum of `start - stop` in seconds. 
 
 `compute_duration` is more useful in cases of parallel sampling, where `wall_duration`
 may understate how much computation time was utilitzed.
 """
 function compute_duration(
-    c::Chains;
-    start=start_times(c),
+    c::Chains; 
+    start=start_times(c), 
     stop=stop_times(c)
 )
     # Calculate total time for each chain, then add it up.
@@ -803,24 +803,24 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
 
     # concatenate all chains
     data = mapreduce(
-        c -> c.value.data,
-        (x, y) -> cat(x, y; dims = 3),
-        args;
+        c -> c.value.data, 
+        (x, y) -> cat(x, y; dims = 3), 
+        args; 
         init = c1.value.data
     )
     value = AxisArray(data; iter = rng, var = nms, chain = 1:size(data, 3))
 
     # Concatenate times, if available
     starts = mapreduce(
-        c -> get(c.info, :start_time, nothing),
-        vcat,
-        args,
+        c -> get(c.info, :start_time, nothing), 
+        vcat, 
+        args, 
         init = get(c1.info, :start_time, nothing)
     )
     stops = mapreduce(
-        c -> get(c.info, :stop_time, nothing),
-        vcat,
-        args,
+        c -> get(c.info, :stop_time, nothing), 
+        vcat, 
+        args, 
         init = get(c1.info, :stop_time, nothing)
     )
     nontime_props = filter(x -> !(x in [:start_time, :stop_time]), [propertynames(c1.info)...])
@@ -837,7 +837,7 @@ function pool_chain(c::Chains)
 end
 
 """
-    replacenames(chains::Chains, dict::AbstractDict)
+    replacenames(chains::Chains, dict::AbstractDict) 
 
 Replace parameter names by creating a new `Chains` object that shares the same underlying data.
 
@@ -854,7 +854,7 @@ julia> names(chn2)
 
 julia> chn3 = replacenames(chn2, Dict("A" => "one", "two" => "B"));
 
-julia> names(chn3)
+julia> names(chn3) 
 2-element Vector{Symbol}:
  :one
  :B
