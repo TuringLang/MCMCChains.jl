@@ -347,13 +347,6 @@ end
 
 function Base.show(io::IO, mime::MIME"text/plain", chains::Chains)
     print(io, "Chains ", chains, ":\n\n", header(chains))
-
-    # Show summary stats.
-    summaries = describe(chains)
-    for summary in summaries
-        println(io)
-        show(io, mime, summary)
-    end
 end
 
 Base.keys(c::Chains) = names(c)
