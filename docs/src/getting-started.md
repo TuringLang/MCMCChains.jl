@@ -175,4 +175,4 @@ MCMCChains.sample(::Chains, ::Integer)
 See `?sample` for additional help on sampling.
 Alternatively, you can construct and sample from a kernel density estimator using
 [KernelDensity.jl](https://github.com/JuliaStats/KernelDensity.jl),
-see [test/sampling_tests.jl](https://github.com/TuringLang/MCMCChains.jl/blob/master/test/sampling_tests.jl).
+see [test/sampling_tests.jl](https://github.com/TuringLang/MCMCChains.jl/blob/main/test/sampling_tests.jl).
