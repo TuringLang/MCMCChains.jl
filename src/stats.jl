@@ -171,17 +171,14 @@ function changerate(chains::AbstractArray{<:Real,3})
     changerates, mvchangerate
 end
 
-describe(c::Chains; args...) = describe(stdout, c; args...)
-
 """
-    describe(io, chains[;
-             q = [0.025, 0.25, 0.5, 0.75, 0.975],
-             etype = :bm,
+    describe(io, chains[; 
+             q=[0.025, 0.25, 0.5, 0.75, 0.975], 
+             etype=:bm, 
              kwargs...])
-
-Print the summary statistics and quantiles for the chain.
+Print chain metadata, summary statistics, and quantiles. Use `describe(chains)` for REPL output to `stdout`, or specify `io` for other streams (e.g., file output).
 """
-function describe(
+function DataAPI.describe(
     io::IO,
     chains::Chains;
     q = [0.025, 0.25, 0.5, 0.75, 0.975],
@@ -189,17 +186,18 @@ function describe(
     kwargs...
 )
     print(io, "Chains ", chains, ":\n\n", header(chains))
-
+    
     summstats = summarystats(chains; etype = etype, kwargs...)
-    quantiles = quantile(chains; q = q, kwargs...)
-
-    # Show summary stats
     println(io)
     show(io, MIME("text/plain"), summstats)
+    
+    qs = quantile(chains; q = q, kwargs...)
     println(io)
-    show(io, MIME("text/plain"), quantiles)
-
+    show(io, MIME("text/plain"), qs)
 end
+
+# Convenience method for default IO
+DataAPI.describe(chains::Chains; kwargs...) = DataAPI.describe(stdout, chains; kwargs...)
 
 function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
     n = length(x)
