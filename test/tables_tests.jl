@@ -134,77 +134,92 @@ using DataFrames
         colnames = ["a", "b", "c", "d", "e", "f", "g", "h"]
         internal_colnames = ["c", "d", "e", "f", "g", "h"]
         chn = Chains(val, colnames, Dict(:internals => internal_colnames))
-        cdf = describe(chn)[1]
-
-        @testset "Tables interface" begin
-            @test Tables.istable(typeof(cdf))
-
-            @testset "column access" begin
-                @test Tables.columnaccess(typeof(cdf))
-                @test Tables.columns(cdf) === cdf
-                @test Tables.columnnames(cdf) == keys(cdf.nt)
-                for (k, v) in pairs(cdf.nt)
-                    @test isequal(Tables.getcolumn(cdf, k), v)
+        
+        # Get ChainDataFrame objects
+        summstats = summarystats(chn)
+        qs = quantile(chn)
+        
+        # Helper function to test any ChainDataFrame
+        function test_chaindataframe(cdf::ChainDataFrame)
+            @testset "Tables interface" begin
+                @test Tables.istable(typeof(cdf))
+    
+                @testset "column access" begin
+                    @test Tables.columnaccess(typeof(cdf))
+                    @test Tables.columns(cdf) === cdf
+                    @test Tables.columnnames(cdf) == keys(cdf.nt)
+                    for (k, v) in pairs(cdf.nt)
+                        @test isequal(Tables.getcolumn(cdf, k), v)
+                    end
+                    @test Tables.getcolumn(cdf, 1) == Tables.getcolumn(cdf, keys(cdf.nt)[1])
+                    @test Tables.getcolumn(cdf, 2) == Tables.getcolumn(cdf, keys(cdf.nt)[2])
+                    @test_throws Exception Tables.getcolumn(cdf, :blah)
+                    @test_throws Exception Tables.getcolumn(cdf, length(cdf.nt) + 1)
                 end
-                @test Tables.getcolumn(cdf, 1) == Tables.getcolumn(cdf, keys(cdf.nt)[1])
-                @test Tables.getcolumn(cdf, 2) == Tables.getcolumn(cdf, keys(cdf.nt)[2])
-                @test_throws Exception Tables.getcolumn(cdf, :blah)
-                @test_throws Exception Tables.getcolumn(cdf, length(cdf.nt) + 1)
-            end
-
-            @testset "row access" begin
-                @test Tables.rowaccess(typeof(cdf))
-                @test Tables.rows(cdf) isa Tables.RowIterator
-                @test eltype(Tables.rows(cdf)) <: Tables.AbstractRow
-                rows = collect(Tables.rows(cdf))
-                @test eltype(rows) <: Tables.AbstractRow
-                @test size(rows) === (2,)
-                @testset for i in 1:2
-                    row = rows[i]
-                    @test Tables.columnnames(row) == keys(cdf.nt)
-                    for j in length(cdf.nt)
-                        @test isequal(Tables.getcolumn(row, j), cdf.nt[j][i])
-                        @test isequal(Tables.getcolumn(row, keys(cdf.nt)[j]), cdf.nt[j][i])
+                
+                @testset "row access" begin
+                    @test Tables.rowaccess(typeof(cdf))
+                    @test Tables.rows(cdf) isa Tables.RowIterator
+                    @test eltype(Tables.rows(cdf)) <: Tables.AbstractRow
+                    rows = collect(Tables.rows(cdf))
+                    @test eltype(rows) <: Tables.AbstractRow
+                    @test size(rows) === (2,)
+                    @testset for i in 1:2
+                        row = rows[i]
+                        @test Tables.columnnames(row) == keys(cdf.nt)
+                        for j in length(cdf.nt)
+                            @test isequal(Tables.getcolumn(row, j), cdf.nt[j][i])
+                            @test isequal(Tables.getcolumn(row, keys(cdf.nt)[j]), cdf.nt[j][i])
+                        end
                     end
                 end
+                
+                @testset "integration tests" begin
+                    @test length(Tables.rowtable(cdf)) == length(cdf.nt[1])
+                    @test isequal(Tables.columntable(cdf), cdf.nt)
+                    nt = Tables.rowtable(cdf)[1]
+                    @test isequal(nt, (; (k => v[1] for (k, v) in pairs(cdf.nt))...))
+                    @test isequal(nt, collect(Iterators.take(Tables.namedtupleiterator(cdf), 1))[1])
+                    nt = Tables.rowtable(cdf)[2]
+                    @test isequal(nt, (; (k => v[2] for (k, v) in pairs(cdf.nt))...))
+                    @test isequal(nt, collect(Iterators.take(Tables.namedtupleiterator(cdf), 2))[2])
+                    @test isequal(
+                        Tables.matrix(Tables.rowtable(cdf)),
+                        Tables.matrix(Tables.columntable(cdf)),
+                    )
+                end
+                
+                @testset "schema" begin
+                    schema = Tables.schema(cdf)
+                    @test schema isa Tables.Schema
+                    @test schema.names == keys(cdf.nt)
+                    @test schema.types == eltype.(values(cdf.nt))
+                end
             end
-
-            @testset "integration tests" begin
-                @test length(Tables.rowtable(cdf)) == length(cdf.nt[1])
-                @test isequal(Tables.columntable(cdf), cdf.nt)
-                nt = Tables.rowtable(cdf)[1]
+            
+            @testset "TableTraits interface" begin
+                @test IteratorInterfaceExtensions.isiterable(cdf)
+                @test TableTraits.isiterabletable(cdf)
+                nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 1))[1]
                 @test isequal(nt, (; (k => v[1] for (k, v) in pairs(cdf.nt))...))
-                @test isequal(nt, collect(Iterators.take(Tables.namedtupleiterator(cdf), 1))[1])
-                nt = Tables.rowtable(cdf)[2]
+                nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 2))[2]
                 @test isequal(nt, (; (k => v[2] for (k, v) in pairs(cdf.nt))...))
-                @test isequal(nt, collect(Iterators.take(Tables.namedtupleiterator(cdf), 2))[2])
-                @test isequal(
-                    Tables.matrix(Tables.rowtable(cdf)),
-                    Tables.matrix(Tables.columntable(cdf)),
-                )
             end
-
-            @testset "schema" begin
-                @test Tables.schema(cdf) isa Tables.Schema
-                @test Tables.schema(cdf).names === keys(cdf.nt)
-                @test Tables.schema(cdf).types === eltype.(values(cdf.nt))
+    
+            @testset "DataFrames.DataFrame constructor" begin
+                @inferred DataFrame(cdf)
+                df = DataFrame(cdf)
+                @test df isa DataFrame
+                @test isequal(Tables.columntable(df), cdf.nt)
             end
         end
-
-        @testset "TableTraits interface" begin
-            @test IteratorInterfaceExtensions.isiterable(cdf)
-            @test TableTraits.isiterabletable(cdf)
-            nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 1))[1]
-            @test isequal(nt, (; (k => v[1] for (k, v) in pairs(cdf.nt))...))
-            nt = collect(Iterators.take(IteratorInterfaceExtensions.getiterator(cdf), 2))[2]
-            @test isequal(nt, (; (k => v[2] for (k, v) in pairs(cdf.nt))...))
+        
+        @testset "Summary Statistics" begin
+            test_chaindataframe(summstats)
         end
-
-        @testset "DataFrames.DataFrame constructor" begin
-            @inferred DataFrame(cdf)
-            df = DataFrame(cdf)
-            @test df isa DataFrame
-            @test isequal(Tables.columntable(df), cdf.nt)
+        
+        @testset "Quantiles" begin
+            test_chaindataframe(qs)
         end
     end
 end
