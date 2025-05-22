@@ -20,20 +20,21 @@ function autocor(
     append_chains = true,
     demean::Bool = true,
     lags::AbstractVector{<:Integer} = _default_lags(chains, append_chains),
-    kwargs...
+    kwargs...,
 )
     funs = Function[]
     func_names = @. Symbol("lag ", lags)
     for i in lags
-        push!(funs, x -> autocor(x, [i], demean=demean)[1])
+        push!(funs, x -> autocor(x, [i], demean = demean)[1])
     end
 
     return summarize(
-        chains, funs...;
+        chains,
+        funs...;
         func_names = func_names,
         append_chains = append_chains,
         name = "Autocorrelation",
-        kwargs...
+        kwargs...,
     )
 end
 
@@ -64,7 +65,7 @@ function cor(
     chains::Chains;
     sections = _default_sections(chains),
     append_chains = true,
-    kwargs...
+    kwargs...,
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
@@ -77,10 +78,8 @@ function cor(
         return df
     else
         vector_of_df = [
-            chaindataframe_cor(
-                "Correlation - Chain $i", names_of_params, data
-            )
-            for (i, data) in enumerate(to_vector_of_matrices(_chains))
+            chaindataframe_cor("Correlation - Chain $i", names_of_params, data) for
+            (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_df
     end
@@ -91,8 +90,10 @@ function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwarg
     cormat = cor(chains)
 
     # Summarize the results in a named tuple.
-    nt = (; parameters = names_of_params,
-          zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...)
+    nt = (;
+        parameters = names_of_params,
+        zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...,
+    )
 
     # Create a ChainDataFrame.
     return ChainDataFrame(name, nt; kwargs...)
@@ -110,7 +111,7 @@ function changerate(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
     append_chains = true,
-    kwargs...
+    kwargs...,
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
@@ -123,9 +124,7 @@ function changerate(
         return df
     else
         vector_of_df = [
-            chaindataframe_changerate(
-                "Change Rate - Chain $i", names_of_params, data
-            )
+            chaindataframe_changerate("Change Rate - Chain $i", names_of_params, data)
             for (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_df
@@ -150,10 +149,10 @@ function changerate(chains::AbstractArray{<:Real,3})
     changerates = zeros(nparams)
     mvchangerate = 0.0
 
-    for chain in 1:nchains, iter in 2:niters
+    for chain = 1:nchains, iter = 2:niters
         isanychanged = false
 
-        for param in 1:nparams
+        for param = 1:nparams
             # update if the sample is different from the one in the previous iteration
             if chains[iter-1, param, chain] != chains[iter, param, chain]
                 changerates[param] += 1
@@ -183,14 +182,14 @@ function DataAPI.describe(
     chains::Chains;
     q = [0.025, 0.25, 0.5, 0.75, 0.975],
     etype = :bm,
-    kwargs...
+    kwargs...,
 )
     print(io, "Chains ", chains, ":\n\n", header(chains))
-    
+
     summstats = summarystats(chains; etype = etype, kwargs...)
     println(io)
     show(io, MIME("text/plain"), summstats)
-    
+
     qs = quantile(chains; q = q, kwargs...)
     println(io)
     show(io, MIME("text/plain"), qs)
@@ -199,13 +198,13 @@ end
 # Convenience method for default IO
 DataAPI.describe(chains::Chains; kwargs...) = DataAPI.describe(stdout, chains; kwargs...)
 
-function _hpd(x::AbstractVector{<:Real}; alpha::Real=0.05)
+function _hpd(x::AbstractVector{<:Real}; alpha::Real = 0.05)
     n = length(x)
     m = max(1, ceil(Int, alpha * n))
 
     y = sort(x)
     a = y[1:m]
-    b = y[(n - m + 1):n]
+    b = y[(n-m+1):n]
     _, i = findmin(b - a)
 
     return [a[i], b[i]]
@@ -233,10 +232,10 @@ HPD
            b    0.0114    0.9460
 ```
 """
-function hpd(chn::Chains; alpha::Real=0.05, kwargs...)
+function hpd(chn::Chains; alpha::Real = 0.05, kwargs...)
     labels = [:lower, :upper]
-    l(x) = _hpd(x, alpha=alpha)[1]
-    u(x) = _hpd(x, alpha=alpha)[2]
+    l(x) = _hpd(x, alpha = alpha)[1]
+    u(x) = _hpd(x, alpha = alpha)[2]
     return summarize(chn, l, u; name = "HPD", func_names = labels, kwargs...)
 end
 
@@ -252,7 +251,7 @@ function quantile(
     chains::Chains;
     q::AbstractVector = [0.025, 0.25, 0.5, 0.75, 0.975],
     append_chains = true,
-    kwargs...
+    kwargs...,
 )
     # compute quantiles
     funs = Function[]
@@ -262,11 +261,12 @@ function quantile(
     end
 
     return summarize(
-        chains, funs...;
+        chains,
+        funs...;
         func_names = func_names,
         append_chains = append_chains,
         name = "Quantiles",
-        kwargs...
+        kwargs...,
     )
 end
 
@@ -296,10 +296,10 @@ function summarystats(
     autocov_method::MCMCDiagnosticTools.AbstractAutocovMethod = AutocovMethod(),
     maxlag = 250,
     name = "Summary Statistics",
-    kwargs...
+    kwargs...,
 )
     # Store everything.
-    funs = [mean∘cskip, std∘cskip]
+    funs = [mean ∘ cskip, std ∘ cskip]
     func_names = [:mean, :std]
 
     # Subset the chain.
@@ -309,30 +309,41 @@ function summarystats(
     nt_additional = NamedTuple()
     try
         mcse_df = MCMCDiagnosticTools.mcse(
-            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag,
+            _chains;
+            sections = nothing,
+            autocov_method = autocov_method,
+            maxlag = maxlag,
         )
-        nt_additional = merge(nt_additional, (; mcse=mcse_df.nt.mcse))
+        nt_additional = merge(nt_additional, (; mcse = mcse_df.nt.mcse))
     catch e
         @warn "MCSE calculation failed: $e"
     end
 
     try
         ess_tail_df = MCMCDiagnosticTools.ess(
-            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:tail
+            _chains;
+            sections = nothing,
+            autocov_method = autocov_method,
+            maxlag = maxlag,
+            kind = :tail,
         )
-        nt_additional = merge(nt_additional, (ess_tail=ess_tail_df.nt.ess,))
+        nt_additional = merge(nt_additional, (ess_tail = ess_tail_df.nt.ess,))
     catch e
         @warn "Tail ESS calculation failed: $e"
     end
 
     try
         ess_rhat_rank_df = MCMCDiagnosticTools.ess_rhat(
-            _chains; sections = nothing, autocov_method = autocov_method, maxlag = maxlag, kind=:rank
+            _chains;
+            sections = nothing,
+            autocov_method = autocov_method,
+            maxlag = maxlag,
+            kind = :rank,
         )
         nt_ess_rhat_rank = (
-            ess_bulk=ess_rhat_rank_df.nt.ess,
-            rhat=ess_rhat_rank_df.nt.rhat,
-            ess_per_sec=ess_rhat_rank_df.nt.ess_per_sec
+            ess_bulk = ess_rhat_rank_df.nt.ess,
+            rhat = ess_rhat_rank_df.nt.rhat,
+            ess_per_sec = ess_rhat_rank_df.nt.ess_per_sec,
         )
         nt_additional = merge(nt_additional, nt_ess_rhat_rank)
     catch e
@@ -341,16 +352,20 @@ function summarystats(
 
     # Possibly re-order the columns to stay backwards-compatible.
     additional_keys = (:mcse, :ess_bulk, :ess_tail, :rhat, :ess_per_sec)
-    additional_df = ChainDataFrame("Additional", (; ((k, nt_additional[k]) for k in additional_keys if k ∈ keys(nt_additional))...))
+    additional_df = ChainDataFrame(
+        "Additional",
+        (; ((k, nt_additional[k]) for k in additional_keys if k ∈ keys(nt_additional))...),
+    )
 
     # Summarize.
     summary_df = summarize(
-        _chains, funs...;
+        _chains,
+        funs...;
         func_names,
         append_chains,
         additional_df,
         name,
-        sections = nothing
+        sections = nothing,
     )
 
     return summary_df
@@ -363,16 +378,12 @@ Calculate the mean of a chain.
 """
 function mean(chains::Chains; kwargs...)
     # Store everything.
-    funs = [mean∘cskip]
+    funs = [mean ∘ cskip]
     func_names = [:mean]
 
     # Summarize.
-    summary_df = summarize(
-        chains, funs...;
-        func_names = func_names,
-        name = "Mean",
-        kwargs...
-    )
+    summary_df =
+        summarize(chains, funs...; func_names = func_names, name = "Mean", kwargs...)
 
     return summary_df
 end
