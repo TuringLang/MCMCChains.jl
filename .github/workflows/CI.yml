@@ -3,24 +3,29 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.version == 'nightly' }}
+    runs-on: ${{ matrix.runner.os }}
+    continue-on-error: ${{ matrix.runner.version == 'pre' }}
+    # needed to allow julia-actions/cache to delete old caches that it has created
+    permissions:
+      actions: write
+      contents: read
     strategy:
       matrix:
-        version:
-          - '1.6'
-          - '1'
-          - nightly
-        os:
-          - ubuntu-latest
-        arch:
-          - x64
-        include:
+        runner:
+          - version: 'min'
+            os: ubuntu-latest
+            arch: x64
+          - version: '1'
+            os: ubuntu-latest
+            arch: x64
+          - version: 'pre'
+            os: ubuntu-latest
+            arch: x64
           - version: '1'
             os: ubuntu-latest
             arch: x86
@@ -29,35 +34,29 @@ jobs:
             arch: x64
           - version: '1'
             os: macOS-latest
-            arch: x64
+            arch: aarch64
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
         with:
-          version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
+          version: ${{ matrix.runner.version }}
+          arch: ${{ matrix.runner.arch }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
         with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-      - uses: julia-actions/julia-buildpkg@latest
-      - uses: julia-actions/julia-runtest@latest
-        with:
-          coverage: ${{ matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64' }}
+          coverage: ${{ matrix.runner.version == '1' && matrix.runner.os == 'ubuntu-latest' && matrix.runner.arch == 'x64' }}
       - uses: julia-actions/julia-processcoverage@v1
-        if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
-      - uses: codecov/codecov-action@v1
-        if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+        if: matrix.runner.version == '1' && matrix.runner.os == 'ubuntu-latest' && matrix.runner.arch == 'x64'
+      - uses: codecov/codecov-action@v5
+        if: matrix.runner.version == '1' && matrix.runner.os == 'ubuntu-latest' && matrix.runner.arch == 'x64'
         with:
-          file: lcov.info
-      - uses: coverallsapp/github-action@master
-        if: matrix.version == '1' && matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
+          files: lcov.info
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: coverallsapp/github-action@v2
+        if: matrix.runner.version == '1' && matrix.runner.os == 'ubuntu-latest' && matrix.runner.arch == 'x64'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: lcov.info

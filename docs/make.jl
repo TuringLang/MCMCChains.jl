@@ -30,5 +30,3 @@ makedocs(
     modules = [MCMCChains],
     checkdocs = :exports,
 )
-
-deploydocs(repo = "github.com/TuringLang/MCMCChains.jl.git", push_preview=true)

@@ -56,7 +56,7 @@ function cummean(x::AbstractVector)
     return y
 end
 
-function _dict2namedtuple(d::Dict)
+function _dict2namedtuple(d::AbstractDict)
     t_keys = ntuple(x -> Symbol(collect(keys(d))[x]), length(keys(d)))
     t_vals = ntuple(x -> collect(values(d))[x], length(values(d)))
     return NamedTuple{t_keys}(t_vals)
