@@ -60,6 +60,23 @@ Logging.disable_logging(Logging.Warn)
     # https://github.com/TuringLang/MCMCChains.jl/issues/413
     display(corner(chn[:, 1:2, 2:3]))
 
+    # Violinplot tests
+    println("\nviolinplot")
+    display(violinplot(chn)) # All parameters, default colordim (:chain)
+    display(violinplot(chn, colordim = :parameter)) # All chains, colordim = :parameter
+    display(violinplot(chn, 1)) # Single parameter, default colordim (:chain)
+    display(violinplot(chn, 1, colordim = :parameter)) # Single chain, colordim = :parameter
+    display(violinplot(chn, 1, show_boxplot = false)) # Single parameter, no boxplot
+    println()
+
+    # Plot() with violinplot seriestype
+    println("\nplot() with violinplot seriestype")
+    # "seriestype = :violin will" also work fine
+    display(plot(chn, seriestype = :violinplot)) # All parameters with violinplot
+    display(plot(chn, 1, seriestype = :violinplot)) # Specific parameter(s) with violinplot
+    display(plot(chn, 1, seriestype = :violinplot, show_boxplot = false)) # Specific parameter(s) with violinplot and no boxplot
+    println()
+
     # plotting combinations
     display(plot(chn))
     display(plot(chn, append_chains=true))
