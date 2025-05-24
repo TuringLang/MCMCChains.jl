@@ -4,6 +4,7 @@
 @shorthands pooleddensity
 @shorthands traceplot
 @shorthands corner
+@shorthands violinplot
 
 """
     ridgelineplot(chains::Chains[, params::Vector{Symbol}]; kwargs...)
@@ -77,6 +78,7 @@ struct _MeanPlot; c; val;  end
 struct _DensityPlot; c; val;  end
 struct _HistogramPlot; c; val;  end
 struct _AutocorPlot; lags; val;  end
+struct _ViolinPlot; c; val; param_indices; show_boxplot; colordim; end
 
 # define alias functions for old syntax
 const translationdict = Dict(
@@ -85,7 +87,9 @@ const translationdict = Dict(
                         :density => _DensityPlot,
                         :histogram => _HistogramPlot,
                         :autocorplot => _AutocorPlot,
-                        :pooleddensity => _DensityPlot
+                        :pooleddensity => _DensityPlot,
+                        :violinplot => _ViolinPlot,
+                        :violin => _ViolinPlot
                       )
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
@@ -106,10 +110,12 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         title --> "Chain $(MCMCChains.chains(c)[i])"
         label --> permutedims(map(string, names(c)))
         val = c.value[:, :, i]
+        _actual_indices_for_violin = 1:size(c, 2)
     elseif colordim == :chain
         title --> string(names(c)[i])
         label --> permutedims(map(x -> "Chain $x", MCMCChains.chains(c)))
         val = c.value[:, i, :]
+        _actual_indices_for_violin = MCMCChains.chains(c)
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
     end
@@ -132,7 +138,10 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         ac_mat = convert(Array{Float64}, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
-    elseif st ∈ supportedplots
+    elseif st ∈ (:violinplot, :violin)
+        show_boxplot_kw = get(plotattributes, :show_boxplot, true)
+        return _ViolinPlot(c, val, _actual_indices_for_violin, show_boxplot_kw, colordim)
+    elseif st ∈ keys(translationdict)
         translationdict[st](c, val)
     else
         range(c), val
@@ -174,6 +183,46 @@ end
     xaxis --> "Iteration"
     yaxis --> "Sample value"
     range(p.c), p.val
+end
+
+@recipe function f(p::_ViolinPlot)
+    num_series = size(p.val, 2)
+    flat_data = vcat([collect(skipmissing(p.val[:, k])) for k in 1:num_series]...)
+
+    plot_labels = String[]
+
+    if p.colordim == :parameter
+        plot_labels = string.(MCMCChains.names(p.c)[p.param_indices])
+    elseif p.colordim == :chain
+        plot_labels = ["Chain $(c_idx)" for c_idx in p.param_indices]
+    else
+        plot_labels = string.(1:num_series)
+    end
+
+    group_labels = repeat(1:num_series, inner = size(p.val, 1))
+
+    xticks := (1:num_series, plot_labels)
+
+    @series begin
+        seriestype := :violin
+        x := group_labels
+        y := flat_data
+        group := group_labels
+        ()
+    end
+
+    if p.show_boxplot
+        @series begin
+            seriestype := :boxplot
+            bar_width := 0.1
+            linewidth := 2
+            fillalpha := 0.8
+            x := group_labels
+            y := flat_data
+            group := group_labels
+            ()
+        end
+    end
 end
 
 @recipe function f(
