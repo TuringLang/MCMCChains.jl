@@ -67,6 +67,8 @@ Logging.disable_logging(Logging.Warn)
     display(violinplot(chn, 1)) # Single parameter, default colordim (:chain)
     display(violinplot(chn, 1, colordim = :parameter)) # Single chain, colordim = :parameter
     display(violinplot(chn, 1, show_boxplot = false)) # Single parameter, no boxplot
+    display(violinplot(chn, 1, append_chains = true)) # Single parameter, chains appended
+    display(violinplot(chn, append_chains = true)) # All parameters, chains appended
     println()
 
     # Plot() with violinplot seriestype
@@ -75,6 +77,7 @@ Logging.disable_logging(Logging.Warn)
     display(plot(chn, seriestype = :violinplot)) # All parameters with violinplot
     display(plot(chn, 1, seriestype = :violinplot)) # Specific parameter(s) with violinplot
     display(plot(chn, 1, seriestype = :violinplot, show_boxplot = false)) # Specific parameter(s) with violinplot and no boxplot
+    display(plot(chn, seriestype = :violinplot, append_chains = true)) # All parameters, chains appended
     println()
 
     # plotting combinations

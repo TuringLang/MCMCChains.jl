@@ -111,10 +111,20 @@ violinplot(chn, 1, colordim = :parameter) # Plotting chain 1 across all paramete
 violinplot(chn, show_boxplot = false) # Plotting all parameters without the inner boxplot
 ```
 
-You can also use the `plot` function with `seriestype = :violinplot` or `seriestype = :violin`.
+You can also aggregate (pool) samples from all chains for a given parameter by using `append_chains = true`. This is useful when you want to visualize the overall posterior distribution without distinguishing between individual chains.
 
 ```@example statsplots
-plot(chn, seriestype = :violinplot)
+violinplot(chn, :A, append_chains = true) # Single parameter, all chains appended
+```
+
+```@example statsplots
+violinplot(chn, append_chains = true) # All parameters, all chains appended
+```
+
+You can also use the `plot` function with `seriestype = :violinplot` or `seriestype = :violin`
+
+```@example statsplots
+plot(chn, seriestype = :violin)
 ```
 
 ## Corner
