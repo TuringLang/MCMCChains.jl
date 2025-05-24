@@ -83,13 +83,47 @@ histogram(chn)
 autocorplot(chn)
 ```
 
+## Violin
+
+Violin plots are similar to box plots but also show the probability density of the data at different values, smoothed by a kernel density estimator.
+
+```@example statsplots
+violinplot(chn) # Plotting parameter 1 across all chains
+```
+
+```@example statsplots
+violinplot(chn, 1) # Plotting parameter 1 across all chains
+```
+
+```@example statsplots
+violinplot(chn, :A) # Plotting a specific parameter across all chains
+```
+
+```@example statsplots
+violinplot(chn, [:C, :B, :A]) # Plotting multiple specific parameters across all chains
+```
+
+```@example statsplots
+violinplot(chn, 1, colordim = :parameter) # Plotting chain 1 across all parameters
+```
+
+```@example statsplots
+violinplot(chn, show_boxplot = false) # Plotting all parameters without the inner boxplot
+```
+
+You can also use the `plot` function with `seriestype = :violinplot` or `seriestype = :violin`.
+
+```@example statsplots
+plot(chn, seriestype = :violinplot)
+```
+
 ## Corner
 
 ```@example statsplots
 corner(chn)
 ```
 
-For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
+> For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
 
 ## Ridgeline
 
