@@ -31,7 +31,7 @@ Logging.disable_logging(Logging.Warn)
 
     println("density")
     display(density(chn, 1))
-    display(density(chn, 1, append_chains=true))
+    display(density(chn, 1, append_chains = true))
     println()
 
     println("autocorplot")
@@ -39,11 +39,11 @@ Logging.disable_logging(Logging.Warn)
     println()
 
     println("ridgelineplot")
-    display(ridgelineplot(chn,chn.name_map[:parameters]))
+    display(ridgelineplot(chn, chn.name_map[:parameters]))
     println()
 
     println("forestplot")
-    display(forestplot(chn,chn.name_map[:parameters]))
+    display(forestplot(chn, chn.name_map[:parameters]))
     println()
 
     #ps_contour = plot(chn, :contour)
@@ -79,7 +79,7 @@ Logging.disable_logging(Logging.Warn)
 
     # plotting combinations
     display(plot(chn))
-    display(plot(chn, append_chains=true))
+    display(plot(chn, append_chains = true))
     display(plot(chn, seriestype = (:mixeddensity, :autocorplot)))
 
     # Test plotting using colordim keyword

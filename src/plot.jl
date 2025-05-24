@@ -73,35 +73,57 @@ By default, all parameters are plotted.
 """
 @userplot ForestPlot
 
-struct _TracePlot; c; val; end
-struct _MeanPlot; c; val;  end
-struct _DensityPlot; c; val;  end
-struct _HistogramPlot; c; val;  end
-struct _AutocorPlot; lags; val;  end
-struct _ViolinPlot; c; val; param_indices; show_boxplot; colordim; end
+struct _TracePlot
+    c::Any
+    val::Any
+end
+struct _MeanPlot
+    c::Any
+    val::Any
+end
+struct _DensityPlot
+    c::Any
+    val::Any
+end
+struct _HistogramPlot
+    c::Any
+    val::Any
+end
+struct _AutocorPlot
+    lags::Any
+    val::Any
+end
+struct _ViolinPlot
+    c::Any
+    val::Any
+    param_indices::Any
+    show_boxplot::Any
+    colordim::Any
+end
 
 # define alias functions for old syntax
 const translationdict = Dict(
-                        :traceplot => _TracePlot,
-                        :meanplot => _MeanPlot,
-                        :density => _DensityPlot,
-                        :histogram => _HistogramPlot,
-                        :autocorplot => _AutocorPlot,
-                        :pooleddensity => _DensityPlot,
-                        :violinplot => _ViolinPlot,
-                        :violin => _ViolinPlot
-                      )
+    :traceplot => _TracePlot,
+    :meanplot => _MeanPlot,
+    :density => _DensityPlot,
+    :histogram => _HistogramPlot,
+    :autocorplot => _AutocorPlot,
+    :pooleddensity => _DensityPlot,
+    :violinplot => _ViolinPlot,
+    :violin => _ViolinPlot,
+)
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
 
 @recipe f(c::Chains, s::Symbol) = c, [s]
 
 @recipe function f(
-    chains::Chains, i::Int;
+    chains::Chains,
+    i::Int;
     colordim = :chain,
     barbounds = (-Inf, Inf),
     maxlag = nothing,
-    append_chains = false
+    append_chains = false,
 )
     st = get(plotattributes, :seriestype, :traceplot)
     c = append_chains || st == :pooleddensity ? pool_chain(chains) : chains
@@ -134,7 +156,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     if st == :autocorplot
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
         # Chains are already appended in `c` if desired, hence we use `append_chains=false`
-        ac = autocor(c; sections = nothing, lags = lags, append_chains=false)
+        ac = autocor(c; sections = nothing, lags = lags, append_chains = false)
         ac_mat = convert(Array{Float64}, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
@@ -152,7 +174,7 @@ end
     xaxis --> "Sample value"
     yaxis --> "Density"
     trim --> true
-    [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
+    [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
 end
 
 @recipe function f(p::_HistogramPlot)
@@ -161,7 +183,7 @@ end
     fillalpha --> 0.7
     bins --> 25
     trim --> true
-    [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
+    [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
 end
 
 @recipe function f(p::_MeanPlot)
@@ -187,7 +209,7 @@ end
 
 @recipe function f(p::_ViolinPlot)
     num_series = size(p.val, 2)
-    flat_data = vcat([collect(skipmissing(p.val[:, k])) for k in 1:num_series]...)
+    flat_data = vcat([collect(skipmissing(p.val[:, k])) for k = 1:num_series]...)
 
     plot_labels = String[]
 
@@ -225,14 +247,11 @@ end
     end
 end
 
-@recipe function f(
-    chains::Chains,
-    parameters::AbstractVector{Symbol};
-    colordim = :chain
-)
-    colordim != :chain &&
-        error("Symbol names are interpreted as parameter names, only compatible with ",
-              "`colordim = :chain`")
+@recipe function f(chains::Chains, parameters::AbstractVector{Symbol}; colordim = :chain)
+    colordim != :chain && error(
+        "Symbol names are interpreted as parameter names, only compatible with ",
+        "`colordim = :chain`",
+    )
 
     ret = indexin(parameters, names(chains))
     any(y === nothing for y in ret) && error("Parameter not found")
@@ -247,9 +266,10 @@ end
     width = 500,
     height = 250,
     colordim = :chain,
-    append_chains = false
+    append_chains = false,
 )
-    _chains = isempty(parameters) ? Chains(chains, _clean_sections(chains, sections)) : chains
+    _chains =
+        isempty(parameters) ? Chains(chains, _clean_sections(chains, sections)) : chains
     c = append_chains ? pool_chain(_chains) : _chains
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa Symbol ? (ptypes,) : ptypes
@@ -260,7 +280,7 @@ end
     N = length(parameters)
 
     if :corner ∉ ptypes
-        size --> (ntypes*width, N*height)
+        size --> (ntypes * width, N * height)
         legend --> false
 
         multiple_plots = N * ntypes > 1
@@ -290,8 +310,8 @@ end
 end
 
 struct Corner
-    c
-    parameters
+    c::Any
+    parameters::Any
 end
 
 @recipe function f(corner::Corner)
@@ -301,7 +321,9 @@ end
     size --> (600, 600)
     # NOTE: Don't use the indices from `chains(chains)`.
     # See https://github.com/TuringLang/MCMCChains.jl/issues/413.
-    ar = collect(Array(corner.c.value[:, corner.parameters, i]) for i in 1:length(chains(corner.c)))
+    ar = collect(
+        Array(corner.c.value[:, corner.parameters, i]) for i = 1:length(chains(corner.c))
+    )
     RecipesBase.recipetype(:cornerplot, vcat(ar...))
 end
 
@@ -320,22 +342,22 @@ function _compute_plot_data(
     show_hpdi = true,
     fill_q = true,
     fill_hpd = false,
-    ordered = false
+    ordered = false,
 )
 
-    chain_dic = Dict(zip(quantile(chains)[:,1], quantile(chains)[:,4]))
+    chain_dic = Dict(zip(quantile(chains)[:, 1], quantile(chains)[:, 4]))
     sorted_chain = sort(collect(zip(values(chain_dic), keys(chain_dic))))
-    sorted_par = [sorted_chain[i][2] for i in 1:length(par_names)]
+    sorted_par = [sorted_chain[i][2] for i = 1:length(par_names)]
     par = (ordered ? sorted_par : par_names)
     hpdi = sort(hpd_val)
 
     chain_sections = MCMCChains.group(chains, Symbol(par[i]))
     chain_vec = vec(chain_sections.value.data)
-    lower_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower
-        for j in 1:length(hpdi)]
-    upper_hpd = [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper
-        for j in 1:length(hpdi)]
-    h = _riser + spacer*(i-1)
+    lower_hpd =
+        [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower for j = 1:length(hpdi)]
+    upper_hpd =
+        [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper for j = 1:length(hpdi)]
+    h = _riser + spacer * (i - 1)
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
     if fill_hpd
@@ -353,8 +375,19 @@ function _compute_plot_data(
     min = minimum(k_density.density .+ h)
     q_int = (show_qi ? [qs[1], chain_med, qs[2]] : [chain_med])
 
-    return par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med,
-        chain_mean, min, q_int
+    return par,
+    hpdi,
+    lower_hpd,
+    upper_hpd,
+    h,
+    qs,
+    k_density,
+    x_int,
+    val,
+    chain_med,
+    chain_mean,
+    min,
+    q_int
 end
 
 @recipe function f(
@@ -369,22 +402,47 @@ end
     show_hpdi = true,
     fill_q = true,
     fill_hpd = false,
-    ordered = false
+    ordered = false,
 )
 
     chn = p.args[1]
     par_names = p.args[2]
 
-    for i in 1:length(par_names)
-        par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
-            min, q_int = _compute_plot_data(i, chn, par_names; hpd_val = hpd_val, q = q,
-            spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
-            show_qi = show_qi, show_hpdi = show_hpdi, fill_q = fill_q, fill_hpd = fill_hpd,
-            ordered = ordered)
+    for i = 1:length(par_names)
+        par,
+        hpdi,
+        lower_hpd,
+        upper_hpd,
+        h,
+        qs,
+        k_density,
+        x_int,
+        val,
+        chain_med,
+        chain_mean,
+        min,
+        q_int = _compute_plot_data(
+            i,
+            chn,
+            par_names;
+            hpd_val = hpd_val,
+            q = q,
+            spacer = spacer,
+            _riser = _riser,
+            show_mean = show_mean,
+            show_median = show_median,
+            show_qi = show_qi,
+            show_hpdi = show_hpdi,
+            fill_q = fill_q,
+            fill_hpd = fill_hpd,
+            ordered = ordered,
+        )
 
-        yticks --> (length(par_names) > 1 ?
-            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
-        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
+        yticks --> (
+            length(par_names) > 1 ?
+            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default
+        )
+        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
         @series begin
             seriestype := :hline
             label := nothing
@@ -436,8 +494,10 @@ end
         end
         @series begin
             seriestype := :path
-            label := (show_hpdi ? (i == 1 ? "$(Integer((1-hpdi[1])*100))% HPDI" : nothing)
-                : nothing)
+            label := (
+                show_hpdi ? (i == 1 ? "$(Integer((1-hpdi[1])*100))% HPDI" : nothing) :
+                nothing
+            )
             linewidth --> (show_hpdi ? 2 : 0)
             seriesalpha --> 0.80
             linecolor --> :darkblue
@@ -458,30 +518,57 @@ end
     show_hpdi = true,
     fill_q = true,
     fill_hpd = false,
-    ordered = false
+    ordered = false,
 )
 
     chn = p.args[1]
     par_names = p.args[2]
 
-    for i in 1:length(par_names)
-        par, hpdi, lower_hpd, upper_hpd, h, qs, k_density, x_int, val, chain_med, chain_mean,
-            min, q_int = _compute_plot_data(i, chn, par_names; hpd_val = hpd_val, q = q,
-            spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
-            show_qi = show_qi, show_hpdi = show_hpdi, fill_q = fill_q, fill_hpd = fill_hpd,
-            ordered = ordered)
+    for i = 1:length(par_names)
+        par,
+        hpdi,
+        lower_hpd,
+        upper_hpd,
+        h,
+        qs,
+        k_density,
+        x_int,
+        val,
+        chain_med,
+        chain_mean,
+        min,
+        q_int = _compute_plot_data(
+            i,
+            chn,
+            par_names;
+            hpd_val = hpd_val,
+            q = q,
+            spacer = spacer,
+            _riser = _riser,
+            show_mean = show_mean,
+            show_median = show_median,
+            show_qi = show_qi,
+            show_hpdi = show_hpdi,
+            fill_q = fill_q,
+            fill_hpd = fill_hpd,
+            ordered = ordered,
+        )
 
-        yticks --> (length(par_names) > 1 ?
-            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
-        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
+        yticks --> (
+            length(par_names) > 1 ?
+            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default
+        )
+        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
 
-        for j in 1:length(hpdi)
+        for j = 1:length(hpdi)
             @series begin
                 seriestype := :path
-                label := (show_hpdi ?
-                    (i == 1 ? "$(Integer((1-hpdi[j])*100))% HPDI" : nothing) : nothing)
+                label := (
+                    show_hpdi ?
+                    (i == 1 ? "$(Integer((1-hpdi[j])*100))% HPDI" : nothing) : nothing
+                )
                 linecolor --> j
-                linewidth --> (show_hpdi ? 1.5*j : 0)
+                linewidth --> (show_hpdi ? 1.5 * j : 0)
                 seriesalpha --> 0.80
                 [lower_hpd[j][1], upper_hpd[j][1]], [h, h]
             end
