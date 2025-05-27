@@ -163,9 +163,9 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         ac_mat = convert(Array{Float64}, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
-    # Passes `_actual_indices_for_violin`` to `_ViolinPlot`` to ensure correct x-axis labels (parameter names or chain numbers).
     elseif st ∈ (:violinplot, :violin)
         show_boxplot_kw = get(plotattributes, :show_boxplot, true)
+        # Passes `_actual_indices_for_violin`` to `_ViolinPlot`` to ensure correct x-axis labels (parameter names or chain numbers).
         return _ViolinPlot(c, val, _actual_indices_for_violin, show_boxplot_kw, colordim)
     elseif st ∈ keys(translationdict)
         translationdict[st](c, val)
