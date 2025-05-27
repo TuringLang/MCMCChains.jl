@@ -96,8 +96,11 @@ end
 struct _ViolinPlot
     c::Any
     val::Any
+    # param_indices: For accurate x-axis labeling (parameter names vs. chain indices).
     param_indices::Any
+    # show_boxplot: To allow toggling the inner boxplot visibility.
     show_boxplot::Any
+    # colordim: To guide x-axis label generation based on grouping (by chain or parameter).
     colordim::Any
 end
 
@@ -160,6 +163,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         ac_mat = convert(Array{Float64}, ac)
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
+    # Passes `_actual_indices_for_violin`` to `_ViolinPlot`` to ensure correct x-axis labels (parameter names or chain numbers).
     elseif st ∈ (:violinplot, :violin)
         show_boxplot_kw = get(plotattributes, :show_boxplot, true)
         return _ViolinPlot(c, val, _actual_indices_for_violin, show_boxplot_kw, colordim)

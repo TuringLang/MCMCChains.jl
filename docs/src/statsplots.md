@@ -133,7 +133,7 @@ plot(chn, seriestype = :violin)
 corner(chn)
 ```
 
-> For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
+For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
 
 ## Ridgeline
 
