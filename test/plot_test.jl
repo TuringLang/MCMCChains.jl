@@ -31,7 +31,7 @@ Logging.disable_logging(Logging.Warn)
 
     println("density")
     display(density(chn, 1))
-    display(density(chn, 1, append_chains=true))
+    display(density(chn, 1, append_chains = true))
     println()
 
     println("autocorplot")
@@ -39,11 +39,11 @@ Logging.disable_logging(Logging.Warn)
     println()
 
     println("ridgelineplot")
-    display(ridgelineplot(chn,chn.name_map[:parameters]))
+    display(ridgelineplot(chn, chn.name_map[:parameters]))
     println()
 
     println("forestplot")
-    display(forestplot(chn,chn.name_map[:parameters]))
+    display(forestplot(chn, chn.name_map[:parameters]))
     println()
 
     #ps_contour = plot(chn, :contour)
@@ -60,9 +60,29 @@ Logging.disable_logging(Logging.Warn)
     # https://github.com/TuringLang/MCMCChains.jl/issues/413
     display(corner(chn[:, 1:2, 2:3]))
 
+    # Violinplot tests
+    println("\nviolinplot")
+    display(violinplot(chn)) # All parameters, default colordim (:chain)
+    display(violinplot(chn, colordim = :parameter)) # All chains, colordim = :parameter
+    display(violinplot(chn, 1)) # Single parameter, default colordim (:chain)
+    display(violinplot(chn, 1, colordim = :parameter)) # Single chain, colordim = :parameter
+    display(violinplot(chn, 1, show_boxplot = false)) # Single parameter, no boxplot
+    display(violinplot(chn, 1, append_chains = true)) # Single parameter, chains appended
+    display(violinplot(chn, append_chains = true)) # All parameters, chains appended
+    println()
+
+    # Plot() with violinplot seriestype
+    println("\nplot() with violinplot seriestype")
+    # "seriestype = :violin will" also work fine
+    display(plot(chn, seriestype = :violinplot)) # All parameters with violinplot
+    display(plot(chn, 1, seriestype = :violinplot)) # Specific parameter(s) with violinplot
+    display(plot(chn, 1, seriestype = :violinplot, show_boxplot = false)) # Specific parameter(s) with violinplot and no boxplot
+    display(plot(chn, seriestype = :violinplot, append_chains = true)) # All parameters, chains appended
+    println()
+
     # plotting combinations
     display(plot(chn))
-    display(plot(chn, append_chains=true))
+    display(plot(chn, append_chains = true))
     display(plot(chn, seriestype = (:mixeddensity, :autocorplot)))
 
     # Test plotting using colordim keyword
