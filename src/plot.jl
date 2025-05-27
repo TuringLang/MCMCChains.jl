@@ -228,6 +228,7 @@ end
     group_labels = repeat(1:num_series, inner = size(p.val, 1))
 
     xticks := (1:num_series, plot_labels)
+    legend --> false
 
     @series begin
         seriestype := :violin
