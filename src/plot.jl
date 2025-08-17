@@ -7,6 +7,20 @@
 @shorthands violinplot
 
 """
+    energyplot(chains::Chains; kind=:density, kwargs...)
+
+Generate an energy plot for the samples in `chains`.
+
+The energy plot is a diagnostic tool for HMC-based samplers like NUTS. It displays the distributions of the Hamiltonian energy and the energy transition (error) todiagnose sampler efficiency and identify divergences.
+
+This plot is only available for chains that contain the `:hamiltonian_energy` and `:hamiltonian_energy_error` statistics in their `:internals` section.
+
+# Keywords
+- `kind::Symbol` (default: `:density`): The type of plot to generate. Can be `:density` or `:histogram`.
+"""
+@userplot EnergyPlot
+
+"""
     ridgelineplot(chains::Chains[, params::Vector{Symbol}]; kwargs...)
 
 Generate a ridgeline plot for the samples of the parameters `params` in `chains`.
@@ -249,6 +263,56 @@ end
             group := group_labels
             ()
         end
+    end
+end
+
+@recipe function f(p::EnergyPlot; kind = :density)
+    chains = p.args[1]
+
+    if kind ∉ (:density, :histogram)
+        error("`kind` must be one of `:density` or `:histogram`")
+    end
+
+    internal_names = names(chains, :internals)
+    required_params = [:hamiltonian_energy, :hamiltonian_energy_error]
+    for param in required_params
+        if param ∉ internal_names
+            error("`$param` not found in chain's internal parameters. Energy plot is only available for HMC/NUTS samplers.")
+        end
+    end
+
+    pooled = pool_chain(chains)
+    energy = vec(pooled[:, :hamiltonian_energy, :])
+    energy_error = vec(pooled[:, :hamiltonian_energy_error, :])
+
+    mean_energy = mean(energy)
+    std_energy = std(energy)
+    centered_energy = (energy .- mean_energy) ./ std_energy
+    scaled_energy_error = energy_error ./ std_energy
+
+    title := "Energy Plot"
+    xaxis := "Standardized Energy"
+    yaxis := "Density"
+    legend := :topright
+
+    @series begin
+        seriestype := kind
+        label := "Marginal Energy"
+        fillrange --> 0
+        fillalpha --> 0.5
+        normalize --> true
+        bins --> 50
+        centered_energy
+    end
+
+    @series begin
+        seriestype := kind
+        label := "Energy Transition"
+        fillrange --> 0
+        fillalpha --> 0.5
+        normalize --> true
+        bins --> 50
+        scaled_energy_error
     end
 end
 
