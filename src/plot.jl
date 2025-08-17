@@ -171,7 +171,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     end
 
     if st == :autocorplot
-        lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
+        lags = 0:(maxlag===nothing ? round(Int, 10*log10(length(range(c)))) : maxlag)
         # Chains are already appended in `c` if desired, hence we use `append_chains=false`
         ac = autocor(c; sections = nothing, lags = lags, append_chains = false)
         ac_mat = convert(Array{Float64}, ac)
@@ -277,7 +277,9 @@ end
     required_params = [:hamiltonian_energy, :hamiltonian_energy_error]
     for param in required_params
         if param ∉ internal_names
-            error("`$param` not found in chain's internal parameters. Energy plot is only available for HMC/NUTS samplers.")
+            error(
+                "`$param` not found in chain's internal parameters. Energy plot is only available for HMC/NUTS samplers.",
+            )
         end
     end
 

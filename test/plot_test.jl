@@ -103,15 +103,15 @@ Logging.disable_logging(Logging.Warn)
 
         parameter_names = [:a, :b, :hamiltonian_energy, :hamiltonian_energy_error]
         section_map = (
-            parameters=[:a, :b],
-            internals=[:hamiltonian_energy, :hamiltonian_energy_error],
+            parameters = [:a, :b],
+            internals = [:hamiltonian_energy, :hamiltonian_energy_error],
         )
 
         chn_energy = Chains(full_val, parameter_names, section_map)
 
         println("energyplot")
         display(energyplot(chn_energy))
-        display(energyplot(chn_energy, kind=:histogram))
+        display(energyplot(chn_energy, kind = :histogram))
         println()
 
         @test_throws ErrorException energyplot(chn)
