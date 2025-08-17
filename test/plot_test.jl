@@ -13,6 +13,7 @@ n_chain = 3
 val = randn(n_iter, n_name, n_chain) .+ [1, 2, 3]'
 val = hcat(val, rand(1:2, n_iter, 1, n_chain))
 
+# This chain is missing the required energy parameters for the energyplot.
 chn = Chains(val)
 
 # Silence all warnings.
@@ -92,6 +93,29 @@ Logging.disable_logging(Logging.Warn)
     display(plot(chn, 2))
     display(plot(chn, 2, colordim = :parameter))
     println()
+
+    @testset "Energy plot" begin
+        # Construct a chain with the required internal parameters.
+        val_params = randn(n_iter, 2, n_chain)
+        val_energy = rand(n_iter, 1, n_chain) .* 10 .+ 20
+        val_energy_error = randn(n_iter, 1, n_chain) .* 0.1
+        full_val = hcat(val_params, val_energy, val_energy_error)
+
+        parameter_names = [:a, :b, :hamiltonian_energy, :hamiltonian_energy_error]
+        section_map = (
+            parameters=[:a, :b],
+            internals=[:hamiltonian_energy, :hamiltonian_energy_error],
+        )
+
+        chn_energy = Chains(full_val, parameter_names, section_map)
+
+        println("energyplot")
+        display(energyplot(chn_energy))
+        display(energyplot(chn_energy, kind=:histogram))
+        println()
+
+        @test_throws ErrorException energyplot(chn)
+    end
 end
 
 # Reset log level.
