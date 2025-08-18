@@ -278,7 +278,7 @@ end
     for param in required_params
         if param ∉ internal_names
             error(
-                "`$param` not found in chain's internal parameters. Energy plot is only available for HMC/NUTS samplers.",
+                "`$param` not found in chain's internal parameters. Energy plots are only available for HMC/NUTS samplers.",
             )
         end
     end
