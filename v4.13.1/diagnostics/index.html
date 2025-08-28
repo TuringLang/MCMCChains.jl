@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Diagnostics · MCMCChains.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body>
+<!-- NAVBAR START -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap');
+
+    /* Documenter.jl CSS Overrides */
+    html {
+        scroll-padding-top: calc(var(--navbar-height) + 1rem);
+    }
+    .docs-sidebar, #documenter {
+        margin-top: var(--navbar-height);
+    }
+    .docs-version-selector {
+        margin-bottom: 60px !important;
+    }
+    @media screen and (max-width: 1056px) {
+        .docs-version-selector {
+            margin-bottom: 60px !important;
+        }
+        .docs-sidebar {
+            margin-top: 0 !important;
+        }
+    }
+    /* End of Documenter.jl Tweaks */
+
+    /* Color and Font Variables */
+    :root {
+        --heading-color: #6c757d;
+        --item-color: rgb(165, 165, 165);
+        --primary-bg: white;
+        --hover-color: #8faad2;
+        --deprecated-bg: #ff4d4d;
+        --deprecated-text: white;
+        --icon-color: #6c757d;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+        --dropdown-hover-bg: #e9ecef;
+        
+        /* Typography */
+        --font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        --nav-link-font-size: 1.0625rem;
+        --turing-title-font-size: 21.25px;
+        --icon-font-size: 1.25rem;
+        --dropdown-arrow-font-size: 0.6875rem;
+        --badge-font-size: 0.75rem;
+
+        /* Sizing and Spacing */
+        --navbar-height: 3.75rem;
+        --logo-height: 31.18px;
+        --logo-width: 52.47px;
+        --logo-padding-top: 7px;
+        --logo-margin-left: 0.3rem;
+        --title-margin-left: 0.4px;
+        --title-nav-spacing: 1.7rem;
+        --nav-item-margin-left: 1.3rem;
+        --icon-margin-left: 1rem;
+        --dropdown-padding: 1.875rem;
+        --dropdown-item-width: 12.5rem;
+        --dropdown-subitem-width: 15.625rem;
+        --dropdown-subitem-padding: 0.125rem 0.625rem;
+    }
+
+    /* Dark Theme Variable Overrides */
+    html.theme--documenter-dark {
+        --heading-color: #e0e0e0;
+        --item-color: #bdbdbd;
+        --primary-bg: #1f2424;
+        --hover-color: #ffffff;
+        --icon-color: #e0e0e0;
+        --shadow-color: rgba(255, 255, 255, 0.1);
+        --dropdown-hover-bg: #424242;
+    }
+
+    /* Catppuccin Theme Overrides */
+    html.theme--catppuccin-latte {
+        --heading-color: #4c4f69;
+        --primary-bg: #eff1f5;
+        --icon-color: #4c4f69;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+        --dropdown-hover-bg: #e6e9ef;
+    }
+    html.theme--catppuccin-frappe {
+        --heading-color: #c6d0f5;
+        --primary-bg: #303446;
+        --icon-color: #c6d0f5;
+        --shadow-color: rgba(255, 255, 255, 0.1);
+        --dropdown-hover-bg: #51576d;
+    }
+    html.theme--catppuccin-macchiato {
+        --heading-color: #cad3f5;
+        --primary-bg: #24273a;
+        --icon-color: #cad3f5;
+        --shadow-color: rgba(255, 255, 255, 0.1);
+        --dropdown-hover-bg: #494d64;
+    }
+    html.theme--catppuccin-mocha {
+        --heading-color: #cad3f5;
+        --primary-bg: #1e1e2e;
+        --icon-color: #cad3f5;
+        --shadow-color: rgba(255, 255, 255, 0.1);
+        --dropdown-hover-bg: #45475a;
+    }
+
+
+    /* Main Navigation Bar */
+    .ext-navigation {
+        font-family: var(--font-family);
+        position: fixed;
+        height: var(--navbar-height);
+        top: 0;
+        width: 100%;
+        background-color: var(--primary-bg);
+        z-index: 1000;
+        box-shadow: 0 2px 4px var(--shadow-color);
+        display: flex;
+        align-items: center;
+        padding: 0 1.0625rem;
+        transition: transform 0.3s, background-color 0.3s;
+    }
+
+    nav.ext-navigation .ext-navbar-logo {
+        margin-left: var(--logo-margin-left);
+        height: var(--logo-height);
+        width: var(--logo-width);
+        padding-top: var(--logo-padding-top);
+    }
+    
+    .ext-navbar-title {
+        color: var(--heading-color) !important;
+        font-size: var(--turing-title-font-size) !important;
+        margin-left: var(--title-margin-left);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    
+    .ext-navbar-title:hover {
+        color: var(--hover-color) !important;
+    }
+
+    .ext-nav-links {
+        display: flex;
+        align-items: center;
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        flex-grow: 1;
+        margin-left: var(--title-nav-spacing);
+    }
+
+    .ext-nav-links li:first-child {
+        margin-left: 0 !important;
+    }
+
+    .ext-nav-links li {
+        margin-left: var(--nav-item-margin-left) !important;
+    }
+
+    .ext-nav-link {
+        color: var(--heading-color) !important;
+        text-decoration: none;
+        font-size: var(--nav-link-font-size) !important;
+        transition: color 0.2s ease;
+        cursor: pointer;
+    }
+
+    .ext-nav-link:hover,
+    .ext-navbar-item-single a:hover,
+    .ext-navbar-icons a:hover {
+        color: var(--hover-color) !important;
+    }
+
+    .ext-navbar-item-single a {
+        color: var(--heading-color) !important;
+    }
+    
+    .ext-navbar-icons {
+        display: flex;
+        align-items: center;
+    }
+
+    .ext-navbar-icons a {
+        color: var(--icon-color) !important;
+        font-size: var(--icon-font-size) !important;
+        transition: color 0.2s ease;
+        margin-left: var(--icon-margin-left);
+    }
+
+    .ext-menu-toggle {
+        display: none;
+        font-size: 1.5rem;
+        color: var(--heading-color);
+        cursor: pointer;
+    }
+
+    .ext-dropdown {
+        display: none;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        padding: var(--dropdown-padding);
+        position: absolute;
+        top: var(--navbar-height);
+        width: 100%;
+        left: 0;
+        background-color: var(--primary-bg);
+        line-height: 1.875rem;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, background-color 0.3s;
+        transform: translateY(-0.625rem);
+        box-shadow: 0 4px 6px var(--shadow-color);
+    }
+
+    #library-handler::after {
+        content: "▼";
+        font-size: var(--dropdown-arrow-font-size);
+        margin-left: 0.3125rem;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    #library-handler.open::after {
+        content: "▲";
+    }
+
+    .ext-dropdown.show {
+        display: grid;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .ext-dropdown ul {
+        width: var(--dropdown-item-width);
+        margin-bottom: 1.25rem;
+    }
+
+    .ext-dropdown ul li {
+        text-align: left;
+        display: flex;
+        align-items: center;
+    }
+
+    .ext-dropdown ul a li {
+        color: var(--item-color);
+        width: var(--dropdown-subitem-width);
+        border-radius: 3px;
+        padding: var(--dropdown-subitem-padding);
+        transition: background-color 0.2s ease;
+    }
+
+    .ext-dropdown ul a li:hover {
+        background-color: var(--dropdown-hover-bg);
+    }
+
+    .ext-dropdown-item-heading {
+        color: var(--heading-color);
+        text-align: center;
+    }
+
+    .deprecated-badge {
+        background-color: var(--deprecated-bg);
+        color: var(--deprecated-text);
+        font-size: var(--badge-font-size);
+        padding: .1rem;
+        border-radius: 3px;
+        margin-left: 0.5rem;
+        line-height: 1;
+    }
+
+    @media (max-width: 966px) {
+        .ext-dropdown {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .ext-nav-links {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            background-color: var(--primary-bg);
+            position: absolute;
+            top: var(--navbar-height);
+            left: 0;
+            padding: 0.625rem 0;
+            height: auto;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px var(--shadow-color);
+            margin-left: 0;
+        }
+
+        .ext-nav-links.show {
+            display: flex;
+        }
+
+        .ext-nav-links li {
+            margin: 0.625rem 0 !important;
+            text-align: center;
+        }
+        
+        .ext-menu-toggle {
+            display: block;
+            margin-left: auto;
+        }
+
+        .ext-navigation.hide {
+            transform: translateY(calc(-1 * var(--navbar-height)));
+        }
+
+        .ext-dropdown {
+            position: static;
+            display: block;
+            opacity: 1;
+            transform: none;
+            box-shadow: none;
+            grid-template-columns: 1fr;
+            padding: 0.625rem;
+            text-align: center;
+        }
+
+        .ext-dropdown ul {
+            width: auto;
+            display: inline-block;
+            margin: 0 auto 0.3125rem;
+            text-align: left;
+        }
+    }
+</style>
+<nav class="ext-navigation">
+    <a href="https://turinglang.org/">
+        <img src="https://turinglang.org/assets/images/turing-logo.svg" alt="Turing Logo" class="ext-navbar-logo">
+    </a>
+    <a class="ext-navbar-title" href="https://turinglang.org/">Turing.jl</a>
+    
+    <ul class="ext-nav-links">
+        <li><a class="ext-nav-link" href="https://turinglang.org/docs/getting-started/">Get Started</a></li>
+        <li><a class="ext-nav-link" href="https://turinglang.org/docs/tutorials/">Tutorials</a></li>
+        <li><a class="ext-nav-link" href="https://turinglang.org/docs/faq/">FAQ</a></li>
+        <li>
+            <p class="ext-nav-link" id="library-handler">Libraries</p>
+            <div class="ext-dropdown" id="ext-dropdown-items">
+                <ul>
+                    <li class="ext-dropdown-item-heading">Modelling Languages</li>
+                    <a href="https://turinglang.org/DynamicPPL.jl/"><li>DynamicPPL</li></a>
+                    <a href="https://turinglang.org/JuliaBUGS.jl/"><li>JuliaBUGS</li></a>
+                    <a href="https://turinglang.org/TuringGLM.jl/"><li>TuringGLM</li></a>
+                </ul>
+                <ul>
+                    <li class="ext-dropdown-item-heading">MCMC</li>
+                    <a href="https://turinglang.org/AdvancedHMC.jl/"><li>AdvancedHMC</li></a>
+                    <a href="https://turinglang.org/AbstractMCMC.jl/"><li>AbstractMCMC</li></a>
+                    <a href="https://github.com/theogf/ThermodynamicIntegration.jl"><li>ThermodynamicIntegration</li></a>
+                    <a href="https://turinglang.org/AdvancedPS.jl/"><li>AdvancedPS</li></a>
+                    <a href="https://turinglang.org/SliceSampling.jl/"><li>SliceSampling</li></a>
+                    <a href="https://turinglang.org/EllipticalSliceSampling.jl/"><li>EllipticalSliceSampling</li></a>
+                    <a href="https://turinglang.org/NestedSamplers.jl/"><li>NestedSamplers</li></a>
+                </ul>
+                <ul>
+                    <li class="ext-dropdown-item-heading">Diagnostics</li>
+                    <a href="https://turinglang.org/MCMCChains.jl/"><li>MCMCChains</li></a>
+                    <a href="https://turinglang.org/MCMCDiagnosticTools.jl/"><li>MCMCDiagnosticTools</li></a>
+                    <a href="https://turinglang.org/ParetoSmooth.jl/"><li>ParetoSmooth</li></a>
+                </ul>
+                <ul>
+                    <li class="ext-dropdown-item-heading">Gaussian Processes</li>
+                    <a href="https://juliagaussianprocesses.github.io/AbstractGPs.jl/"><li>AbstractGPs</li></a>
+                    <a href="https://juliagaussianprocesses.github.io/KernelFunctions.jl/"><li>KernelFunctions</li></a>
+                    <a href="https://juliagaussianprocesses.github.io/ApproximateGPs.jl/"><li>ApproximateGPs</li></a>
+                </ul>
+                <ul><li class="ext-dropdown-item-heading ext-navbar-item-single"><a href="https://turinglang.org/Bijectors.jl/">Bijectors</a></li></ul>
+                <ul><li class="ext-dropdown-item-heading ext-navbar-item-single"><a href="https://turinglang.org/TuringCallbacks.jl/">TuringCallbacks</a></li></ul>
+                <ul><li class="ext-dropdown-item-heading ext-navbar-item-single"><a href="https://turinglang.org/Deprecated/TuringBenchmarking/">TuringBenchmarking</a><span class="deprecated-badge">Deprecated</span></li></ul>
+            </div>
+        </li>
+        <li><a class="ext-nav-link" href="https://turinglang.org/news/">News</a></li>
+        <li><a class="ext-nav-link" href="https://turinglang.org/team/">Team</a></li>
+    </ul>
+
+    <div class="ext-navbar-icons">
+        <a href="https://x.com/TuringLang" aria-label="Turing on X"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="https://discourse.julialang.org/c/domain/probprog/48" aria-label="Turing on Discourse"><i class="fa-brands fa-discourse"></i></a>
+        <a href="https://julialang.slack.com/archives/CCYDC34A0" aria-label="Turing on Slack"><i class="fa-brands fa-slack"></i></a>
+        <a href="https://github.com/TuringLang/" aria-label="Turing.jl on GitHub"><i class="fa-brands fa-github"></i></a>
+    </div>
+
+    <span class="ext-menu-toggle"><i class="fa-solid fa-bars"></i></span>
+</nav>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const menuToggle = document.querySelector(".ext-menu-toggle");
+        const navLinks = document.querySelector(".ext-nav-links");
+        const nav = document.querySelector(".ext-navigation");
+        const libraryHandler = document.getElementById("library-handler");
+        const dropdownContainer = document.getElementById("ext-dropdown-items");
+        let lastScrollY = window.scrollY;
+
+        function closeDropdown() {
+            if (dropdownContainer.classList.contains("show")) {
+                libraryHandler.classList.remove("open");
+                dropdownContainer.classList.remove("show");
+                setTimeout(() => {
+                    if (!dropdownContainer.classList.contains("show")) {
+                        dropdownContainer.style.display = "none";
+                    }
+                }, 300);
+            }
+        }
+
+        function openDropdown() {
+            dropdownContainer.style.display = "grid";
+            libraryHandler.classList.add("open");
+            setTimeout(() => {
+                dropdownContainer.classList.add("show");
+            }, 10);
+        }
+
+        function setAppropriateHeight() {
+            if (window.innerWidth <= 768) {
+                const viewportHeight = window.innerHeight;
+                const navHeight = nav.offsetHeight;
+                navLinks.style.maxHeight = `${viewportHeight - navHeight}px`;
+                navLinks.style.overflowY = "auto";
+            } else {
+                navLinks.style.maxHeight = "";
+                navLinks.style.overflowY = "";
+            }
+        }
+
+        menuToggle.addEventListener("click", (event) => {
+            event.stopPropagation();
+            navLinks.classList.toggle("show");
+            if (navLinks.classList.contains("show")) {
+                setAppropriateHeight();
+                closeDropdown();
+                dropdownContainer.style.display = "none";
+            }
+        });
+
+        libraryHandler.addEventListener("click", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            if (dropdownContainer.classList.contains("show")) {
+                closeDropdown();
+            } else {
+                openDropdown();
+            }
+            setAppropriateHeight();
+        });
+
+        // Close all menus if a click is registered outside the navigation bar.
+        document.addEventListener("click", (event) => {
+            if (!nav.contains(event.target)) {
+                navLinks.classList.remove("show");
+                closeDropdown();
+            }
+        });
+
+        // Hide navigation bar on scroll down in mobile view.
+        window.addEventListener("scroll", () => {
+            if (window.innerWidth <= 768) {
+                if (window.scrollY > lastScrollY && window.scrollY > nav.offsetHeight){
+                    nav.classList.add("hide");
+                } else {
+                    nav.classList.remove("hide");
+                }
+                lastScrollY = window.scrollY;
+            }
+        });
+
+        window.addEventListener("resize", setAppropriateHeight);
+    });
+</script>
+<!-- NAVBAR END -->
+
+
+<div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">MCMCChains.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">MCMCChains</a></li><li><a class="tocitem" href="../getting-started/">Getting started</a></li><li><span class="tocitem">Plotting</span><ul><li><a class="tocitem" href="../statsplots/">StatsPlots.jl</a></li><li><a class="tocitem" href="../gadfly/">Gadfly.jl</a></li></ul></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../chains/">Chains</a></li><li class="is-active"><a class="tocitem" href>Diagnostics</a></li><li><a class="tocitem" href="../stats/">Posterior statistics</a></li><li><a class="tocitem" href="../modelstats/">Model selection</a></li><li><a class="tocitem" href="../summarize/">Summarize</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API</a></li><li class="is-active"><a href>Diagnostics</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Diagnostics</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/TuringLang/MCMCChains.jl/blob/master/docs/src/diagnostics.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Diagnostics"><a class="docs-heading-anchor" href="#Diagnostics">Diagnostics</a><a id="Diagnostics-1"></a><a class="docs-heading-anchor-permalink" href="#Diagnostics" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.discretediag-Tuple{Chains{var&quot;#s11&quot;, A, L, K, I} where {var&quot;#s11&quot;&lt;:Real, A&lt;:(AxisArrays.AxisArray{var&quot;#s11&quot;, 3, D, Ax} where {D, Ax}), L, K&lt;:NamedTuple, I&lt;:NamedTuple}}" href="#MCMCChains.discretediag-Tuple{Chains{var&quot;#s11&quot;, A, L, K, I} where {var&quot;#s11&quot;&lt;:Real, A&lt;:(AxisArrays.AxisArray{var&quot;#s11&quot;, 3, D, Ax} where {D, Ax}), L, K&lt;:NamedTuple, I&lt;:NamedTuple}}"><code>MCMCChains.discretediag</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">discretediag(chains::Chains{&lt;:Real}; sections, frac, method, nsim)</code></pre><p>Discrete diagnostic where <code>method</code> can be  <code>[:weiss, :hangartner, :DARBOOT, MCBOOT, :billinsgley, :billingsleyBOOT]</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/discretediag.jl#L371-L376">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.weiss-Tuple{AbstractMatrix{T} where T}" href="#MCMCChains.weiss-Tuple{AbstractMatrix{T} where T}"><code>MCMCChains.weiss</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">weiss(X::AbstractMatrix)</code></pre><p>Assess the convergence of the MCMC chains with the Weiss procedure.</p><p>It computes <span>$\frac{X^2}{c}$</span> and evaluates a p-value from the <span>$\chi^2$</span> distribution with <span>$(|R| − 1)(s − 1)$</span> degrees of freedom.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/discretediag.jl#L27-L33">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.gelmandiag-Tuple{AbstractArray{var&quot;#s12&quot;, 3} where var&quot;#s12&quot;&lt;:Real}" href="#MCMCChains.gelmandiag-Tuple{AbstractArray{var&quot;#s12&quot;, 3} where var&quot;#s12&quot;&lt;:Real}"><code>MCMCChains.gelmandiag</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">gelmandiag(chains::AbstractArray{&lt;:Real,3}; kwargs...)</code></pre><p>Gelman, Rubin and Brooks diagnostics.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/gelmandiag.jl#L56-L60">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.gelmandiag_multivariate-Tuple{AbstractArray{var&quot;#s11&quot;, 3} where var&quot;#s11&quot;&lt;:Real}" href="#MCMCChains.gelmandiag_multivariate-Tuple{AbstractArray{var&quot;#s11&quot;, 3} where var&quot;#s11&quot;&lt;:Real}"><code>MCMCChains.gelmandiag_multivariate</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">gelmandiag_multivariate(chains::AbstractArray{&lt;:Real,3}; kwargs...)</code></pre><p>Multivariate Gelman, Rubin and Brooks diagnostics.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/gelmandiag.jl#L67-L71">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.gewekediag-Tuple{Vector{var&quot;#s13&quot;} where var&quot;#s13&quot;&lt;:Real}" href="#MCMCChains.gewekediag-Tuple{Vector{var&quot;#s13&quot;} where var&quot;#s13&quot;&lt;:Real}"><code>MCMCChains.gewekediag</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">gewekediag(x::Vector{&lt;:Real}; first, last, etype)
+gewekediag(chains::Chains; sections, first, last, etype, kwargs...)</code></pre><p>Geweke diagnostic.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/gewekediag.jl#L3-L8">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.heideldiag-Tuple{Vector{var&quot;#s13&quot;} where var&quot;#s13&quot;&lt;:Real}" href="#MCMCChains.heideldiag-Tuple{Vector{var&quot;#s13&quot;} where var&quot;#s13&quot;&lt;:Real}"><code>MCMCChains.heideldiag</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">heideldiag(x::Vector{&lt;:Real}; alpha, eps, etype, start, args...)
+heideldiag(chains::Chains; sections, alpha, eps, etype, args...)</code></pre><p>Heidelberger and Welch Diagnostic.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/heideldiag.jl#L3-L8">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.rafterydiag-Tuple{Vector{var&quot;#s10&quot;} where var&quot;#s10&quot;&lt;:Real}" href="#MCMCChains.rafterydiag-Tuple{Vector{var&quot;#s10&quot;} where var&quot;#s10&quot;&lt;:Real}"><code>MCMCChains.rafterydiag</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">rafterydiag(x::Vector{&lt;:Real}; q, r, s, eps, range)
+rafterydiag(chains::Chains; sections, q, r, s, eps)</code></pre><p>Raftery and Lewis Diagnostic.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/rafterydiag.jl#L3-L8">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.rstar-Tuple{Random.AbstractRNG, MLJModelInterface.Supervised, AbstractMatrix{T} where T, AbstractVector{Int64}}" href="#MCMCChains.rstar-Tuple{Random.AbstractRNG, MLJModelInterface.Supervised, AbstractMatrix{T} where T, AbstractVector{Int64}}"><code>MCMCChains.rstar</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">rstar([rng ,]classif::Supervised, chains::Chains; kwargs...)
+rstar([rng ,]classif::Supervised, x::AbstractMatrix, y::AbstractVector; kwargs...)</code></pre><p>Compute the <span>$R^*$</span> convergence diagnostic of MCMC.</p><p>This implementation is an adaption of Algorithm 1 &amp; 2, described by <sup class="footnote-reference"><a id="citeref-LambertVehtari2020" href="#footnote-LambertVehtari2020">[LambertVehtari2020]</a></sup>. Note that the correctness of the statistic depends on the convergence of the classifier used internally in the statistic. You can inspect the training of the classifier by adjusting the verbosity level.</p><p><strong>Keyword Arguments</strong></p><ul><li><code>subset = 0.8</code> ... Subset used to train the classifier, i.e. 0.8 implies 80% of the samples are used.</li><li><code>iterations = 10</code> ... Number of iterations used to estimate the statistic. If the classifier is not probabilistic, i.e. does not return class probabilities, it is advisable to use a value of one.</li><li><code>verbosity = 0</code> ... Verbosity level used during fitting of the classifier.</li></ul><p><strong>Example</strong></p><pre><code class="language-julia">using MLJBase, MLJXGBoostInterface
+
+chn = Chains(fill(4, 100, 2, 3))
+
+Rs = rstar(XGBoostClassifier(), chn; iterations=20)
+R = round(mean(Rs); digits=0)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/rstar.jl#L1-L32">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.BDAESSMethod" href="#MCMCChains.BDAESSMethod"><code>MCMCChains.BDAESSMethod</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">BDAESSMethod &lt;: AbstractESSMethod</code></pre><p>The <code>BDAESSMethod</code> uses a standard algorithm for estimating the effective sample size of MCMC chains.</p><p>It is is based on the discussion by <sup class="footnote-reference"><a id="citeref-Vehtari2019" href="#footnote-Vehtari2019">[Vehtari2019]</a></sup> and uses the variogram estimator of the autocorrelation function discussed in <sup class="footnote-reference"><a id="citeref-Gelman2013" href="#footnote-Gelman2013">[Gelman2013]</a></sup>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/ess.jl#L37-L47">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.ESSMethod" href="#MCMCChains.ESSMethod"><code>MCMCChains.ESSMethod</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">ESSMethod &lt;: AbstractESSMethod</code></pre><p>The <code>ESSMethod</code> uses a standard algorithm for estimating the effective sample size of MCMC chains.</p><p>It is is based on the discussion by <sup class="footnote-reference"><a id="citeref-Vehtari2019" href="#footnote-Vehtari2019">[Vehtari2019]</a></sup> and uses the biased estimator of the autocovariance, as discussed by <sup class="footnote-reference"><a id="citeref-Geyer1992" href="#footnote-Geyer1992">[Geyer1992]</a></sup>. In contrast to Geyer, the divisor <code>n - 1</code> is used in the estimation of the autocovariance to obtain the unbiased estimator of the variance for lag 0.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/ess.jl#L4-L18">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.FFTESSMethod" href="#MCMCChains.FFTESSMethod"><code>MCMCChains.FFTESSMethod</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">FFTESSMethod &lt;: AbstractESSMethod</code></pre><p>The <code>FFTESSMethod</code> uses a standard algorithm for estimating the effective sample size of MCMC chains.</p><p>It is is based on the discussion by <sup class="footnote-reference"><a id="citeref-Vehtari2019" href="#footnote-Vehtari2019">[Vehtari2019]</a></sup> and uses the biased estimator of the autocovariance, as discussed by <sup class="footnote-reference"><a id="citeref-Geyer1992" href="#footnote-Geyer1992">[Geyer1992]</a></sup>. In contrast to Geyer, the divisor <code>n - 1</code> is used in the estimation of the autocovariance to obtain the unbiased estimator of the variance for lag 0.</p><p>In contrast to <a href="#MCMCChains.ESSMethod"><code>ESSMethod</code></a>, this method uses fast Fourier transforms (FFTs) for estimating the autocorrelation.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/ess.jl#L21-L34">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.copyto_split!-Tuple{AbstractMatrix{T} where T, AbstractMatrix{T} where T}" href="#MCMCChains.copyto_split!-Tuple{AbstractMatrix{T} where T, AbstractMatrix{T} where T}"><code>MCMCChains.copyto_split!</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">copyto_split!(out::AbstractMatrix, x::AbstractMatrix)</code></pre><p>Copy the elements of matrix <code>x</code> to matrix <code>out</code>, in which each column of <code>x</code> is split.</p><p>If the number of rows in <code>x</code> is odd, the sample at index <code>(size(x, 1) + 1) / 2</code> is dropped.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/ess.jl#L335-L341">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="MCMCChains.ess-Tuple{Chains}" href="#MCMCChains.ess-Tuple{Chains}"><code>MCMCChains.ess</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">ess(chains::Chains; duration=compute_duration, kwargs...)</code></pre><p>Estimate the effective sample size and the potential scale reduction.</p><p>ESS per second options include <code>duration=MCMCChains.compute_duration</code> (the default)  and <code>duration=MCMCChains.wall_duration</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/TuringLang/MCMCChains.jl/blob/bb01f11061510007130d877a1133c1bbcafb146c/src/ess.jl#L198-L205">source</a></section></article><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-LambertVehtari2020"><a class="tag is-link" href="#citeref-LambertVehtari2020">LambertVehtari2020</a>Lambert &amp; Vehtari (2020). <span>$R^*$</span>: A robust MCMC convergence diagnostic with uncertainty using gradient-boosted machines. arXiv preprint <a href="https://arxiv.org/abs/2003.07900">https://arxiv.org/abs/2003.07900</a>.</li><li class="footnote" id="footnote-Gelman2013"><a class="tag is-link" href="#citeref-Gelman2013">Gelman2013</a>Gelman, A., Carlin, J. B., Stern, H. S., Dunson, D. B., Vehtari, A., &amp; Rubin, D. B. (2013). Bayesian data analysis. CRC press.</li><li class="footnote" id="footnote-Geyer1992"><a class="tag is-link" href="#citeref-Geyer1992">Geyer1992</a>Geyer, C. J. (1992). Practical Markov Chain Monte Carlo. Statistical Science, 473-483. <a href="https://projecteuclid.org/euclid.ss/1177011137">https://projecteuclid.org/euclid.ss/1177011137</a>.</li><li class="footnote" id="footnote-Vehtari2019"><a class="tag is-link" href="#citeref-Vehtari2019">Vehtari2019</a>Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., &amp; Bürkner, P. C. (2021). Rank-normalization, folding, and localization: An improved <span>$\widehat {R}$</span> for assessing convergence of MCMC. Bayesian Analysis. <a href="https://arxiv.org/pdf/1903.08008.pdf">https://arxiv.org/pdf/1903.08008.pdf</a>.</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../chains/">« Chains</a><a class="docs-footer-nextpage" href="../stats/">Posterior statistics »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.3 on <span class="colophon-date" title="Friday 9 July 2021 14:24">Friday 9 July 2021</span>. Using Julia version 1.6.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+
