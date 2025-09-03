@@ -1,15 +1,20 @@
-@generated function initnamemap(namemap::NamedTuple{names}) where names
+@generated function initnamemap(namemap::NamedTuple{names}) where {names}
     if :parameters in names
         :((; $((:($name = Symbol.(namemap.$name)) for name in names)...)))
     else
-        :((; parameters = Symbol[],
-          $((:($name = Symbol.(namemap.$name)) for name in names)...)))
+        :((;
+            parameters = Symbol[],
+            $((:($name = Symbol.(namemap.$name)) for name in names)...),
+        ))
     end
 end
 
 # fallback
 function initnamemap(namemap)
-    (; parameters = Symbol[], (Symbol(key) => Symbol.(values) for (key, values) in namemap)...)
+    (;
+        parameters = Symbol[],
+        (Symbol(key) => Symbol.(values) for (key, values) in namemap)...,
+    )
 end
 
 """
@@ -46,7 +51,7 @@ function cummean(x::AbstractVector)
     fill!(y, xs)
 
     c = 0
-    for i in 1:length(x)
+    for i = 1:length(x)
         if !ismissing(x[i])
             c += 1
             xs += x[i]
@@ -106,7 +111,11 @@ function merge_union(a::NamedTuple{an}, b::NamedTuple{bn}) where {an,bn}
 end
 
 # adapted from https://github.com/JuliaLang/julia/blob/3fdfb6734bb6ed7fc805a484183077dd7924b7c0/base/namedtuple.jl#L192
-Base.@pure function merge_union_types(names::Tuple{Vararg{Symbol}}, a::Type{<:NamedTuple}, b::Type{<:NamedTuple})
+Base.@pure function merge_union_types(
+    names::Tuple{Vararg{Symbol}},
+    a::Type{<:NamedTuple},
+    b::Type{<:NamedTuple},
+)
     an = Base._nt_names(a)
     bn = Base._nt_names(b)
 
@@ -132,9 +141,12 @@ end
 
 # promote element types of a tuple
 promote_eltype_tuple_type(::Type{Tuple{}}) = Any
-promote_eltype_tuple_type(::Type{Tuple{T}}) where T = T
+promote_eltype_tuple_type(::Type{Tuple{T}}) where {T} = T
 function promote_eltype_tuple_type(t::Type{<:Tuple})
-    Base.promote_eltype(Base.tuple_type_head(t), promote_eltype_tuple_type(Base.tuple_type_tail(t)))
+    Base.promote_eltype(
+        Base.tuple_type_head(t),
+        promote_eltype_tuple_type(Base.tuple_type_tail(t)),
+    )
 end
 
 """
@@ -166,7 +178,7 @@ function concretize(x::AbstractArray)
         return x
     else
         xnew = map(concretize, x)
-        T = mapreduce(typeof, promote_type, xnew; init=Union{})
+        T = mapreduce(typeof, promote_type, xnew; init = Union{})
         if T <: eltype(xnew) && T !== Union{}
             return convert(AbstractArray{T}, xnew)
         else

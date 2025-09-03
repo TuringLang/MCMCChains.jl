@@ -22,9 +22,9 @@ ProjDir = mktempdir()
     # m, s ~ Normal-IG(7/6, 3, 3, 49/12)
     # ```
     vals = Matrix{Float64}(undef, 500, 2)
-    rand!(InverseGamma(3, 49/12), view(vals, :, 2))
-    for i in 1:size(vals, 1)
-        vals[i, 1] = rand(Normal(7/6, sqrt(vals[i, 2] / 3)))
+    rand!(InverseGamma(3, 49 / 12), view(vals, :, 2))
+    for i = 1:size(vals, 1)
+        vals[i, 1] = rand(Normal(7 / 6, sqrt(vals[i, 2] / 3)))
     end
     chn1 = Chains(vals, ["m", "s"])
 
@@ -36,15 +36,15 @@ ProjDir = mktempdir()
     chn2 = open(deserialize, joinpath(ProjDir, "chn1.jls"), "r")
 
     open(joinpath(ProjDir, "chn1.txt"), "w") do io
-        describe(io, chn1);
+        describe(io, chn1)
     end
 
     open(joinpath(ProjDir, "chn2.txt"), "w") do io
-        describe(io, chn2);
+        describe(io, chn2)
     end
 
-    @test open(f->read(f, String), joinpath(ProjDir, "chn1.txt")) ==
-        open(f->read(f, String), joinpath(ProjDir, "chn2.txt"))
+    @test open(f -> read(f, String), joinpath(ProjDir, "chn1.txt")) ==
+          open(f -> read(f, String), joinpath(ProjDir, "chn2.txt"))
 end
 
-rm(ProjDir, force=true, recursive=true)
+rm(ProjDir, force = true, recursive = true)

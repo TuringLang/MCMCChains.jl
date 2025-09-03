@@ -7,20 +7,22 @@ Discrete diagnostic where `method` can be
 function MCMCDiagnosticTools.discretediag(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
-    kwargs...
+    kwargs...,
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Compute statistics.
     between_chain_vals, within_chain_vals = MCMCDiagnosticTools.discretediag(
-        _permutedims_diagnostics(_chains.value.data); kwargs...
+        _permutedims_diagnostics(_chains.value.data);
+        kwargs...,
     )
 
     # Create dataframes
     parameters = (parameters = names(_chains),)
     between_chain_df = ChainDataFrame(
-        "Chisq diagnostic - Between chains", merge(parameters, between_chain_vals),
+        "Chisq diagnostic - Between chains",
+        merge(parameters, between_chain_vals),
     )
     within_chain_dfs = map(1:size(_chains, 3)) do i
         vals = map(val -> val[:, i], within_chain_vals)

@@ -30,25 +30,31 @@ function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
     println(io, df.name)
     # Support for PrettyTables 0.9 (`borderless`) and 0.10 (`tf_borderless`)
     PrettyTables.pretty_table(
-        io, df.nt;
+        io,
+        df.nt;
         formatters = formatter,
-        tf = isdefined(PrettyTables, :borderless) ? PrettyTables.borderless : PrettyTables.tf_borderless,
+        tf = isdefined(PrettyTables, :borderless) ? PrettyTables.borderless :
+             PrettyTables.tf_borderless,
     )
 end
 
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
 
 # Index functions
-function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, g::Union{Colon, Integer, UnitRange})
+function Base.getindex(
+    c::ChainDataFrame,
+    s::Union{Colon,Integer,UnitRange},
+    g::Union{Colon,Integer,UnitRange},
+)
     convert(Array, getindex(c, c.nt[:parameters][s], collect(keys(c.nt))[g]))
 end
 
 Base.getindex(c::ChainDataFrame, s::Vector{Symbol}, ::Colon) = getindex(c, s)
-function Base.getindex(c::ChainDataFrame, s::Union{Symbol, Vector{Symbol}})
+function Base.getindex(c::ChainDataFrame, s::Union{Symbol,Vector{Symbol}})
     getindex(c, s, collect(keys(c.nt)))
 end
 
-function Base.getindex(c::ChainDataFrame, s::Union{Colon, Integer, UnitRange}, ks)
+function Base.getindex(c::ChainDataFrame, s::Union{Colon,Integer,UnitRange}, ks)
     getindex(c, c.nt[:parameters][s], ks)
 end
 
@@ -68,7 +74,7 @@ end
 function Base.getindex(
     c::ChainDataFrame,
     s::AbstractVector{Symbol},
-    ks::AbstractVector{Symbol}
+    ks::AbstractVector{Symbol},
 )
     ind = indexin(s, c.nt[:parameters])
 
@@ -97,7 +103,7 @@ end
 function Base.lastindex(c::ChainDataFrame, i::Integer)
     if i == 1
         return c.nrows
-    elseif i ==2
+    elseif i == 2
         return c.ncols
     else
         error("No such dimension")
@@ -109,7 +115,7 @@ function Base.convert(::Type{Array}, c::ChainDataFrame)
     return convert(Array{T}, c)
 end
 function Base.convert(::Type{Array{T}}, c::ChainDataFrame) where {T}
-    arr = Array{T, 2}(undef, c.nrows, c.ncols - 1)
+    arr = Array{T,2}(undef, c.nrows, c.ncols - 1)
 
     for (i, k) in enumerate(Iterators.drop(keys(c.nt), 1))
         arr[:, i] = c.nt[k]
@@ -118,7 +124,10 @@ function Base.convert(::Type{Array{T}}, c::ChainDataFrame) where {T}
     return arr
 end
 
-function Base.convert(::Type{Array}, cs::Vector{ChainDataFrame{NamedTuple{K,V}}}) where {K,V}
+function Base.convert(
+    ::Type{Array},
+    cs::Vector{ChainDataFrame{NamedTuple{K,V}}},
+) where {K,V}
     T = promote_eltype_tuple_type(Base.tuple_type_tail(V))
     return convert(Array{T}, cs)
 end
@@ -141,12 +150,13 @@ Summarize `chains` in a `ChainsDataFrame`.
 * `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
 function summarize(
-    chains::Chains, funs...;
+    chains::Chains,
+    funs...;
     sections = _default_sections(chains),
     func_names::AbstractVector{Symbol} = Symbol[],
     append_chains::Bool = true,
     name::String = "",
-    additional_df = nothing
+    additional_df = nothing,
 )
     # If we weren't given any functions, fall back to summary stats.
     if isempty(funs)
@@ -182,12 +192,10 @@ function summarize(
 
         # Build the ChainDataFrames.
         vector_of_nt = [
-            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt)
-            for fvals in vector_of_fvals
+            merge((; parameters = names_of_params, zip(fnames, fvals)...), additional_nt) for fvals in vector_of_fvals
         ]
         vector_of_df = [
-            ChainDataFrame(name * " (Chain $i)", nt)
-            for (i, nt) in enumerate(vector_of_nt)
+            ChainDataFrame(name * " (Chain $i)", nt) for (i, nt) in enumerate(vector_of_nt)
         ]
 
         return vector_of_df

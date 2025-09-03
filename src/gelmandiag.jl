@@ -24,7 +24,7 @@ function MCMCDiagnosticTools.gelmandiag_multivariate(
     chains::Chains{<:Real};
     sections = _default_sections(chains),
     transform = true,
-    kwargs...
+    kwargs...,
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))

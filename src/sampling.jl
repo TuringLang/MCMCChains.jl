@@ -16,11 +16,17 @@ If specified, sampling probabilities are proportional to weights `wv`.
     true
     ```
 """
-function sample(chn::Chains, n::Integer; replace::Bool=true, ordered::Bool=false)
-    return sample(Random.GLOBAL_RNG, chn, n; replace=replace, ordered=ordered)
+function sample(chn::Chains, n::Integer; replace::Bool = true, ordered::Bool = false)
+    return sample(Random.GLOBAL_RNG, chn, n; replace = replace, ordered = ordered)
 end
-function sample(chn::Chains, wv::AbstractWeights, n::Integer; replace::Bool=true, ordered::Bool=false)
-    return sample(Random.GLOBAL_RNG, chn, wv, n; replace=replace, ordered=ordered)
+function sample(
+    chn::Chains,
+    wv::AbstractWeights,
+    n::Integer;
+    replace::Bool = true,
+    ordered::Bool = false,
+)
+    return sample(Random.GLOBAL_RNG, chn, wv, n; replace = replace, ordered = ordered)
 end
 
 function sample(
@@ -28,9 +34,9 @@ function sample(
     chn::Chains,
     n::Integer;
     replace::Bool = true,
-    ordered::Bool = false
+    ordered::Bool = false,
 )
-    return _sample(rng, chn, n; replace=replace, ordered=ordered)
+    return _sample(rng, chn, n; replace = replace, ordered = ordered)
 end
 
 
@@ -40,9 +46,9 @@ function sample(
     wv::AbstractWeights,
     n::Integer;
     replace::Bool = true,
-    ordered::Bool = false
-) 
-    return _sample(rng, chn, wv, n; replace=replace, ordered=ordered)
+    ordered::Bool = false,
+)
+    return _sample(rng, chn, wv, n; replace = replace, ordered = ordered)
 end
 
 # Internal implementation with generic arguments (possibly including weights) and keyword arguments
@@ -52,8 +58,12 @@ function _sample(rng, chn, args...; kwargs...)
     pool_data = reshape(PermutedDimsArray(data, (1, 3, 2)), :, size(data, 2), 1)
     idxs = sample(rng, axes(pool_data, 1), args...; kwargs...)
 
-    samples = AxisArray(pool_data[idxs, :, :]; iter=1:length(idxs), var=names(chn), chain=1:1)
+    samples = AxisArray(
+        pool_data[idxs, :, :];
+        iter = 1:length(idxs),
+        var = names(chn),
+        chain = 1:1,
+    )
 
     return Chains(samples, missing, chn.name_map, chn.info)
 end
-

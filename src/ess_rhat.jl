@@ -8,16 +8,15 @@ and `duration=MCMCChains.wall_duration`.
 """
 function MCMCDiagnosticTools.ess(
     chains::Chains;
-    sections = _default_sections(chains), duration = compute_duration, kwargs...
+    sections = _default_sections(chains),
+    duration = compute_duration,
+    kwargs...,
 )
     # Subset the chain
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Estimate the effective sample size
-    ess = MCMCDiagnosticTools.ess(
-        _permutedims_diagnostics(_chains.value.data);
-        kwargs...,
-    )
+    ess = MCMCDiagnosticTools.ess(_permutedims_diagnostics(_chains.value.data); kwargs...)
 
     # Calculate ESS/minute if available
     dur = duration(chains)
@@ -36,16 +35,14 @@ Estimate the ``\\widehat{R}`` diagnostic.
 """
 function MCMCDiagnosticTools.rhat(
     chains::Chains;
-    sections = _default_sections(chains), kwargs...
+    sections = _default_sections(chains),
+    kwargs...,
 )
     # Subset the chain
     _chains = Chains(chains, _clean_sections(chains, sections))
 
     # Estimate the rhat
-    rhat = MCMCDiagnosticTools.rhat(
-        _permutedims_diagnostics(_chains.value.data);
-        kwargs...,
-    )
+    rhat = MCMCDiagnosticTools.rhat(_permutedims_diagnostics(_chains.value.data); kwargs...)
 
     # Convert to NamedTuple
     nt = merge((parameters = names(_chains),), (; rhat))
@@ -63,7 +60,9 @@ and `duration=MCMCChains.wall_duration`.
 """
 function MCMCDiagnosticTools.ess_rhat(
     chains::Chains;
-    sections = _default_sections(chains), duration = compute_duration, kwargs...
+    sections = _default_sections(chains),
+    duration = compute_duration,
+    kwargs...,
 )
     # Subset the chain
     _chains = Chains(chains, _clean_sections(chains, sections))

@@ -1,12 +1,7 @@
 using Documenter
 using MCMCChains
 
-DocMeta.setdocmeta!(
-    MCMCChains,
-    :DocTestSetup,
-    :(using MCMCChains);
-    recursive=true
-)
+DocMeta.setdocmeta!(MCMCChains, :DocTestSetup, :(using MCMCChains); recursive = true)
 
 makedocs(
     sitename = "MCMCChains.jl",
@@ -16,15 +11,15 @@ makedocs(
         "Plotting" => [
             "StatsPlots.jl" => "statsplots.md",
             "Makie.jl" => "makie.md",
-            "Gadfly.jl" => "gadfly.md"
+            "Gadfly.jl" => "gadfly.md",
         ],
         "API" => [
             "Chains" => "chains.md",
             "Diagnostics" => "diagnostics.md",
             "Posterior statistics" => "stats.md",
             "Model selection" => "modelstats.md",
-            "Summarize" => "summarize.md"
-        ]
+            "Summarize" => "summarize.md",
+        ],
     ],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     modules = [MCMCChains],

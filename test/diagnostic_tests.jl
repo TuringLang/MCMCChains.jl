@@ -15,12 +15,12 @@ val = hcat(val, rand(1:2, niter, 1, nchains))
 
 # construct a Chains object
 chn = Chains(val, start = 1, thin = 2)
-@test_throws ErrorException Chains(val; start=0, thin=2)
-@test_throws ErrorException Chains(val; start=niter, thin=-1)
-@test_throws ErrorException Chains(val; iterations=1:(niter - 1))
-@test_throws ErrorException Chains(val; iterations=range(0; step=2, length=niter))
-@test_throws ErrorException Chains(val; iterations=niter:-1:1)
-@test_throws ErrorException Chains(val; iterations=ones(Int, niter))
+@test_throws ErrorException Chains(val; start = 0, thin = 2)
+@test_throws ErrorException Chains(val; start = niter, thin = -1)
+@test_throws ErrorException Chains(val; iterations = 1:(niter-1))
+@test_throws ErrorException Chains(val; iterations = range(0; step = 2, length = niter))
+@test_throws ErrorException Chains(val; iterations = niter:-1:1)
+@test_throws ErrorException Chains(val; iterations = ones(Int, niter))
 
 # Chains object for discretediag
 val_disc = rand(Int16, 200, nparams, nchains)
@@ -35,11 +35,11 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test keys(chn) == names(chn) == [:param_1, :param_2, :param_3, :param_4]
 
     @test range(chn) == range(1; step = 2, length = niter)
-    @test range(chn) == range(Chains(val; iterations=range(chn)))
-    @test range(chn) == range(Chains(val; iterations=collect(range(chn))))
+    @test range(chn) == range(Chains(val; iterations = range(chn)))
+    @test range(chn) == range(Chains(val; iterations = collect(range(chn))))
 
     @test_throws ErrorException setrange(chn, 1:10)
-    @test_throws ErrorException setrange(chn, 0:(niter - 1))
+    @test_throws ErrorException setrange(chn, 0:(niter-1))
     @test_throws ErrorException setrange(chn, niter:-1:1)
     @test_throws ErrorException setrange(chn, ones(Int, niter))
     @test_throws MethodError setrange(chn, float.(range(chn)))
@@ -66,7 +66,7 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test chn3.info == chn.info
 
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
-    @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
+    @test setinfo(chn, NamedTuple{(:A, :B)}((1, 2))).info == NamedTuple{(:A, :B)}((1, 2))
     @test isa(set_section(chn, Dict(:internals => ["param_1"])), AbstractChains)
     @test mean(chn) isa ChainDataFrame
     @test mean(chn, ["param_1", "param_3"]) isa ChainDataFrame
@@ -76,7 +76,7 @@ end
 @testset "Chain times" begin
     t1 = time()
     t2 = t1 + 1.5
-    chn_timed = Chains(val, info = (start_time=t1, stop_time=t2))
+    chn_timed = Chains(val, info = (start_time = t1, stop_time = t2))
 
     @test MCMCChains.max_stop(chn_timed) == unix2datetime(t2)
     @test MCMCChains.min_start(chn_timed) == unix2datetime(t1)
@@ -106,7 +106,7 @@ end
     @test size(c) == (niter, nchains)
     @test c == val[:, 1, :]
 
-    for i in 1:2
+    for i = 1:2
         c = chn[:, 1, i]
         @test c isa AbstractVector
         @test length(c) == niter
@@ -142,8 +142,10 @@ end
 @testset "names and groups tests" begin
     chn2 = @inferred replacenames(chn, "param_2" => "param[2]", "param_3" => "param[3]")
     @test chn2.value ==
-        (@inferred replacenames(chn, Dict("param_2" => "param[2]",
-                                          "param_3" => "param[3]"))).value
+          (@inferred replacenames(
+        chn,
+        Dict("param_2" => "param[2]", "param_3" => "param[3]"),
+    )).value
     @test names(chn2) == [:param_1, Symbol("param[2]"), Symbol("param[3]"), :param_4]
     for p in (:param, "param", SubString("param", 1))
         @test namesingroup(chn2, p) == Symbol.(["param[2]", "param[3]"])
@@ -157,17 +159,18 @@ end
 
     stan_chn = Chains(rand(100, 3, 1), ["a.1", "a[2]", "b"])
     for p in (:a, "a", SubString("a", 1))
-        @test namesingroup(stan_chn, p; index_type=:dot) == [Symbol("a.1")]
-        @test names(group(stan_chn, p; index_type=:dot)) == [Symbol("a.1")]
-        @test_throws Exception namesingroup(stan_chn, p; index_type=:x)
-        @test_throws Exception group(stan_chn, p; index_type=:x)    
+        @test namesingroup(stan_chn, p; index_type = :dot) == [Symbol("a.1")]
+        @test names(group(stan_chn, p; index_type = :dot)) == [Symbol("a.1")]
+        @test_throws Exception namesingroup(stan_chn, p; index_type = :x)
+        @test_throws Exception group(stan_chn, p; index_type = :x)
     end
 end
 
 @testset "function tests" begin
-    tchain = Chains(rand(niter, nparams, nchains), ["a", "b", "c"], Dict(:internals => ["c"]))
+    tchain =
+        Chains(rand(niter, nparams, nchains), ["a", "b", "c"], Dict(:internals => ["c"]))
 
-    @test eltype(discretediag(chn_disc[:,2:2,:])) <: ChainDataFrame
+    @test eltype(discretediag(chn_disc[:, 2:2, :])) <: ChainDataFrame
 
     gelman = gelmandiag(tchain)
     gelmanmv = gelmandiag_multivariate(tchain)
@@ -183,11 +186,11 @@ end
     @test typeof(raferty) <: Array{<:ChainDataFrame}
 
     # test ChainDataFrame sizes
-    @test size(gelman) == (2,3)
-    @test size(gelmanmv[1]) == (2,3)
-    @test size(geweke[1]) == (2,3)
-    @test size(heidel[1]) == (2,7)
-    @test size(raferty[1]) == (2,6)
+    @test size(gelman) == (2, 3)
+    @test size(gelmanmv[1]) == (2, 3)
+    @test size(geweke[1]) == (2, 3)
+    @test size(heidel[1]) == (2, 7)
+    @test size(raferty[1]) == (2, 6)
 end
 
 @testset "stats tests" begin
@@ -195,14 +198,14 @@ end
     for c in (chn, chn[1:10, :, :])
         for append_chains in (true, false)
             # Number of samples for estimation
-            carray = Array(c; append_chains=append_chains)
+            carray = Array(c; append_chains = append_chains)
             n = append_chains ? size(carray, 1) : size(first(carray), 1)
-            
+
             # Default lags
             lags = MCMCChains._default_lags(c, append_chains)
             @test lags == filter!(x -> x < n, [1, 5, 10, 50])
 
-            acor = autocor(c; append_chains=append_chains)
+            acor = autocor(c; append_chains = append_chains)
             # Number of columns in the ChainDataFrame(s): lags + parameters
             ncols = length(lags) + 1
             if append_chains
@@ -214,7 +217,7 @@ end
             end
         end
         @test autocor(c) isa ChainDataFrame
-        @test convert(Array, autocor(c)) == convert(Array, autocor(c; append_chains=true))
+        @test convert(Array, autocor(c)) == convert(Array, autocor(c; append_chains = true))
     end
 
     @test MCMCChains.cor(chn) isa ChainDataFrame
@@ -231,7 +234,7 @@ end
 end
 
 @testset "vector of vectors" begin
-    val = [rand(20) for _ in 1:10]
+    val = [rand(20) for _ = 1:10]
 
     chn = Chains(val)
     chn2 = Chains(reduce(hcat, val)')

@@ -34,14 +34,14 @@ DIC, pD = dic(chn, lpfun)
 function dic(chain::Chains, logpdf::Function)
 
     # expectation of each parameter
-    Eθ = reshape(mean(Array(chain), dims = [1,3]), 1,:,1)
+    Eθ = reshape(mean(Array(chain), dims = [1, 3]), 1, :, 1)
     Echain = Chains(Eθ)
-    EθD = -2*mean(logpdf(Echain))
+    EθD = -2 * mean(logpdf(Echain))
 
-    D = -2*logpdf(chain)
+    D = -2 * logpdf(chain)
     ED = mean(D)
 
-    pD = 2*(ED - EθD)
+    pD = 2 * (ED - EθD)
 
     DIC = EθD + pD
 

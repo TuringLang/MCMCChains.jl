@@ -41,7 +41,7 @@ function Base.Array(
     chains::Chains,
     sections = _default_sections(chains);
     append_chains = true,
-    remove_missing_union = true
+    remove_missing_union = true,
 )
     _chains = Chains(chains, _clean_sections(chains, sections))
     chn = remove_missing_union ? concretize(_chains) : _chains
