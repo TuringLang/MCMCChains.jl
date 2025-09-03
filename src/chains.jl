@@ -838,11 +838,14 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
         args,
         init = get(c1.info, :samplerstate, nothing),
     )
-    other_props =
-        filter(x -> !(x in [:start_time, :stop_time, :samplerstate]), [propertynames(c1.info)...])
+    other_props = filter(
+        x -> !(x in [:start_time, :stop_time, :samplerstate]),
+        [propertynames(c1.info)...],
+    )
     new_info =
         NamedTuple{tuple(other_props...)}(tuple([c1.info[n] for n in other_props]...))
-    new_info = merge(new_info, (start_time = starts, stop_time = stops, samplerstate = spl_states))
+    new_info =
+        merge(new_info, (start_time = starts, stop_time = stops, samplerstate = spl_states))
 
     return Chains(value, missing, c1.name_map, new_info)
 end
