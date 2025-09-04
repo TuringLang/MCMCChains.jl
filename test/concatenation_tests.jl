@@ -3,7 +3,7 @@ using Test
 
 @testset "merge_union" begin
     @test @inferred(MCMCChains.merge_union((a = [1], b = [3.0]), (c = [3], a = [2.5]))) ==
-        (a = [1.0, 2.5], b = [3.0], c = [3])
+          (a = [1.0, 2.5], b = [3.0], c = [3])
 end
 
 @testset "concatenation tests" begin
@@ -19,7 +19,7 @@ end
 
     # Test dim 1
     c1_2 = cat(c1, c2; dims = 1)
-    @test c1_2.value.data == cat(v1, v2, dims=1)
+    @test c1_2.value.data == cat(v1, v2, dims = 1)
     @test range(c1_2) == 1:1:1000
     @test names(c1_2) == names(c1) == names(c2)
     @test chains(c1_2) == chains(c1) == chains(c2)
@@ -27,15 +27,15 @@ end
 
     # Test dim 2
     c1_3 = cat(c1, c3; dims = 2)
-    @test c1_3.value.data == cat(v1, v3, dims=2)
+    @test c1_3.value.data == cat(v1, v3, dims = 2)
     @test range(c1_3) == 1:1:500
-    @test names(c1_3) == cat(names(c1), names(c3), dims=1)
+    @test names(c1_3) == cat(names(c1), names(c3), dims = 1)
     @test chains(c1_3) == chains(c1) == chains(c3)
     @test c1_3.value == hcat(c1, c3).value
 
     # Test dim 3
     c1_4 = cat(c1, c4; dims = 3)
-    @test c1_4.value.data == cat(v1, v4, dims=3)
+    @test c1_4.value.data == cat(v1, v4, dims = 3)
     @test range(c1_4) == 1:1:500
     @test names(c1_4) == names(c1) == names(c4)
     @test length(chains(c1_4)) == length(chains(c1)) + length(chains(c4))
@@ -50,10 +50,16 @@ end
     @test_throws ArgumentError vcat(chn, Chains(rand(2, 5, 2)))
 
     # incorrect names
-    @test_throws ArgumentError vcat(chn, Chains(rand(10, 5, 2), ["a", "b", "c", "d", "f"]; start=11))
+    @test_throws ArgumentError vcat(
+        chn,
+        Chains(rand(10, 5, 2), ["a", "b", "c", "d", "f"]; start = 11),
+    )
 
     # incorrect number of chains
-    @test_throws ArgumentError vcat(chn, Chains(rand(10, 5, 3), ["a", "b", "c", "d", "e"]; start=11))
+    @test_throws ArgumentError vcat(
+        chn,
+        Chains(rand(10, 5, 3), ["a", "b", "c", "d", "e"]; start = 11),
+    )
 
     # concate the same chain
     chn_shifted = setrange(chn, 11:20)
@@ -126,7 +132,7 @@ end
     @test names(chn2) == vcat(names(chn), names(chn1))
     @test range(chn2) == 1:10
     @test chn2.name_map == (parameters = [:a, :b, :e], internal = [:c, :d])
-    
+
     chn2a = cat(chn, chn1; dims = Val(2))
     @test chn2a.value == chn2.value
     @test chn2a.name_map == chn2.name_map
@@ -157,7 +163,7 @@ end
     @test range(chn2) == 1:10
     # just keep the name map of the first argument
     @test chn2.name_map == (parameters = [:a, :b], internal = [:c])
-    
+
     chn2a = cat(chn, chn1; dims = Val(3))
     @test chn2a.value == chn2.value
     @test chn2a.name_map == chn2.name_map
@@ -167,4 +173,33 @@ end
     @test chn2b.value == chn2.value
     @test chn2b.name_map == chn2.name_map
     @test chn2b.info == chn2.info
+
+    # check merging of info field
+    chn = Chains(
+        rand(10, 3, 1),
+        ["a", "b", "c"],
+        info = (
+            start_time = 1,
+            stop_time = 2,
+            samplerstate = "state1",
+            otherinfo = "info1",
+        ),
+    )
+    chn1 = Chains(
+        rand(10, 3, 1),
+        ["a", "b", "c"],
+        info = (
+            start_time = 3,
+            stop_time = 4,
+            samplerstate = "state2",
+            otherinfo = "info2",
+        ),
+    )
+    chn3 = chainscat(chn, chn1)
+    # these three fields should be concatenated
+    @test chn3.info.start_time == [1, 3]
+    @test chn3.info.stop_time == [2, 4]
+    @test chn3.info.samplerstate == ["state1", "state2"]
+    # other fields should just be taken from the first chain
+    @test chn3.info.otherinfo == "info1"
 end
