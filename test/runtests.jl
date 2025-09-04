@@ -24,6 +24,9 @@ Random.seed!(0)
     println("Plotting")
     @time include("plot_test.jl")
 
+    println("Display")
+    @time include("display_tests.jl")
+
     # run function tests
     println("Diagnostics")
     @time include("diagnostic_tests.jl")
