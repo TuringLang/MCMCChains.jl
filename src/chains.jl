@@ -749,6 +749,7 @@ Base.hcat(c::Chains, cs::Chains...) = _cat(Val(2), c, cs...)
 Base.hcat(c::T, cs::T...) where {T<:Chains} = _cat(Val(2), c, cs...)
 
 AbstractMCMC.chainscat(c::Chains, cs::Chains...) = _cat(Val(3), c, cs...)
+AbstractMCMC.chainsstack(c::AbstractVector{<:Chains}) = AbstractMCMC.chainscat(c...)
 
 _cat(dim::Int, cs::Chains...) = _cat(Val(dim), cs...)
 
@@ -822,13 +823,13 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
         c -> get(c.info, :start_time, nothing),
         vcat,
         args,
-        init = get(c1.info, :start_time, nothing),
+        init = [get(c1.info, :start_time, nothing)],
     )
     stops = mapreduce(
         c -> get(c.info, :stop_time, nothing),
         vcat,
         args,
-        init = get(c1.info, :stop_time, nothing),
+        init = [get(c1.info, :stop_time, nothing)],
     )
     # Concatenate sampler states too. This is hacky(!) but required upstream in Turing.jl
     # because otherwise you cannot resume multiple-chain sampling.
@@ -836,7 +837,7 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
         c -> get(c.info, :samplerstate, nothing),
         vcat,
         args,
-        init = get(c1.info, :samplerstate, nothing),
+        init = [get(c1.info, :samplerstate, nothing)],
     )
     other_props = filter(
         x -> !(x in [:start_time, :stop_time, :samplerstate]),
