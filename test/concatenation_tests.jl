@@ -174,7 +174,7 @@ end
     @test chn2b.name_map == chn2.name_map
     @test chn2b.info == chn2.info
 
-    # check merging of info field
+    # check merging of info field for multiple-chain concatenation
     chn = Chains(
         rand(10, 3, 1),
         ["a", "b", "c"],
@@ -202,4 +202,24 @@ end
     @test chn3.info.samplerstate == ["state1", "state2"]
     # other fields should just be taken from the first chain
     @test chn3.info.otherinfo == "info1"
+
+    # for single-chain concatenation too
+    chn = Chains(
+        rand(10, 3, 1),
+        ["a", "b", "c"],
+        info = (
+            start_time = 1,
+            stop_time = 2,
+            samplerstate = "state1",
+            otherinfo = "info1",
+        ),
+    )
+    for new_chn in [chainscat(chn), chainsstack([chn])]
+        @test new_chn.value == chn.value
+        @test new_chn.name_map == chn.name_map
+        @test new_chn.info.start_time == [chn.info.start_time]
+        @test new_chn.info.stop_time == [chn.info.stop_time]
+        @test new_chn.info.samplerstate == [chn.info.samplerstate]
+        @test new_chn.info.otherinfo == chn.info.otherinfo
+    end
 end
