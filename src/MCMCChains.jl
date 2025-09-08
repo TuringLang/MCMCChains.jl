@@ -3,7 +3,7 @@ module MCMCChains
 using AxisArrays
 const axes = Base.axes
 import AbstractMCMC
-import AbstractMCMC: chainscat
+import AbstractMCMC: chainscat, chainsstack
 using Distributions
 using RecipesBase
 using Dates
@@ -35,7 +35,7 @@ import LinearAlgebra
 import Random
 import Statistics: std, cor, mean, var, mean!
 
-export Chains, chains, chainscat
+export Chains, chains, chainscat, chainsstack
 export setrange, resetrange
 export set_section, get_params, sections, sort_sections, setinfo
 export replacenames, namesingroup, group
