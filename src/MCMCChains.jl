@@ -19,7 +19,8 @@ import StatsBase:
     quantile,
     sample,
     summarystats,
-    cov
+    cov,
+    ecdf
 
 import MCMCDiagnosticTools
 import MLJModelInterface
