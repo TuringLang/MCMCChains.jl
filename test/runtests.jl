@@ -82,7 +82,7 @@ Random.seed!(0)
             MCMCChains,
             :DocTestSetup,
             :(using MCMCChains);
-            recursive = true
+            recursive = true,
         )
         doctest(MCMCChains)
     end

@@ -394,55 +394,61 @@ end
     ppc_group = :posterior,
 )
     if length(p.args) < 3
-        error("ppcplot requires at least 3 arguments: (posterior_chains, posterior_predictive_chains, observed_data)")
+        error(
+            "ppcplot requires at least 3 arguments: (posterior_chains, posterior_predictive_chains, observed_data)",
+        )
     end
-    
+
     posterior_chains = p.args[1]
     pp_chains = p.args[2]
     observed_data = p.args[3]
-    
+
     if !(posterior_chains isa Chains)
         error("First argument must be a Chains object (posterior chains)")
     end
-    if !(pp_chains isa Chains) 
+    if !(pp_chains isa Chains)
         error("Second argument must be a Chains object (posterior predictive chains)")
     end
     if !(observed_data isa AbstractVector)
         error("Third argument must be a vector (observed data)")
     end
-    
+
     if kind ∉ (:density, :histogram, :scatter, :cumulative)
-        error("`kind` must be one of `:density`, `:histogram`, `:scatter`, or `:cumulative`")
+        error(
+            "`kind` must be one of `:density`, `:histogram`, `:scatter`, or `:cumulative`",
+        )
     end
-    
+
     if ppc_group ∉ (:posterior, :prior)
         error("`ppc_group` must be one of `:posterior` or `:prior`")
     end
-    
+
     if observed === nothing
         observed = (ppc_group == :posterior)
     end
-    
+
     if length(colors) != 3
-        error("`colors` must be a vector of length 3: [predictive_color, observed_color, mean_color]")
+        error(
+            "`colors` must be a vector of length 3: [predictive_color, observed_color, mean_color]",
+        )
     end
-    
+
     if alpha === nothing
         alpha = (kind == :scatter) ? 0.7 : 0.2
     end
-    
+
     if jitter === nothing
         jitter = 0.0
     end
-    
+
     pp_pooled = pool_chain(pp_chains)
     pp_data = Array(pp_pooled.value.data)
     pp_data = pp_data[:, :, 1]
-    
+
     if random_seed !== nothing
         Random.seed!(random_seed)
     end
-    
+
     total_pp_samples = size(pp_data, 1)
     if num_pp_samples === nothing
         if kind == :scatter
@@ -454,33 +460,33 @@ end
             num_pp_samples = total_pp_samples
         end
     end
-    
+
     if num_pp_samples > total_pp_samples
         @warn "Requested $num_pp_samples samples but only $total_pp_samples available. Using all samples."
         num_pp_samples = total_pp_samples
     end
-    
+
     if num_pp_samples < total_pp_samples
         sample_indices = Random.randperm(total_pp_samples)[1:num_pp_samples]
         pp_data = pp_data[sample_indices, :]
     end
-    
+
     if ppc_group == :prior
         title := "Prior Predictive Check"
         predictive_label = "Prior Predictive"
         mean_label = "Prior Predictive Mean"
     else
-        title := "Posterior Predictive Check" 
+        title := "Posterior Predictive Check"
         predictive_label = "Posterior Predictive"
         mean_label = "Posterior Predictive Mean"
     end
     legend := legend
-    
+
     if kind == :density
         xaxis := "Value"
         yaxis := "Density"
-        
-        for i in 1:size(pp_data, 1)
+
+        for i = 1:size(pp_data, 1)
             @series begin
                 seriestype := :density
                 label := i == 1 ? predictive_label : ""
@@ -490,7 +496,7 @@ end
                 pp_data[i, :]
             end
         end
-        
+
         if observed
             @series begin
                 seriestype := :density
@@ -500,9 +506,9 @@ end
                 observed_data
             end
         end
-        
+
         if mean_pp
-            pp_mean = vec(mean(pp_data, dims=1))
+            pp_mean = vec(mean(pp_data, dims = 1))
             @series begin
                 seriestype := :density
                 label := mean_label
@@ -512,7 +518,7 @@ end
                 pp_mean
             end
         end
-        
+
         if observed_rug && observed
             y_min = 0
             @series begin
@@ -525,12 +531,12 @@ end
                 observed_data
             end
         end
-        
+
     elseif kind == :histogram
         xaxis := "Value"
         yaxis := "Frequency"
-        
-        for i in 1:size(pp_data, 1)
+
+        for i = 1:size(pp_data, 1)
             @series begin
                 seriestype := :histogram
                 label := i == 1 ? predictive_label : ""
@@ -541,7 +547,7 @@ end
                 pp_data[i, :]
             end
         end
-        
+
         if observed
             @series begin
                 seriestype := :histogram
@@ -553,9 +559,9 @@ end
                 observed_data
             end
         end
-        
+
         if mean_pp
-            pp_mean = vec(mean(pp_data, dims=1))
+            pp_mean = vec(mean(pp_data, dims = 1))
             @series begin
                 seriestype := :histogram
                 label := mean_label
@@ -566,15 +572,15 @@ end
                 pp_mean
             end
         end
-        
+
     elseif kind == :cumulative
         xaxis := "Value"
         yaxis := "Cumulative Probability"
-        
+
         all_data = vcat(vec(pp_data), observed_data)
-        x_range = range(minimum(all_data), maximum(all_data), length=200)
-        
-        for i in 1:size(pp_data, 1)
+        x_range = range(minimum(all_data), maximum(all_data), length = 200)
+
+        for i = 1:size(pp_data, 1)
             pp_ecdf = ecdf(pp_data[i, :])
             y_vals = pp_ecdf.(x_range)
             @series begin
@@ -588,7 +594,7 @@ end
                 ()
             end
         end
-        
+
         if observed
             obs_ecdf = ecdf(observed_data)
             obs_y_vals = obs_ecdf.(x_range)
@@ -602,9 +608,9 @@ end
                 ()
             end
         end
-        
+
         if mean_pp
-            pp_mean = vec(mean(pp_data, dims=1))
+            pp_mean = vec(mean(pp_data, dims = 1))
             pp_mean_ecdf = ecdf(pp_mean)
             mean_y_vals = pp_mean_ecdf.(x_range)
             @series begin
@@ -618,7 +624,7 @@ end
                 ()
             end
         end
-        
+
         if observed_rug && observed
             @series begin
                 seriestype := :scatter
@@ -631,19 +637,21 @@ end
                 ()
             end
         end
-        
+
     elseif kind == :scatter
         xaxis := "Index"
         yaxis := "Value"
-        
+
         if jitter > 0
             jitter_vals = jitter * (rand(size(pp_data, 2)) .- 0.5)
         else
             jitter_vals = zeros(size(pp_data, 2))
         end
-        
-        for i in 1:size(pp_data, 1)
-            y_vals = pp_data[i, :] .+ (jitter > 0 ? jitter * (rand(length(pp_data[i, :])) .- 0.5) : 0)
+
+        for i = 1:size(pp_data, 1)
+            y_vals =
+                pp_data[i, :] .+
+                (jitter > 0 ? jitter * (rand(length(pp_data[i, :])) .- 0.5) : 0)
             @series begin
                 seriestype := :scatter
                 label := i == 1 ? predictive_label : ""
@@ -655,7 +663,7 @@ end
                 ()
             end
         end
-        
+
         if observed
             obs_y = observed_data .+ jitter_vals[1:length(observed_data)]
             @series begin
@@ -669,9 +677,9 @@ end
                 ()
             end
         end
-        
+
         if mean_pp
-            pp_mean = vec(mean(pp_data, dims=1))
+            pp_mean = vec(mean(pp_data, dims = 1))
             mean_y = pp_mean .+ jitter_vals[1:length(pp_mean)]
             @series begin
                 seriestype := :scatter
