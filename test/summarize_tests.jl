@@ -6,11 +6,7 @@ using Statistics: std
 @testset "Summarize tests" begin
     val = rand(1000, 8, 4)
     parm_names = ["a", "b", "c", "d", "e", "f", "g", "h"]
-    chns = Chains(
-        val,
-        parm_names,
-        Dict(:internals => ["c", "d", "e", "f", "g", "h"]),
-    )
+    chns = Chains(val, parm_names, Dict(:internals => ["c", "d", "e", "f", "g", "h"]))
 
     parm_stats = summarize(chns, sections = [:parameters])
     @test parm_stats isa SummaryStats
@@ -61,20 +57,20 @@ using Statistics: std
     @test two_parms_two_funs_df[!, 1] == [:a, :b]
     @test propertynames(two_parms_two_funs_df) == [:label, :mean, :std]
 
-    three_parms_df = DataFrame(summarize(
-        chns[[:a, :b, :c]],
-        mean, std;
-        sections = [:parameters, :internals],
-    ))
+    three_parms_df = DataFrame(
+        summarize(chns[[:a, :b, :c]], mean, std; sections = [:parameters, :internals]),
+    )
     @test three_parms_df[!, 1] == [:a, :b, :c]
     @test propertynames(three_parms_df) == [:label, :mean, :std]
 
-    three_parms_df_2 = DataFrame(summarize(
-        chns[[:a, :b, :g]],
-        :mymean => mean,
-        :mystd => std;
-        sections = [:parameters, :internals],
-    ))
+    three_parms_df_2 = DataFrame(
+        summarize(
+            chns[[:a, :b, :g]],
+            :mymean => mean,
+            :mystd => std;
+            sections = [:parameters, :internals],
+        ),
+    )
     @test three_parms_df_2[!, 1] == [:a, :b, :g]
     @test propertynames(three_parms_df_2) == [:label, :mymean, :mystd]
 end
