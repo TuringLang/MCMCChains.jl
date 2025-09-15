@@ -222,6 +222,8 @@ Return the equal-tailed interval (ETI) representing `prob` probability mass.
 The bounds of the ETI are the symmetric quantiles so that the interval contains `prob`
 probability mass.
 
+See also [`quantile`](@ref), [`hdi`](@ref)
+
 # Examples
 
 ```jldoctest
@@ -251,6 +253,8 @@ Return the highest density interval (HDI) representing `prob` probability mass.
 Note that for the default (`method=:unimodal`), this will return a single interval.
 For multiple intervals for discontinuous regions, use `method=:multimodal`.
 See [`PosteriorStats.hdi`](@extref) for more details.
+
+See also [`eti`](@ref)
 
 # Examples
 
@@ -284,6 +288,8 @@ Compute the quantiles for each parameter in the chain.
 
 Setting `append_chains=false` will return a vector of dataframes containing the quantiles
 for each chain.
+
+For intervals defined by symmetric quantiles, see [`eti`](@ref).
 """
 function quantile(
     chains::Chains;
