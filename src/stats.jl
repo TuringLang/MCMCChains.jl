@@ -230,13 +230,13 @@ julia> chn = Chains(val, [:a, :b]);
 
 julia> hdi(chn)
 HDI
-     lower  upper
- a  0.0630  0.994
- b  0.0404  0.968
+    hdi94           
+ a  0.0630 .. 0.994
+ b  0.0404 .. 0.968
 ```
 """
 function PosteriorStats.hdi(chn::Chains; prob::Real=0.94, kwargs...)
-    hdi_name = Symbol("hdi_$(_prob_to_string(prob))%")
+    hdi_name = Symbol("hdi$(_prob_to_string(prob))")
     return summarize(chn, hdi_name => (x -> hdi(x; prob)); name = "HDI", kwargs...)
 end
 
