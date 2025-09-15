@@ -170,7 +170,7 @@ end
 @testset "function tests" begin
     tchain = Chains(rand(niter, nparams, nchains), ["a", "b", "c"], Dict(:internals => ["c"]))
 
-    @test eltype(discretediag(chn_disc[:,2:2,:])) <: SummaryStats
+    @test eltype(discretediag(chn_disc[:, 2:2, :])) <: SummaryStats
 
     gelman = gelmandiag(tchain)
     gelmanmv = gelmandiag_multivariate(tchain)
@@ -222,14 +222,15 @@ end
             end
         end
         @test autocor(c) isa SummaryStats
-        @test autocor(c) == autocor(c; append_chains=true)
+        @test autocor(c) == autocor(c; append_chains = true)
     end
 
     @test MCMCChains.cor(chn) isa SummaryStats
     @test MCMCChains.cor(chn; append_chains = false) isa Vector{<:SummaryStats}
 
     @test MCMCChains.changerate(chn) isa Tuple{SummaryStats,Float64}
-    @test MCMCChains.changerate(chn; append_chains = false) isa Vector{<:Tuple{SummaryStats,Float64}}
+    @test MCMCChains.changerate(chn; append_chains = false) isa
+          Vector{<:Tuple{SummaryStats,Float64}}
 
     @test eti(chn) isa SummaryStats
     @test eti(chn; append_chains = false) isa Vector{<:SummaryStats}
@@ -241,7 +242,7 @@ end
     @test :hdi94 in Tables.columnnames(result)
 
     @test_deprecated hpd(chn)
-    @test hpd(chn) == hdi(chn; prob=0.95)
+    @test hpd(chn) == hdi(chn; prob = 0.95)
 end
 
 @testset "vector of vectors" begin

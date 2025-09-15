@@ -12,13 +12,11 @@ using Statistics: std
         Dict(:internals => ["c", "d", "e", "f", "g", "h"]),
     )
 
-    parm_stats = summarize(chns, sections=[:parameters])
+    parm_stats = summarize(chns, sections = [:parameters])
     @test parm_stats isa SummaryStats
     @test parm_stats.name == "SummaryStats"
-    parm_array_stats = summarize(
-        PermutedDimsArray(val[:, 1:2, :], (1, 3, 2));
-        var_names =[:a, :b],
-    )
+    parm_array_stats =
+        summarize(PermutedDimsArray(val[:, 1:2, :], (1, 3, 2)); var_names = [:a, :b])
 
     # check that display of SummaryStats does not error
     println("compact display:")
@@ -36,9 +34,8 @@ using Statistics: std
     @test parm_df[!, 1] == [:a, :b]
 
     all_sections_stats = summarize(chns; sections = [:parameters, :internals])
-    all_sections_array_stats = summarize(
-        PermutedDimsArray(val, (1, 3, 2)); var_names = Symbol.(parm_names),
-    )
+    all_sections_array_stats =
+        summarize(PermutedDimsArray(val, (1, 3, 2)); var_names = Symbol.(parm_names))
     @test all_sections_stats isa SummaryStats
     all_sections_df = DataFrame(all_sections_stats)
     all_sections_array_df = DataFrame(all_sections_array_stats)

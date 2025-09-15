@@ -240,7 +240,7 @@ ETI
  b  0.0300 .. 0.962
 ```
 """
-function PosteriorStats.eti(chn::Chains; prob::Real=DEFAULT_CI_PROB, kwargs...)
+function PosteriorStats.eti(chn::Chains; prob::Real = DEFAULT_CI_PROB, kwargs...)
     eti_name = Symbol("eti$(_prob_to_string(prob))")
     return summarize(chn, eti_name => (x -> eti(x; prob)); name = "ETI", kwargs...)
 end
@@ -274,14 +274,19 @@ HDI
  b  0.0404 .. 0.968
 ```
 """
-function PosteriorStats.hdi(chn::Chains; prob::Real=DEFAULT_CI_PROB, kwargs...)
+function PosteriorStats.hdi(chn::Chains; prob::Real = DEFAULT_CI_PROB, kwargs...)
     hdi_name = Symbol("hdi$(_prob_to_string(prob))")
     return summarize(chn, hdi_name => (x -> hdi(x; prob)); name = "HDI", kwargs...)
 end
 
-_prob_to_string(prob; digits=2) = replace(string(round(100 * prob; digits)), r"\.0+$" => "")
+_prob_to_string(prob; digits = 2) =
+    replace(string(round(100 * prob; digits)), r"\.0+$" => "")
 
-@deprecate hpd(chn::Chains; alpha::Real=0.05, kwargs...) hdi(chn; prob=1 - alpha, kwargs...)
+@deprecate hpd(chn::Chains; alpha::Real = 0.05, kwargs...) hdi(
+    chn;
+    prob = 1 - alpha,
+    kwargs...,
+)
 
 """
     quantile(chains[; q = (0.025, 0.25, 0.5, 0.75, 0.975), append_chains = true, kwargs...])
@@ -296,14 +301,14 @@ For intervals defined by symmetric quantiles, see [`eti`](@ref).
 function quantile(
     chains::Chains;
     q::Union{Tuple,AbstractVector} = (0.025, 0.25, 0.5, 0.75, 0.975),
-    kwargs...
+    kwargs...,
 )
     # compute quantiles
     func_names = Tuple(Symbol.(100 .* q, :%))
     return summarize(
         chains,
         func_names => (Base.Fix2(quantile, q) ∘ cskip);
-        name="Quantiles",
+        name = "Quantiles",
         kwargs...,
     )
 end

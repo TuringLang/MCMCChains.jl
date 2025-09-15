@@ -28,12 +28,13 @@ inferred from data.
 * `summarize(chns; sections=[:parameters, :internals])` : Chain summary for multiple sections
 """
 function PosteriorStats.summarize(
-    chains::Chains, funs...;
+    chains::Chains,
+    funs...;
     sections = _default_sections(chains),
     append_chains::Bool = true,
-    var_names=nothing,
+    var_names = nothing,
     name::AbstractString = "SummaryStats",
-    kwargs...
+    kwargs...,
 )
     # Generate a chain to work on.
     chn = Chains(chains, _clean_sections(chains, sections))
@@ -44,14 +45,14 @@ function PosteriorStats.summarize(
     if append_chains
         # Evaluate the functions.
         data = _permutedims_diagnostics(chn.value.data)
-        summarize(data, funs...; var_names=names_of_params, name, kwargs...)
+        summarize(data, funs...; var_names = names_of_params, name, kwargs...)
     else
         # Evaluate the functions.
         data = to_vector_of_matrices(chn)
         return map(enumerate(data)) do (i, x)
             z = reshape(x, size(x, 1), 1, size(x, 2))
             name_chain = name * " (Chain $i)"
-            summarize(z, funs...; var_names=names_of_params, name=name_chain, kwargs...)
+            summarize(z, funs...; var_names = names_of_params, name = name_chain, kwargs...)
         end
     end
 end

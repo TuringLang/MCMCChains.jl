@@ -6,7 +6,6 @@ using MCMCChains
     val = rand(rng, 100, 4, 4)
     parm_names = ["a", "b", "c", "d"]
     chns = Chains(val, parm_names, Dict(:internals => ["b", "d"]))[1:2:99, :, :]
-    
     str = sprint(show, "text/plain", chns)
     expected_str = """
     Chains MCMC chain (50×4×4 Array{Float64, 3}):

@@ -67,7 +67,6 @@ end
         ess_df = DataFrame(ess_stats)
         @test isequal(ess_df[!, :ess], fill(NaN, 5))
         @test isequal(ess_df[!, :ess_per_sec], fill(missing, 5))
-        
         ess_rhat_stats = ess_rhat(chain; autocov_method = autocov_method)
         @test ess_rhat_stats isa SummaryStats
         @test ess_rhat_stats.name == "ESS/R-hat"

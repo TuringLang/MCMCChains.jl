@@ -5,7 +5,7 @@ using Random
 
 # Tests for missing values.
 function testdiff(cdf1, cdf2)
-    return all(((x, y),) -> isapprox(x, y; atol=1e-2), Iterators.drop(zip(cdf1, cdf2), 1))
+    return all(((x, y),) -> isapprox(x, y; atol = 1e-2), Iterators.drop(zip(cdf1, cdf2), 1))
 end
 
 @testset "utils" begin
