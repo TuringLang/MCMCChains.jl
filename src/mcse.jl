@@ -1,5 +1,5 @@
 """
-    mcse(chains::Chains; duration=compute_duration, kwargs...)
+    mcse(chains::Chains; kwargs...)
 
 Estimate the Monte Carlo standard error.
 """
