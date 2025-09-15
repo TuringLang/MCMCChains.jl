@@ -418,10 +418,10 @@ function _compute_plot_data(
 
     chain_sections = MCMCChains.group(chains, Symbol(par_names[i]))
     chain_vec = vec(chain_sections.value.data)
-    lower_hdi = [MCMCChains.hdi(chain_sections, prob = hdii[j])[:lower]
+    hdi_intervals = [only(Tables.getcolumn(hdi(chain_sections; prob = hdii[j]), 2))
         for j in 1:length(hdii)]
-    upper_hdi = [MCMCChains.hdi(chain_sections, prob = hdii[j])[:upper]
-        for j in 1:length(hdii)]
+    lower_hdi = map(minimum, hdi_intervals)
+    upper_hdi = map(maximum, hdi_intervals)
     h = _riser + spacer*(i-1)
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
