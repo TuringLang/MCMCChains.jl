@@ -24,8 +24,7 @@ function MCMCDiagnosticTools.gewekediag(
             result;
             name = "Geweke diagnostic - Chain $i",
             labels = names(_chains),
-        )
-        for (i, result) in enumerate(results)
+        ) for (i, result) in enumerate(results)
     ]
 
     return stats

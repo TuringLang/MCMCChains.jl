@@ -9,9 +9,7 @@ DocMeta.setdocmeta!(
     recursive=true
 )
 
-links = InterLinks(
-    "PosteriorStats" => "https://julia.arviz.org/PosteriorStats/stable/",
-)
+links = InterLinks("PosteriorStats" => "https://julia.arviz.org/PosteriorStats/stable/")
 
 makedocs(
     sitename = "MCMCChains.jl",

@@ -181,7 +181,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
     if st == :autocorplot
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
         # Chains are already appended in `c` if desired, hence we use `append_chains=false`
-        ac = autocor(c; sections = nothing, lags = lags, append_chains=false)
+        ac = autocor(c; sections = nothing, lags = lags, append_chains = false)
         ac_mat = stack(map(stack ∘ Base.Fix2(Iterators.drop, 1), ac))
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
@@ -423,14 +423,14 @@ function _compute_plot_data(
     fill_q = true,
     fill_ci = false,
 )
-    probs_sorted = sort(ci_probs; rev=true)
+    probs_sorted = sort(ci_probs; rev = true)
 
     chain_sections = MCMCChains.group(chains, Symbol(par_names[i]))
     chain_vec = vec(chain_sections.value.data)
     ci_intervals = map(probs_sorted) do prob
         only(Tables.getcolumn(ci_fun(chain_sections; prob), 2))
     end
-    h = _riser + spacer*(i-1)
+    h = _riser + spacer * (i - 1)
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
     if fill_ci
@@ -448,8 +448,18 @@ function _compute_plot_data(
     min = minimum(k_density.density .+ h)
     q_int = (show_qi ? [qs[1], chain_med, qs[2]] : [chain_med])
 
-    return par_names, probs_sorted, ci_intervals, h, qs, k_density, x_int, val, chain_med,
-        chain_mean, min, q_int
+    return par_names,
+    probs_sorted,
+    ci_intervals,
+    h,
+    qs,
+    k_density,
+    x_int,
+    val,
+    chain_med,
+    chain_mean,
+    min,
+    q_int
 end
 
 _intervalname(::typeof(PosteriorStats.eti)) = "ETI"
@@ -469,7 +479,7 @@ _intervalname(f) = string(nameof(f))
     show_cii = true,
     fill_q = true,
     fill_ci = false,
-    ordered = false
+    ordered = false,
 )
 
     chn = p.args[1]
@@ -480,13 +490,34 @@ _intervalname(f) = string(nameof(f))
         par_names = par_table_names[sortperm(par_medians)]
     end
 
-    for i in 1:length(par_names)
-        par, cii, ci_intervals, h, qs, k_density, x_int, val, chain_med,
-            chain_mean, min, q_int = _compute_plot_data(i, chn, par_names;
+    for i = 1:length(par_names)
+        par,
+        cii,
+        ci_intervals,
+        h,
+        qs,
+        k_density,
+        x_int,
+        val,
+        chain_med,
+        chain_mean,
+        min,
+        q_int = _compute_plot_data(
+            i,
+            chn,
+            par_names;
             ci_fun = ci_fun,
-            ci_probs = ci_probs, q = q, spacer = spacer, _riser = _riser,
-            show_mean = show_mean, show_median = show_median, show_qi = show_qi,
-            show_cii = show_cii, fill_q = fill_q, fill_ci = fill_ci)
+            ci_probs = ci_probs,
+            q = q,
+            spacer = spacer,
+            _riser = _riser,
+            show_mean = show_mean,
+            show_median = show_median,
+            show_qi = show_qi,
+            show_cii = show_cii,
+            fill_q = fill_q,
+            fill_ci = fill_ci,
+        )
 
         yticks --> (
             length(par_names) > 1 ?
@@ -545,8 +576,10 @@ _intervalname(f) = string(nameof(f))
         end
         @series begin
             seriestype := :path
-            label := (show_cii ? (i == 1 ? "$(round(Int, cii[i]*100))% $(_intervalname(ci_fun))" : nothing)
-                : nothing)
+            label := (
+                show_cii ?
+                (i == 1 ? "$(round(Int, cii[i]*100))% $(_intervalname(ci_fun))" : nothing) : nothing
+            )
             linewidth --> (show_cii ? 2 : 0)
             markersize --> 0
             seriesalpha --> (show_cii ? 0.80 : 0.0)
@@ -570,7 +603,7 @@ end
     show_cii = true,
     fill_q = true,
     fill_ci = false,
-    ordered = false
+    ordered = false,
 )
 
     chn = p.args[1]
@@ -581,11 +614,34 @@ end
         par_names = par_table_names[sortperm(par_medians)]
     end
 
-    for i in 1:length(par_names)
-        par, cii, ci_intervals, h, qs, k_density, x_int, val, chain_med, chain_mean,
-            min, q_int = _compute_plot_data(i, chn, par_names; ci_fun = ci_fun, ci_probs = ci_probs, q = q,
-            spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
-            show_qi = show_qi, show_cii = show_cii, fill_q = fill_q, fill_ci = fill_ci)
+    for i = 1:length(par_names)
+        par,
+        cii,
+        ci_intervals,
+        h,
+        qs,
+        k_density,
+        x_int,
+        val,
+        chain_med,
+        chain_mean,
+        min,
+        q_int = _compute_plot_data(
+            i,
+            chn,
+            par_names;
+            ci_fun = ci_fun,
+            ci_probs = ci_probs,
+            q = q,
+            spacer = spacer,
+            _riser = _riser,
+            show_mean = show_mean,
+            show_median = show_median,
+            show_qi = show_qi,
+            show_cii = show_cii,
+            fill_q = fill_q,
+            fill_ci = fill_ci,
+        )
 
         yticks --> (
             length(par_names) > 1 ?
@@ -593,13 +649,18 @@ end
         )
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
 
-        for j in 1:length(cii)
+        for j = 1:length(cii)
             @series begin
                 seriestype := :path
-                label := (show_cii ?
-                    (i == 1 ? "$(round(Int, cii[j]*100))% $(_intervalname(ci_fun))" : nothing) : nothing)
+                label := (
+                    show_cii ?
+                    (
+                        i == 1 ? "$(round(Int, cii[j]*100))% $(_intervalname(ci_fun))" :
+                        nothing
+                    ) : nothing
+                )
                 linecolor --> j
-                linewidth --> (show_cii ? 1.5*j : 0)
+                linewidth --> (show_cii ? 1.5 * j : 0)
                 markersize --> 0
                 seriesalpha --> (show_cii ? 0.80 : 0.0)
                 offset := h

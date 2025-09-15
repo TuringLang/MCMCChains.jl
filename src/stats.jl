@@ -38,20 +38,20 @@ function autocor(
     # lags without constructing a huge NamedTuple
     if append_chains
         data = _permutedims_diagnostics(chn.value.data)
-        vals = stack(map(eachslice(data; dims=3)) do x
-            return autocor(vec(x), lags; demean=demean)
+        vals = stack(map(eachslice(data; dims = 3)) do x
+            return autocor(vec(x), lags; demean = demean)
         end)
-        table = Tables.table(vals'; header=col_names)
-        return SummaryStats(table; name="Autocorrelation", labels=names_of_params)
+        table = Tables.table(vals'; header = col_names)
+        return SummaryStats(table; name = "Autocorrelation", labels = names_of_params)
     else
         data = to_vector_of_matrices(chn)
         return map(enumerate(data)) do (i, x)
             name_chain = "Autocorrelation (Chain $i)"
-            vals = stack(map(eachslice(x; dims=2)) do xi
-                return autocor(xi, lags; demean=demean)
+            vals = stack(map(eachslice(x; dims = 2)) do xi
+                return autocor(xi, lags; demean = demean)
             end)
-            table = Tables.table(vals'; header=col_names)
-            return SummaryStats(table; name=name_chain, labels=names_of_params)
+            table = Tables.table(vals'; header = col_names)
+            return SummaryStats(table; name = name_chain, labels = names_of_params)
         end
     end
 end
@@ -95,10 +95,8 @@ function cor(
         return df
     else
         vector_of_df = [
-            summarystats_cor(
-                "Correlation - Chain $i", names_of_params, data
-            )
-            for (i, data) in enumerate(to_vector_of_matrices(_chains))
+            summarystats_cor("Correlation - Chain $i", names_of_params, data) for
+            (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_df
     end
@@ -109,10 +107,12 @@ function summarystats_cor(name, names_of_params, chains::AbstractMatrix)
     cormat = cor(chains)
 
     # Summarize the results in a dict
-    dict = OrderedCollections.OrderedDict(k => v for (k, v) in zip(names_of_params, eachcol(cormat)))
+    dict = OrderedCollections.OrderedDict(
+        k => v for (k, v) in zip(names_of_params, eachcol(cormat))
+    )
 
     # Create a SummaryStats.
-    return SummaryStats(dict; name=name, labels=names_of_params)
+    return SummaryStats(dict; name = name, labels = names_of_params)
 end
 
 """
@@ -139,10 +139,8 @@ function changerate(
         return stats
     else
         vector_of_stats = [
-            summarystats_changerate(
-                "Change Rate - Chain $i", names_of_params, data
-            )
-            for (i, data) in enumerate(to_vector_of_matrices(_chains))
+            summarystats_changerate("Change Rate - Chain $i", names_of_params, data) for
+            (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_stats
     end
@@ -153,10 +151,10 @@ function summarystats_changerate(name, names_of_params, chains)
     changerates, mvchangerate = changerate(chains)
 
     # Summarize the results in a named tuple.
-    nt = (; label=names_of_params, changerate=changerates)
+    nt = (; label = names_of_params, changerate = changerates)
 
     # Create a SummaryStats.
-    return SummaryStats(nt; name=name), mvchangerate
+    return SummaryStats(nt; name = name), mvchangerate
 end
 
 changerate(chains::AbstractMatrix{<:Real}) = changerate(reshape(chains, Val(3)))
@@ -197,7 +195,7 @@ function DataAPI.describe(
     io::IO,
     chains::Chains;
     q = [0.025, 0.25, 0.5, 0.75, 0.975],
-    kwargs...
+    kwargs...,
 )
     print(io, "Chains ", chains, ":\n\n", header(chains))
 
