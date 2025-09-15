@@ -402,7 +402,8 @@ function _compute_plot_data(
     i::Integer,
     chains::Chains,
     par_names::AbstractVector{Symbol};
-    hdi_prob = [0.94, 0.8],
+    ci_fun = hdi,
+    ci_prob = [DEFAULT_CI_PROB, 0.8],
     q = [0.1, 0.9],
     spacer = 0.4,
     _riser = 0.2,
@@ -410,23 +411,22 @@ function _compute_plot_data(
     show_mean = true,
     show_median = true,
     show_qi = false,
-    show_hdii = true,
+    show_cii = true,
     fill_q = true,
-    fill_hdi = false,
+    fill_ci = false,
 )
-    hdii = sort(hdi_prob; rev=true)
+    probs_sorted = sort(ci_prob; rev=true)
 
     chain_sections = MCMCChains.group(chains, Symbol(par_names[i]))
     chain_vec = vec(chain_sections.value.data)
-    hdi_intervals = [only(Tables.getcolumn(hdi(chain_sections; prob = hdii[j]), 2))
-        for j in 1:length(hdii)]
-    lower_hdi = map(minimum, hdi_intervals)
-    upper_hdi = map(maximum, hdi_intervals)
+    ci_intervals = map(probs_sorted) do prob
+        only(Tables.getcolumn(ci_fun(chain_sections; prob), 2))
+    end
     h = _riser + spacer*(i-1)
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
-    if fill_hdi
-        x_int = filter(x -> lower_hdi[1][1] <= x <= upper_hdi[1][1], k_density.x)
+    if fill_ci
+        x_int = filter(in(ci_intervals[1]), k_density.x)
         val = pdf(k_density, x_int) .+ h
     elseif fill_q
         x_int = filter(x -> qs[1] <= x <= qs[2], k_density.x)
@@ -440,22 +440,27 @@ function _compute_plot_data(
     min = minimum(k_density.density .+ h)
     q_int = (show_qi ? [qs[1], chain_med, qs[2]] : [chain_med])
 
-    return par_names, hdii, lower_hdi, upper_hdi, h, qs, k_density, x_int, val, chain_med,
+    return par_names, probs_sorted, ci_intervals, h, qs, k_density, x_int, val, chain_med,
         chain_mean, min, q_int
 end
 
+_intervalname(::typeof(PosteriorStats.hdi)) = "HDI"
+_intervalname(::typeof(PosteriorStats.eti)) = "ETI"
+_intervalname(f) = string(nameof(f))
+
 @recipe function f(
     p::RidgelinePlot;
-    hdi_prob = [0.94, 0.8],
+    ci_prob = [DEFAULT_CI_PROB, 0.8],
+    ci_fun = hdi,
     q = [0.1, 0.9],
     spacer = 0.5,
     _riser = 0.2,
     show_mean = true,
     show_median = true,
     show_qi = false,
-    show_hdii = true,
+    show_cii = true,
     fill_q = true,
-    fill_hdi = false,
+    fill_ci = false,
     ordered = false
 )
 
@@ -468,10 +473,12 @@ end
     end
 
     for i in 1:length(par_names)
-        par, hdii, lower_hdi, upper_hdi, h, qs, k_density, x_int, val, chain_med, chain_mean,
-            min, q_int = _compute_plot_data(i, chn, par_names; hdi_prob = hdi_prob, q = q,
-            spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
-            show_qi = show_qi, show_hdii = show_hdii, fill_q = fill_q, fill_hdi = fill_hdi)
+        par, cii, ci_intervals, h, qs, k_density, x_int, val, chain_med,
+            chain_mean, min, q_int = _compute_plot_data(i, chn, par_names;
+            ci_fun = ci_fun,
+            ci_prob = ci_prob, q = q, spacer = spacer, _riser = _riser,
+            show_mean = show_mean, show_median = show_median, show_qi = show_qi,
+            show_cii = show_cii, fill_q = fill_q, fill_ci = fill_ci)
 
         yticks --> (
             length(par_names) > 1 ?
@@ -528,29 +535,31 @@ end
             [qs[1], qs[2]], [h, h]
         end
         @series begin
-            seriestype := :path
-            label := (show_hdii ? (i == 1 ? "$(round(Int, hdii[i]*100))% HDI" : nothing)
+            label := (show_cii ? (i == 1 ? "$(round(Int, cii[i]*100))% $(_intervalname(ci_fun))" : nothing)
                 : nothing)
-            linewidth --> (show_hdii ? 2 : 0)
+            linewidth --> (show_cii ? 2 : 0)
+            markersize --> 0,
             seriesalpha --> 0.80
             linecolor --> :darkblue
-            [lower_hdi[1][1], upper_hdi[1][1]], [h, h]
+            offset := h
+            ci_intervals[1]
         end
     end
 end
 
 @recipe function f(
     p::ForestPlot;
-    hdi_prob = [0.94, 0.8],
+    ci_prob = [DEFAULT_CI_PROB, 0.8],
+    ci_fun = hdi,
     q = [0.1, 0.9],
     spacer = 0.5,
     _riser = 0.2,
     show_mean = true,
     show_median = true,
     show_qi = false,
-    show_hdii = true,
+    show_cii = true,
     fill_q = true,
-    fill_hdi = false,
+    fill_ci = false,
     ordered = false
 )
 
@@ -563,10 +572,10 @@ end
     end
 
     for i in 1:length(par_names)
-        par, hdii, lower_hdi, upper_hdi, h, qs, k_density, x_int, val, chain_med, chain_mean,
-            min, q_int = _compute_plot_data(i, chn, par_names; hdi_prob = hdi_prob, q = q,
+        par, cii, ci_intervals, h, qs, k_density, x_int, val, chain_med, chain_mean,
+            min, q_int = _compute_plot_data(i, chn, par_names; ci_fun = ci_fun, ci_prob = ci_prob, q = q,
             spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
-            show_qi = show_qi, show_hdii = show_hdii, fill_q = fill_q, fill_hdi = fill_hdi)
+            show_qi = show_qi, show_cii = show_cii, fill_q = fill_q, fill_ci = fill_ci)
 
         yticks --> (
             length(par_names) > 1 ?
@@ -574,15 +583,17 @@ end
         )
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
 
-        for j in 1:length(hdii)
+        for j in 1:length(cii)
             @series begin
                 seriestype := :path
-                label := (show_hdii ?
-                    (i == 1 ? "$(round(Int, hdii[j]*100))% HDI" : nothing) : nothing)
+                label := (show_cii ?
+                    (i == 1 ? "$(round(Int, cii[j]*100))% $(_intervalname(ci_fun))" : nothing) : nothing)
                 linecolor --> j
-                linewidth --> (show_hdii ? 1.5*j : 0)
+                linewidth --> (show_cii ? 1.5*j : 0)
+                markersize --> 0,
                 seriesalpha --> 0.80
-                [lower_hdi[j][1], upper_hdi[j][1]], [h, h]
+                offset := h
+                ci_intervals[j]
             end
         end
         @series begin
@@ -590,7 +601,7 @@ end
             label := (show_median ? (i == 1 ? "Median" : nothing) : nothing)
             markershape --> :diamond
             markercolor --> "#000000"
-            markersize --> (show_median ? length(hdii) : 0)
+            markersize --> (show_median ? length(cii) : 0)
             [chain_med], [h]
         end
         @series begin
@@ -598,7 +609,7 @@ end
             label := (show_mean ? (i == 1 ? "Mean" : nothing) : nothing)
             markershape --> :circle
             markercolor --> :gray
-            markersize --> (show_mean ? length(hdii) : 0)
+            markersize --> (show_mean ? length(cii) : 0)
             [chain_mean], [h]
         end
         @series begin
