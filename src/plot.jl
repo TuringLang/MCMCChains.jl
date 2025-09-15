@@ -540,14 +540,16 @@ _intervalname(f) = string(nameof(f))
             label := nothing
             linecolor := "#000000"
             linewidth --> (show_qi ? 1.2 : 0)
+            seriesalpha --> (show_qi ? 1.0 : 0.0)
             [qs[1], qs[2]], [h, h]
         end
         @series begin
+            seriestype := :path
             label := (show_cii ? (i == 1 ? "$(round(Int, cii[i]*100))% $(_intervalname(ci_fun))" : nothing)
                 : nothing)
             linewidth --> (show_cii ? 2 : 0)
-            markersize --> 0,
-            seriesalpha --> 0.80
+            markersize --> 0
+            seriesalpha --> (show_cii ? 0.80 : 0.0)
             linecolor --> :darkblue
             offset := h
             ci_intervals[1]
@@ -598,8 +600,8 @@ end
                     (i == 1 ? "$(round(Int, cii[j]*100))% $(_intervalname(ci_fun))" : nothing) : nothing)
                 linecolor --> j
                 linewidth --> (show_cii ? 1.5*j : 0)
-                markersize --> 0,
-                seriesalpha --> 0.80
+                markersize --> 0
+                seriesalpha --> (show_cii ? 0.80 : 0.0)
                 offset := h
                 ci_intervals[j]
             end
@@ -633,6 +635,7 @@ end
             label := nothing
             linecolor := "#000000"
             linewidth --> (show_qi ? 1.2 : 0.0)
+            seriesalpha --> (show_qi ? 1.0 : 0.0)
             [qs[1], qs[2]], [h, h]
         end
     end
