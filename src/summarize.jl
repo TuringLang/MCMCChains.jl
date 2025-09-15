@@ -3,7 +3,7 @@
         chains[, stats_funs...];
         append_chains=true,
         name="SummaryStats",
-        [sections, var_names],
+        [sections, var_names, kind],
     )
 
 Summarize `chains` in a `PosteriorStats.SummaryStats`.
@@ -14,8 +14,8 @@ to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` m
 form `(name1, ...) => fun` when the function returns a collection. When the function returns
 a collection, the names in this latter format must be provided.
 
-If no stats functions are provided, then those specified in
-`PosteriorStats.default_summary_stats` are computed.
+If no stats functions are provided, then those specified by the preset `kind` are computed.
+See [`PosteriorStats.summarize`](@extref) for details.
 
 `var_names` specifies the names of the parameters in data. If not provided, the names are
 inferred from data.
