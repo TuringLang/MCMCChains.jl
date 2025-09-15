@@ -68,8 +68,8 @@ export rafterydiag
 export rstar
 
 # Reexport stats functions
-using PosteriorStats: SummaryStats, hdi, summarize
-export SummaryStats, hdi, summarize
+using PosteriorStats: SummaryStats, eti, hdi, summarize
+export SummaryStats, eti, hdi, summarize
 
 """
     Chains

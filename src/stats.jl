@@ -1,5 +1,7 @@
 #################### Posterior Statistics ####################
 
+const DEFAULT_CI_PROB = 0.94
+
 """
     autocor(
         chains;
@@ -213,7 +215,36 @@ end
 DataAPI.describe(chains::Chains; kwargs...) = DataAPI.describe(stdout, chains; kwargs...)
 
 """
-    hdi(chn::Chains; prob::Real=0.94, method=:unimodal, kwargs...)
+    eti(chn::Chains; prob::Real=$DEFAULT_CI_PROB)
+
+Return the equal-tailed interval (ETI) representing `prob` probability mass.
+
+The bounds of the ETI are the symmetric quantiles so that the interval contains `prob`
+probability mass.
+
+# Examples
+
+```jldoctest
+julia> using StableRNGs; rng = StableRNG(42);
+
+julia> val = rand(rng, 500, 2, 3);
+
+julia> chn = Chains(val, [:a, :b]);
+
+julia> eti(chn)
+ETI
+    eti94           
+ a  0.0337 .. 0.971
+ b  0.0300 .. 0.962
+```
+"""
+function PosteriorStats.eti(chn::Chains; prob::Real=DEFAULT_CI_PROB)
+    eti_name = Symbol("eti$(_prob_to_string(prob))")
+    return summarize(chn, eti_name => (x -> eti(x; prob)); name = "ETI")
+end
+
+"""
+    hdi(chn::Chains; prob::Real=$DEFAULT_CI_PROB, method=:unimodal, kwargs...)
 
 Return the highest density interval (HDI) representing `prob` probability mass.
 
@@ -237,7 +268,7 @@ HDI
  b  0.0404 .. 0.968
 ```
 """
-function PosteriorStats.hdi(chn::Chains; prob::Real=0.94, kwargs...)
+function PosteriorStats.hdi(chn::Chains; prob::Real=DEFAULT_CI_PROB, kwargs...)
     hdi_name = Symbol("hdi$(_prob_to_string(prob))")
     return summarize(chn, hdi_name => (x -> hdi(x; prob)); name = "HDI", kwargs...)
 end
