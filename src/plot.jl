@@ -47,8 +47,8 @@ The following options are available:
 
 - `q` (default: `[0.1, 0.9]`): The two quantiles used for plotting if `fill_q = true` or `show_qi = true`.
 
-- `ci_fun` (default: `hdi`): The function used to compute the credible intervals.
-  (Can be [`hdi`](@ref) or [`eti`](@ref))
+- `ci_fun` (default: `eti`): The function used to compute the credible intervals.
+  (Can be [`eti`](@ref) or [`hdi`](@ref))
 
 - `ci_probs` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
   intervals that are plotted if `fill_ci = true` or `show_cii = true`.
@@ -87,8 +87,8 @@ By default, all parameters are plotted.
 
 - `q` (default: `[0.1, 0.9]`): The two quantiles used for plotting if `fill_q = true` or `show_qi = true`.
 
-- `ci_fun` (default: `hdi`): The function used to compute the credible intervals.
-  (Can be [`hdi`](@ref) or [`eti`](@ref))
+- `ci_fun` (default: `eti`): The function used to compute the credible intervals.
+  (Can be [`eti`](@ref) or [`hdi`](@ref))
 
 - `ci_probs` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
   intervals that are plotted if `fill_ci = true` or `show_cii = true`.
@@ -410,7 +410,7 @@ function _compute_plot_data(
     i::Integer,
     chains::Chains,
     par_names::AbstractVector{Symbol};
-    ci_fun = hdi,
+    ci_fun = eti,
     ci_probs = [DEFAULT_CI_PROB, 0.8],
     q = [0.1, 0.9],
     spacer = 0.4,
@@ -452,14 +452,14 @@ function _compute_plot_data(
         chain_mean, min, q_int
 end
 
-_intervalname(::typeof(PosteriorStats.hdi)) = "HDI"
 _intervalname(::typeof(PosteriorStats.eti)) = "ETI"
+_intervalname(::typeof(PosteriorStats.hdi)) = "HDI"
 _intervalname(f) = string(nameof(f))
 
 @recipe function f(
     p::RidgelinePlot;
     ci_probs = [DEFAULT_CI_PROB, 0.8],
-    ci_fun = hdi,
+    ci_fun = eti,
     q = [0.1, 0.9],
     spacer = 0.5,
     _riser = 0.2,
@@ -560,7 +560,7 @@ end
 @recipe function f(
     p::ForestPlot;
     ci_probs = [DEFAULT_CI_PROB, 0.8],
-    ci_fun = hdi,
+    ci_fun = eti,
     q = [0.1, 0.9],
     spacer = 0.5,
     _riser = 0.2,
