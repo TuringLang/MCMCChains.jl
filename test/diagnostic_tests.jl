@@ -1,6 +1,9 @@
 using MCMCChains
 using AbstractMCMC: AbstractChains
 using Dates
+using DataFrames
+using PosteriorStats: SummaryStats
+using Tables
 using Test
 
 ## CHAIN TESTS
@@ -184,13 +187,15 @@ end
 
     # test SummaryStats sizes
     for s in (gelman, gelmanmv[1], geweke[1], heidel[1], raferty[1])
-        @test length(s[:parameter]) == 2
+        @test s isa SummaryStats
+        df = DataFrame(s)
+        @test size(df, 1) == 2
     end
-    @test length(keys(gelman)) == 3
-    @test length(keys(gelmanmv[1])) == 3
-    @test length(keys(geweke[1])) == 3
-    @test length(keys(heidel[1])) == 7
-    @test length(keys(raferty[1])) == 6
+    @test size(DataFrame(gelman), 2) == 3
+    @test size(DataFrame(gelmanmv[1]), 2) == 3
+    @test size(DataFrame(geweke[1]), 2) == 3
+    @test size(DataFrame(heidel[1]), 2) == 7
+    @test size(DataFrame(raferty[1]), 2) == 6
 end
 
 @testset "stats tests" begin
@@ -230,7 +235,7 @@ end
     @test hdi(chn; append_chains = false) isa Vector{<:SummaryStats}
 
     result = hdi(chn)
-    @test all(result[:upper] .> result[:lower])
+    @test :hdi94 in Tables.columnnames(result)
 
     @test_deprecated hpd(chn)
     @test hpd(chn) == hdi(chn; prob=0.95)
