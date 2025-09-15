@@ -47,7 +47,11 @@ The following options are available:
 
 - `q` (default: `[0.1, 0.9]`): The two quantiles used for plotting if `fill_q = true` or `show_qi = true`.
 
-- `hpd_val` (default: `[0.05, 0.2]`): The complementary probability mass(es) of the highest posterior density intervals that are plotted if `fill_hpd = true` or `show_hpdi = true`.
+- `ci_fun` (default: `hdi`): The function used to compute the credible intervals.
+  (Can be [`hdi`](@ref) or [`eti`](@ref))
+
+- `ci_prob` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
+  intervals that are plotted if `fill_ci = true` or `show_cii = true`.
 
 !!! note
     If a single parameter is provided, the generated plot is a density plot with all the elements described above.
@@ -83,7 +87,11 @@ By default, all parameters are plotted.
 
 - `q` (default: `[0.1, 0.9]`): The two quantiles used for plotting if `fill_q = true` or `show_qi = true`.
 
-- `hpd_val` (default: `[0.05, 0.2]`): The complementary probability mass(es) of the highest posterior density intervals that are plotted if `fill_hpd = true` or `show_hpdi = true`.
+- `ci_fun` (default: `hdi`): The function used to compute the credible intervals.
+  (Can be [`hdi`](@ref) or [`eti`](@ref))
+
+- `ci_prob` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
+  intervals that are plotted if `fill_ci = true` or `show_cii = true`.
 """
 @userplot ForestPlot
 
