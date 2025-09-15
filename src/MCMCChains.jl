@@ -27,7 +27,6 @@ import MLJModelInterface
 import NaturalSort
 import OrderedCollections
 import PosteriorStats
-import PrettyTables
 import StatsFuns
 import Tables
 import TableTraits
