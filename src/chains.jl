@@ -3,15 +3,15 @@
 ## Constructors ##
 
 # Constructor to handle a vector of vectors.
-Chains(val::AbstractVector{<:AbstractVector{<:Union{Missing, Real}}}, args...; kwargs...) =
-	Chains(copy(reduce(hcat, val)'), args...; kwargs...)
+Chains(val::AbstractVector{<:AbstractVector{<:Union{Missing,Real}}}, args...; kwargs...) =
+    Chains(copy(reduce(hcat, val)'), args...; kwargs...)
 
 # Constructor to handle a 1D array.
-Chains(val::AbstractVector{<:Union{Missing, Real}}, args...; kwargs...) =
-	Chains(reshape(val, :, 1, 1), args...; kwargs...)
+Chains(val::AbstractVector{<:Union{Missing,Real}}, args...; kwargs...) =
+    Chains(reshape(val, :, 1, 1), args...; kwargs...)
 
 # Constructor to handle a 2D array
-Chains(val::AbstractMatrix{<:Union{Missing, Real}}, args...; kwargs...) =
+Chains(val::AbstractMatrix{<:Union{Missing,Real}}, args...; kwargs...) =
     Chains(reshape(val, size(val, 1), size(val, 2), 1), args...; kwargs...)
 
 # Constructor to handle parameter names that are not Symbols.
@@ -19,26 +19,31 @@ function Chains(
     val::AbstractArray{<:Union{Missing,Real},3},
     parameter_names::AbstractVector,
     args...;
-    kwargs...
+    kwargs...,
 )
     return Chains(val, Symbol.(parameter_names), args...; kwargs...)
 end
 
 # Generic chain constructor.
 function Chains(
-    val::AbstractArray{<:Union{Missing, Real},3},
+    val::AbstractArray{<:Union{Missing,Real},3},
     parameter_names::AbstractVector{Symbol} = Symbol.(:param_, 1:size(val, 2)),
     name_map = (parameters = parameter_names,);
     start::Int = 1,
     thin::Int = 1,
-    iterations::AbstractVector{Int} = range(start; step=thin, length=size(val, 1)),
+    iterations::AbstractVector{Int} = range(start; step = thin, length = size(val, 1)),
     evidence = missing,
-    info::NamedTuple = NamedTuple()
+    info::NamedTuple = NamedTuple(),
 )
     # Check that iteration numbers are reasonable
     if length(iterations) != size(val, 1)
-        error("length of `iterations` (", length(iterations),
-              ") is not equal to the number of iterations (", size(val, 1), ")")
+        error(
+            "length of `iterations` (",
+            length(iterations),
+            ") is not equal to the number of iterations (",
+            size(val, 1),
+            ")",
+        )
     end
     if !isempty(iterations) && first(iterations) < 1
         error("iteration numbers must be positive integers")
@@ -70,10 +75,7 @@ function Chains(
     append!(_name_map[:parameters], unassigned)
 
     # Construct the AxisArray.
-    arr = AxisArray(val;
-                    iter = iterations,
-                    var = parameter_names,
-                    chain = 1:size(val, 3))
+    arr = AxisArray(val; iter = iterations, var = parameter_names, chain = 1:size(val, 3))
 
     # Create the new chain.
     return Chains(arr, evidence, _name_map, info)
@@ -104,10 +106,10 @@ julia> names(chn2)
 Chains(c::Chains, section::Union{Symbol,AbstractString}) = Chains(c, (section,))
 function Chains(chn::Chains, sections)
     # Make sure the sections exist first.
-	  all(haskey(chn.name_map, Symbol(x)) for x in sections) ||
-		    error("some sections are not present in the chain")
+    all(haskey(chn.name_map, Symbol(x)) for x in sections) ||
+        error("some sections are not present in the chain")
 
-	  # Create the new section map.
+    # Create the new section map.
     name_map = (; (Symbol(k) => chn.name_map[Symbol(k)] for k in sections)...)
 
     # Extract wanted values.
@@ -153,8 +155,9 @@ julia> namesingroup(chn, :A; index_type=:dot)
  Symbol("A.2")
 ```
 """
-namesingroup(chains::Chains, sym::AbstractString; kwargs...) = namesingroup(chains, Symbol(sym); kwargs...)
-function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol=:bracket)
+namesingroup(chains::Chains, sym::AbstractString; kwargs...) =
+    namesingroup(chains, Symbol(sym); kwargs...)
+function namesingroup(chains::Chains, sym::Symbol; index_type::Symbol = :bracket)
     if index_type !== :bracket && index_type !== :dot
         error("index_type must be :bracket or :dot")
     end
@@ -239,16 +242,16 @@ julia> get(chn, :param_1; flatten=true)
 (param_1 = 1,)
 ```
 """
-function Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
-    pairs = Dict()
+function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
+    pairs = OrderedCollections.OrderedDict()
     for v in vs
         syms = namesingroup(c, v)
         len = length(syms)
         val = ()
         if len > 1
-            val = ntuple(i -> c.value[:,syms[i],:], length(syms))
+            val = ntuple(i -> c.value[:, syms[i], :], length(syms))
         elseif len == 1
-            val = c.value[:,syms[1],:]
+            val = c.value[:, syms[1], :]
         else
             continue
         end
@@ -263,7 +266,7 @@ function Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
     end
     return _dict2namedtuple(pairs)
 end
-Base.get(c::Chains, v::Symbol; flatten=false) = get(c, [v]; flatten=flatten)
+Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v]; flatten = flatten)
 
 """
     get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}, flatten=false)
@@ -284,12 +287,8 @@ julia> get(chn; section=[:internals])
 (a = [1; 2;;],)
 ```
 """
-function Base.get(
-    c::Chains;
-    section::Union{Symbol,AbstractVector{Symbol}},
-    flatten = false
-)
-    names = Set(Symbol[])
+function Base.get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}, flatten = false)
+    names = OrderedCollections.OrderedSet(Symbol[])
     regex = r"[^\[]*"
     _section = section isa Symbol ? (section,) : section
     for v in _section
@@ -337,7 +336,7 @@ And data, a 5×1 Matrix{Int64}:
  5
 ```
 """
-get_params(c::Chains; flatten = false) = get(c, section = sections(c), flatten=flatten)
+get_params(c::Chains; flatten = false) = get(c, section = sections(c), flatten = flatten)
 
 #################### Base Methods ####################
 
@@ -347,16 +346,7 @@ end
 
 function Base.show(io::IO, mime::MIME"text/plain", chains::Chains)
     println(io, "Chains ", chains, ":\n\n", header(chains))
-
-    # Show summary stats.
-    summaries = describe(chains)
-    summary, others = Iterators.peel(summaries)
-    show(io, mime, summary)
-    for summary in others
-        println(io)
-        println(io)
-        show(io, mime, summary)
-    end
+    println(io, "\nUse `describe(chains)` for summary statistics and quantiles.")
 end
 
 Base.keys(c::Chains) = names(c)
@@ -374,7 +364,7 @@ Base.convert(::Type{Array}, chn::Chains) = convert(Array, chn.value)
 to_datetime(t::DateTime) = t
 to_datetime(t::Float64) = unix2datetime(t)
 to_datetime(t) = missing
-to_datetime_vec(t::Union{Float64, DateTime}) = [to_datetime(t)]
+to_datetime_vec(t::Union{Float64,DateTime}) = [to_datetime(t)]
 to_datetime_vec(t::DateTime) = [to_datetime(t)]
 to_datetime_vec(ts::Vector) = map(to_datetime, ts)
 to_datetime_vec(ts) = [missing]
@@ -427,7 +417,7 @@ Calculate the wall clock time for all chains in seconds.
 The duration is calculated as `stop - start`, where as default `stop`
 is the latest stopping time and `start` is the earliest starting time.
 """
-function wall_duration(c::Chains; start=min_start(c), stop=max_stop(c))
+function wall_duration(c::Chains; start = min_start(c), stop = max_stop(c))
     # DateTime - DateTime returns a Millisecond value,
     # divide by 1k to get seconds.
     return if start === missing || stop === missing
@@ -447,11 +437,7 @@ The duration is calculated as the sum of `start - stop` in seconds.
 `compute_duration` is more useful in cases of parallel sampling, where `wall_duration`
 may understate how much computation time was utilitzed.
 """
-function compute_duration(
-    c::Chains; 
-    start=start_times(c), 
-    stop=stop_times(c)
-)
+function compute_duration(c::Chains; start = start_times(c), stop = stop_times(c))
     # Calculate total time for each chain, then add it up.
     if start === missing || stop === missing
         return missing
@@ -483,16 +469,25 @@ The new chain and `chains` share the same data in memory.
 """
 function setrange(chains::Chains, range::AbstractVector{Int})
     if length(chains) != length(range)
-        error("length of `range` (", length(range),
-              ") is not equal to the number of iterations (", length(chains), ")")
+        error(
+            "length of `range` (",
+            length(range),
+            ") is not equal to the number of iterations (",
+            length(chains),
+            ")",
+        )
     end
     if !isempty(range) && first(range) < 1
         error("iteration numbers must be positive integers")
     end
     isstrictlyincreasing(range) || error("iteration numbers must be strictly increasing")
 
-    value = AxisArray(chains.value.data;
-                      iter = range, var = names(chains), chain = MCMCChains.chains(chains))
+    value = AxisArray(
+        chains.value.data;
+        iter = range,
+        var = names(chains),
+        chain = MCMCChains.chains(chains),
+    )
 
     return Chains(value, chains.logevidence, chains.name_map, chains.info)
 end
@@ -528,7 +523,8 @@ Base.names(chains::Chains) = chains.value[Axis{:var}].val
 
 Return the parameter names of a `section` in the `chains`.
 """
-Base.names(chains::Chains, section::Symbol) = convert(Vector{Symbol}, chains.name_map[section])
+Base.names(chains::Chains, section::Symbol) =
+    convert(Vector{Symbol}, chains.name_map[section])
 
 """
     names(chains::Chains, sections)
@@ -551,7 +547,8 @@ Return multiple `Chains` objects, each containing only a single section.
 function get_sections(chains::Chains, sections = keys(chains.name_map))
     return [Chains(chains, section) for section in sections]
 end
-get_sections(chains::Chains, section::Union{Symbol, AbstractString}) = Chains(chains, section)
+get_sections(chains::Chains, section::Union{Symbol,AbstractString}) =
+    Chains(chains, section)
 
 """
     sections(c::Chains)
@@ -576,14 +573,14 @@ header(chn)
 header(chn, section = :parameter)
 ```
 """
-function header(c::Chains; section=missing)
+function header(c::Chains; section = missing)
     rng = range(c)
 
     # Function to make section strings.
     section_str(sec, arr) = string(
         "$sec",
         repeat(" ", 18 - length(string(sec))),
-        "= $(join(map(string, arr), ", "))\n"
+        "= $(join(map(string, arr), ", "))\n",
     )
 
     # Get the timing stats
@@ -613,20 +610,18 @@ function header(c::Chains; section=missing)
         "Number of chains  = $(size(c, 3))\n",
         "Samples per chain = $(length(range(c)))\n",
         ismissing(wall) ? "" : "Wall duration     = $(round(wall, digits=2)) seconds\n",
-        ismissing(compute) ? "" : "Compute duration  = $(round(compute, digits=2)) seconds\n",
-        section_strings...
+        ismissing(compute) ? "" :
+        "Compute duration  = $(round(compute, digits=2)) seconds\n",
+        section_strings...,
     )
 end
 
-function indiscretesupport(
-    c::Chains,
-    bounds::Tuple{Real, Real}=(0, Inf)
-)
+function indiscretesupport(c::Chains, bounds::Tuple{Real,Real} = (0, Inf))
     nrows, nvars, nchains = size(c.value)
     result = Array{Bool}(undef, nvars * (nrows > 0))
-    for i in 1:nvars
+    for i = 1:nvars
         result[i] = true
-        for j in 1:nrows, k in 1:nchains
+        for j = 1:nrows, k = 1:nchains
             x = c.value[j, i, k]
             if !isinteger(x) || x < bounds[1] || x > bounds[2]
                 result[i] = false
@@ -661,7 +656,7 @@ function Base.sort(c::Chains; lt = NaturalSort.natural)
     v = c.value
     x, y, z = size(v)
     unsorted = collect(zip(1:y, v.axes[2].val))
-    sorted = sort(unsorted, by = x -> string(x[2]), lt=lt)
+    sorted = sort(unsorted, by = x -> string(x[2]), lt = lt)
     new_axes = (v.axes[1], Axis{:var}([n for (_, n) in sorted]), v.axes[3])
     new_v = copy(v.data)
     for i in eachindex(sorted)
@@ -673,7 +668,7 @@ function Base.sort(c::Chains; lt = NaturalSort.natural)
     # Sort the name map too:
     namemap = deepcopy(c.name_map)
     for names in namemap
-        sort!(names, by=string, lt=lt)
+        sort!(names, by = string, lt = lt)
     end
 
     return Chains(aa, c.logevidence, namemap, c.info)
@@ -720,7 +715,7 @@ function set_section(chains::Chains, namemap)
     # Assign everything that is missing to :parameters.
     if !isempty(missingnames)
         @warn "Section mapping does not contain all parameter names, " *
-            "$missingnames assigned to :parameters."
+              "$missingnames assigned to :parameters."
         for name in missingnames
             push!(_namemap.parameters, name)
         end
@@ -745,15 +740,16 @@ _clean_sections(::Chains, ::Nothing) = nothing
 #################### Concatenation ####################
 
 Base.cat(c::Chains, cs::Chains...; dims = Val(1)) = _cat(dims, c, cs...)
-Base.cat(c::T, cs::T...; dims = Val(1)) where T<:Chains = _cat(dims, c, cs...)
+Base.cat(c::T, cs::T...; dims = Val(1)) where {T<:Chains} = _cat(dims, c, cs...)
 
 Base.vcat(c::Chains, cs::Chains...) = _cat(Val(1), c, cs...)
-Base.vcat(c::T, cs::T...) where T<:Chains = _cat(Val(1), c, cs...)
+Base.vcat(c::T, cs::T...) where {T<:Chains} = _cat(Val(1), c, cs...)
 
 Base.hcat(c::Chains, cs::Chains...) = _cat(Val(2), c, cs...)
-Base.hcat(c::T, cs::T...) where T<:Chains = _cat(Val(2), c, cs...)
+Base.hcat(c::T, cs::T...) where {T<:Chains} = _cat(Val(2), c, cs...)
 
 AbstractMCMC.chainscat(c::Chains, cs::Chains...) = _cat(Val(3), c, cs...)
+AbstractMCMC.chainsstack(c::AbstractVector{<:Chains}) = AbstractMCMC.chainscat(c...)
 
 _cat(dim::Int, cs::Chains...) = _cat(Val(dim), cs...)
 
@@ -771,10 +767,12 @@ function _cat(::Val{1}, c1::Chains, args::Chains...)
 
     # concatenate all chains
     data = mapreduce(c -> c.value.data, vcat, args; init = c1.value.data)
-    value = AxisArray(data;
-                      iter = mapreduce(range, vcat, args; init=range(c1)),
-                      var = nms,
-                      chain = chns)
+    value = AxisArray(
+        data;
+        iter = mapreduce(range, vcat, args; init = range(c1)),
+        var = nms,
+        chain = chns,
+    )
 
     return Chains(value, missing, c1.name_map, c1.info)
 end
@@ -813,29 +811,42 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
 
     # concatenate all chains
     data = mapreduce(
-        c -> c.value.data, 
-        (x, y) -> cat(x, y; dims = 3), 
-        args; 
-        init = c1.value.data
+        c -> c.value.data,
+        (x, y) -> cat(x, y; dims = 3),
+        args;
+        init = c1.value.data,
     )
     value = AxisArray(data; iter = rng, var = nms, chain = 1:size(data, 3))
 
     # Concatenate times, if available
     starts = mapreduce(
-        c -> get(c.info, :start_time, nothing), 
-        vcat, 
-        args, 
-        init = get(c1.info, :start_time, nothing)
+        c -> get(c.info, :start_time, nothing),
+        vcat,
+        args,
+        init = [get(c1.info, :start_time, nothing)],
     )
     stops = mapreduce(
-        c -> get(c.info, :stop_time, nothing), 
-        vcat, 
-        args, 
-        init = get(c1.info, :stop_time, nothing)
+        c -> get(c.info, :stop_time, nothing),
+        vcat,
+        args,
+        init = [get(c1.info, :stop_time, nothing)],
     )
-    nontime_props = filter(x -> !(x in [:start_time, :stop_time]), [propertynames(c1.info)...])
-    new_info = NamedTuple{tuple(nontime_props...)}(tuple([c1.info[n] for n in nontime_props]...))
-    new_info = merge(new_info, (start_time = starts, stop_time = stops))
+    # Concatenate sampler states too. This is hacky(!) but required upstream in Turing.jl
+    # because otherwise you cannot resume multiple-chain sampling.
+    spl_states = mapreduce(
+        c -> get(c.info, :samplerstate, nothing),
+        vcat,
+        args,
+        init = [get(c1.info, :samplerstate, nothing)],
+    )
+    other_props = filter(
+        x -> !(x in [:start_time, :stop_time, :samplerstate]),
+        [propertynames(c1.info)...],
+    )
+    new_info =
+        NamedTuple{tuple(other_props...)}(tuple([c1.info[n] for n in other_props]...))
+    new_info =
+        merge(new_info, (start_time = starts, stop_time = stops, samplerstate = spl_states))
 
     return Chains(value, missing, c1.name_map, new_info)
 end
@@ -843,7 +854,7 @@ end
 function pool_chain(c::Chains)
     data = c.value.data
     pool_data = reshape(permutedims(data, [1, 3, 2]), :, size(data, 2), 1)
-    return Chains(pool_data, names(c), c.name_map; info=c.info)
+    return Chains(pool_data, names(c), c.name_map; info = c.info)
 end
 
 """
@@ -888,7 +899,9 @@ function replacenames(chains::Chains, old_new::Pair...)
 
     value = AxisArray(
         chains.value.data;
-        iter = range(chains), var = names_of_params, chain = 1:size(chains, 3)
+        iter = range(chains),
+        var = names_of_params,
+        chain = 1:size(chains, 3),
     )
 
     return Chains(value, chains.logevidence, namemap, chains.info)

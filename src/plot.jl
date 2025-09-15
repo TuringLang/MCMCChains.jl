@@ -4,6 +4,21 @@
 @shorthands pooleddensity
 @shorthands traceplot
 @shorthands corner
+@shorthands violinplot
+
+"""
+    energyplot(chains::Chains; kind=:density, kwargs...)
+
+Generate an energy plot for the samples in `chains`.
+
+The energy plot is a diagnostic tool for HMC-based samplers like NUTS. It displays the distributions of the Hamiltonian energy and the energy transition (error) to diagnose sampler efficiency and identify divergences.
+
+This plot is only available for chains that contain the `:hamiltonian_energy` and `:hamiltonian_energy_error` statistics in their `:internals` section.
+
+# Keywords
+- `kind::Symbol` (default: `:density`): The type of plot to generate. Can be `:density` or `:histogram`.
+"""
+@userplot EnergyPlot
 
 """
     ridgelineplot(chains::Chains[, params::Vector{Symbol}]; kwargs...)
@@ -72,32 +87,60 @@ By default, all parameters are plotted.
 """
 @userplot ForestPlot
 
-struct _TracePlot; c; val; end
-struct _MeanPlot; c; val;  end
-struct _DensityPlot; c; val;  end
-struct _HistogramPlot; c; val;  end
-struct _AutocorPlot; lags; val;  end
+struct _TracePlot
+    c::Any
+    val::Any
+end
+struct _MeanPlot
+    c::Any
+    val::Any
+end
+struct _DensityPlot
+    c::Any
+    val::Any
+end
+struct _HistogramPlot
+    c::Any
+    val::Any
+end
+struct _AutocorPlot
+    lags::Any
+    val::Any
+end
+struct _ViolinPlot
+    c::Any
+    val::Any
+    # param_indices: For accurate x-axis labeling (parameter names vs. chain indices).
+    param_indices::Any
+    # show_boxplot: To allow toggling the inner boxplot visibility.
+    show_boxplot::Any
+    # colordim: To guide x-axis label generation based on grouping (by chain or parameter).
+    colordim::Any
+end
 
 # define alias functions for old syntax
 const translationdict = Dict(
-                        :traceplot => _TracePlot,
-                        :meanplot => _MeanPlot,
-                        :density => _DensityPlot,
-                        :histogram => _HistogramPlot,
-                        :autocorplot => _AutocorPlot,
-                        :pooleddensity => _DensityPlot
-                      )
+    :traceplot => _TracePlot,
+    :meanplot => _MeanPlot,
+    :density => _DensityPlot,
+    :histogram => _HistogramPlot,
+    :autocorplot => _AutocorPlot,
+    :pooleddensity => _DensityPlot,
+    :violinplot => _ViolinPlot,
+    :violin => _ViolinPlot,
+)
 
 const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
 
 @recipe f(c::Chains, s::Symbol) = c, [s]
 
 @recipe function f(
-    chains::Chains, i::Int;
+    chains::Chains,
+    i::Int;
     colordim = :chain,
     barbounds = (-Inf, Inf),
     maxlag = nothing,
-    append_chains = false
+    append_chains = false,
 )
     st = get(plotattributes, :seriestype, :traceplot)
     c = append_chains || st == :pooleddensity ? pool_chain(chains) : chains
@@ -106,10 +149,12 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         title --> "Chain $(MCMCChains.chains(c)[i])"
         label --> permutedims(map(string, names(c)))
         val = c.value[:, :, i]
+        _actual_indices_for_violin = 1:size(c, 2)
     elseif colordim == :chain
         title --> string(names(c)[i])
         label --> permutedims(map(x -> "Chain $x", MCMCChains.chains(c)))
         val = c.value[:, i, :]
+        _actual_indices_for_violin = MCMCChains.chains(c)
     else
         throw(ArgumentError("`colordim` must be one of `:chain` or `:parameter`"))
     end
@@ -132,7 +177,11 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         ac_mat = stack(map(stack ∘ Base.Fix2(Iterators.drop, 1), ac))
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
-    elseif st ∈ supportedplots
+    elseif st ∈ (:violinplot, :violin)
+        show_boxplot_kw = get(plotattributes, :show_boxplot, true)
+        # Passes `_actual_indices_for_violin`` to `_ViolinPlot`` to ensure correct x-axis labels (parameter names or chain numbers).
+        return _ViolinPlot(c, val, _actual_indices_for_violin, show_boxplot_kw, colordim)
+    elseif st ∈ keys(translationdict)
         translationdict[st](c, val)
     else
         range(c), val
@@ -143,7 +192,7 @@ end
     xaxis --> "Sample value"
     yaxis --> "Density"
     trim --> true
-    [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
+    [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
 end
 
 @recipe function f(p::_HistogramPlot)
@@ -152,7 +201,7 @@ end
     fillalpha --> 0.7
     bins --> 25
     trim --> true
-    [collect(skipmissing(p.val[:,k])) for k in 1:size(p.val, 2)]
+    [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
 end
 
 @recipe function f(p::_MeanPlot)
@@ -176,14 +225,104 @@ end
     range(p.c), p.val
 end
 
-@recipe function f(
-    chains::Chains,
-    parameters::AbstractVector{Symbol};
-    colordim = :chain
-)
-    colordim != :chain &&
-        error("Symbol names are interpreted as parameter names, only compatible with ",
-              "`colordim = :chain`")
+@recipe function f(p::_ViolinPlot)
+    num_series = size(p.val, 2)
+    flat_data = vcat([collect(skipmissing(p.val[:, k])) for k = 1:num_series]...)
+
+    plot_labels = String[]
+
+    if p.colordim == :parameter
+        plot_labels = string.(MCMCChains.names(p.c)[p.param_indices])
+    elseif p.colordim == :chain
+        plot_labels = ["Chain $(c_idx)" for c_idx in p.param_indices]
+    else
+        plot_labels = string.(1:num_series)
+    end
+
+    group_labels = repeat(1:num_series, inner = size(p.val, 1))
+
+    xticks := (1:num_series, plot_labels)
+    legend --> false
+
+    @series begin
+        seriestype := :violin
+        x := group_labels
+        y := flat_data
+        group := group_labels
+        ()
+    end
+
+    if p.show_boxplot
+        @series begin
+            seriestype := :boxplot
+            bar_width := 0.1
+            linewidth := 2
+            fillalpha := 0.8
+            x := group_labels
+            y := flat_data
+            group := group_labels
+            ()
+        end
+    end
+end
+
+@recipe function f(p::EnergyPlot; kind = :density)
+    chains = p.args[1]
+
+    if kind ∉ (:density, :histogram)
+        error("`kind` must be one of `:density` or `:histogram`")
+    end
+
+    internal_names = names(chains, :internals)
+    required_params = [:hamiltonian_energy, :hamiltonian_energy_error]
+    for param in required_params
+        if param ∉ internal_names
+            error(
+                "`$param` not found in chain's internal parameters. Energy plots are only available for HMC/NUTS samplers.",
+            )
+        end
+    end
+
+    pooled = pool_chain(chains)
+    energy = vec(pooled[:, :hamiltonian_energy, :])
+    energy_error = vec(pooled[:, :hamiltonian_energy_error, :])
+
+    mean_energy = mean(energy)
+    std_energy = std(energy)
+    centered_energy = (energy .- mean_energy) ./ std_energy
+    scaled_energy_error = energy_error ./ std_energy
+
+    title := "Energy Plot"
+    xaxis := "Standardized Energy"
+    yaxis := "Density"
+    legend := :topright
+
+    @series begin
+        seriestype := kind
+        label := "Marginal Energy"
+        fillrange --> 0
+        fillalpha --> 0.5
+        normalize --> true
+        bins --> 50
+        centered_energy
+    end
+
+    @series begin
+        seriestype := kind
+        label := "Energy Transition"
+        fillrange --> 0
+        fillalpha --> 0.5
+        normalize --> true
+        bins --> 50
+        scaled_energy_error
+    end
+end
+
+@recipe function f(chains::Chains, parameters::AbstractVector{Symbol}; colordim = :chain)
+    colordim != :chain && error(
+        "Symbol names are interpreted as parameter names, only compatible with ",
+        "`colordim = :chain`",
+    )
 
     ret = indexin(parameters, names(chains))
     any(y === nothing for y in ret) && error("Parameter not found")
@@ -198,9 +337,10 @@ end
     width = 500,
     height = 250,
     colordim = :chain,
-    append_chains = false
+    append_chains = false,
 )
-    _chains = isempty(parameters) ? Chains(chains, _clean_sections(chains, sections)) : chains
+    _chains =
+        isempty(parameters) ? Chains(chains, _clean_sections(chains, sections)) : chains
     c = append_chains ? pool_chain(_chains) : _chains
     ptypes = get(plotattributes, :seriestype, (:traceplot, :mixeddensity))
     ptypes = ptypes isa Symbol ? (ptypes,) : ptypes
@@ -211,7 +351,7 @@ end
     N = length(parameters)
 
     if :corner ∉ ptypes
-        size --> (ntypes*width, N*height)
+        size --> (ntypes * width, N * height)
         legend --> false
 
         multiple_plots = N * ntypes > 1
@@ -241,8 +381,8 @@ end
 end
 
 struct Corner
-    c
-    parameters
+    c::Any
+    parameters::Any
 end
 
 @recipe function f(corner::Corner)
@@ -252,7 +392,9 @@ end
     size --> (600, 600)
     # NOTE: Don't use the indices from `chains(chains)`.
     # See https://github.com/TuringLang/MCMCChains.jl/issues/413.
-    ar = collect(Array(corner.c.value[:, corner.parameters, i]) for i in 1:length(chains(corner.c)))
+    ar = collect(
+        Array(corner.c.value[:, corner.parameters, i]) for i = 1:length(chains(corner.c))
+    )
     RecipesBase.recipetype(:cornerplot, vcat(ar...))
 end
 
@@ -331,9 +473,11 @@ end
             spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
             show_qi = show_qi, show_hdii = show_hdii, fill_q = fill_q, fill_hdi = fill_hdi)
 
-        yticks --> (length(par_names) > 1 ?
-            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
-        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
+        yticks --> (
+            length(par_names) > 1 ?
+            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default
+        )
+        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
         @series begin
             seriestype := :hline
             label := nothing
@@ -424,9 +568,11 @@ end
             spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
             show_qi = show_qi, show_hdii = show_hdii, fill_q = fill_q, fill_hdi = fill_hdi)
 
-        yticks --> (length(par_names) > 1 ?
-            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default)
-        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density" )
+        yticks --> (
+            length(par_names) > 1 ?
+            (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default
+        )
+        yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
 
         for j in 1:length(hdii)
             @series begin

@@ -18,10 +18,10 @@ using DataFrames
                 @test Tables.columnaccess(typeof(chn))
                 @test Tables.columns(chn) === chn
                 @test Tables.columnnames(chn) ==
-                    (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
+                      (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
                 @test Tables.getcolumn(chn, :iteration) == [1:1000; 1:1000; 1:1000; 1:1000]
                 @test Tables.getcolumn(chn, :chain) ==
-                    [fill(1, 1000); fill(2, 1000); fill(3, 1000); fill(4, 1000)]
+                      [fill(1, 1000); fill(2, 1000); fill(3, 1000); fill(4, 1000)]
                 @test Tables.getcolumn(chn, :a) == [
                     vec(chn[:, :a, 1])
                     vec(chn[:, :a, 2])
@@ -43,10 +43,10 @@ using DataFrames
                 rows = collect(Tables.rows(chn))
                 @test eltype(rows) <: Tables.AbstractRow
                 @test size(rows) === (4000,)
-                for chainid in 1:4, iterid in 1:1000
-                    row = rows[(chainid - 1) * 1000 + iterid]
+                for chainid = 1:4, iterid = 1:1000
+                    row = rows[(chainid-1)*1000+iterid]
                     @test Tables.columnnames(row) ==
-                        (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
+                          (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
                     @test Tables.getcolumn(row, 1) == iterid
                     @test Tables.getcolumn(row, 2) == chainid
                     @test Tables.getcolumn(row, 3) == chn[iterid, :a, chainid]
@@ -61,22 +61,25 @@ using DataFrames
             @testset "integration tests" begin
                 @test length(Tables.rowtable(chn)) == 4000
                 nt = Tables.rowtable(chn)[1]
-                @test nt ==
-                    (; (k => Tables.getcolumn(chn, k)[1] for k in Tables.columnnames(chn))...)
+                @test nt == (;
+                    (k => Tables.getcolumn(chn, k)[1] for k in Tables.columnnames(chn))...
+                )
                 @test nt == collect(Iterators.take(Tables.namedtupleiterator(chn), 1))[1]
                 nt = Tables.rowtable(chn)[2]
-                @test nt ==
-                    (; (k => Tables.getcolumn(chn, k)[2] for k in Tables.columnnames(chn))...)
+                @test nt == (;
+                    (k => Tables.getcolumn(chn, k)[2] for k in Tables.columnnames(chn))...
+                )
                 @test nt == collect(Iterators.take(Tables.namedtupleiterator(chn), 2))[2]
                 @test Tables.matrix(chn[:, :, 1])[:, 3:end] ≈ chn[:, :, 1].value
                 @test Tables.matrix(chn[:, :, 2])[:, 3:end] ≈ chn[:, :, 2].value
-                @test Tables.matrix(Tables.rowtable(chn)) == Tables.matrix(Tables.columntable(chn))
+                @test Tables.matrix(Tables.rowtable(chn)) ==
+                      Tables.matrix(Tables.columntable(chn))
             end
 
             @testset "schema" begin
                 @test Tables.schema(chn) isa Tables.Schema
                 @test Tables.schema(chn).names ===
-                    (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
+                      (:iteration, :chain, :a, :b, :c, :d, :e, :f, :g, :h)
                 @test Tables.schema(chn).types === (
                     Int,
                     Int,

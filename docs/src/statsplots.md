@@ -83,10 +83,84 @@ histogram(chn)
 autocorplot(chn)
 ```
 
+## Violin
+
+Violin plots are similar to box plots but also show the probability density of the data at different values, smoothed by a kernel density estimator.
+
+```@example statsplots
+violinplot(chn) # Plotting parameter 1 across all chains
+```
+
+```@example statsplots
+violinplot(chn, 1) # Plotting parameter 1 across all chains
+```
+
+```@example statsplots
+violinplot(chn, :A) # Plotting a specific parameter across all chains
+```
+
+```@example statsplots
+violinplot(chn, [:C, :B, :A]) # Plotting multiple specific parameters across all chains
+```
+
+```@example statsplots
+violinplot(chn, 1, colordim = :parameter) # Plotting chain 1 across all parameters
+```
+
+```@example statsplots
+violinplot(chn, show_boxplot = false) # Plotting all parameters without the inner boxplot
+```
+
+You can also aggregate (pool) samples from all chains for a given parameter by using `append_chains = true`. This is useful when you want to visualize the overall posterior distribution without distinguishing between individual chains.
+
+```@example statsplots
+violinplot(chn, :A, append_chains = true) # Single parameter, all chains appended
+```
+
+```@example statsplots
+violinplot(chn, append_chains = true) # All parameters, all chains appended
+```
+
+You can also use the `plot` function with `seriestype = :violinplot` or `seriestype = :violin`
+
+```@example statsplots
+plot(chn, seriestype = :violin)
+```
+
 ## Corner
 
 ```@example statsplots
 corner(chn)
+```
+
+## Energy Plot
+
+The energy plot is a diagnostic tool for HMC-based samplers (like NUTS) that helps diagnose sampling efficiency by visualizing the energy and energy transition distributions. This plot requires that the chain contains the internal sampler statistics `:hamiltonian_energy` and `:hamiltonian_energy_error`.
+
+```@example statsplots
+# First, we generate a chain that includes the required sampler parameters.
+n_iter = 1000
+n_chain = 4
+val_params = randn(n_iter, 2, n_chain)
+val_energy = randn(n_iter, 1, n_chain) .+ 20
+val_energy_error = randn(n_iter, 1, n_chain) .* 0.5
+full_val = hcat(val_params, val_energy, val_energy_error)
+
+parameter_names = [:a, :b, :hamiltonian_energy, :hamiltonian_energy_error]
+section_map = (
+    parameters=[:a, :b],
+    internals=[:hamiltonian_energy, :hamiltonian_energy_error],
+)
+
+chn_energy = Chains(full_val, parameter_names, section_map)
+
+# Generate the energy plot (default is a density plot).
+energyplot(chn_energy)
+```
+
+```@example statsplots
+# The plot can also be generated as a histogram.
+energyplot(chn_energy, kind=:histogram)
 ```
 
 For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
@@ -112,6 +186,8 @@ forestplot(chn, chn.name_map[:parameters], hpd_val = [0.05, 0.15, 0.25], ordered
 ## API
 
 ```@docs
+energyplot
+energyplot!
 ridgelineplot
 ridgelineplot!
 forestplot

@@ -1,8 +1,8 @@
 # MCMCChains.jl
 
-![CI](https://github.com/TuringLang/MCMCChains.jl/workflows/CI/badge.svg?branch=master)
-[![codecov](https://codecov.io/gh/TuringLang/MCMCChains.jl/branch/master/graph/badge.svg?token=TFxRFbKONS)](https://codecov.io/gh/TuringLang/MCMCChains.jl)
-[![Coverage Status](https://coveralls.io/repos/github/TuringLang/MCMCChains.jl/badge.svg?branch=master)](https://coveralls.io/github/TuringLang/MCMCChains.jl?branch=master)
+![CI](https://github.com/TuringLang/MCMCChains.jl/workflows/CI/badge.svg?branch=main)
+[![codecov](https://codecov.io/gh/TuringLang/MCMCChains.jl/branch/main/graph/badge.svg?token=TFxRFbKONS)](https://codecov.io/gh/TuringLang/MCMCChains.jl)
+[![Coverage Status](https://coveralls.io/repos/github/TuringLang/MCMCChains.jl/badge.svg?branch=main)](https://coveralls.io/github/TuringLang/MCMCChains.jl?branch=main)
 [![Stable Docs](https://img.shields.io/badge/docs-stable-blue.svg)](https://TuringLang.github.io/MCMCChains.jl/stable/)
 [![Dev Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://TuringLang.github.io/MCMCChains.jl/dev/)
 
