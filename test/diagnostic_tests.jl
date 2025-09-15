@@ -231,6 +231,9 @@ end
     @test MCMCChains.changerate(chn) isa Tuple{SummaryStats,Float64}
     @test MCMCChains.changerate(chn; append_chains = false) isa Vector{<:Tuple{SummaryStats,Float64}}
 
+    @test eti(chn) isa SummaryStats
+    @test eti(chn; append_chains = false) isa Vector{<:SummaryStats}
+
     @test hdi(chn) isa SummaryStats
     @test hdi(chn; append_chains = false) isa Vector{<:SummaryStats}
 

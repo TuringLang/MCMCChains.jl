@@ -215,12 +215,14 @@ end
 DataAPI.describe(chains::Chains; kwargs...) = DataAPI.describe(stdout, chains; kwargs...)
 
 """
-    eti(chn::Chains; prob::Real=$DEFAULT_CI_PROB)
+    eti(chn::Chains; prob::Real=$DEFAULT_CI_PROB, kwargs...)
 
 Return the equal-tailed interval (ETI) representing `prob` probability mass.
 
 The bounds of the ETI are the symmetric quantiles so that the interval contains `prob`
 probability mass.
+
+Remaining keyword arguments are forwarded to [`summarize`](@ref).
 
 See also [`quantile`](@ref), [`hdi`](@ref)
 
@@ -240,9 +242,9 @@ ETI
  b  0.0300 .. 0.962
 ```
 """
-function PosteriorStats.eti(chn::Chains; prob::Real=DEFAULT_CI_PROB)
+function PosteriorStats.eti(chn::Chains; prob::Real=DEFAULT_CI_PROB, kwargs...)
     eti_name = Symbol("eti$(_prob_to_string(prob))")
-    return summarize(chn, eti_name => (x -> eti(x; prob)); name = "ETI")
+    return summarize(chn, eti_name => (x -> eti(x; prob)); name = "ETI", kwargs...)
 end
 
 """
@@ -253,6 +255,8 @@ Return the highest density interval (HDI) representing `prob` probability mass.
 Note that for the default (`method=:unimodal`), this will return a single interval.
 For multiple intervals for discontinuous regions, use `method=:multimodal`.
 See [`PosteriorStats.hdi`](@extref) for more details.
+
+Remaining keyword arguments are forwarded to [`summarize`](@ref).
 
 See also [`eti`](@ref)
 
