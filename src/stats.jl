@@ -213,11 +213,13 @@ end
 DataAPI.describe(chains::Chains; kwargs...) = DataAPI.describe(stdout, chains; kwargs...)
 
 """
-    hdi(chn::Chains; prob::Real=0.94, kwargs...)
+    hdi(chn::Chains; prob::Real=0.94, method=:unimodal, kwargs...)
 
-Return the unimodal highest density interval (HDI) representing `prob` probability mass.
+Return the highest density interval (HDI) representing `prob` probability mass.
 
-Note that this will return a single interval and will not return multiple intervals for discontinuous regions.
+Note that for the default (`method=:unimodal`), this will return a single interval.
+For multiple intervals for discontinuous regions, use `method=:multimodal`.
+See [`PosteriorStats.hdi`](@extref) for more details.
 
 # Examples
 
