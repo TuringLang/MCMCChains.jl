@@ -50,7 +50,7 @@ The following options are available:
 - `ci_fun` (default: `hdi`): The function used to compute the credible intervals.
   (Can be [`hdi`](@ref) or [`eti`](@ref))
 
-- `ci_prob` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
+- `ci_probs` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
   intervals that are plotted if `fill_ci = true` or `show_cii = true`.
 
 !!! note
@@ -90,7 +90,7 @@ By default, all parameters are plotted.
 - `ci_fun` (default: `hdi`): The function used to compute the credible intervals.
   (Can be [`hdi`](@ref) or [`eti`](@ref))
 
-- `ci_prob` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
+- `ci_probs` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
   intervals that are plotted if `fill_ci = true` or `show_cii = true`.
 """
 @userplot ForestPlot
@@ -411,7 +411,7 @@ function _compute_plot_data(
     chains::Chains,
     par_names::AbstractVector{Symbol};
     ci_fun = hdi,
-    ci_prob = [DEFAULT_CI_PROB, 0.8],
+    ci_probs = [DEFAULT_CI_PROB, 0.8],
     q = [0.1, 0.9],
     spacer = 0.4,
     _riser = 0.2,
@@ -423,7 +423,7 @@ function _compute_plot_data(
     fill_q = true,
     fill_ci = false,
 )
-    probs_sorted = sort(ci_prob; rev=true)
+    probs_sorted = sort(ci_probs; rev=true)
 
     chain_sections = MCMCChains.group(chains, Symbol(par_names[i]))
     chain_vec = vec(chain_sections.value.data)
@@ -458,7 +458,7 @@ _intervalname(f) = string(nameof(f))
 
 @recipe function f(
     p::RidgelinePlot;
-    ci_prob = [DEFAULT_CI_PROB, 0.8],
+    ci_probs = [DEFAULT_CI_PROB, 0.8],
     ci_fun = hdi,
     q = [0.1, 0.9],
     spacer = 0.5,
@@ -484,7 +484,7 @@ _intervalname(f) = string(nameof(f))
         par, cii, ci_intervals, h, qs, k_density, x_int, val, chain_med,
             chain_mean, min, q_int = _compute_plot_data(i, chn, par_names;
             ci_fun = ci_fun,
-            ci_prob = ci_prob, q = q, spacer = spacer, _riser = _riser,
+            ci_probs = ci_probs, q = q, spacer = spacer, _riser = _riser,
             show_mean = show_mean, show_median = show_median, show_qi = show_qi,
             show_cii = show_cii, fill_q = fill_q, fill_ci = fill_ci)
 
@@ -559,7 +559,7 @@ end
 
 @recipe function f(
     p::ForestPlot;
-    ci_prob = [DEFAULT_CI_PROB, 0.8],
+    ci_probs = [DEFAULT_CI_PROB, 0.8],
     ci_fun = hdi,
     q = [0.1, 0.9],
     spacer = 0.5,
@@ -583,7 +583,7 @@ end
 
     for i in 1:length(par_names)
         par, cii, ci_intervals, h, qs, k_density, x_int, val, chain_med, chain_mean,
-            min, q_int = _compute_plot_data(i, chn, par_names; ci_fun = ci_fun, ci_prob = ci_prob, q = q,
+            min, q_int = _compute_plot_data(i, chn, par_names; ci_fun = ci_fun, ci_probs = ci_probs, q = q,
             spacer = spacer, _riser = _riser, show_mean = show_mean, show_median = show_median,
             show_qi = show_qi, show_cii = show_cii, fill_q = fill_q, fill_ci = fill_ci)
 
