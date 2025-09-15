@@ -1,4 +1,5 @@
 using Documenter
+using DocumenterInterLinks
 using MCMCChains
 
 DocMeta.setdocmeta!(
@@ -7,6 +8,8 @@ DocMeta.setdocmeta!(
     :(using MCMCChains);
     recursive=true
 )
+
+links = InterLinks("PosteriorStats" => "https://julia.arviz.org/PosteriorStats/stable/")
 
 makedocs(
     sitename = "MCMCChains.jl",
@@ -28,5 +31,6 @@ makedocs(
     ],
     format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     modules = [MCMCChains],
+    plugins = [links],
     checkdocs = :exports,
 )

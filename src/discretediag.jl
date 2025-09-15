@@ -17,16 +17,22 @@ function MCMCDiagnosticTools.discretediag(
         _permutedims_diagnostics(_chains.value.data); kwargs...
     )
 
-    # Create dataframes
-    parameters = (parameters = names(_chains),)
-    between_chain_df = ChainDataFrame(
-        "Chisq diagnostic - Between chains", merge(parameters, between_chain_vals),
+    # Create SummaryStats
+    param_names = names(_chains)
+    between_chain_stats = SummaryStats(
+        between_chain_vals;
+        name = "Chisq diagnostic - Between chains",
+        labels = param_names,
     )
-    within_chain_dfs = map(1:size(_chains, 3)) do i
+    within_chain_stats = map(1:size(_chains, 3)) do i
         vals = map(val -> val[:, i], within_chain_vals)
-        return ChainDataFrame("Chisq diagnostic - Chain $i", merge(parameters, vals))
+        return SummaryStats(
+            vals;
+            name = "Chisq diagnostic - Chain $i",
+            labels = param_names,
+        )
     end
-    dfs = vcat(between_chain_df, within_chain_dfs)
+    stats = vcat([between_chain_stats], within_chain_stats)
 
-    return dfs
+    return stats
 end
