@@ -40,7 +40,7 @@ function autocor(
             return autocor(vec(x), lags; demean=demean)
         end)
         table = Tables.table(vals'; header=col_names)
-        return SummaryStats("Autocorrelation", table, names_of_params)
+        return SummaryStats(table; name="Autocorrelation", labels=names_of_params)
     else
         data = to_vector_of_matrices(chn)
         return map(enumerate(data)) do (i, x)
@@ -49,7 +49,7 @@ function autocor(
                 return autocor(xi, lags; demean=demean)
             end)
             table = Tables.table(vals'; header=col_names)
-            return SummaryStats(name_chain, table, names_of_params)
+            return SummaryStats(table; name=name_chain, labels=names_of_params)
         end
     end
 end
@@ -110,7 +110,7 @@ function summarystats_cor(name, names_of_params, chains::AbstractMatrix)
     dict = OrderedCollections.OrderedDict(k => v for (k, v) in zip(names_of_params, eachcol(cormat)))
 
     # Create a SummaryStats.
-    return SummaryStats(name, dict, names_of_params)
+    return SummaryStats(dict; name=name, labels=names_of_params)
 end
 
 """
@@ -151,10 +151,10 @@ function summarystats_changerate(name, names_of_params, chains)
     changerates, mvchangerate = changerate(chains)
 
     # Summarize the results in a named tuple.
-    nt = (; changerate=changerates)
+    nt = (; label=names_of_params, changerate=changerates)
 
     # Create a SummaryStats.
-    return SummaryStats(name, nt, names_of_params), mvchangerate
+    return SummaryStats(nt; name=name), mvchangerate
 end
 
 changerate(chains::AbstractMatrix{<:Real}) = changerate(reshape(chains, Val(3)))

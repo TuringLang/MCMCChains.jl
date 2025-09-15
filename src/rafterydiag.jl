@@ -19,7 +19,9 @@ function MCMCDiagnosticTools.rafterydiag(
     # Create SummaryStats.
     stats = [
         SummaryStats(
-            "Raftery and Lewis diagnostic - Chain $i", result, names(_chains),
+            result;
+            name = "Raftery and Lewis diagnostic - Chain $i", 
+            labels = names(_chains),
         )
         for (i, result) in enumerate(results)
     ]

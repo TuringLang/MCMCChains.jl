@@ -20,7 +20,11 @@ function MCMCDiagnosticTools.gewekediag(
 
     # Create SummaryStats.
     stats = [
-        SummaryStats("Geweke diagnostic - Chain $i", result, names(_chains))
+        SummaryStats(
+            result;
+            name = "Geweke diagnostic - Chain $i",
+            labels = names(_chains),
+        )
         for (i, result) in enumerate(results)
     ]
 

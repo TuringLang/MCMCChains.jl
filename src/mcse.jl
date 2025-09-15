@@ -18,5 +18,5 @@ function MCMCDiagnosticTools.mcse(
 
     nt = (; mcse)
 
-    return SummaryStats("MCSE", nt, names(_chains))
+    return SummaryStats(nt; name = "MCSE", labels = names(_chains))
 end

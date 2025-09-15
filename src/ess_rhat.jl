@@ -26,7 +26,7 @@ function MCMCDiagnosticTools.ess(
     ess_per_sec = ess ./ dur
     nt = (; ess, ess_per_sec)
 
-    return SummaryStats("ESS", nt, names(_chains))
+    return SummaryStats(nt; name = "ESS", labels = names(_chains))
 end
 
 """
@@ -50,7 +50,7 @@ function MCMCDiagnosticTools.rhat(
     # Convert to NamedTuple
     nt = (; rhat)
 
-    return SummaryStats("R-hat", nt, names(_chains))
+    return SummaryStats(nt; name = "R-hat", labels = names(_chains))
 end
 
 """
@@ -81,5 +81,5 @@ function MCMCDiagnosticTools.ess_rhat(
     ess_per_sec = ess_rhat.ess ./ dur
     nt = merge(ess_rhat, (; ess_per_sec))
 
-    return SummaryStats("ESS/R-hat", nt, names(_chains))
+    return SummaryStats(nt; name = "ESS/R-hat", labels = names(_chains))
 end
