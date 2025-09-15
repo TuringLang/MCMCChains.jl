@@ -205,6 +205,7 @@ function DataAPI.describe(
 
     qs = quantile(chains; q = q, kwargs...)
     println(io)
+    println(io)
     show(io, MIME("text/plain"), qs)
 end
 
