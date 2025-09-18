@@ -183,11 +183,133 @@ forestplot(chn, [:C, :B, :A], hpd_val = [0.05, 0.15, 0.25])
 forestplot(chn, chn.name_map[:parameters], hpd_val = [0.05, 0.15, 0.25], ordered = true)
 ```
 
+## Posterior Predictive Checks (PPC)
+
+Posterior Predictive Checks (PPC) are essential tools for Bayesian model validation. They compare observed data with samples from the posterior predictive distribution to assess whether the model can reproduce key features of the data. Prior Predictive Checks can also be performed to evaluate prior appropriateness before seeing the data.
+
+```@example statsplots
+using Random
+Random.seed!(123)
+
+# Generate posterior samples (parameters)
+n_iter = 500
+posterior_data = randn(n_iter, 2, 2)  # μ, σ parameters
+posterior_chains = Chains(posterior_data, [:μ, :σ])
+
+# Generate posterior predictive samples
+n_obs = 20
+pp_data = zeros(n_iter, n_obs, 2)
+for i in 1:n_iter, j in 1:2
+    μ = posterior_data[i, 1, j]
+    σ = abs(posterior_data[i, 2, j]) + 0.5  # Ensure positive σ
+    pp_data[i, :, j] = randn(n_obs) * σ .+ μ
+end
+pp_chains = Chains(pp_data)
+
+# Generate observed data
+Random.seed!(456)
+observed = randn(n_obs) * 1.2 .+ 0.3
+
+# Basic posterior predictive check (density overlay)
+# Note: observed data is shown by default for posterior checks
+ppcplot(posterior_chains, pp_chains, observed)
+```
+
+### Plot Types
+
+Our PPC implementation supports four main plot types:
+
+#### Density Plots (Default)
+```@example statsplots
+# Density overlay with customized transparency
+ppcplot(posterior_chains, pp_chains, observed; 
+        kind=:density, alpha=0.3, num_pp_samples=50)
+```
+
+#### Histogram Comparison
+```@example statsplots
+# Normalized histogram comparison
+ppcplot(posterior_chains, pp_chains, observed; kind=:histogram)
+```
+
+#### Cumulative Distribution Functions
+```@example statsplots
+# Empirical CDFs comparison
+ppcplot(posterior_chains, pp_chains, observed; kind=:cumulative)
+```
+
+#### Scatter Plots with Jitter
+```@example statsplots
+# Index-based scatter plot with automatic jitter for small samples
+ppcplot(posterior_chains, pp_chains, observed; 
+        kind=:scatter, num_pp_samples=8, jitter=0.3)
+```
+
+### Advanced Styling and Options
+
+```@example statsplots
+# Comprehensive customization example
+ppcplot(posterior_chains, pp_chains, observed; 
+        kind=:density,
+        colors=[:steelblue, :darkred, :orange],  # [predictive, observed, mean]
+        alpha=0.25,
+        observed_rug=true,      # Add rug plot for observed data
+        num_pp_samples=75,      # Limit predictive samples shown
+        mean_pp=true,           # Show predictive mean
+        legend=true,
+        random_seed=42)         # Reproducible subsampling
+```
+
+### Prior Predictive Checks
+
+Prior predictive checks assess whether priors generate reasonable data before observing actual data. The `ppc_group` parameter controls default behavior:
+
+```@example statsplots
+# Prior predictive check - observed data hidden by default
+ppcplot(posterior_chains, pp_chains, observed; ppc_group=:prior)
+```
+
+```@example statsplots
+# Prior check with observed data explicitly shown for comparison
+ppcplot(posterior_chains, pp_chains, observed; 
+        ppc_group=:prior, observed=true, alpha=0.4)
+```
+
+### Controlling Observed Data Display
+
+You can explicitly control whether observed data is shown regardless of the check type:
+
+```@example statsplots
+# Posterior check without observed data
+ppcplot(posterior_chains, pp_chains, observed; 
+        ppc_group=:posterior, observed=false)
+```
+
+### Performance and Sampling Control
+
+For large datasets or when you want to reduce visual clutter:
+
+```@example statsplots
+# Limit the number of predictive samples displayed
+ppcplot(posterior_chains, pp_chains, observed; 
+        num_pp_samples=25, 
+        random_seed=123)  # Reproducible results
+```
+
+```julia
+ppcplot(posterior_chains::Chains, posterior_predictive_chains::Chains, observed_data::Vector;
+        kind=:density, alpha=nothing, num_pp_samples=nothing, mean_pp=true, observed=nothing,
+        observed_rug=false, colors=[:steelblue, :black, :orange], jitter=nothing, 
+        legend=true, random_seed=nothing, ppc_group=:posterior)
+```
+
 ## API
 
 ```@docs
 energyplot
 energyplot!
+ppcplot
+ppcplot!
 ridgelineplot
 ridgelineplot!
 forestplot
