@@ -138,4 +138,45 @@ using Test
             ppc_group = :invalid,
         )
     end
+    
+    @testset "Multi-Chain and Plot Bounds Tests" begin
+        # Test multi-chain handling
+        Random.seed!(789)
+        multi_chain_post = Chains(randn(50, 2, 3), [:μ, :σ])  # 3 chains
+        multi_chain_pp = Chains(randn(50, 5, 3))  # 3 chains of predictive data
+        obs_multi = randn(5)
+        
+        @test_nowarn ppcplot(multi_chain_post, multi_chain_pp, obs_multi)
+        @test_nowarn ppcplot(multi_chain_post, multi_chain_pp, obs_multi; kind = :density)
+        @test_nowarn ppcplot(multi_chain_post, multi_chain_pp, obs_multi; kind = :histogram)
+        @test_nowarn ppcplot(multi_chain_post, multi_chain_pp, obs_multi; kind = :scatter)
+        @test_nowarn ppcplot(multi_chain_post, multi_chain_pp, obs_multi; kind = :cumulative)
+
+        # Test plot bounds with observed=false (should not include observed data in range)
+        @test_nowarn ppcplot(
+            multi_chain_post, 
+            multi_chain_pp, 
+            obs_multi; 
+            ppc_group = :prior, 
+            observed = false, 
+            kind = :cumulative
+        )
+        
+        # Test consistent jitter patterns in scatter plots
+        @test_nowarn ppcplot(
+            multi_chain_post,
+            multi_chain_pp,
+            obs_multi;
+            kind = :scatter,
+            jitter = 0.5,
+            random_seed = 42
+        )
+        
+        # Test with different chain configurations
+        single_chain_multi_data = Chains(randn(20, 2, 1), [:a, :b])
+        single_chain_pp = Chains(randn(20, 8, 1))
+        obs_single_multi = randn(8)
+        
+        @test_nowarn ppcplot(single_chain_multi_data, single_chain_pp, obs_single_multi)
+    end
 end

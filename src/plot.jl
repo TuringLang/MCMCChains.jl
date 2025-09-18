@@ -443,7 +443,7 @@ end
 
     pp_pooled = pool_chain(pp_chains)
     pp_data = Array(pp_pooled.value.data)
-    pp_data = pp_data[:, :, 1]
+    pp_data = reshape(pp_data, size(pp_data, 1) * size(pp_data, 3), size(pp_data, 2))
 
     if random_seed !== nothing
         Random.seed!(random_seed)
@@ -577,7 +577,7 @@ end
         xaxis := "Value"
         yaxis := "Cumulative Probability"
 
-        all_data = vcat(vec(pp_data), observed_data)
+        all_data = observed ? vcat(vec(pp_data), observed_data) : vec(pp_data)
         x_range = range(minimum(all_data), maximum(all_data), length = 200)
 
         for i = 1:size(pp_data, 1)
@@ -649,9 +649,7 @@ end
         end
 
         for i = 1:size(pp_data, 1)
-            y_vals =
-                pp_data[i, :] .+
-                (jitter > 0 ? jitter * (rand(length(pp_data[i, :])) .- 0.5) : 0)
+            y_vals = pp_data[i, :] .+ jitter_vals[1:length(pp_data[i, :])]
             @series begin
                 seriestype := :scatter
                 label := i == 1 ? predictive_label : ""
