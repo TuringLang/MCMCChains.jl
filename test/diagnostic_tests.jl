@@ -239,7 +239,7 @@ end
     @test hdi(chn; append_chains = false) isa Vector{<:SummaryStats}
 
     result = hdi(chn)
-    @test :hdi94 in Tables.columnnames(result)
+    @test :hdi89 in Tables.columnnames(result)
 
     @test_deprecated hpd(chn)
     @test hpd(chn) == hdi(chn; prob = 0.95)
