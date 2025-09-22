@@ -235,9 +235,9 @@ julia> chn = Chains(val, [:a, :b]);
 
 julia> eti(chn)
 ETI
-    eti94           
- a  0.0337 .. 0.971
- b  0.0300 .. 0.962
+    eti89           
+ a  0.0620 .. 0.942
+ b  0.0486 .. 0.939
 ```
 """
 function PosteriorStats.eti(chn::Chains; prob::Real = DEFAULT_CI_PROB, kwargs...)
@@ -269,9 +269,9 @@ julia> chn = Chains(val, [:a, :b]);
 
 julia> hdi(chn)
 HDI
-    hdi94           
- a  0.0630 .. 0.994
- b  0.0404 .. 0.968
+    hdi89           
+ a   0.104 .. 0.977
+ b  0.0827 .. 0.966
 ```
 """
 function PosteriorStats.hdi(chn::Chains; prob::Real = DEFAULT_CI_PROB, kwargs...)
