@@ -1,6 +1,6 @@
 #################### Posterior Statistics ####################
 
-const DEFAULT_CI_PROB = 0.94
+const DEFAULT_CI_PROB = 0.89f0
 
 """
     autocor(
