@@ -2,11 +2,11 @@
     summarize(
         chains[, stats_funs...];
         append_chains=true,
-        name="SummaryStats",
-        [sections, var_names, kind],
+        [sections, var_names],
+        kwargs...,
     )
 
-Summarize `chains` in a `PosteriorStats.SummaryStats`.
+Summarize `chains` in a [`PosteriorStats.SummaryStats`](@extref).
 
 `stats_funs` is a collection of functions that reduces a matrix with shape `(draws, chains)`
 to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` may be a
@@ -14,11 +14,16 @@ to a scalar or a collection of scalars. Alternatively, an item in `stats_funs` m
 form `(name1, ...) => fun` when the function returns a collection. When the function returns
 a collection, the names in this latter format must be provided.
 
-If no stats functions are provided, then those specified by the preset `kind` are computed.
-See [`PosteriorStats.summarize`](@extref) for details.
+# Keywords
 
-`var_names` specifies the names of the parameters in data. If not provided, the names are
-inferred from data.
+- `section`: The sections of the chain to include in the summary. If not provided, defaults
+  to `:parameters`.
+- `append_chains`: If `true`, a single `SummaryStats` for all chains is returned. If
+  `false`, a vector of `SummaryStats` (one for each chain) is returned.
+- `var_names`: The names of the parameters in data. If not provided, the names are taken
+  from `chains`.
+- `kwargs...`: Additional keyword arguments are forwarded to
+  [`PosteriorStats.summarize`](@extref).
 
 # Examples
 
