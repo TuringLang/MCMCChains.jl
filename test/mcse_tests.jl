@@ -1,4 +1,6 @@
 using MCMCChains
+using DataFrames
+using PosteriorStats: SummaryStats
 
 using Random
 using Statistics
@@ -14,21 +16,27 @@ mymean(x) = mean(x)
         if kind !== mymean
             for autocov_method in (AutocovMethod(), BDAAutocovMethod())
                 # analyze chain
-                mcse_df = mcse(chain; autocov_method = autocov_method, kind = kind)
+                mcse_stats = mcse(chain; autocov_method = autocov_method, kind = kind)
+                @test mcse_stats isa SummaryStats
+                @test mcse_stats.name == "MCSE"
+                mcse_df = DataFrame(mcse_stats)
 
                 # analyze array
                 mcse_array = mcse(
                     PermutedDimsArray(x, (1, 3, 2)); autocov_method = autocov_method, kind = kind,
                 )
-                @test mcse_df[:,2] == mcse_array
+                @test mcse_df[!, :mcse] == mcse_array
             end
         else
             # analyze chain
-            mcse_df = mcse(chain; kind = kind)
+            mcse_stats = mcse(chain; kind = kind)
+            @test mcse_stats isa SummaryStats
+            @test mcse_stats.name == "MCSE"
+            mcse_df = DataFrame(mcse_stats)
 
             # analyze array
             mcse_array = mcse(PermutedDimsArray(x, (1, 3, 2)); kind = kind)
-            @test mcse_df[:,2] == mcse_array
+            @test mcse_df[!, :mcse] == mcse_array
         end
     end
 end

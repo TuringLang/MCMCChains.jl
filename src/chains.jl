@@ -345,7 +345,7 @@ function Base.show(io::IO, chains::Chains)
 end
 
 function Base.show(io::IO, mime::MIME"text/plain", chains::Chains)
-    print(io, "Chains ", chains, ":\n\n", header(chains))
+    println(io, "Chains ", chains, ":\n\n", header(chains))
     println(io, "\nUse `describe(chains)` for summary statistics and quantiles.")
 end
 
