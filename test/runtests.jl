@@ -75,6 +75,10 @@ Random.seed!(0)
     println("Rstar")
     @time include("rstar_tests.jl")
 
+    # run tests for PPC plots
+    println("PPC plots")
+    @time include("ppc_tests.jl")
+
     # Array printing depends on Julia version and architecture,
     # therefore we only run doctests with Julia >= 1.7 and on 64bit where `Int === Int64`
     if VERSION >= v"1.7" && Sys.WORD_SIZE == 64
@@ -82,7 +86,7 @@ Random.seed!(0)
             MCMCChains,
             :DocTestSetup,
             :(using MCMCChains);
-            recursive = true
+            recursive = true,
         )
         doctest(MCMCChains)
     end
