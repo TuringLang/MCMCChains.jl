@@ -391,3 +391,25 @@ end
 mean(chn::Chains, syms) = mean(chn[:, syms, :])
 # resolve method ambiguity with `mean(f, ::AbstractArray)`
 mean(chn::Chains, syms::AbstractVector) = mean(chn[:, syms, :])
+
+
+
+"""
+    bfmi(chains::Chains)
+
+Compute the Bayesian Fraction of Missing Information (BFMI) for a set of chains.
+
+This is a diagnostic for Hamiltonian Monte Carlo (HMC) methods, which indicates how well the
+    momentum resampling explores the energy distribution.
+
+Remark: This function is a wrapper around the `MCMCDiagnosticTools.jl` function.
+"""
+function bfmi(chains::Chains)
+
+    if :hamiltonian_energy ∉ names(chains)
+        throw(ArgumentError("The chain does not contain the `:hamiltonian_energy` parameter. 
+                             BFMI is tailored for Hamiltonian Monte Carlo (HMC) methods."))
+    end
+
+    MCMCDiagnosticTools.bfmi(chains[:hamiltonian_energy])
+end
