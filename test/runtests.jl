@@ -63,6 +63,10 @@ Random.seed!(0)
     println("Model statistics")
     @time include("modelstats_test.jl")
 
+    # run tests for show methods
+    println("Show methods")
+    @time include("show_tests.jl")
+
     # run tests for concatenation
     println("Concatenation")
     @time include("concatenation_tests.jl")

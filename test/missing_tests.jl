@@ -5,9 +5,7 @@ using Random
 
 # Tests for missing values.
 function testdiff(cdf1, cdf2)
-    m1 = convert(Array, cdf1)
-    m2 = convert(Array, cdf2)
-    return all(((x, y),) -> isapprox(x, y; atol=1e-2), zip(m1, m2))
+    return all(((x, y),) -> isapprox(x, y; atol = 1e-2), Iterators.drop(zip(cdf1, cdf2), 1))
 end
 
 @testset "utils" begin
@@ -35,9 +33,9 @@ end
     rf_2 = rafterydiag(chn_m)
 
     @testset "diagnostics missing tests" for i in 1:nchains
-        @test testdiff(gw_1, gw_2)
-        @test testdiff(hd_1, hd_2)
-        @test testdiff(rf_1, rf_2)
+        @test all(Base.splat(testdiff), zip(gw_1, gw_2))
+        @test all(Base.splat(testdiff), zip(hd_1, hd_2))
+        @test all(Base.splat(testdiff), zip(rf_1, rf_2))
     end
 
     @test_throws MethodError discretediag(chn_m)

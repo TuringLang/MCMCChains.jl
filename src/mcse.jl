@@ -1,5 +1,5 @@
 """
-    mcse(chains::Chains; duration=compute_duration, kwargs...)
+    mcse(chains::Chains; kwargs...)
 
 Estimate the Monte Carlo standard error.
 """
@@ -16,7 +16,7 @@ function MCMCDiagnosticTools.mcse(
         kwargs...,
     )
 
-    nt = merge((parameters = names(_chains),), (; mcse))
+    nt = (; mcse)
 
-    return ChainDataFrame("MCSE", nt)
+    return SummaryStats(nt; name = "MCSE", labels = names(_chains))
 end

@@ -174,13 +174,13 @@ ridgelineplot(chn, [:C, :B, :A])
 ## Forest
 
 ```@example statsplots
-forestplot(chn, [:C, :B, :A], hpd_val = [0.05, 0.15, 0.25])
+forestplot(chn, [:C, :B, :A], ci_probs = [0.05, 0.15, 0.25])
 ```
 
 ## Caterpillar
 
 ```@example statsplots
-forestplot(chn, chn.name_map[:parameters], hpd_val = [0.05, 0.15, 0.25], ordered = true)
+forestplot(chn, chn.name_map[:parameters], ci_fun=hdi, ci_probs = [0.05, 0.15, 0.25], ordered = true)
 ```
 
 ## Posterior Predictive Checks (PPC)

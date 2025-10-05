@@ -1,5 +1,6 @@
 module MCMCChains
 
+using Compat: stack
 using AxisArrays
 const axes = Base.axes
 import AbstractMCMC
@@ -26,7 +27,7 @@ import MCMCDiagnosticTools
 import MLJModelInterface
 import NaturalSort
 import OrderedCollections
-import PrettyTables
+import PosteriorStats
 import StatsFuns
 import Tables
 import TableTraits
@@ -41,8 +42,6 @@ export setrange, resetrange
 export set_section, get_params, sections, sort_sections, setinfo
 export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
-export ChainDataFrame
-export summarize
 
 # Reexport diagnostics functions
 using MCMCDiagnosticTools:
@@ -69,7 +68,9 @@ export mcse
 export rafterydiag
 export rstar
 
-export hpd
+# Reexport stats functions
+using PosteriorStats: SummaryStats, eti, hdi, summarize
+export SummaryStats, eti, hdi, summarize
 
 """
     Chains

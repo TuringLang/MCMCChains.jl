@@ -1,6 +1,9 @@
 using MCMCChains
 using AbstractMCMC: AbstractChains
 using Dates
+using DataFrames
+using PosteriorStats: SummaryStats
+using Tables
 using Test
 
 ## CHAIN TESTS
@@ -68,8 +71,8 @@ chn_disc = Chains(val_disc, start = 1, thin = 2)
     @test all(MCMCChains.indiscretesupport(chn) .== [false, false, false, true])
     @test setinfo(chn, NamedTuple{(:A, :B)}((1,2))).info == NamedTuple{(:A, :B)}((1,2))
     @test isa(set_section(chn, Dict(:internals => ["param_1"])), AbstractChains)
-    @test mean(chn) isa ChainDataFrame
-    @test mean(chn, ["param_1", "param_3"]) isa ChainDataFrame
+    @test mean(chn) isa SummaryStats
+    @test mean(chn, ["param_1", "param_3"]) isa SummaryStats
     @test 0.95 ≤ mean(chn, "param_1") ≤ 1.05
 end
 
@@ -167,7 +170,7 @@ end
 @testset "function tests" begin
     tchain = Chains(rand(niter, nparams, nchains), ["a", "b", "c"], Dict(:internals => ["c"]))
 
-    @test eltype(discretediag(chn_disc[:,2:2,:])) <: ChainDataFrame
+    @test eltype(discretediag(chn_disc[:, 2:2, :])) <: SummaryStats
 
     gelman = gelmandiag(tchain)
     gelmanmv = gelmandiag_multivariate(tchain)
@@ -176,18 +179,23 @@ end
     raferty = rafterydiag(tchain)
 
     # test raw return values
-    @test typeof(gelman) <: ChainDataFrame
-    @test typeof(gelmanmv) <: Tuple{ChainDataFrame,Float64}
-    @test typeof(geweke) <: Array{<:ChainDataFrame}
-    @test typeof(heidel) <: Array{<:ChainDataFrame}
-    @test typeof(raferty) <: Array{<:ChainDataFrame}
+    @test typeof(gelman) <: SummaryStats
+    @test typeof(gelmanmv) <: Tuple{SummaryStats,Float64}
+    @test typeof(geweke) <: Array{<:SummaryStats}
+    @test typeof(heidel) <: Array{<:SummaryStats}
+    @test typeof(raferty) <: Array{<:SummaryStats}
 
-    # test ChainDataFrame sizes
-    @test size(gelman) == (2,3)
-    @test size(gelmanmv[1]) == (2,3)
-    @test size(geweke[1]) == (2,3)
-    @test size(heidel[1]) == (2,7)
-    @test size(raferty[1]) == (2,6)
+    # test SummaryStats sizes
+    for s in (gelman, gelmanmv[1], geweke[1], heidel[1], raferty[1])
+        @test s isa SummaryStats
+        df = DataFrame(s)
+        @test size(df, 1) == 2
+    end
+    @test size(DataFrame(gelman), 2) == 3
+    @test size(DataFrame(gelmanmv[1]), 2) == 3
+    @test size(DataFrame(geweke[1]), 2) == 3
+    @test size(DataFrame(heidel[1]), 2) == 7
+    @test size(DataFrame(raferty[1]), 2) == 6
 end
 
 @testset "stats tests" begin
@@ -203,31 +211,38 @@ end
             @test lags == filter!(x -> x < n, [1, 5, 10, 50])
 
             acor = autocor(c; append_chains=append_chains)
-            # Number of columns in the ChainDataFrame(s): lags + parameters
+            # Number of columns in the SummaryStats: lags + parameters
             ncols = length(lags) + 1
             if append_chains
-                @test acor isa ChainDataFrame
-                @test size(acor)[2] == ncols
+                @test acor isa SummaryStats
+                @test length(keys(acor)) == ncols
             else
-                @test acor isa Vector{<:ChainDataFrame}
-                @test all(size(a)[2] == ncols for a in acor)
+                @test acor isa Vector{<:SummaryStats}
+                @test all(length(keys(a)) == ncols for a in acor)
             end
         end
-        @test autocor(c) isa ChainDataFrame
-        @test convert(Array, autocor(c)) == convert(Array, autocor(c; append_chains=true))
+        @test autocor(c) isa SummaryStats
+        @test autocor(c) == autocor(c; append_chains = true)
     end
 
-    @test MCMCChains.cor(chn) isa ChainDataFrame
-    @test MCMCChains.cor(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+    @test MCMCChains.cor(chn) isa SummaryStats
+    @test MCMCChains.cor(chn; append_chains = false) isa Vector{<:SummaryStats}
 
-    @test MCMCChains.changerate(chn) isa ChainDataFrame
-    @test MCMCChains.changerate(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+    @test MCMCChains.changerate(chn) isa Tuple{SummaryStats,Float64}
+    @test MCMCChains.changerate(chn; append_chains = false) isa
+          Vector{<:Tuple{SummaryStats,Float64}}
 
-    @test hpd(chn) isa ChainDataFrame
-    @test hpd(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+    @test eti(chn) isa SummaryStats
+    @test eti(chn; append_chains = false) isa Vector{<:SummaryStats}
 
-    result = hpd(chn)
-    @test all(result.nt.upper .> result.nt.lower)
+    @test hdi(chn) isa SummaryStats
+    @test hdi(chn; append_chains = false) isa Vector{<:SummaryStats}
+
+    result = hdi(chn)
+    @test :hdi89 in Tables.columnnames(result)
+
+    @test_deprecated hpd(chn)
+    @test hpd(chn) == hdi(chn; prob = 0.95)
 end
 
 @testset "vector of vectors" begin

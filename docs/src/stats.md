@@ -8,5 +8,6 @@ describe
 mean
 summarystats
 quantile
-hpd
+eti
+hdi
 ```

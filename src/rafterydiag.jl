@@ -16,14 +16,14 @@ function MCMCDiagnosticTools.rafterydiag(
         return namedtuple_of_vecs
     end
 
-    # Create data frames.
-    parameters = (parameters = names(_chains),)
-    dfs = [
-        ChainDataFrame(
-            "Raftery and Lewis diagnostic - Chain $i", merge(parameters, result)
-        )
-        for (i, result) in enumerate(results)
+    # Create SummaryStats.
+    stats = [
+        SummaryStats(
+            result;
+            name = "Raftery and Lewis diagnostic - Chain $i",
+            labels = names(_chains),
+        ) for (i, result) in enumerate(results)
     ]
 
-    return dfs
+    return stats
 end

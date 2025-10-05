@@ -108,7 +108,11 @@ The following options are available:
 
 - `q` (default: `[0.1, 0.9]`): The two quantiles used for plotting if `fill_q = true` or `show_qi = true`.
 
-- `hpd_val` (default: `[0.05, 0.2]`): The complementary probability mass(es) of the highest posterior density intervals that are plotted if `fill_hpd = true` or `show_hpdi = true`.
+- `ci_fun` (default: `eti`): The function used to compute the credible intervals.
+  (Can be [`eti`](@ref) or [`hdi`](@ref))
+
+- `ci_probs` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
+  intervals that are plotted if `fill_ci = true` or `show_cii = true`.
 
 !!! note
     If a single parameter is provided, the generated plot is a density plot with all the elements described above.
@@ -144,7 +148,11 @@ By default, all parameters are plotted.
 
 - `q` (default: `[0.1, 0.9]`): The two quantiles used for plotting if `fill_q = true` or `show_qi = true`.
 
-- `hpd_val` (default: `[0.05, 0.2]`): The complementary probability mass(es) of the highest posterior density intervals that are plotted if `fill_hpd = true` or `show_hpdi = true`.
+- `ci_fun` (default: `eti`): The function used to compute the credible intervals.
+  (Can be [`eti`](@ref) or [`hdi`](@ref))
+
+- `ci_probs` (default: `[$DEFAULT_CI_PROB, 0.8]`): The probability mass(es) of the credible
+  intervals that are plotted if `fill_ci = true` or `show_cii = true`.
 """
 @userplot ForestPlot
 
@@ -235,7 +243,7 @@ const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :cor
         lags = 0:(maxlag === nothing ? round(Int, 10 * log10(length(range(c)))) : maxlag)
         # Chains are already appended in `c` if desired, hence we use `append_chains=false`
         ac = autocor(c; sections = nothing, lags = lags, append_chains = false)
-        ac_mat = convert(Array{Float64}, ac)
+        ac_mat = stack(map(stack ∘ Base.Fix2(Iterators.drop, 1), ac))
         val = colordim == :parameter ? ac_mat[:, :, i]' : ac_mat[i, :, :]
         _AutocorPlot(lags, val)
     elseif st ∈ (:violinplot, :violin)
@@ -777,7 +785,8 @@ function _compute_plot_data(
     i::Integer,
     chains::Chains,
     par_names::AbstractVector{Symbol};
-    hpd_val = [0.05, 0.2],
+    ci_fun = eti,
+    ci_probs = [DEFAULT_CI_PROB, 0.8],
     q = [0.1, 0.9],
     spacer = 0.4,
     _riser = 0.2,
@@ -785,29 +794,22 @@ function _compute_plot_data(
     show_mean = true,
     show_median = true,
     show_qi = false,
-    show_hpdi = true,
+    show_cii = true,
     fill_q = true,
-    fill_hpd = false,
-    ordered = false,
+    fill_ci = false,
 )
+    probs_sorted = sort(ci_probs; rev = true)
 
-    chain_dic = Dict(zip(quantile(chains)[:, 1], quantile(chains)[:, 4]))
-    sorted_chain = sort(collect(zip(values(chain_dic), keys(chain_dic))))
-    sorted_par = [sorted_chain[i][2] for i = 1:length(par_names)]
-    par = (ordered ? sorted_par : par_names)
-    hpdi = sort(hpd_val)
-
-    chain_sections = MCMCChains.group(chains, Symbol(par[i]))
+    chain_sections = MCMCChains.group(chains, Symbol(par_names[i]))
     chain_vec = vec(chain_sections.value.data)
-    lower_hpd =
-        [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.lower for j = 1:length(hpdi)]
-    upper_hpd =
-        [MCMCChains.hpd(chain_sections, alpha = hpdi[j]).nt.upper for j = 1:length(hpdi)]
+    ci_intervals = map(probs_sorted) do prob
+        only(Tables.getcolumn(ci_fun(chain_sections; prob), 2))
+    end
     h = _riser + spacer * (i - 1)
     qs = quantile(chain_vec, q)
     k_density = kde(chain_vec)
-    if fill_hpd
-        x_int = filter(x -> lower_hpd[1][1] <= x <= upper_hpd[1][1], k_density.x)
+    if fill_ci
+        x_int = filter(in(ci_intervals[1]), k_density.x)
         val = pdf(k_density, x_int) .+ h
     elseif fill_q
         x_int = filter(x -> qs[1] <= x <= qs[2], k_density.x)
@@ -821,10 +823,9 @@ function _compute_plot_data(
     min = minimum(k_density.density .+ h)
     q_int = (show_qi ? [qs[1], chain_med, qs[2]] : [chain_med])
 
-    return par,
-    hpdi,
-    lower_hpd,
-    upper_hpd,
+    return par_names,
+    probs_sorted,
+    ci_intervals,
     h,
     qs,
     k_density,
@@ -836,29 +837,38 @@ function _compute_plot_data(
     q_int
 end
 
+_intervalname(::typeof(PosteriorStats.eti)) = "ETI"
+_intervalname(::typeof(PosteriorStats.hdi)) = "HDI"
+_intervalname(f) = string(nameof(f))
+
 @recipe function f(
     p::RidgelinePlot;
-    hpd_val = [0.05, 0.2],
+    ci_probs = [DEFAULT_CI_PROB, 0.8],
+    ci_fun = eti,
     q = [0.1, 0.9],
     spacer = 0.5,
     _riser = 0.2,
     show_mean = true,
     show_median = true,
     show_qi = false,
-    show_hpdi = true,
+    show_cii = true,
     fill_q = true,
-    fill_hpd = false,
+    fill_ci = false,
     ordered = false,
 )
 
     chn = p.args[1]
     par_names = p.args[2]
 
+    if ordered
+        par_table_names, par_medians = summarize(chn[:, par_names, :], median)
+        par_names = par_table_names[sortperm(par_medians)]
+    end
+
     for i = 1:length(par_names)
         par,
-        hpdi,
-        lower_hpd,
-        upper_hpd,
+        cii,
+        ci_intervals,
         h,
         qs,
         k_density,
@@ -871,17 +881,17 @@ end
             i,
             chn,
             par_names;
-            hpd_val = hpd_val,
+            ci_fun = ci_fun,
+            ci_probs = ci_probs,
             q = q,
             spacer = spacer,
             _riser = _riser,
             show_mean = show_mean,
             show_median = show_median,
             show_qi = show_qi,
-            show_hpdi = show_hpdi,
+            show_cii = show_cii,
             fill_q = fill_q,
-            fill_hpd = fill_hpd,
-            ordered = ordered,
+            fill_ci = fill_ci,
         )
 
         yticks --> (
@@ -936,45 +946,53 @@ end
             label := nothing
             linecolor := "#000000"
             linewidth --> (show_qi ? 1.2 : 0)
+            seriesalpha --> (show_qi ? 1.0 : 0.0)
             [qs[1], qs[2]], [h, h]
         end
         @series begin
             seriestype := :path
             label := (
-                show_hpdi ? (i == 1 ? "$(Integer((1-hpdi[1])*100))% HPDI" : nothing) :
-                nothing
+                show_cii ?
+                (i == 1 ? "$(round(Int, cii[i]*100))% $(_intervalname(ci_fun))" : nothing) : nothing
             )
-            linewidth --> (show_hpdi ? 2 : 0)
-            seriesalpha --> 0.80
+            linewidth --> (show_cii ? 2 : 0)
+            markersize --> 0
+            seriesalpha --> (show_cii ? 0.80 : 0.0)
             linecolor --> :darkblue
-            [lower_hpd[1][1], upper_hpd[1][1]], [h, h]
+            offset := h
+            ci_intervals[1]
         end
     end
 end
 
 @recipe function f(
     p::ForestPlot;
-    hpd_val = [0.05, 0.2],
+    ci_probs = [DEFAULT_CI_PROB, 0.8],
+    ci_fun = eti,
     q = [0.1, 0.9],
     spacer = 0.5,
     _riser = 0.2,
     show_mean = true,
     show_median = true,
     show_qi = false,
-    show_hpdi = true,
+    show_cii = true,
     fill_q = true,
-    fill_hpd = false,
+    fill_ci = false,
     ordered = false,
 )
 
     chn = p.args[1]
     par_names = p.args[2]
 
+    if ordered
+        par_table_names, par_medians = summarize(chn[:, par_names, :], median)
+        par_names = par_table_names[sortperm(par_medians)]
+    end
+
     for i = 1:length(par_names)
         par,
-        hpdi,
-        lower_hpd,
-        upper_hpd,
+        cii,
+        ci_intervals,
         h,
         qs,
         k_density,
@@ -987,17 +1005,17 @@ end
             i,
             chn,
             par_names;
-            hpd_val = hpd_val,
+            ci_fun = ci_fun,
+            ci_probs = ci_probs,
             q = q,
             spacer = spacer,
             _riser = _riser,
             show_mean = show_mean,
             show_median = show_median,
             show_qi = show_qi,
-            show_hpdi = show_hpdi,
+            show_cii = show_cii,
             fill_q = fill_q,
-            fill_hpd = fill_hpd,
-            ordered = ordered,
+            fill_ci = fill_ci,
         )
 
         yticks --> (
@@ -1006,17 +1024,22 @@ end
         )
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
 
-        for j = 1:length(hpdi)
+        for j = 1:length(cii)
             @series begin
                 seriestype := :path
                 label := (
-                    show_hpdi ?
-                    (i == 1 ? "$(Integer((1-hpdi[j])*100))% HPDI" : nothing) : nothing
+                    show_cii ?
+                    (
+                        i == 1 ? "$(round(Int, cii[j]*100))% $(_intervalname(ci_fun))" :
+                        nothing
+                    ) : nothing
                 )
                 linecolor --> j
-                linewidth --> (show_hpdi ? 1.5 * j : 0)
-                seriesalpha --> 0.80
-                [lower_hpd[j][1], upper_hpd[j][1]], [h, h]
+                linewidth --> (show_cii ? 1.5 * j : 0)
+                markersize --> 0
+                seriesalpha --> (show_cii ? 0.80 : 0.0)
+                offset := h
+                ci_intervals[j]
             end
         end
         @series begin
@@ -1024,7 +1047,7 @@ end
             label := (show_median ? (i == 1 ? "Median" : nothing) : nothing)
             markershape --> :diamond
             markercolor --> "#000000"
-            markersize --> (show_median ? length(hpdi) : 0)
+            markersize --> (show_median ? length(cii) : 0)
             [chain_med], [h]
         end
         @series begin
@@ -1032,7 +1055,7 @@ end
             label := (show_mean ? (i == 1 ? "Mean" : nothing) : nothing)
             markershape --> :circle
             markercolor --> :gray
-            markersize --> (show_mean ? length(hpdi) : 0)
+            markersize --> (show_mean ? length(cii) : 0)
             [chain_mean], [h]
         end
         @series begin
@@ -1048,6 +1071,7 @@ end
             label := nothing
             linecolor := "#000000"
             linewidth --> (show_qi ? 1.2 : 0.0)
+            seriesalpha --> (show_qi ? 1.0 : 0.0)
             [qs[1], qs[2]], [h, h]
         end
     end
