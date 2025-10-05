@@ -1,4 +1,5 @@
 using MCMCChains
+using MCMCDiagnosticTools
 using AbstractMCMC: AbstractChains
 using Dates
 using Test
