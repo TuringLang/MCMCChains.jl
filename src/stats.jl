@@ -404,10 +404,10 @@ Returns a Vector{Float64} of BFMI values, one for each chain.
 """
 function MCMCDiagnosticTools.bfmi(chains::Chains)
     if :hamiltonian_energy ∉ names(chains)
-        throw(
-            ArgumentError("The chain does not contain the `:hamiltonian_energy` parameter. 
-                           BFMI is tailored for Hamiltonian Monte Carlo (HMC) methods.")
-        )
+        throw(ArgumentError("""
+                          The chain does not contain the `:hamiltonian_energy` parameter. 
+                          BFMI is tailored for Hamiltonian Monte Carlo (HMC) methods.
+                          """))
     end
 
     return MCMCDiagnosticTools.bfmi(chains[:hamiltonian_energy])
