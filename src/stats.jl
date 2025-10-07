@@ -397,8 +397,8 @@ mean(chn::Chains, syms::AbstractVector) = mean(chn[:, syms, :])
 
 Compute the Bayesian Fraction of Missing Information (BFMI) for a set of chains.
 
-This is a diagnostic for Hamiltonian Monte Carlo (HMC) methods, which indicates how well the
-    momentum resampling explores the energy distribution.
+This is a diagnostic for Hamiltonian Monte Carlo (HMC) methods, which indicates how
+well the momentum resampling explores the energy distribution.
 
 Returns a Vector{Float64} of BFMI values, one for each chain.
 """
