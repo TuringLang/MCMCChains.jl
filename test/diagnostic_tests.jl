@@ -1,4 +1,5 @@
 using MCMCChains
+using MCMCDiagnosticTools
 using AbstractMCMC: AbstractChains
 using Dates
 using Test
@@ -25,6 +26,13 @@ chn = Chains(val, start = 1, thin = 2)
 # Chains object for discretediag
 val_disc = rand(Int16, 200, nparams, nchains)
 chn_disc = Chains(val_disc, start = 1, thin = 2)
+
+# Chains object using Hamiltonian energy for bfmi test
+chn_bfmi = Chains(rand(100, 4, 2), [:a, :b, :c, :hamiltonian_energy])
+chn_bfmi = set_section(
+    chn_bfmi,
+    Dict(:internals => [:hamiltonian_energy], :parameters => [:a, :b, :c]),
+)
 
 @testset "basic chains functions" begin
     @test first(chn) == 1
@@ -228,10 +236,19 @@ end
 
     result = hpd(chn)
     @test all(result.nt.upper .> result.nt.lower)
+
+    # test throws for bfmi if no hamiltonian energy
+    @test_throws ArgumentError bfmi(chn)
+
+    # test bfmi function
+    bfmi_values = bfmi(chn_bfmi)
+    @test isa(bfmi_values, Vector{Float64})
+    @test size(bfmi_values, 1) == 2
 end
 
+
 @testset "vector of vectors" begin
-    val = [rand(20) for _ in 1:10]
+    val = [rand(20) for _ = 1:10]
 
     chn = Chains(val)
     chn2 = Chains(reduce(hcat, val)')
