@@ -19,7 +19,8 @@ concurrency:
 jobs:
   test:
     runs-on: ${{ matrix.runner.os }}
-    continue-on-error: ${{ matrix.runner.version == 'pre' }}
+    # Uncomment when there is a new prerelease of 1.13 available
+    # continue-on-error: ${{ matrix.runner.version == 'pre' }}
     strategy:
       fail-fast: false
 
@@ -27,22 +28,17 @@ jobs:
         runner:
           - version: 'min'
             os: ubuntu-latest
-            arch: x64
+          - version: '1.11'
+            os: ubuntu-latest
           - version: '1'
             os: ubuntu-latest
-            arch: x64
-          - version: 'pre'
-            os: ubuntu-latest
-            arch: x64
-          - version: '1'
-            os: ubuntu-latest
-            arch: x86
           - version: '1'
             os: windows-latest
-            arch: x64
           - version: '1'
             os: macOS-latest
-            arch: aarch64
+          # Uncomment when there is a new prerelease of 1.13 available
+          # - version: 'pre'
+          #   os: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v5
