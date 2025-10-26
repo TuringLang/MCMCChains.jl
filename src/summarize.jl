@@ -25,15 +25,33 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
     digits = get(io, :digits, 4)
-    formatter = PrettyTables.ft_printf("%.$(digits)f")
+    if pkgversion(PrettyTables) < v"3.0"
+        formatter = PrettyTables.ft_printf("%.$(digits)f")
 
-    println(io, df.name)
-    # Support for PrettyTables 0.9 (`borderless`) and 0.10 (`tf_borderless`)
-    PrettyTables.pretty_table(
-        io, df.nt;
-        formatters = formatter,
-        tf = isdefined(PrettyTables, :borderless) ? PrettyTables.borderless : PrettyTables.tf_borderless,
-    )
+        println(io, df.name)
+        # Support for PrettyTables 0.9 (`borderless`) and 0.10 (`tf_borderless`)
+        PrettyTables.pretty_table(
+            io, df.nt;
+            formatters = formatter,
+            tf = isdefined(PrettyTables, :borderless) ? PrettyTables.borderless : PrettyTables.tf_borderless,
+        )
+    else
+        # v3: ft_printf  ->  fmt__printf  (returns a formatter function)
+        fmt = PrettyTables.fmt__printf("%.$(digits)f")
+
+        println(io, df.name)
+
+        # v3: `tf` keyword was replaced by `table_format`
+        #     use the predefined border set "borderless"
+        PrettyTables.pretty_table(
+            io, df.nt;
+            backend = :text,  # explicit; :text is the default
+            formatters = [fmt],  # v3 expects a Vector{Function}
+            table_format = PrettyTables.TextTableFormat(
+                borders = PrettyTables.text_table_borders__borderless
+            ),
+        )
+    end
 end
 
 Base.isequal(c1::ChainDataFrame, c2::ChainDataFrame) = isequal(c1, c2)
