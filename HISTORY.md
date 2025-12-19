@@ -1,5 +1,9 @@
 # MCMCChains Changelog
 
+## 7.7.0
+
+Remove support for PrettyTables.jl versions prior to 3.0.
+
 ## 7.6.0
 
 Compatibility for PrettyTables@3.
