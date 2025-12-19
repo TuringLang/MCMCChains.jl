@@ -25,7 +25,9 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
     digits = get(io, :digits, 4)
-    if pkgversion(PrettyTables) < v"3.0"
+
+    if isdefined(PrettyTables, :ft_printf)
+        # This branch handles PrettyTables pre-v3
         formatter = PrettyTables.ft_printf("%.$(digits)f")
 
         println(io, df.name)
@@ -35,7 +37,8 @@ function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
             formatters = formatter,
             tf = isdefined(PrettyTables, :borderless) ? PrettyTables.borderless : PrettyTables.tf_borderless,
         )
-    else
+    elseif isdefined(PrettyTables, :fmt__printf)
+        # This branch handles PrettyTables v3
         # v3: ft_printf  ->  fmt__printf  (returns a formatter function)
         fmt = PrettyTables.fmt__printf("%.$(digits)f")
 
@@ -51,6 +54,8 @@ function Base.show(io::IO, ::MIME"text/plain", df::ChainDataFrame)
                 borders = PrettyTables.text_table_borders__borderless
             ),
         )
+    else
+        error("incompatible PrettyTables version; neither `ft_printf` nor `fmt__printf` found")
     end
 end
 

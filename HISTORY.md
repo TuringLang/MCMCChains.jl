@@ -1,5 +1,9 @@
 # MCMCChains Changelog
 
+## 7.6.1
+
+Tweaked the compatibility check for PrettyTables to use `isdefined` rather than `pkgversion`.
+
 ## 7.6.0
 
 Compatibility for PrettyTables@3.
