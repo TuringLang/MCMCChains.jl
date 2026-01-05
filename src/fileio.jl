@@ -24,3 +24,43 @@ function readcoda(output::AbstractString, index::AbstractString)
 
   Chains(value; iterations=window, names=names)
 end
+
+"""
+    write_json(c::Chains, filepath::Union{AbstractString, Nothing}=nothing; as_string::Bool=false)
+
+Serialize the `Chains` object to JSON.
+
+!!! note
+    This function requires the `JSON package. Run `using JSON` before calling this function.
+
+# Examples
+```julia
+using JSON
+write_json(chains, "output.json")
+```
+"""
+function write_json end
+
+function write_json(c, args...; kwargs...)
+    error("write_json requires the JSON package. Please run: using JSON")
+end
+
+"""
+    read_json(input::AbstractString)
+
+Deserialize a `Chains` object from a JSON file.
+
+!!! note
+    This function requires the `JSON` package. Run `using JSON` before calling this function.
+
+# Examples
+```julia
+using JSON
+chains = read_json("input.json")
+```
+"""
+function read_json end
+
+function read_json(input)
+    error("read_json requires the JSON package. Please run: using JSON")
+end

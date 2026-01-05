@@ -47,6 +47,10 @@ Random.seed!(0)
     println("Serialization")
     @time include("serialization_tests.jl")
 
+    # run tests for JSON IO
+    println("JSON IO")
+    @time include("json_tests.jl")
+
     # run tests for sampling api
     println("Sampling")
     @time include("sampling_tests.jl")
