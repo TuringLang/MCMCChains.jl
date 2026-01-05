@@ -44,6 +44,9 @@ export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
 
+# IO Exports
+export read_json, write_json
+
 # Reexport diagnostics functions
 using MCMCDiagnosticTools:
     discretediag,
