@@ -5,40 +5,45 @@ using JSON
 
 import MCMCChains: write_json, read_json
 
-# Helpers for JSON serialization
-_clean_json(x) = string(x)
-_clean_json(x::Union{Number,String,Bool,Nothing}) = x
-_clean_json(x::Symbol) = string(x)
-_clean_json(x::Missing) = nothing
-_clean_json(x::AbstractArray) = map(_clean_json, x)
-_clean_json(x::AbstractDict) =
-    Dict{String,Any}(string(k) => _clean_json(v) for (k, v) in pairs(x))
-_clean_json(x::NamedTuple) =
-    Dict{String,Any}(string(k) => _clean_json(v) for (k, v) in pairs(x))
+function JSON.lower(c::Chains)
+    return (
+        size = size(c),
+        value_flat = vec(c.value.data),
+        iterations = range(c),
+        parameters = names(c),
+        chains = chains(c),
+        logevidence = c.logevidence,
+        name_map = c.name_map,
+        info = _lower_info(c.info),
+    )
+end
+
+_lower_info(x) = Dict{String,Any}()
+function _lower_info(info::NamedTuple)
+    result = Dict{String,Any}()
+    for (k, v) in pairs(info)
+        result[string(k)] = _lower_value(v)
+    end
+    return result
+end
+
+_lower_value(x) = string(x)
+_lower_value(x::Union{Number,String,Bool,Nothing}) = x
+_lower_value(x::Symbol) = string(x)
+_lower_value(x::Missing) = nothing
+_lower_value(x::AbstractArray) = map(_lower_value, x)
+_lower_value(x::AbstractDict) =
+    Dict{String,Any}(string(k) => _lower_value(v) for (k, v) in pairs(x))
+_lower_value(x::NamedTuple) =
+    Dict{String,Any}(string(k) => _lower_value(v) for (k, v) in pairs(x))
 
 function write_json(
     c::Chains,
     filepath::Union{AbstractString,Nothing} = nothing;
     as_string::Bool = false,
 )
-    data = Dict{String,Any}()
-
-    # Flatten data for consistent JSON structure
-    data["size"] = collect(size(c))
-    data["value_flat"] = vec(c.value.data)
-
-    data["iterations"] = collect(range(c))
-    data["parameters"] = map(string, names(c))
-    data["chains"] = collect(chains(c))
-    data["logevidence"] = ismissing(c.logevidence) ? nothing : c.logevidence
-
-    data["name_map"] =
-        Dict{String,Any}(string(k) => map(string, v) for (k, v) in pairs(c.name_map))
-
-    data["info"] = _clean_json(c.info)
-
     if as_string
-        return JSON.json(data)
+        return JSON.json(c)
     end
 
     if isnothing(filepath)
@@ -47,25 +52,19 @@ function write_json(
         filepath = "$(name).json"
     end
 
-    open(filepath, "w") do f
-        JSON.print(f, data)
-    end
+    JSON.json(filepath, c)
 
     return filepath
 end
 
 function read_json(filepath::AbstractString)
-    data = JSON.parsefile(filepath)
+    data = JSON.parsefile(filepath; null = missing)
 
     dims = Tuple(data["size"])
     raw_vec = data["value_flat"]
 
-    # Handle JSON nulls as missing
-    convert_val(x) = x === nothing ? missing : x
-    val_vec = map(convert_val, raw_vec)
-
     # Reconstruct 3D array
-    val_typed = convert(Vector{Union{Missing,Float64}}, val_vec)
+    val_typed = convert(Vector{Union{Missing,Float64}}, raw_vec)
     val = reshape(val_typed, dims)
 
     nms = Symbol.(data["parameters"])
@@ -85,7 +84,7 @@ function read_json(filepath::AbstractString)
     start_val = isempty(iters) ? 1 : iters[1]
     step_val = length(iters) > 1 ? iters[2] - iters[1] : 1
 
-    logev = data["logevidence"] === nothing ? missing : data["logevidence"]
+    logev = data["logevidence"]
 
     return Chains(
         val,

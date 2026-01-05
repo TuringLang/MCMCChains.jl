@@ -95,9 +95,10 @@ The JSON structure is designed to be both human-readable and efficient:
 {
   "size": [1000, 5, 2],
   "value_flat": [...],
-  "iter": [1, 2, 3, ...],
-  "param_names": ["a", "b", "c", "d", "e"],
-  "chain_names": ["chain_1", "chain_2"],
+  "iterations": [1, 2, 3, ...],
+  "parameters": ["a", "b", "c", "d", "e"],
+  "chains": [1, 2],
+  "logevidence": null,
   "name_map": {
     "parameters": ["a", "b"],
     "internals": ["c", "d", "e"]

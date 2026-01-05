@@ -11,7 +11,7 @@ using Test
 
     param_names = ["a", "b", "c", "d", "e"]
 
-    # Mixed types Metadata (String, Float, Symbol, Dict) to verify _clean_json
+    # Mixed types Metadata (String, Float, Symbol, Dict) to verify JSON.lower
     info = (
         model_name = "test_model",
         start_time = 123456789.0,
