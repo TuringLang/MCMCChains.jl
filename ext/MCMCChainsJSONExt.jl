@@ -71,7 +71,8 @@ function StructUtils.lift(::JSON.JSONStyle, ::Type{Chains}, d::AbstractDict)
         thin = step_val,
         evidence = logev,
         info = info,
-    ), nothing
+    ),
+    nothing
 end
 
 end # module

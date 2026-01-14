@@ -23,8 +23,17 @@ using Test
 
     @testset "String Export" begin
         lowered = JSON.lower(chn)
-        @test Set(keys(lowered)) == Set([:size, :value_flat, :iterations, :parameters, :chains, :logevidence, :name_map, :info])
-        
+        @test Set(keys(lowered)) == Set([
+            :size,
+            :value_flat,
+            :iterations,
+            :parameters,
+            :chains,
+            :logevidence,
+            :name_map,
+            :info,
+        ])
+
         json_str_std = JSON.json(chn)
         @test json_str_std isa String
         parsed_std = JSON.parse(json_str_std)
@@ -37,12 +46,12 @@ using Test
                 json_file_std = "std_output.json"
                 JSON.json(json_file_std, chn)
                 @test isfile(json_file_std)
-                
+
                 chn_loaded_std = JSON.parsefile(json_file_std, Chains)
                 @test size(chn_loaded_std) == size(chn)
                 @test names(chn_loaded_std) == Symbol.(param_names)
                 @test chn_loaded_std.value.data ≈ chn.value.data
-                
+
                 @test :d in names(chn_loaded_std, :internals)
                 @test :a in names(chn_loaded_std, :parameters)
 
