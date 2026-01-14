@@ -21,17 +21,13 @@ using JSON
 chn = Chains(rand(1000, 2, 3), [:param1, :param2])
 
 # Save to a JSON file
-write_json(chn, "results.json")
+JSON.json("results.json", chn)
 
 # Load back from JSON
-chn_loaded = read_json("results.json")
+chn_loaded = JSON.parsefile("results.json", Chains)
 ```
 
 ## Saving Chains to JSON
-
-```@docs
-write_json
-```
 
 ### Examples
 
@@ -41,29 +37,16 @@ Save to a specific file:
 using MCMCChains, JSON
 
 chn = Chains(rand(500, 2, 2), [:a, :b])
-write_json(chn, "my_chain.json")
-```
-
-Save using the model name (if available in chain info):
-
-```julia
-# If chain has model_name in info, it will be used as filename
-info = (model_name = "gdemo",)
-chn = Chains(rand(500, 2, 2), [:s, :m]; info = info)
-write_json(chn)  # Creates "gdemo.json"
+JSON.json("my_chain.json", chn)
 ```
 
 Get JSON as a string instead of writing to file:
 
 ```julia
-json_string = write_json(chn; as_string = true)
+json_string = JSON.json(chn)
 ```
 
 ## Loading Chains from JSON
-
-```@docs
-read_json
-```
 
 ### Example
 
@@ -71,7 +54,7 @@ read_json
 using MCMCChains, JSON
 
 # Load a previously saved chain
-chn = read_json("my_chain.json")
+chn = JSON.parsefile("my_chain.json", Chains)
 
 # Use the chain normally
 describe(chn)
@@ -114,34 +97,7 @@ The JSON structure is designed to be both human-readable and efficient:
 !!! info "Type Safety"
     Complex Julia types (e.g., `Symbol`, `Missing`, `NamedTuple`) are automatically converted to JSON-compatible types during serialization and restored during deserialization.
 
-## Round-Trip Fidelity
-
-The serialization is designed to preserve all information needed to reconstruct the chain:
-
-```julia
-using MCMCChains, JSON
-
-# Original chain
-chn_original = Chains(
-    rand(1000, 3, 2), 
-    [:a, :b, :c];
-    info = (model_name = "demo", sampler = "NUTS")
-)
-
-# Save and load
-write_json(chn_original, "temp.json")
-chn_loaded = read_json("temp.json")
-
-# Verify data matches
-using Test
-@test chn_original.value.data ≈ chn_loaded.value.data
-@test names(chn_original) == names(chn_loaded)
-@test chn_loaded.info.model_name == "demo"
-```
-
 ## Integration with Turing.jl
-
-The JSON serialization works seamlessly with chains generated from Turing models:
 
 ```julia
 using Turing, MCMCChains, JSON
@@ -161,11 +117,9 @@ chn = sample(gdemo([1.5, 2.0]), NUTS(), 1000)
 chn = setinfo(chn, merge(chn.info, (model_name = "gdemo",)))
 
 # Save - will create "gdemo.json"
-write_json(chn)
+JSON.json("gdemo.json", chn)
 
 # Load and analyze
-chn_loaded = read_json("gdemo.json")
+chn_loaded = JSON.parsefile("gdemo.json", Chains)
 describe(chn_loaded)
 ```
-
-

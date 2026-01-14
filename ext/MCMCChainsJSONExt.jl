@@ -3,7 +3,9 @@ module MCMCChainsJSONExt
 using MCMCChains
 using JSON
 
-import MCMCChains: write_json, read_json
+const StructUtils = JSON.StructUtils
+
+StructUtils.structlike(::JSON.JSONStyle, ::Type{<:Chains}) = false
 
 function JSON.lower(c::Chains)
     return (
@@ -37,54 +39,29 @@ _lower_value(x::AbstractDict) =
 _lower_value(x::NamedTuple) =
     Dict{String,Any}(string(k) => _lower_value(v) for (k, v) in pairs(x))
 
-function write_json(
-    c::Chains,
-    filepath::Union{AbstractString,Nothing} = nothing;
-    as_string::Bool = false,
-)
-    if as_string
-        return JSON.json(c)
+function StructUtils.lift(::JSON.JSONStyle, ::Type{Chains}, d::AbstractDict)
+    dims = Tuple(d["size"])
+    raw_vec = d["value_flat"]
+    val_typed = Vector{Union{Missing,Float64}}(undef, length(raw_vec))
+    for (i, x) in enumerate(raw_vec)
+        val_typed[i] = x === nothing ? missing : x
     end
-
-    if isnothing(filepath)
-        raw_name = get(c.info, :model_name, "chain")
-        name = string(raw_name)
-        filepath = "$(name).json"
-    end
-
-    JSON.json(filepath, c)
-
-    return filepath
-end
-
-function read_json(filepath::AbstractString)
-    data = JSON.parsefile(filepath; null = missing)
-
-    dims = Tuple(data["size"])
-    raw_vec = data["value_flat"]
-
-    # Reconstruct 3D array
-    val_typed = convert(Vector{Union{Missing,Float64}}, raw_vec)
     val = reshape(val_typed, dims)
 
-    nms = Symbol.(data["parameters"])
+    nms = Symbol.(d["parameters"])
 
-    # Reconstruct Name Map
-    nm_dict = data["name_map"]
+    nm_dict = d["name_map"]
     nm_pairs = [Symbol(k) => Symbol.(v) for (k, v) in nm_dict]
     name_map = (; nm_pairs...)
-
-    # Reconstruct Info
-    # Note: Complex objects in info (like Models) are loaded as Strings due to sanitization
-    info_dict = data["info"]
+    info_dict = d["info"]
     info_pairs = [Symbol(k) => v for (k, v) in info_dict]
     info = (; info_pairs...)
 
-    iters = data["iterations"]
+    iters = d["iterations"]
     start_val = isempty(iters) ? 1 : iters[1]
     step_val = length(iters) > 1 ? iters[2] - iters[1] : 1
 
-    logev = data["logevidence"]
+    logev = d["logevidence"]
 
     return Chains(
         val,
@@ -94,7 +71,7 @@ function read_json(filepath::AbstractString)
         thin = step_val,
         evidence = logev,
         info = info,
-    )
+    ), nothing
 end
 
 end # module

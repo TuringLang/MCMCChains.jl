@@ -11,7 +11,6 @@ using Test
 
     param_names = ["a", "b", "c", "d", "e"]
 
-    # Mixed types Metadata (String, Float, Symbol, Dict) to verify JSON.lower
     info = (
         model_name = "test_model",
         start_time = 123456789.0,
@@ -23,48 +22,44 @@ using Test
     chn = Chains(val, param_names, Dict(:internals => ["d", "e"]); info = info)
 
     @testset "String Export" begin
-        json_str = write_json(chn; as_string = true)
-        @test json_str isa String
-
-        parsed = JSON.parse(json_str)
-        @test parsed["info"]["model_name"] == "test_model"
-        @test parsed["info"]["tags"] == ["test", "json"]
-        @test length(parsed["parameters"]) == n_params
-        @test parsed["size"] == [n_iter, n_params, n_chains]
+        lowered = JSON.lower(chn)
+        @test Set(keys(lowered)) == Set([:size, :value_flat, :iterations, :parameters, :chains, :logevidence, :name_map, :info])
+        
+        json_str_std = JSON.json(chn)
+        @test json_str_std isa String
+        parsed_std = JSON.parse(json_str_std)
+        @test parsed_std["info"]["model_name"] == "test_model"
     end
 
     @testset "File Export" begin
         mktempdir() do tmpdir
             cd(tmpdir) do
-                file_path_default = write_json(chn)
-                @test file_path_default == "test_model.json"
-                @test isfile(file_path_default)
+                json_file_std = "std_output.json"
+                JSON.json(json_file_std, chn)
+                @test isfile(json_file_std)
+                
+                chn_loaded_std = JSON.parsefile(json_file_std, Chains)
+                @test size(chn_loaded_std) == size(chn)
+                @test names(chn_loaded_std) == Symbol.(param_names)
+                @test chn_loaded_std.value.data ≈ chn.value.data
+                
+                @test :d in names(chn_loaded_std, :internals)
+                @test :a in names(chn_loaded_std, :parameters)
 
-                chn_loaded = read_json(file_path_default)
+                @test chn_loaded_std.info.model_name == "test_model"
+                @test chn_loaded_std.info.sampler == "NUTS"
 
-                @test size(chn_loaded) == size(chn)
-                @test names(chn_loaded) == Symbol.(param_names)
-                @test chn_loaded.value.data ≈ chn.value.data
-
-                @test :d in names(chn_loaded, :internals)
-                @test :a in names(chn_loaded, :parameters)
-
-                @test chn_loaded.info.model_name == "test_model"
-                @test chn_loaded.info.sampler == "NUTS"
-
-                custom_name = "custom_chain.json"
-                write_json(chn, custom_name)
-                @test isfile(custom_name)
-                chn_custom = read_json(custom_name)
-                @test chn_custom.value.data ≈ chn.value.data
+                str_content = read(json_file_std, String)
+                chn_from_str = JSON.parse(str_content, Chains)
+                @test chn_from_str.value.data ≈ chn.value.data
 
                 val_missing = convert(Array{Union{Float64,Missing}}, val)
                 val_missing[1, 1, 1] = missing
                 chn_missing = Chains(val_missing, param_names)
 
                 missing_file = "missing.json"
-                write_json(chn_missing, missing_file)
-                chn_missing_loaded = read_json(missing_file)
+                JSON.json(missing_file, chn_missing)
+                chn_missing_loaded = JSON.parsefile(missing_file, Chains)
 
                 @test ismissing(chn_missing_loaded[1, 1, 1])
                 @test chn_missing_loaded[2, 1, 1] ≈ chn_missing[2, 1, 1]
