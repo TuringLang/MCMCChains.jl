@@ -1,125 +1,136 @@
 # Serialization
 
-MCMCChains provides functionality to save and load `Chains` objects to and from JSON format.
-This is useful for:
+MCMCChains supports saving and loading `Chains` objects in multiple formats:
 
-- Sharing MCMC results with collaborators
-- Archiving simulation results for reproducibility
-- Exporting data for analysis in other tools
-- Creating portable analysis pipelines
+- **JSON** - Full round-trip with metadata preservation
+- **CSV** - Simple tabular data export
+- **StanCSV** - Stan-compatible format for interoperability with Stan ecosystem tools
+
+## JSON
+
+The JSON format preserves all chain data including metadata, parameter sections, and iteration information.
+
+```julia
+using MCMCChains, JSON
+
+chn = Chains(rand(100, 2, 2), [:a, :b])
+
+# Serialize to string
+json_str = JSON.json(chn)
+
+# Save to file
+JSON.json("chains.json", chn)
+
+# Load from file
+chn_loaded = JSON.parsefile("chains.json", Chains)
+
+# Parse from string
+chn_from_str = JSON.parse(json_str, Chains)
+```
+
+### What Gets Saved
+
+- Parameter values across all iterations and chains
+- Parameter names and section groupings (`:parameters`, `:internals`)
+- Iteration range and thinning information
+- Log evidence (if available)
+- Chain metadata (`info` field)
+
+## CSV
+
+MCMCChains implements the Tables.jl interface, so you can use CSV.jl directly for simple data export.
+
+```julia
+using MCMCChains, CSV
+
+chn = Chains(rand(100, 2, 2), [:a, :b])
+
+# Save (includes iteration and chain columns)
+CSV.write("chains.csv", chn)
+
+# Load
+chn_loaded = Chains(CSV.File("chains.csv"))
+```
 
 !!! note
-    JSON serialization requires the `JSON` package. Make sure to run `using JSON` before using these functions.
+    Simple CSV export flattens all chains into rows and adds `iteration` and `chain` columns.
+    This is useful for quick data export but doesn't preserve all metadata.
 
-## Quick Start
+## StanCSV Format
 
-```julia
-using MCMCChains
-using JSON
+For interoperability with Stan ecosystem tools (CmdStan, ArviZ, etc.), MCMCChains provides dedicated StanCSV functions that handle the Stan-specific format including comment headers, parameter name conventions, and column ordering.
 
-# Create or sample a chain
-chn = Chains(rand(1000, 2, 3), [:param1, :param2])
+### Stan CSV Format Features
 
-# Save to a JSON file
-JSON.json("results.json", chn)
+- **Adaptation comments**: Step size and mass matrix info
+- **Timing comments**: Elapsed time for warmup/sampling  
+- **Parameter naming**: `theta[1,2]` → `theta.1.2` (dot notation)
+- **Column ordering**: Sampler parameters (`lp__`, `accept_stat__`, etc.) appear first
+- **Internals detection**: Parameters ending in `__` auto-classified as internals
 
-# Load back from JSON
-chn_loaded = JSON.parsefile("results.json", Chains)
-```
-
-## Saving Chains to JSON
-
-### Examples
-
-Save to a specific file:
+### Writing StanCSV
 
 ```julia
-using MCMCChains, JSON
+using MCMCChains, CSV
 
-chn = Chains(rand(500, 2, 2), [:a, :b])
-JSON.json("my_chain.json", chn)
+chn = Chains(rand(100, 3, 2), [:mu, :sigma, :lp__], 
+             Dict(:internals => [:lp__]))
+
+# Write single chain
+write_stancsv("chain_1.csv", chn; chain_id=1)
+
+# Write all chains to separate files (chain_1.csv, chain_2.csv, ...)
+write_stancsv("chain.csv", chn, Val(:all))
+
+# Write without comments (plain CSV with Stan column naming)
+write_stancsv("chain.csv", chn; include_adaptation=false, include_timing=false)
 ```
 
-Get JSON as a string instead of writing to file:
+### Reading StanCSV
 
 ```julia
-json_string = JSON.json(chn)
+using MCMCChains, CSV
+
+# Read single file (handles CmdStan output directly)
+chn = read_stancsv("output.csv")
+
+# Read multiple chain files
+chn = read_stancsv(["chain_1.csv", "chain_2.csv", "chain_3.csv"])
 ```
 
-## Loading Chains from JSON
+The reader:
+- Skips all comment lines (starting with `#`)
+- Converts Stan parameter names back to Julia format (`theta.1.2` → `theta[1,2]`)
+- Extracts metadata from comments (model name, seed, warmup, step size)
+- Classifies parameters ending in `__` as internals
 
-### Example
+### Example Output
 
-```julia
-using MCMCChains, JSON
-
-# Load a previously saved chain
-chn = JSON.parsefile("my_chain.json", Chains)
-
-# Use the chain normally
-describe(chn)
+```
+# Adaptation terminated
+# Step size = 0.8
+# Diagonal elements of inverse mass matrix:
+# 1.0
+lp__,mu,sigma
+-6.74827,0.247195,1.5
+-6.74827,0.280619,1.3
+...
+#
+#  Elapsed Time: 0.01 seconds (Warm-up)
+#                0.02 seconds (Sampling)
+#                0.03 seconds (Total)
+#
 ```
 
-## What Gets Serialized
+## Format Comparison
 
-The JSON serialization captures:
+| Feature | JSON | CSV | StanCSV |
+|---------|------|-----|---------|
+| Full metadata | ✓ | ✗ | Partial |
+| Section info | ✓ | ✗ | Auto-detected |
+| Iteration range | ✓ | ✗ | ✗ |
+| Stan compatible | ✗ | ✗ | ✓ |
+| Human readable | ✓ | ✓ | ✓ |
+| Multi-chain in one file | ✓ | ✓ | ✗ |
+| Requires package | JSON.jl | CSV.jl | CSV.jl |
 
-- **Numerical data**: All parameter values across iterations and chains
-- **Dimensions**: Number of iterations, parameters, and chains
-- **Parameter names**: Names of all variables
-- **Sections**: Parameter groupings (`:parameters`, `:internals`, etc.)
-- **Metadata**: Chain info including model name, sampler details, timing information
-
-## Data Format
-
-The JSON structure is designed to be both human-readable and efficient:
-
-```json
-{
-  "size": [1000, 5, 2],
-  "value_flat": [...],
-  "iterations": [1, 2, 3, ...],
-  "parameters": ["a", "b", "c", "d", "e"],
-  "chains": [1, 2],
-  "logevidence": null,
-  "name_map": {
-    "parameters": ["a", "b"],
-    "internals": ["c", "d", "e"]
-  },
-  "info": {
-    "model_name": "mymodel",
-    "start_time": 1234567890.0,
-    "sampler": "NUTS"
-  }
-}
-```
-
-!!! info "Type Safety"
-    Complex Julia types (e.g., `Symbol`, `Missing`, `NamedTuple`) are automatically converted to JSON-compatible types during serialization and restored during deserialization.
-
-## Integration with Turing.jl
-
-```julia
-using Turing, MCMCChains, JSON
-
-@model function gdemo(x)
-    s ~ InverseGamma(2, 3)
-    m ~ Normal(0, sqrt(s))
-    for i in eachindex(x)
-        x[i] ~ Normal(m, sqrt(s))
-    end
-end
-
-# Sample from model
-chn = sample(gdemo([1.5, 2.0]), NUTS(), 1000)
-
-# Add model name for better organization
-chn = setinfo(chn, merge(chn.info, (model_name = "gdemo",)))
-
-# Save - will create "gdemo.json"
-JSON.json("gdemo.json", chn)
-
-# Load and analyze
-chn_loaded = JSON.parsefile("gdemo.json", Chains)
-describe(chn_loaded)
-```

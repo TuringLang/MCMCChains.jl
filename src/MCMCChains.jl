@@ -43,6 +43,7 @@ export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
+export write_stancsv, read_stancsv
 
 # Reexport diagnostics functions
 using MCMCDiagnosticTools:
@@ -108,5 +109,18 @@ include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
+
+function write_stancsv end
+function read_stancsv end
+
+const _CSV_REQUIRED_MSG = """
+StanCSV functions require the CSV.jl package.
+Please load it first: `using CSV`
+"""
+
+write_stancsv(file, chn::Chains; kwargs...) = error(_CSV_REQUIRED_MSG)
+write_stancsv(file, chn::Chains, ::Val{:all}; kwargs...) = error(_CSV_REQUIRED_MSG)
+read_stancsv(file) = error(_CSV_REQUIRED_MSG)
+read_stancsv(files::AbstractVector) = error(_CSV_REQUIRED_MSG)
 
 end # module

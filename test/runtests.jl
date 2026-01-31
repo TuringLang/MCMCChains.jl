@@ -51,6 +51,10 @@ Random.seed!(0)
     println("JSON IO")
     @time include("json_tests.jl")
 
+    # run tests for StanCSV IO
+    println("StanCSV IO")
+    @time include("stancsv_tests.jl")
+
     # run tests for sampling api
     println("Sampling")
     @time include("sampling_tests.jl")
