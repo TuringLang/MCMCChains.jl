@@ -6,7 +6,6 @@ using Tables
 using Dates
 
 # Bidirectional map between Turing and Stan sampler diagnostic names.
-# Follows the pattern from ArviZ.jl (ArviZMCMCChainsExt.jl).
 const SAMPLER_STATS_MAP = Dict(
     :lp => :lp__,
     :hamiltonian_energy => :energy__,
