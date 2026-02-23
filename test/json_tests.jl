@@ -58,6 +58,15 @@ using Test
                 @test chn_loaded_std.info.model_name == "test_model"
                 @test chn_loaded_std.info.sampler == "NUTS"
 
+                loaded_tags = chn_loaded_std.info.tags
+                @test length(loaded_tags) == 2
+                @test string(loaded_tags[1]) == "test"
+                @test string(loaded_tags[2]) == "json"
+
+                loaded_config = chn_loaded_std.info.config
+                @test loaded_config["step_size"] == 0.1
+                @test loaded_config["max_depth"] == 10
+
                 str_content = read(json_file_std, String)
                 chn_from_str = JSON.parse(str_content, Chains)
                 @test chn_from_str.value.data ≈ chn.value.data

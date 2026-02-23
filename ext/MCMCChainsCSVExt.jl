@@ -46,7 +46,23 @@ function _get_stan_column_order(chn::Chains)
     other_internals = [n for n in internals if n ∉ sampler_cols]
     ordered_params = [n for n in all_names if n in parameters]
 
-    return vcat(sampler_cols, ordered_params, other_internals)
+    ordered = Symbol[]
+    seen = Set{Symbol}()
+    for col in Iterators.flatten((sampler_cols, ordered_params, other_internals))
+        if col ∉ seen
+            push!(ordered, col)
+            push!(seen, col)
+        end
+    end
+
+    for n in all_names
+        if n ∉ seen
+            push!(ordered, n)
+            push!(seen, n)
+        end
+    end
+
+    return ordered
 end
 
 function _write_adaptation(io::IO, chn::Chains, chain_id::Int)
@@ -74,10 +90,14 @@ function _write_timing(io::IO, chn::Chains, chain_id::Int)
 
     if has_timing
         duration = Dates.value(stop_t[chain_id] - start_t[chain_id]) / 1000
-        warmup = get(chn.info, :warmup_time, 0.0)
-        println(io, "#  Elapsed Time: ", warmup, " seconds (Warm-up)")
-        println(io, "#                ", duration, " seconds (Sampling)")
-        println(io, "#                ", warmup + duration, " seconds (Total)")
+        warmup = get(chn.info, :warmup_time, missing)
+        if warmup === missing
+            println(io, "#  Elapsed Time: ", duration, " seconds (Sampling)")
+        else
+            println(io, "#  Elapsed Time: ", warmup, " seconds (Warm-up)")
+            println(io, "#                ", duration, " seconds (Sampling)")
+            println(io, "#                ", warmup + duration, " seconds (Total)")
+        end
     else
         println(io, "#  Elapsed Time: unknown")
     end
@@ -99,7 +119,7 @@ function Tables.columnnames(t::StanCSVTable)
 end
 
 function Tables.getcolumn(t::StanCSVTable, i::Int)
-    return Tables.getcolumn(t, t.col_order[i])
+    return vec(t.chn.value[:, t.col_order[i], t.chain_id])
 end
 
 function Tables.getcolumn(t::StanCSVTable, nm::Symbol)
@@ -109,7 +129,12 @@ function Tables.getcolumn(t::StanCSVTable, nm::Symbol)
             return vec(t.chn.value[:, orig_name, t.chain_id])
         end
     end
-    return vec(t.chn.value[:, _convert_param_name_from_stan(stan_name), t.chain_id])
+    orig_name = _convert_param_name_from_stan(stan_name)
+    if orig_name in t.col_order
+        return vec(t.chn.value[:, orig_name, t.chain_id])
+    end
+    available = join(string.(t.col_order), ", ")
+    throw(ArgumentError("Column $(nm) (Stan name: $(stan_name)) not found in chain. Available: $(available)"))
 end
 
 function Tables.schema(t::StanCSVTable)
@@ -126,19 +151,20 @@ function MCMCChains.write_stancsv(
     include_timing::Bool = true,
     kwargs...,
 )
+    n_chains = size(chn, 3)
+    if chain_id < 1 || chain_id > n_chains
+        throw(ArgumentError("Invalid chain_id $chain_id; must be between 1 and $n_chains."))
+    end
+
     col_order = _get_stan_column_order(chn)
     table = StanCSVTable(chn, chain_id, col_order)
 
     open(file, "w") do io
         include_adaptation && _write_adaptation(io, chn, chain_id)
-    end
-
-    CSV.write(file, table; append = true, header = true, kwargs...)
-
-    if include_timing
-        open(file, "a") do io
-            _write_timing(io, chn, chain_id)
-        end
+        csv_buf = IOBuffer()
+        CSV.write(csv_buf, table; kwargs...)
+        write(io, take!(csv_buf))
+        include_timing && _write_timing(io, chn, chain_id)
     end
 
     return file
@@ -152,10 +178,10 @@ function MCMCChains.write_stancsv(
 )
     n_chains = size(chn, 3)
     files = String[]
+    base, ext = splitext(basename)
+    ext = isempty(ext) ? ".csv" : ext
 
     for chain_id = 1:n_chains
-        base, ext = splitext(basename)
-        ext = isempty(ext) ? ".csv" : ext
         file = n_chains == 1 ? basename : "$(base)_$(chain_id)$(ext)"
         MCMCChains.write_stancsv(file, chn; chain_id, kwargs...)
         push!(files, file)
@@ -216,18 +242,49 @@ function MCMCChains.read_stancsv(files::AbstractVector{<:AbstractString}; kwargs
 end
 
 function MCMCChains.Chains(file::CSV.File)
-    col_names = collect(Tables.columnnames(file))
-    n_iter, n_params = length(file), length(col_names)
+    all_col_names = collect(Tables.columnnames(file))
+    has_chain = :chain in all_col_names
+    param_col_names = [nm for nm in all_col_names if nm != :iteration && nm != :chain]
 
-    val = Matrix{Union{Missing,Float64}}(undef, n_iter, n_params)
-    for (j, nm) in enumerate(col_names)
+    n_rows = length(file)
+    n_params = length(param_col_names)
+
+    val = Matrix{Union{Missing,Float64}}(undef, n_rows, n_params)
+    for (j, nm) in enumerate(param_col_names)
         col = Tables.getcolumn(file, nm)
         for (i, v) in enumerate(col)
             val[i, j] = ismissing(v) ? missing : Float64(v)
         end
     end
 
-    return Chains(val, Symbol.(col_names))
+    if !has_chain
+        return Chains(val, Symbol.(param_col_names))
+    end
+
+    chain_col = collect(Tables.getcolumn(file, :chain))
+    unique_chain_ids = sort(unique(chain_col))
+    n_chains = length(unique_chain_ids)
+    chain_index = Dict(cid => idx for (idx, cid) in enumerate(unique_chain_ids))
+
+    rows_by_chain = Dict{Int,Vector{Int}}()
+    for i in 1:n_rows
+        cidx = chain_index[chain_col[i]]
+        push!(get!(rows_by_chain, cidx, Int[]), i)
+    end
+
+    n_iter = length(rows_by_chain[1])
+    for rows in values(rows_by_chain)
+        length(rows) == n_iter || error("Inconsistent number of iterations per chain in CSV file")
+    end
+
+    vals3 = Array{Union{Missing,Float64}}(undef, n_iter, n_params, n_chains)
+    for (cidx, rows) in rows_by_chain
+        for (t, row_idx) in enumerate(rows)
+            @inbounds vals3[t, :, cidx] = val[row_idx, :]
+        end
+    end
+
+    return Chains(vals3, Symbol.(param_col_names))
 end
 
 end

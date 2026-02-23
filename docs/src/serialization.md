@@ -54,7 +54,8 @@ chn_loaded = Chains(CSV.File("chains.csv"))
 
 !!! note
     Simple CSV export flattens all chains into rows and adds `iteration` and `chain` columns.
-    This is useful for quick data export but doesn't preserve all metadata.
+    On reload, the multi-chain structure is reconstructed from these columns, but other metadata
+    (parameter sections, info, log evidence) is not preserved.
 
 ## StanCSV Format
 

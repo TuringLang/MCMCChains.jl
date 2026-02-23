@@ -2,7 +2,7 @@ using MCMCChains
 using CSV
 using Test
 
-@testset "CSV Serialization" begin
+@testset "CSV and StanCSV Serialization" begin
 
     @testset "Simple CSV via Tables.jl" begin
         chn = Chains(randn(50, 3, 2), [:a, :b, :c])
@@ -14,6 +14,10 @@ using Test
             @test :a in names(chn2)
             @test :b in names(chn2)
             @test :c in names(chn2)
+            @test :iteration ∉ names(chn2)
+            @test :chain ∉ names(chn2)
+            @test size(chn2, 3) == size(chn, 3)
+            @test chn2.value.data ≈ chn.value.data
         end
     end
 

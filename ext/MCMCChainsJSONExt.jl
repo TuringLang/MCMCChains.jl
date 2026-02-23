@@ -58,8 +58,22 @@ function StructUtils.lift(::JSON.JSONStyle, ::Type{Chains}, d::AbstractDict)
     info = (; info_pairs...)
 
     iters = d["iterations"]
-    start_val = isempty(iters) ? 1 : iters[1]
-    step_val = length(iters) > 1 ? iters[2] - iters[1] : 1
+    if isempty(iters)
+        start_val = 1
+        step_val = 1
+    else
+        start_val = iters[1]
+        if length(iters) == 1
+            step_val = 1
+        else
+            deltas = diff(iters)
+            unique_deltas = unique(deltas)
+            if length(unique_deltas) != 1
+                throw(ArgumentError("Non-uniform iteration steps in serialized data; cannot derive a single thinning interval."))
+            end
+            step_val = unique_deltas[1]
+        end
+    end
 
     logev = d["logevidence"]
 
