@@ -113,14 +113,21 @@ include("rstar.jl")
 function write_stancsv end
 function read_stancsv end
 
-const _CSV_REQUIRED_MSG = """
-StanCSV functions require the CSV.jl package.
-Please load it first: `using CSV`
-"""
-
-write_stancsv(file, chn::Chains; kwargs...) = error(_CSV_REQUIRED_MSG)
-write_stancsv(file, chn::Chains, ::Val{:all}; kwargs...) = error(_CSV_REQUIRED_MSG)
-read_stancsv(file) = error(_CSV_REQUIRED_MSG)
-read_stancsv(files::AbstractVector) = error(_CSV_REQUIRED_MSG)
+function __init__()
+    Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, _
+        is_stancsv =
+            (exc.f === write_stancsv || exc.f === read_stancsv) &&
+            length(methods(exc.f)) == 0
+        if is_stancsv
+            printstyled(
+                io,
+                "\n\n    `$(exc.f)` requires CSV.jl to be loaded.",
+                "\n    Please run `using CSV` before calling `$(exc.f)`.\n";
+                color=:cyan,
+                bold=true,
+            )
+        end
+    end
+end
 
 end # module

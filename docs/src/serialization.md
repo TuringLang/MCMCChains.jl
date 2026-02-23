@@ -38,7 +38,7 @@ chn_from_str = JSON.parse(json_str, Chains)
 
 ## CSV
 
-MCMCChains implements the Tables.jl interface, so you can use CSV.jl directly for simple data export.
+MCMCChains implements the Tables.jl interface, which allows you to use CSV.jl directly for simple data export.
 
 ```julia
 using MCMCChains, CSV
@@ -67,10 +67,13 @@ For interoperability with Stan ecosystem tools (CmdStan, ArviZ, etc.), MCMCChain
 ### Stan CSV Format Features
 
 - **Adaptation comments**: Step size and mass matrix info
-- **Timing comments**: Elapsed time for warmup/sampling  
-- **Parameter naming**: `theta[1,2]` → `theta.1.2` (dot notation)
+- **Timing comments**: Elapsed time for warmup/sampling
+- **Parameter naming**: `theta[1,2]` is converted to `theta.1.2` (indexing and commas are replaced with full stops)
 - **Column ordering**: Sampler parameters (`lp__`, `accept_stat__`, etc.) appear first
-- **Internals detection**: Parameters ending in `__` auto-classified as internals
+- **Internals detection**: Parameters ending in `__` are auto-classified as internals
+
+!!! note "Parameter Name Conversion"
+    The name conversion handles Stan's numeric-index dot notation (e.g. `theta.1.2` <--> `theta[1,2]`). Parameter names containing non-numeric dot segments (e.g. `a.b`) are left unchanged. This means the conversion is not fully invertible for arbitrary Julia symbol names — it is designed for Stan-generated output only.
 
 ### Writing StanCSV
 
