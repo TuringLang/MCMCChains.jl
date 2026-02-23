@@ -18,7 +18,8 @@ const SAMPLER_STATS_MAP = Dict(
 )
 
 # All known sampler diagnostic names (both conventions), used for column ordering.
-const SAMPLER_PARAMS = Set(Iterators.flatten((keys(SAMPLER_STATS_MAP), values(SAMPLER_STATS_MAP))))
+const SAMPLER_PARAMS =
+    Set(Iterators.flatten((keys(SAMPLER_STATS_MAP), values(SAMPLER_STATS_MAP))))
 
 function _convert_param_name_to_stan(name::Symbol)
     s = string(name)

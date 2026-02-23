@@ -123,8 +123,8 @@ function __init__()
                 io,
                 "\n\n    `$(exc.f)` requires CSV.jl to be loaded.",
                 "\n    Please run `using CSV` before calling `$(exc.f)`.\n";
-                color=:cyan,
-                bold=true,
+                color = :cyan,
+                bold = true,
             )
         end
     end
