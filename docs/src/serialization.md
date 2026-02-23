@@ -61,6 +61,9 @@ chn_loaded = Chains(CSV.File("chains.csv"))
 
 For interoperability with Stan ecosystem tools (CmdStan, ArviZ, etc.), MCMCChains provides dedicated StanCSV functions that handle the Stan-specific format including comment headers, parameter name conventions, and column ordering.
 
+!!! note "CmdStan Compatibility"
+    StanCSV support has been tested with **CmdStan v2.38**. The Stan CSV format is not formally versioned and may change in future CmdStan releases. If you encounter issues with a newer version, please open an issue.
+
 ### Stan CSV Format Features
 
 - **Adaptation comments**: Step size and mass matrix info

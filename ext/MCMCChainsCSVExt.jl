@@ -221,8 +221,9 @@ function MCMCChains.read_stancsv(file::AbstractString; kwargs...)
     parameters = [n for n in col_names if n ∉ internals]
     name_map = (parameters = parameters, internals = internals)
 
+    comment_lines = filter(l -> startswith(l, "#"), lines)
     info_dict = Dict{Symbol,Any}()
-    for line in lines[1:(header_idx-1)]
+    for line in comment_lines
         m = match(r"^#\s*model\s*=\s*(.+?)(?:\s+\(Default\))?$", line)
         m !== nothing && (info_dict[:model_name] = strip(m[1]); continue)
         m = match(r"^#\s*Step size\s*=\s*([\d.eE+-]+)", line)
