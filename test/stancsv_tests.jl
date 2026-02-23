@@ -139,7 +139,7 @@ using Test
 
         @test chn.info.model_name == "test_model_model"
         @test chn.info.seed == 42
-        @test chn.info.stepsize ≈ 0.486381 atol=1e-4
+        @test chn.info.stepsize ≈ 0.486381 atol = 1e-4
         @test chn.info.num_warmup == 100
 
         @test size(chn, 1) == 50
