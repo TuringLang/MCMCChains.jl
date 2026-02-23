@@ -5,9 +5,9 @@ using CSV
 using Tables
 using Dates
 
-# Bidirectional map between Stan and Turing sampler diagnostic names.
+# Bidirectional map between Turing and Stan sampler diagnostic names.
 # Follows the pattern from ArviZ.jl (ArviZMCMCChainsExt.jl).
-const TURING_TO_STAN_KEYS = Dict(
+const SAMPLER_STATS_MAP = Dict(
     :lp => :lp__,
     :hamiltonian_energy => :energy__,
     :numerical_error => :divergent__,
@@ -16,20 +16,9 @@ const TURING_TO_STAN_KEYS = Dict(
     :n_steps => :n_leapfrog__,
     :acceptance_rate => :accept_stat__,
 )
-const STAN_TO_TURING_KEYS = Dict(v => k for (k, v) in TURING_TO_STAN_KEYS)
 
-# Well-known Stan sampler diagnostic columns, used for column ordering when writing.
-const STAN_SAMPLER_PARAMS = Set([
-    :lp__,
-    :accept_stat__,
-    :stepsize__,
-    :treedepth__,
-    :n_leapfrog__,
-    :divergent__,
-    :energy__,
-])
-
-_is_sampler_param(n::Symbol) = n in STAN_SAMPLER_PARAMS || haskey(TURING_TO_STAN_KEYS, n)
+# All known sampler diagnostic names (both conventions), used for column ordering.
+const SAMPLER_PARAMS = Set(Iterators.flatten((keys(SAMPLER_STATS_MAP), values(SAMPLER_STATS_MAP))))
 
 function _convert_param_name_to_stan(name::Symbol)
     s = string(name)
@@ -58,7 +47,7 @@ function _get_stan_column_order(chn::Chains)
     internals = get(chn.name_map, :internals, Symbol[])
     parameters = get(chn.name_map, :parameters, Symbol[])
 
-    sampler_cols = [n for n in all_names if _is_sampler_param(n) && n in internals]
+    sampler_cols = [n for n in all_names if n in SAMPLER_PARAMS && n in internals]
     other_internals = [n for n in internals if n ∉ sampler_cols]
     ordered_params = [n for n in all_names if n in parameters]
 
