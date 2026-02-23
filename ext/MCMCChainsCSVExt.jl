@@ -134,7 +134,11 @@ function Tables.getcolumn(t::StanCSVTable, nm::Symbol)
         return vec(t.chn.value[:, orig_name, t.chain_id])
     end
     available = join(string.(t.col_order), ", ")
-    throw(ArgumentError("Column $(nm) (Stan name: $(stan_name)) not found in chain. Available: $(available)"))
+    throw(
+        ArgumentError(
+            "Column $(nm) (Stan name: $(stan_name)) not found in chain. Available: $(available)",
+        ),
+    )
 end
 
 function Tables.schema(t::StanCSVTable)
@@ -267,14 +271,15 @@ function MCMCChains.Chains(file::CSV.File)
     chain_index = Dict(cid => idx for (idx, cid) in enumerate(unique_chain_ids))
 
     rows_by_chain = Dict{Int,Vector{Int}}()
-    for i in 1:n_rows
+    for i = 1:n_rows
         cidx = chain_index[chain_col[i]]
         push!(get!(rows_by_chain, cidx, Int[]), i)
     end
 
     n_iter = length(rows_by_chain[1])
     for rows in values(rows_by_chain)
-        length(rows) == n_iter || error("Inconsistent number of iterations per chain in CSV file")
+        length(rows) == n_iter ||
+            error("Inconsistent number of iterations per chain in CSV file")
     end
 
     vals3 = Array{Union{Missing,Float64}}(undef, n_iter, n_params, n_chains)

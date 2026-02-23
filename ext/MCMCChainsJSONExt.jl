@@ -69,7 +69,11 @@ function StructUtils.lift(::JSON.JSONStyle, ::Type{Chains}, d::AbstractDict)
             deltas = diff(iters)
             unique_deltas = unique(deltas)
             if length(unique_deltas) != 1
-                throw(ArgumentError("Non-uniform iteration steps in serialized data; cannot derive a single thinning interval."))
+                throw(
+                    ArgumentError(
+                        "Non-uniform iteration steps in serialized data; cannot derive a single thinning interval.",
+                    ),
+                )
             end
             step_val = unique_deltas[1]
         end
