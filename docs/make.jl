@@ -9,6 +9,7 @@ makedocs(
         "MCMCChains" => "index.md",
         "Getting started" => "getting-started.md",
         "Plotting" => ["StatsPlots.jl" => "statsplots.md", "Makie.jl" => "makie.md"],
+        "Serialization" => "serialization.md",
         "API" => [
             "Chains" => "chains.md",
             "Diagnostics" => "diagnostics.md",

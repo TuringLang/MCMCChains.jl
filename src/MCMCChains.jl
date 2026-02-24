@@ -43,6 +43,7 @@ export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
 export summarize
+export write_stancsv, read_stancsv
 
 # Reexport diagnostics functions
 using MCMCDiagnosticTools:
@@ -108,5 +109,25 @@ include("modelstats.jl")
 include("plot.jl")
 include("tables.jl")
 include("rstar.jl")
+
+function write_stancsv end
+function read_stancsv end
+
+function __init__()
+    Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, _
+        is_stancsv =
+            (exc.f === write_stancsv || exc.f === read_stancsv) &&
+            length(methods(exc.f)) == 0
+        if is_stancsv
+            printstyled(
+                io,
+                "\n\n    `$(exc.f)` requires CSV.jl to be loaded.",
+                "\n    Please run `using CSV` before calling `$(exc.f)`.\n";
+                color = :cyan,
+                bold = true,
+            )
+        end
+    end
+end
 
 end # module
