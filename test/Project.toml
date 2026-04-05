@@ -27,6 +27,7 @@ UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]
 AbstractMCMC = "5"
+CSV = "0.10"
 DataFrames = "1"
 Dates = "<0.0.1, 1"
 Distributions = "0.25"
