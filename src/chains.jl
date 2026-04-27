@@ -851,6 +851,13 @@ function _cat(::Val{3}, c1::Chains, args::Chains...)
     return Chains(value, missing, c1.name_map, new_info)
 end
 
+"""
+    pool_chain(c::Chains)
+
+Combine all chains in `c` into a single chain by concatenating iterations.
+
+Returns a new `Chains` object with a single chain containing all iterations from all chains.
+"""
 function pool_chain(c::Chains)
     data = c.value.data
     pool_data = reshape(permutedims(data, [1, 3, 2]), :, size(data, 2), 1)
