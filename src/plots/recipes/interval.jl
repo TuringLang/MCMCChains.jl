@@ -14,6 +14,7 @@
 )
 
     chn, par_names = _interval_args(p, "ridgelineplot")
+    _apply_chrome!(plotattributes)
 
     rows = _interval_rows(
         chn,
@@ -137,6 +138,7 @@ end
 )
 
     chn, par_names = _interval_args(p, "forestplot")
+    _apply_chrome!(plotattributes)
 
     rows = _interval_rows(
         chn,

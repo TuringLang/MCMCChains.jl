@@ -4,6 +4,7 @@ struct Corner
 end
 
 @recipe function f(corner::Corner)
+    _apply_chrome!(plotattributes)
     # Convert labels to string because `Symbol` is not supported generally supported.
     label --> permutedims(map(string, corner.parameters))
     compact --> true
