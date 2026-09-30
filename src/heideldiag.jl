@@ -1,5 +1,7 @@
 function MCMCDiagnosticTools.heideldiag(
-    chains::Chains; sections = _default_sections(chains), kwargs...
+    chains::Chains;
+    sections = _default_sections(chains),
+    kwargs...,
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
@@ -9,7 +11,8 @@ function MCMCDiagnosticTools.heideldiag(
     results = map(axes(chains_array, 3)) do chain
         vec_of_namedtuples = map(axes(chains_array, 2)) do param
             return MCMCDiagnosticTools.heideldiag(
-                cskip(@view(_chains.value.data[:, param, chain])); kwargs...
+                cskip(@view(_chains.value.data[:, param, chain]));
+                kwargs...,
             )
         end
         namedtuple_of_vecs = Tables.columntable(vec_of_namedtuples)
@@ -20,9 +23,9 @@ function MCMCDiagnosticTools.heideldiag(
     parameters = (parameters = names(_chains),)
     dfs = [
         ChainDataFrame(
-            "Heidelberger and Welch diagnostic - Chain $i", merge(parameters, result)
-        )
-        for (i, result) in enumerate(results)
+            "Heidelberger and Welch diagnostic - Chain $i",
+            merge(parameters, result),
+        ) for (i, result) in enumerate(results)
     ]
 
     return dfs

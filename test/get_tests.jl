@@ -19,9 +19,9 @@ Random.seed!(20)
     # s ∼ IG(2.5, 5)
     # ```
     n_samples = 1000
-    vals = hcat(rand(MvNormal(1:10, 0.1), n_samples)',
-                rand(InverseGamma(2.5, 5), n_samples))
-    chn = Chains(vals, [("m[$i]" for i in 1:10)..., "s"])
+    vals =
+        hcat(rand(MvNormal(1:10, 0.1), n_samples)', rand(InverseGamma(2.5, 5), n_samples))
+    chn = Chains(vals, [("m[$i]" for i = 1:10)..., "s"])
 
     get1 = get(chn, :m)
     get2 = get(chn, [:m, :s])

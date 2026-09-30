@@ -1,7 +1,7 @@
 function MCMCDiagnosticTools.gewekediag(
     chains::Chains;
     sections = _default_sections(chains),
-    kwargs...
+    kwargs...,
 )
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
@@ -11,7 +11,8 @@ function MCMCDiagnosticTools.gewekediag(
     results = map(axes(chains_array, 3)) do chain
         vec_of_namedtuples = map(axes(chains_array, 2)) do param
             return MCMCDiagnosticTools.gewekediag(
-                cskip(@view(_chains.value.data[:, param, chain])); kwargs...
+                cskip(@view(_chains.value.data[:, param, chain]));
+                kwargs...,
             )
         end
         namedtuple_of_vecs = Tables.columntable(vec_of_namedtuples)
@@ -21,8 +22,8 @@ function MCMCDiagnosticTools.gewekediag(
     # Create data frames.
     parameters = (parameters = names(_chains),)
     dfs = [
-        ChainDataFrame("Geweke diagnostic - Chain $i", merge(parameters, result))
-        for (i, result) in enumerate(results)
+        ChainDataFrame("Geweke diagnostic - Chain $i", merge(parameters, result)) for
+        (i, result) in enumerate(results)
     ]
 
     return dfs

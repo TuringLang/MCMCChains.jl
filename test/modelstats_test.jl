@@ -10,12 +10,12 @@ n_chain = 2
 
 # observations
 Random.seed!(1234)
-x = map(i -> i + 2e-1*randn(), 1:n_name)
+x = map(i -> i + 2e-1 * randn(), 1:n_name)
 
 # some sample experiment results
 Random.seed!(1234)
-val1 = 0.5*randn(n_iter, n_name, n_chain) .+ x'
-val2 = 2*randn(n_iter, n_name, n_chain) .+ x'
+val1 = 0.5 * randn(n_iter, n_name, n_chain) .+ x'
+val2 = 2 * randn(n_iter, n_name, n_chain) .+ x'
 
 # construct a Chains object
 chn1 = Chains(val1)
@@ -23,9 +23,9 @@ chn2 = Chains(val2)
 
 lpfun = function f(chain::Chains)
 
-    p1 = Array(chain[:,1,:])
-    p2 = Array(chain[:,2,:])
-    p3 = Array(chain[:,3,:])
+    p1 = Array(chain[:, 1, :])
+    p2 = Array(chain[:, 2, :])
+    p3 = Array(chain[:, 3, :])
 
     lp = map(p -> logpdf(Normal(p), x[1]), p1)
     lp += map(p -> logpdf(Normal(p), x[2]), p2)

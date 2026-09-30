@@ -37,9 +37,7 @@ julia> isapprox(value, 1; atol=0.2)
 true
 ```
 """
-function MCMCDiagnosticTools.rstar(
-    classif, chn::Chains; kwargs...
-)
+function MCMCDiagnosticTools.rstar(classif, chn::Chains; kwargs...)
     return MCMCDiagnosticTools.rstar(Random.GLOBAL_RNG, classif, chn; kwargs...)
 end
 
@@ -48,7 +46,7 @@ function MCMCDiagnosticTools.rstar(
     classif,
     chn::Chains;
     sections = _default_sections(chn),
-    kwargs...
+    kwargs...,
 )
     nchains = size(chn, 3)
     nchains <= 1 && throw(DimensionMismatch())
