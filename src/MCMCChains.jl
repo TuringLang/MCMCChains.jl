@@ -6,6 +6,7 @@ import AbstractMCMC
 import AbstractMCMC: chainscat, chainsstack
 using Distributions
 using RecipesBase
+import Measures
 using Dates
 using KernelDensity: kde, pdf
 import DataAPI
