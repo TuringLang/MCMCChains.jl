@@ -7,12 +7,12 @@ using Random
 function testdiff(cdf1, cdf2)
     m1 = convert(Array, cdf1)
     m2 = convert(Array, cdf2)
-    return all(((x, y),) -> isapprox(x, y; atol=1e-2), zip(m1, m2))
+    return all(((x, y),) -> isapprox(x, y; atol = 1e-2), zip(m1, m2))
 end
 
 @testset "utils" begin
     x = [1, missing, 3, 2]
-    @test MCMCChains.cummean(x) == [1., 1., 2., 2.]
+    @test MCMCChains.cummean(x) == [1.0, 1.0, 2.0, 2.0]
 end
 
 @testset "diagnostic functions" begin
@@ -34,7 +34,7 @@ end
     rf_1 = rafterydiag(chn)
     rf_2 = rafterydiag(chn_m)
 
-    @testset "diagnostics missing tests" for i in 1:nchains
+    @testset "diagnostics missing tests" for i = 1:nchains
         @test testdiff(gw_1, gw_2)
         @test testdiff(hd_1, hd_2)
         @test testdiff(rf_1, rf_2)
