@@ -1,5 +1,10 @@
 # MCMCChains Changelog
 
+## 7.8.0
+
+`ridgelineplot` and `forestplot` now plot every parameter when no parameter list is given, which their docstrings already described.
+Both now leave room for the outermost rows and draw the legend outside the axes, so a row is no longer drawn on the frame or hidden behind the legend.
+
 ## 7.7.0
 
 Remove support for PrettyTables.jl versions prior to 3.0.
