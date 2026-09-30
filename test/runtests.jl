@@ -24,6 +24,10 @@ Random.seed!(0)
     println("Plotting")
     @time include("plot_test.jl")
 
+    # run tests for the ridgeline and forest plot helpers
+    println("Interval plots")
+    @time include("interval_plot_tests.jl")
+
     println("Display")
     @time include("display_tests.jl")
 
