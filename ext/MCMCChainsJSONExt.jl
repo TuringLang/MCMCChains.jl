@@ -39,7 +39,7 @@ _lower_value(x::AbstractDict) =
 _lower_value(x::NamedTuple) =
     Dict{String,Any}(string(k) => _lower_value(v) for (k, v) in pairs(x))
 
-function StructUtils.lift(::JSON.JSONStyle, ::Type{Chains}, d::AbstractDict)
+function StructUtils.lift(::StructUtils.StructStyle, ::Type{Chains}, d::AbstractDict)
     dims = Tuple(d["size"])
     raw_vec = d["value_flat"]
     val_typed = Vector{Union{Missing,Float64}}(undef, length(raw_vec))
