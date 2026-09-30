@@ -33,9 +33,9 @@ end
     if :corner ∉ ptypes
         size --> (ntypes * width, N * height)
         legend --> false
-        # Plots scales the guide font with the canvas, so on a tall multi-panel figure the
-        # rotated y label runs off the left edge unless room is reserved for it.
-        left_margin --> 5Measures.mm
+        # Plots scales the guide font with the canvas and sizes the tick labels to the
+        # data, so without reserved room the rotated y label runs off the left edge.
+        left_margin --> (8, :mm)
 
         multiple_plots = N * ntypes > 1
         if multiple_plots
