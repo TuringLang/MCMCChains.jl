@@ -5,6 +5,8 @@
 `ridgelineplot` and `forestplot` now plot every parameter when no parameter list is given, which their docstrings already described.
 Both now leave room for the outermost rows and draw the legend outside the axes, so a row is no longer drawn on the frame or hidden behind the legend.
 Multi-panel plots such as `meanplot` and `mixeddensity` now reserve room for the y axis label, which Plots otherwise draws off the left edge of a tall figure.
+Plots now share a single look based on ArviZ's default style: no grid, only the left and bottom spines, an unboxed legend, grey rather than black chrome, and a colour-blind safe palette that keeps a chain the same colour in every panel.
+`violinplot` gained the y axis label it was missing.
 
 ## 7.7.0
 
