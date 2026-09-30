@@ -106,7 +106,7 @@ include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
 include("modelstats.jl")
-include("plot.jl")
+include("plots/plots.jl")
 include("tables.jl")
 include("rstar.jl")
 
