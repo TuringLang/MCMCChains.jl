@@ -46,17 +46,31 @@ function _compute_plot_data(
     min = minimum(k_density.density .+ h)
     q_int = (show_qi ? [qs[1], chain_med, qs[2]] : [chain_med])
 
-    return par,
-    hpdi,
-    lower_hpd,
-    upper_hpd,
-    h,
-    qs,
-    k_density,
-    x_int,
-    val,
-    chain_med,
-    chain_mean,
-    min,
-    q_int
+    return (;
+        par,
+        hpdi,
+        lower_hpd,
+        upper_hpd,
+        h,
+        qs,
+        k_density,
+        x_int,
+        val,
+        chain_med,
+        chain_mean,
+        min,
+        q_int,
+    )
+end
+
+"""
+    _interval_rows(chains, par_names; kwargs...)
+
+Per-parameter plot data for the ridgeline and forest recipes.
+
+Computing every row up front lets the recipes size the axis to the tallest ridge, which a
+per-row loop cannot do because the first row does not know about the others.
+"""
+function _interval_rows(chains::Chains, par_names::AbstractVector{Symbol}; kwargs...)
+    return [_compute_plot_data(i, chains, par_names; kwargs...) for i = 1:length(par_names)]
 end

@@ -1,5 +1,6 @@
 include("userplots.jl")
 include("types.jl")
+include("attributes.jl")
 include("compute.jl")
 include("recipes/chains.jl")
 include("recipes/series.jl")
