@@ -1,5 +1,6 @@
 @shorthands meanplot
 @shorthands autocorplot
+@shorthands rankplot
 @shorthands mixeddensity
 @shorthands pooleddensity
 @shorthands traceplot

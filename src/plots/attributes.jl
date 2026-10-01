@@ -17,18 +17,19 @@ end
 
 Colours used to distinguish chains.
 
-Taken from ArviZ's default style, which picked them for distinguishability under the common
-forms of colour blindness.
+The Okabe-Ito palette, designed to stay distinguishable under protanopia, deuteranopia and
+tritanopia. Blue, vermillion and green lead because the common case is a handful of chains,
+and those three separate most strongly from each other.
 """
 const CHAIN_PALETTE = [
-    "#36ACC6",  # cyan
-    "#F66D7F",  # rose
-    "#FAC364",  # amber
-    "#7C2695",  # purple
-    "#228306",  # green
-    "#A252F4",  # violet
-    "#63F0EA",  # turquoise
-    "#A77E4F",  # brown
+    "#0072B2",  # blue
+    "#D55E00",  # vermillion
+    "#009E73",  # bluish green
+    "#CC79A7",  # reddish purple
+    "#E69F00",  # orange
+    "#56B4E9",  # sky blue
+    "#F0E442",  # yellow
+    "#000000",  # black
 ]
 
 # Filled series stack on top of each other when several chains are drawn, so they need to be
@@ -44,9 +45,10 @@ const AXIS_COLOUR = "#545454"
 
 Apply the shared look to everything that is not data.
 
-Follows ArviZ's default style: no grid, only the left and bottom spines, an unboxed legend,
-and grey rather than black for text and axes, so the data carries the contrast. Each
-setting is a default, so anything the caller passes wins.
+Gridlines, a full frame and a legend box are ink that encodes nothing, and on a diagnostic
+plot they compete with the thing being judged, so they are off by default. Text and axes are
+grey rather than black for the same reason. Each setting is a default, so anything the
+caller passes wins.
 """
 function _apply_chrome!(plotattributes)
     get!(plotattributes, :grid, false)

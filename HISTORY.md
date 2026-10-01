@@ -7,6 +7,8 @@ Both now leave room for the outermost rows and draw the legend outside the axes,
 Multi-panel plots such as `meanplot` and `mixeddensity` now reserve room for the y axis label, which Plots otherwise draws off the left edge of a tall figure.
 Plots now share a single look based on ArviZ's default style: no grid, only the left and bottom spines, an unboxed legend, grey rather than black chrome, and a colour-blind safe palette that keeps a chain the same colour in every panel.
 `violinplot` gained the y axis label it was missing.
+Added `rankplot`, which ranks every draw against every other draw and shows each chain's share of the rank range against the uniform count it should hit.
+Vehtari et al. (2021) recommend it in place of the trace plot, which loses its diagnostic value once chains are long.
 
 ## 7.7.0
 

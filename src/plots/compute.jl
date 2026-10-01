@@ -74,3 +74,27 @@ per-row loop cannot do because the first row does not know about the others.
 function _interval_rows(chains::Chains, par_names::AbstractVector{Symbol}; kwargs...)
     return [_compute_plot_data(i, chains, par_names; kwargs...) for i = 1:length(par_names)]
 end
+
+"""
+    _rank_bin_counts(val, nbins)
+
+Rank every draw against every other draw, then count each chain's ranks into `nbins`
+equal-width bins.
+
+`val` is iterations by chains. Ranking pools all chains, so under good mixing each chain
+holds an equal share of every rank range and its counts are flat. Returns the bin edges and
+a bins by chains matrix of counts.
+"""
+function _rank_bin_counts(val::AbstractMatrix, nbins::Integer)
+    niter, nchains = size(val)
+    ntotal = niter * nchains
+    ranks = reshape(ordinalrank(vec(val)), niter, nchains)
+    edges = range(0.5, ntotal + 0.5; length = nbins + 1)
+    counts = zeros(Int, nbins, nchains)
+    width = (ntotal) / nbins
+    for c = 1:nchains, r in view(ranks, :, c)
+        b = min(nbins, Int(fld(r - 1, width)) + 1)
+        counts[b, c] += 1
+    end
+    return edges, counts
+end
