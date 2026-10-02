@@ -1,6 +1,7 @@
 @recipe function f(p::_DensityPlot)
     xaxis --> "Sample value"
     yaxis --> "Density"
+    color_palette --> CHAIN_PALETTE
     trim --> true
     [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
 end
@@ -8,7 +9,9 @@ end
 @recipe function f(p::_HistogramPlot)
     xaxis --> "Sample value"
     yaxis --> "Frequency"
-    fillalpha --> 0.7
+    color_palette --> CHAIN_PALETTE
+    fillalpha --> FILL_ALPHA
+    linealpha --> 0.8
     bins --> 25
     trim --> true
     [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
@@ -16,6 +19,7 @@ end
 
 @recipe function f(p::_MeanPlot)
     seriestype := :path
+    color_palette --> CHAIN_PALETTE
     xaxis --> "Iteration"
     yaxis --> "Mean"
     range(p.c), cummean(p.val)
@@ -23,6 +27,7 @@ end
 
 @recipe function f(p::_AutocorPlot)
     seriestype := :path
+    color_palette --> CHAIN_PALETTE
     xaxis --> "Lag"
     yaxis --> "Autocorrelation"
     p.lags, p.val
@@ -30,6 +35,7 @@ end
 
 @recipe function f(p::_TracePlot)
     seriestype := :path
+    color_palette --> CHAIN_PALETTE
     xaxis --> "Iteration"
     yaxis --> "Sample value"
     range(p.c), p.val
@@ -52,6 +58,9 @@ end
     group_labels = repeat(1:num_series, inner = size(p.val, 1))
 
     xticks := (1:num_series, plot_labels)
+    yaxis --> "Sample value"
+    color_palette --> CHAIN_PALETTE
+    fillalpha --> FILL_ALPHA
     legend --> false
 
     @series begin

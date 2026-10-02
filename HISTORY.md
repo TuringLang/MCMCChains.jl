@@ -3,6 +3,8 @@
 ## 7.8.0
 
 Added `rankplot`.
+Plots drop the grid, the top and right spines, and the legend box, and draw chains from the Okabe-Ito palette.
+`violinplot` gained a y axis label.
 `ridgelineplot` and `forestplot` now plot every parameter when no parameter list is given.
 Multi-panel plots reserve room for the y axis label, which was being clipped.
 
