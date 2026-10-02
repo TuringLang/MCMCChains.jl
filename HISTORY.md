@@ -2,6 +2,7 @@
 
 ## 7.8.0
 
+Added `rankplot`.
 `ridgelineplot` and `forestplot` now plot every parameter when no parameter list is given.
 Multi-panel plots reserve room for the y axis label, which was being clipped.
 

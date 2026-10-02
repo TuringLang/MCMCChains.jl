@@ -20,7 +20,8 @@ import StatsBase:
     sample,
     summarystats,
     cov,
-    ecdf
+    ecdf,
+    ordinalrank
 
 import MCMCDiagnosticTools
 import MLJModelInterface

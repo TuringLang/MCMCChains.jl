@@ -28,6 +28,10 @@ Random.seed!(0)
     println("Interval plots")
     @time include("interval_plot_tests.jl")
 
+    # run tests for rank plots
+    println("Rank plots")
+    @time include("rank_plot_tests.jl")
+
     println("Display")
     @time include("display_tests.jl")
 

@@ -75,3 +75,23 @@ end
         end
     end
 end
+
+@recipe function f(p::_RankPlot; nbins = 20)
+    edges, counts = _rank_bin_counts(p.val, nbins)
+    centres = [(edges[i] + edges[i+1]) / 2 for i = 1:(length(edges)-1)]
+
+    seriestype := :step
+    xaxis --> "Rank (pooled over chains)"
+    yaxis --> "Count"
+    color_palette --> CHAIN_PALETTE
+    # A flat line at the expected count is the reference the eye compares against.
+    @series begin
+        seriestype := :hline
+        label := nothing
+        linecolor := AXIS_COLOUR
+        linestyle := :dash
+        linewidth := 1
+        [size(p.val, 1) / nbins]
+    end
+    centres, counts
+end
