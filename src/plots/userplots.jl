@@ -147,3 +147,30 @@ By default, all parameters are plotted.
 - `hpd_val` (default: `[0.05, 0.2]`): The complementary probability mass(es) of the highest posterior density intervals that are plotted if `fill_hpd = true` or `show_hpdi = true`.
 """
 @userplot ForestPlot
+
+"""
+    _interval_args(p, name)
+
+Chain and parameter names for a ridgeline or forest plot.
+
+`@userplot` leaves `p.args` untyped, so without this a missing parameter list surfaces as a
+`BoundsError` from inside the recipe. Omitting the list plots every parameter.
+"""
+function _interval_args(p, name::AbstractString)
+    if length(p.args) == 1
+        chn = only(p.args)
+        chn isa Chains ||
+            throw(ArgumentError("$name expects a Chains as its first argument"))
+        return chn, names(chn, :parameters)
+    elseif length(p.args) == 2
+        chn, par_names = p.args
+        chn isa Chains ||
+            throw(ArgumentError("$name expects a Chains as its first argument"))
+        return chn, par_names
+    end
+    throw(
+        ArgumentError(
+            "$name expects a Chains and optionally a vector of parameter names, got $(length(p.args)) arguments",
+        ),
+    )
+end
