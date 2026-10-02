@@ -1,5 +1,10 @@
 # MCMCChains Changelog
 
+## 7.8.0
+
+`ridgelineplot` and `forestplot` now plot every parameter when no parameter list is given.
+Multi-panel plots reserve room for the y axis label, which was being clipped.
+
 ## 7.7.0
 
 Remove support for PrettyTables.jl versions prior to 3.0.

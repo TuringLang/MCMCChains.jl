@@ -13,44 +13,51 @@
     ordered = false,
 )
 
-    chn = p.args[1]
-    par_names = p.args[2]
+    chn, par_names = _interval_args(p, "ridgelineplot")
+
+    rows = _interval_rows(
+        chn,
+        par_names;
+        hpd_val = hpd_val,
+        q = q,
+        spacer = spacer,
+        _riser = _riser,
+        show_mean = show_mean,
+        show_median = show_median,
+        show_qi = show_qi,
+        show_hpdi = show_hpdi,
+        fill_q = fill_q,
+        fill_hpd = fill_hpd,
+        ordered = ordered,
+    )
+    ridge_top = maximum(maximum(row.val) for row in rows)
 
     for i = 1:length(par_names)
-        par,
-        hpdi,
-        lower_hpd,
-        upper_hpd,
-        h,
-        qs,
-        k_density,
-        x_int,
-        val,
-        chain_med,
-        chain_mean,
-        min,
-        q_int = _compute_plot_data(
-            i,
-            chn,
-            par_names;
-            hpd_val = hpd_val,
-            q = q,
-            spacer = spacer,
-            _riser = _riser,
-            show_mean = show_mean,
-            show_median = show_median,
-            show_qi = show_qi,
-            show_hpdi = show_hpdi,
-            fill_q = fill_q,
-            fill_hpd = fill_hpd,
-            ordered = ordered,
-        )
+        (;
+            par,
+            hpdi,
+            lower_hpd,
+            upper_hpd,
+            h,
+            qs,
+            k_density,
+            x_int,
+            val,
+            chain_med,
+            chain_mean,
+            min,
+            q_int,
+        ) = rows[i]
 
         yticks --> (
             length(par_names) > 1 ?
             (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default
         )
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
+        xaxis --> "Sample value"
+        # Rows span the full width, so an inset legend always lands on the data.
+        legend --> :outertopright
+        ylims --> _interval_ylims(_riser, spacer, length(par_names), ridge_top)
         @series begin
             seriestype := :hline
             label := nothing
@@ -129,44 +136,50 @@ end
     ordered = false,
 )
 
-    chn = p.args[1]
-    par_names = p.args[2]
+    chn, par_names = _interval_args(p, "forestplot")
+
+    rows = _interval_rows(
+        chn,
+        par_names;
+        hpd_val = hpd_val,
+        q = q,
+        spacer = spacer,
+        _riser = _riser,
+        show_mean = show_mean,
+        show_median = show_median,
+        show_qi = show_qi,
+        show_hpdi = show_hpdi,
+        fill_q = fill_q,
+        fill_hpd = fill_hpd,
+        ordered = ordered,
+    )
 
     for i = 1:length(par_names)
-        par,
-        hpdi,
-        lower_hpd,
-        upper_hpd,
-        h,
-        qs,
-        k_density,
-        x_int,
-        val,
-        chain_med,
-        chain_mean,
-        min,
-        q_int = _compute_plot_data(
-            i,
-            chn,
-            par_names;
-            hpd_val = hpd_val,
-            q = q,
-            spacer = spacer,
-            _riser = _riser,
-            show_mean = show_mean,
-            show_median = show_median,
-            show_qi = show_qi,
-            show_hpdi = show_hpdi,
-            fill_q = fill_q,
-            fill_hpd = fill_hpd,
-            ordered = ordered,
-        )
+        (;
+            par,
+            hpdi,
+            lower_hpd,
+            upper_hpd,
+            h,
+            qs,
+            k_density,
+            x_int,
+            val,
+            chain_med,
+            chain_mean,
+            min,
+            q_int,
+        ) = rows[i]
 
         yticks --> (
             length(par_names) > 1 ?
             (_riser .+ ((1:length(par_names)) .- 1) .* spacer, string.(par)) : :default
         )
         yaxis --> (length(par_names) > 1 ? "Parameters" : "Density")
+        xaxis --> "Sample value"
+        # Rows span the full width, so an inset legend always lands on the data.
+        legend --> :outertopright
+        ylims --> _interval_ylims(_riser, spacer, length(par_names), -Inf)
 
         for j = 1:length(hpdi)
             @series begin
