@@ -18,7 +18,8 @@ end
 Colours used to distinguish chains.
 
 The Okabe-Ito palette, designed to stay distinguishable under protanopia, deuteranopia and
-tritanopia.
+tritanopia. Blue, vermillion and green lead because the common case is a handful of chains,
+and those three separate most strongly from each other.
 """
 const CHAIN_PALETTE = [
     "#0072B2",  # blue
@@ -31,5 +32,37 @@ const CHAIN_PALETTE = [
     "#000000",  # black
 ]
 
+# Filled series stack on top of each other when several chains are drawn, so they need to be
+# see-through to stay readable.
+const FILL_ALPHA = 0.45
+
 # Grey rather than black for anything that is not data, so the data carries the contrast.
+const TEXT_COLOUR = "#262626"
 const AXIS_COLOUR = "#545454"
+
+"""
+    _apply_chrome!(plotattributes)
+
+Apply the shared look to everything that is not data.
+
+Gridlines, a full frame and a legend box are ink that encodes nothing, and on a diagnostic
+plot they compete with the thing being judged, so they are off by default. Text and axes are
+grey rather than black for the same reason. Each setting is a default, so anything the
+caller passes wins.
+"""
+function _apply_chrome!(plotattributes)
+    get!(plotattributes, :grid, false)
+    get!(plotattributes, :framestyle, :axes)
+    get!(plotattributes, :foreground_color_legend, nothing)
+    get!(plotattributes, :foreground_color_axis, AXIS_COLOUR)
+    get!(plotattributes, :foreground_color_border, AXIS_COLOUR)
+    get!(plotattributes, :foreground_color_text, TEXT_COLOUR)
+    get!(plotattributes, :foreground_color_guide, TEXT_COLOUR)
+    get!(plotattributes, :titlefontsize, 12)
+    get!(plotattributes, :guidefontsize, 10)
+    get!(plotattributes, :tickfontsize, 8)
+    get!(plotattributes, :legendfontsize, 8)
+    get!(plotattributes, :left_margin, (8, :mm))
+    get!(plotattributes, :bottom_margin, (3, :mm))
+    return nothing
+end
