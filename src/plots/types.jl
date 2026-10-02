@@ -14,6 +14,10 @@ struct _HistogramPlot
     c::Any
     val::Any
 end
+struct _RankPlot
+    c::Any
+    val::Any
+end
 struct _AutocorPlot
     lags::Any
     val::Any
@@ -36,6 +40,7 @@ const translationdict = Dict(
     :density => _DensityPlot,
     :histogram => _HistogramPlot,
     :autocorplot => _AutocorPlot,
+    :rankplot => _RankPlot,
     :pooleddensity => _DensityPlot,
     :violinplot => _ViolinPlot,
     :violin => _ViolinPlot,
