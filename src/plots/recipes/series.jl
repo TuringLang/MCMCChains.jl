@@ -92,7 +92,9 @@ end
     seriestype := :step
     xaxis --> "Rank (pooled over chains)"
     yaxis --> "Count"
-    color_palette --> CHAIN_PALETTE
+    # Named rather than taken from the palette in turn, so that the reference line below
+    # does not shift chain 1 off the colour it has in every other plot.
+    linecolor --> _chain_colours(size(counts, 2))
     # A flat line at the expected count is the reference the eye compares against.
     @series begin
         seriestype := :hline

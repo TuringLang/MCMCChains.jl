@@ -41,6 +41,16 @@ const TEXT_COLOUR = "#262626"
 const AXIS_COLOUR = "#545454"
 
 """
+    _chain_colours(nchains)
+
+The first `nchains` palette entries as a row vector, which is how Plots reads one colour per
+column of a matrix of series.
+"""
+function _chain_colours(nchains)
+    return permutedims([CHAIN_PALETTE[mod1(i, length(CHAIN_PALETTE))] for i = 1:nchains])
+end
+
+"""
     _axis_default!(plotattributes, key, value)
 
 Set an axis attribute, unless the caller already set it.
