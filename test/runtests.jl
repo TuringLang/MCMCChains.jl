@@ -99,6 +99,10 @@ Random.seed!(0)
     println("Plot style")
     @time include("plot_style_tests.jl")
 
+    # run tests for the convergence and sampler diagnostic plots
+    println("Diagnostic plots")
+    @time include("diagnostic_plot_tests.jl")
+
     # Array printing depends on Julia version and architecture,
     # therefore we only run doctests with Julia >= 1.7 and on 64bit where `Int === Int64`
     if VERSION >= v"1.7" && Sys.WORD_SIZE == 64

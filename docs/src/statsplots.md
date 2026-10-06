@@ -112,6 +112,76 @@ Use `nbins` to set how many bins the ranks are collected into.
 rankplot(chn, nbins = 10)
 ```
 
+## Empirical CDF
+
+```@example statsplots
+plot(chn, seriestype = :ecdfplot)
+```
+
+Two chains that agree lie on top of each other here, which is easier to judge than two density curves, because the eye compares positions rather than areas.
+The name `ecdfplot` belongs to StatsPlots and takes a vector, so a chain goes through `plot` with the series type.
+
+## Convergence diagnostics
+
+Most of the time the question is only whether anything went wrong, and `diagnosticsplot` answers that in one grid.
+Each cell is coloured by whether the value is fine, worth a look, or bad, and grey where the diagnostic does not apply.
+
+```@example statsplots
+diagnosticsplot(chn)
+```
+
+`essplot`, `rhatplot` and `mcseplot` draw one dot per parameter for the diagnostics that [`ess`](@ref), [`rhat`](@ref) and [`mcse`](@ref) already report.
+The dashed line is the threshold recommended by [Vehtari et al. (2021)](https://doi.org/10.1214/20-BA1221), an effective sample size of 400 and an R-hat of 1.01.
+
+```@example statsplots
+essplot(chn)
+```
+
+`kind` picks which effective sample size to estimate.
+
+```@example statsplots
+essplot(chn, kind = :tail)
+```
+
+`relative = true` divides by the number of draws, which keeps the axis readable when chains are long.
+
+```@example statsplots
+essplot(chn, relative = true)
+```
+
+```@example statsplots
+rhatplot(chn)
+```
+
+```@example statsplots
+mcseplot(chn, relative = true)
+```
+
+A single number says how the run ended.
+`evolutionplot` says whether it was still improving, which is what tells you that running for longer would help.
+
+```@example statsplots
+evolutionplot(chn)
+```
+
+```@example statsplots
+evolutionplot(chn, diagnostic = :rhat)
+```
+
+## Parallel coordinates
+
+`parallelplot` draws one line per draw across all parameters, standardised so that parameters on different scales share one axis.
+
+```@example statsplots
+parallelplot(chn)
+```
+
+When the chain records divergent transitions they are drawn on top in a second colour, which is what makes this plot worth reading: it shows where in the parameter space the sampler is failing.
+
+```@example statsplots
+parallelplot(chn, num_draws = 100, standardise = false)
+```
+
 ## Violin
 
 Violin plots are similar to box plots but also show the probability density of the data at different values, smoothed by a kernel density estimator.
@@ -190,6 +260,41 @@ energyplot(chn_energy)
 ```@example statsplots
 # The plot can also be generated as a histogram.
 energyplot(chn_energy, kind=:histogram)
+```
+
+## Sampler diagnostics
+
+`nutsplot` draws the statistics an HMC sampler records about its own behaviour, one series per chain.
+
+```@example statsplots
+# A chain carrying the sampler statistics NUTS records.
+n_iter = 500
+n_chain = 4
+nuts_val = hcat(
+    randn(n_iter, 1, n_chain),
+    clamp.(0.9 .+ 0.08 .* randn(n_iter, 1, n_chain), 0, 1),
+    0.35 .+ 0.02 .* randn(n_iter, 1, n_chain),
+    float.(rand(2:5, n_iter, 1, n_chain)),
+    float.(rand(n_iter, 1, n_chain) .< 0.03),
+)
+chn_nuts = Chains(
+    nuts_val,
+    [:a, :acceptance_rate, :step_size, :tree_depth, :numerical_error],
+    (
+        parameters = [:a],
+        internals = [:acceptance_rate, :step_size, :tree_depth, :numerical_error],
+    ),
+)
+
+nutsplot(chn_nuts)
+```
+
+```@example statsplots
+nutsplot(chn_nuts, kind = :treedepth)
+```
+
+```@example statsplots
+nutsplot(chn_nuts, kind = :divergence)
 ```
 
 For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
@@ -368,10 +473,6 @@ nothing # hide
 ## API
 
 ```@docs
-MCMCChains.CHAIN_PALETTE
-plot_style
-plot_style!
-reset_plot_style!
 energyplot
 energyplot!
 ppcplot
@@ -380,4 +481,22 @@ ridgelineplot
 ridgelineplot!
 forestplot
 forestplot!
+diagnosticsplot
+diagnosticsplot!
+essplot
+essplot!
+rhatplot
+rhatplot!
+mcseplot
+mcseplot!
+evolutionplot
+evolutionplot!
+parallelplot
+parallelplot!
+nutsplot
+nutsplot!
+MCMCChains.CHAIN_PALETTE
+plot_style
+plot_style!
+reset_plot_style!
 ```
