@@ -12,6 +12,8 @@
     random_seed = nothing,
     ppc_group = :posterior,
 )
+    _apply_chrome!(plotattributes)
+
     if length(p.args) < 3
         error(
             "ppcplot requires at least 3 arguments: (posterior_chains, posterior_predictive_chains, observed_data)",
