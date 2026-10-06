@@ -32,6 +32,9 @@ end
 
     if :corner ∉ ptypes
         size --> (ntypes * width, N * height)
+        # Read before the default below, so that a caller who asks for a legend keeps it on
+        # every panel and a caller who asks for none gets none.
+        asked_for_legend = haskey(plotattributes, :legend)
         legend --> false
         _apply_chrome!(plotattributes)
 
@@ -39,6 +42,11 @@ end
         if multiple_plots
             layout := (N, ntypes)
         end
+
+        # Without this the panels are a set of unnamed coloured lines. One panel carries the
+        # names by default, because repeating the same legend on every panel is ink that
+        # says nothing new and lands on top of the data.
+        legend_panel = asked_for_legend ? :none : plot_style().legend_panel
 
         i = 0
         for par in parameters
@@ -48,6 +56,9 @@ end
                 @series begin
                     if multiple_plots
                         subplot := i
+                    end
+                    if legend_panel === :all || (legend_panel === :first && i == 1)
+                        legend := :best
                     end
                     colordim := colordim
                     seriestype := ptype

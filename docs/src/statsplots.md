@@ -332,9 +332,46 @@ ppcplot(posterior_chains::Chains, posterior_predictive_chains::Chains, observed_
         legend=true, random_seed=nothing, ppc_group=:posterior)
 ```
 
+## Appearance
+
+Every plot on this page is drawn with the same look: no grid, no box around the plot or the legend, grey axes and text, and chains coloured from the Okabe-Ito palette, which stays readable for the common forms of colour blindness.
+
+`plot_style!` changes that for every plot drawn after it.
+
+```@example statsplots
+plot_style!(grid = :dots, framestyle = :box)
+meanplot(chn)
+```
+
+```@example statsplots
+plot_style!(grid = :none, framestyle = :axes, palette = ["#332288", "#117733", "#DDCC77", "#CC6677"])
+meanplot(chn)
+```
+
+`background = :transparent` draws no background at all, which is what you want when the page behind the plot is not white.
+
+Everything `plot_style!` sets is a default, so anything passed to a single plot still wins.
+
+```@example statsplots
+reset_plot_style!()
+meanplot(chn, grid = true, legend = :outertopright)
+```
+
+By default only the first panel of a multi-panel plot names the chains, since the same legend on every panel is ink that says nothing new and lands on top of the data.
+Set `legend_panel` to `:all` or `:none` to change that.
+
+```@example statsplots
+reset_plot_style!()
+nothing # hide
+```
+
 ## API
 
 ```@docs
+MCMCChains.CHAIN_PALETTE
+plot_style
+plot_style!
+reset_plot_style!
 energyplot
 energyplot!
 ppcplot

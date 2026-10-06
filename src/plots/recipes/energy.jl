@@ -29,7 +29,6 @@
     xaxis := "Standardized Energy"
     yaxis := "Density"
     legend := :topright
-    color_palette --> CHAIN_PALETTE
 
     @series begin
         seriestype := kind
