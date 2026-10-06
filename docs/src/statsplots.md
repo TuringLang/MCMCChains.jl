@@ -96,6 +96,22 @@ histogram(chn, bins = 60, fillalpha = 0.7)
 autocorplot(chn)
 ```
 
+## Rank
+
+A rank plot histograms the ranks of the draws pooled over all chains, one line per chain.
+If every chain is sampling the same posterior then the ranks are uniform, so each chain should stay near the dashed line at the expected count.
+Rank plots keep working on long chains, where a trace plot turns into a band of ink ([Vehtari et al. 2021](https://doi.org/10.1214/20-BA1221)).
+
+```@example statsplots
+rankplot(chn)
+```
+
+Use `nbins` to set how many bins the ranks are collected into.
+
+```@example statsplots
+rankplot(chn, nbins = 10)
+```
+
 ## Violin
 
 Violin plots are similar to box plots but also show the probability density of the data at different values, smoothed by a kernel density estimator.
