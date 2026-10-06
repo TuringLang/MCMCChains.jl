@@ -41,6 +41,23 @@ const TEXT_COLOUR = "#262626"
 const AXIS_COLOUR = "#545454"
 
 """
+    _axis_default!(plotattributes, key, value)
+
+Set an axis attribute, unless the caller already set it.
+
+Plots expands an axis attribute such as `grid` into `xgrid`, `ygrid` and `zgrid` before a
+recipe runs, and does not always leave the original behind, so a plain `get!` on `grid`
+finds nothing and overrules the caller.
+"""
+function _axis_default!(plotattributes, key::Symbol, value)
+    for prefix in ("", "x", "y", "z")
+        haskey(plotattributes, Symbol(prefix, key)) && return nothing
+    end
+    plotattributes[key] = value
+    return nothing
+end
+
+"""
     _apply_chrome!(plotattributes)
 
 Apply the shared look to everything that is not data.
@@ -51,16 +68,16 @@ grey rather than black for the same reason. Each setting is a default, so anythi
 caller passes wins.
 """
 function _apply_chrome!(plotattributes)
-    get!(plotattributes, :grid, false)
-    get!(plotattributes, :framestyle, :axes)
+    _axis_default!(plotattributes, :grid, false)
+    _axis_default!(plotattributes, :framestyle, :axes)
     get!(plotattributes, :foreground_color_legend, nothing)
-    get!(plotattributes, :foreground_color_axis, AXIS_COLOUR)
-    get!(plotattributes, :foreground_color_border, AXIS_COLOUR)
+    _axis_default!(plotattributes, :foreground_color_axis, AXIS_COLOUR)
+    _axis_default!(plotattributes, :foreground_color_border, AXIS_COLOUR)
+    _axis_default!(plotattributes, :foreground_color_guide, TEXT_COLOUR)
     get!(plotattributes, :foreground_color_text, TEXT_COLOUR)
-    get!(plotattributes, :foreground_color_guide, TEXT_COLOUR)
     get!(plotattributes, :titlefontsize, 12)
-    get!(plotattributes, :guidefontsize, 10)
-    get!(plotattributes, :tickfontsize, 8)
+    _axis_default!(plotattributes, :guidefontsize, 10)
+    _axis_default!(plotattributes, :tickfontsize, 8)
     get!(plotattributes, :legendfontsize, 8)
     get!(plotattributes, :left_margin, (8, :mm))
     get!(plotattributes, :bottom_margin, (3, :mm))

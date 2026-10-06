@@ -4,6 +4,7 @@
 
 Added `rankplot`.
 Plots drop the grid, the top and right spines, and the legend box, and draw chains from the Okabe-Ito palette.
+An attribute passed to a plot is no longer overruled by that look, which was dropping `grid`, `framestyle` and the font sizes.
 `violinplot` gained a y axis label.
 `ridgelineplot` and `forestplot` now plot every parameter when no parameter list is given.
 Multi-panel plots reserve room for the y axis label, which was being clipped.
