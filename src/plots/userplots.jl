@@ -150,6 +150,122 @@ By default, all parameters are plotted.
 @userplot ForestPlot
 
 """
+    essplot(chains::Chains; kind=:bulk, relative=false, kwargs...)
+
+Plot the effective sample size of every parameter in `chains`.
+
+One dot per parameter, with a dashed line at the effective sample size of 400 that Vehtari et al. (2021) recommend reaching before trusting ``\\widehat{R}``.
+
+# Keywords
+- `kind::Symbol` (default: `:bulk`): which effective sample size to estimate, one of `:bulk`, `:tail` or `:basic`.
+- `relative::Bool` (default: `false`): divide by the number of draws, so the dots and the reference line are fractions.
+
+# References
+Vehtari, Gelman, Simpson, Carpenter and Bürkner (2021). Rank-Normalization, Folding, and Localization: An Improved R̂ for Assessing Convergence of MCMC (with Discussion). Bayesian Analysis 16(2). https://doi.org/10.1214/20-BA1221
+"""
+@userplot EssPlot
+
+"""
+    rhatplot(chains::Chains; kwargs...)
+
+Plot the ``\\widehat{R}`` diagnostic of every parameter in `chains`.
+
+One dot per parameter, with a dashed line at 1.01, the threshold Vehtari et al. (2021) recommend.
+
+# Keywords
+- `kind::Symbol` (default: `:rank`): which ``\\widehat{R}`` to estimate, passed on to [`rhat`](@ref).
+
+# References
+Vehtari, Gelman, Simpson, Carpenter and Bürkner (2021). Rank-Normalization, Folding, and Localization: An Improved R̂ for Assessing Convergence of MCMC (with Discussion). Bayesian Analysis 16(2). https://doi.org/10.1214/20-BA1221
+"""
+@userplot RhatPlot
+
+"""
+    mcseplot(chains::Chains; relative=false, kwargs...)
+
+Plot the Monte Carlo standard error of every parameter in `chains`.
+
+# Keywords
+- `relative::Bool` (default: `false`): divide by the posterior standard deviation, which puts parameters on different scales on one axis.
+"""
+@userplot McsePlot
+
+"""
+    diagnosticsplot(chains::Chains; kwargs...)
+
+Every convergence diagnostic for every parameter, in one grid.
+
+Each cell is coloured by whether the value is fine, worth a look, or bad, so the usual question of whether anything at all went wrong is one glance rather than five plots.
+The thresholds follow Vehtari et al. (2021): ``\\widehat{R}`` at most 1.01 and an effective sample size of at least 400.
+
+# Keywords
+- `digits` is read per column, so each diagnostic is rounded to what is worth reading.
+
+# References
+Vehtari, Gelman, Simpson, Carpenter and Bürkner (2021). Rank-Normalization, Folding, and Localization: An Improved R̂ for Assessing Convergence of MCMC (with Discussion). Bayesian Analysis 16(2). https://doi.org/10.1214/20-BA1221
+"""
+@userplot DiagnosticsPlot
+
+"""
+    evolutionplot(chains::Chains; diagnostic=:ess, npoints=20, kwargs...)
+
+Plot a diagnostic against the number of draws it was computed from.
+
+A single effective sample size says how the run ended. This says whether it was still improving, which is what tells you that running for longer would help.
+
+# Keywords
+- `diagnostic::Symbol` (default: `:ess`): `:ess` or `:rhat`.
+- `npoints::Integer` (default: `20`): how many prefixes of the chain to recompute at.
+"""
+@userplot EvolutionPlot
+
+"""
+    parallelplot(chains::Chains; kwargs...)
+
+Draw one line per draw across all parameters.
+
+Divergent transitions are drawn on top in a contrasting colour when the chain carries them, which is how a parallel coordinates plot earns its place: it shows which part of the parameter space the sampler fails in.
+
+# Keywords
+- `standardise::Bool` (default: `true`): centre and scale each parameter, so parameters on different scales share one axis.
+- `num_draws::Integer` (default: `nothing`): thin to this many draws, chosen uniformly. All draws are shown by default.
+- `random_seed::Integer` (default: `nothing`): seed for choosing which draws to keep when thinning.
+"""
+@userplot ParallelPlot
+
+"""
+    nutsplot(chains::Chains; kind=:acceptance, kwargs...)
+
+Plot a NUTS sampler statistic for each chain.
+
+Only available for chains that carry the sampler statistic being asked for in their `:internals` section.
+
+# Keywords
+- `kind::Symbol` (default: `:acceptance`): which statistic to draw.
+  - `:acceptance` uses `:acceptance_rate`
+  - `:stepsize` uses `:step_size`
+  - `:treedepth` uses `:tree_depth`
+  - `:divergence` uses `:numerical_error`, and counts divergent transitions per chain
+"""
+@userplot NutsPlot
+
+"""
+    _chain_arg(p, name)
+
+The chain a one-argument user plot was called with.
+
+`@userplot` leaves `p.args` untyped, so without this a wrong call surfaces from deep inside
+the recipe.
+"""
+function _chain_arg(p, name::AbstractString)
+    length(p.args) == 1 ||
+        throw(ArgumentError("$name expects one Chains, got $(length(p.args)) arguments"))
+    chn = only(p.args)
+    chn isa Chains || throw(ArgumentError("$name expects a Chains, got a $(typeof(chn))"))
+    return chn
+end
+
+"""
     _interval_args(p, name)
 
 Chain and parameter names for a ridgeline or forest plot.

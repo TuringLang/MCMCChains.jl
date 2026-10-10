@@ -18,9 +18,21 @@ struct _RankPlot
     c::Any
     val::Any
 end
+struct _EcdfPlot
+    c::Any
+    val::Any
+end
 struct _AutocorPlot
     lags::Any
     val::Any
+end
+# One dot per parameter, used by every per-parameter diagnostic.
+struct _ParameterDots
+    par_names::Any
+    val::Any
+    # references: values to draw a dashed line at, such as the R-hat threshold.
+    references::Any
+    label::Any
 end
 struct _ViolinPlot
     c::Any
@@ -41,6 +53,7 @@ const translationdict = Dict(
     :histogram => _HistogramPlot,
     :autocorplot => _AutocorPlot,
     :rankplot => _RankPlot,
+    :ecdfplot => _EcdfPlot,
     :pooleddensity => _DensityPlot,
     :violinplot => _ViolinPlot,
     :violin => _ViolinPlot,

@@ -22,6 +22,14 @@ end
     series
 end
 
+@recipe function f(p::_EcdfPlot)
+    seriestype := :steppost
+    xaxis --> "Sample value"
+    yaxis --> "ECDF"
+    xs, ys = _ecdf_series(p.val)
+    xs, ys
+end
+
 @recipe function f(p::_MeanPlot)
     seriestype := :path
     xaxis --> "Iteration"
