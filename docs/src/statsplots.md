@@ -77,6 +77,19 @@ density(chn)
 histogram(chn)
 ```
 
+Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
+
+The bin count comes from the draws, taking whichever of [Freedman and Diaconis (1981)](https://doi.org/10.1007/BF01025868) and Sturges asks for more.
+Pass `bins` to override it, as a rule, a count, or the edges themselves.
+
+```@example statsplots
+histogram(chn, bins = :sturges)
+```
+
+```@example statsplots
+histogram(chn, bins = 60, fillalpha = 0.7)
+```
+
 ## Autocorrelation
 
 ```@example statsplots
