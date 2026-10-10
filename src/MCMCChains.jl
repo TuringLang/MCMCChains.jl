@@ -73,6 +73,8 @@ export rstar
 
 export hpd
 
+export plot_style, plot_style!, reset_plot_style!
+
 """
     Chains
 

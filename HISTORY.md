@@ -8,6 +8,8 @@ An attribute passed to a plot is no longer overruled by that look, which was dro
 `rankplot` draws chain 1 in the same colour as every other plot does.
 A histogram bins every chain of a parameter over the same edges, so the bars line up between chains.
 Histograms choose their bin count from the draws, by Freedman and Diaconis against Sturges, rather than always using 25.
+Added `plot_style!` and `reset_plot_style!` to set the palette, the grid, the background, the frame, the font and where a multi-panel plot names its chains.
+Multi-panel plots name the chains in one panel, instead of leaving the lines unlabelled.
 `violinplot` gained a y axis label.
 `ridgelineplot` and `forestplot` now plot every parameter when no parameter list is given.
 Multi-panel plots reserve room for the y axis label, which was being clipped.

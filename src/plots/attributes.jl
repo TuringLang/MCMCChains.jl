@@ -13,44 +13,6 @@ function _interval_ylims(riser, spacer, nparams, top)
 end
 
 """
-    CHAIN_PALETTE
-
-Colours used to distinguish chains.
-
-The Okabe-Ito palette, designed to stay distinguishable under protanopia, deuteranopia and
-tritanopia. Blue, vermillion and green lead because the common case is a handful of chains,
-and those three separate most strongly from each other.
-"""
-const CHAIN_PALETTE = [
-    "#0072B2",  # blue
-    "#D55E00",  # vermillion
-    "#009E73",  # bluish green
-    "#CC79A7",  # reddish purple
-    "#E69F00",  # orange
-    "#56B4E9",  # sky blue
-    "#F0E442",  # yellow
-    "#000000",  # black
-]
-
-# Filled series stack on top of each other when several chains are drawn, so they need to be
-# see-through to stay readable.
-const FILL_ALPHA = 0.45
-
-# Grey rather than black for anything that is not data, so the data carries the contrast.
-const TEXT_COLOUR = "#262626"
-const AXIS_COLOUR = "#545454"
-
-"""
-    _chain_colours(nchains)
-
-The first `nchains` palette entries as a row vector, which is how Plots reads one colour per
-column of a matrix of series.
-"""
-function _chain_colours(nchains)
-    return permutedims([CHAIN_PALETTE[mod1(i, length(CHAIN_PALETTE))] for i = 1:nchains])
-end
-
-"""
     _axis_default!(plotattributes, key, value)
 
 Set an axis attribute, unless the caller already set it.
@@ -70,7 +32,7 @@ end
 """
     _apply_chrome!(plotattributes)
 
-Apply the shared look to everything that is not data.
+Apply the current [`plot_style`](@ref) to everything that is not data.
 
 Gridlines, a full frame and a legend box are ink that encodes nothing, and on a diagnostic
 plot they compete with the thing being judged, so they are off by default. Text and axes are
@@ -78,8 +40,26 @@ grey rather than black for the same reason. Each setting is a default, so anythi
 caller passes wins.
 """
 function _apply_chrome!(plotattributes)
-    _axis_default!(plotattributes, :grid, false)
-    _axis_default!(plotattributes, :framestyle, :axes)
+    style = plot_style()
+
+    _axis_default!(plotattributes, :grid, style.grid !== :none)
+    if style.grid === :dots
+        _axis_default!(plotattributes, :gridstyle, :dot)
+        _axis_default!(plotattributes, :gridlinewidth, 1)
+        _axis_default!(plotattributes, :gridalpha, 0.5)
+    elseif style.grid === :lines
+        _axis_default!(plotattributes, :gridalpha, 0.2)
+    end
+
+    _axis_default!(plotattributes, :framestyle, style.framestyle)
+    get!(plotattributes, :color_palette, style.palette)
+
+    if style.background !== nothing
+        get!(plotattributes, :background_color, style.background)
+        get!(plotattributes, :background_color_inside, style.background)
+    end
+    style.fontfamily === nothing || get!(plotattributes, :fontfamily, style.fontfamily)
+
     get!(plotattributes, :foreground_color_legend, nothing)
     _axis_default!(plotattributes, :foreground_color_axis, AXIS_COLOUR)
     _axis_default!(plotattributes, :foreground_color_border, AXIS_COLOUR)
