@@ -1,5 +1,6 @@
 @recipe function f(p::EnergyPlot; kind = :density)
     chains = p.args[1]
+    _apply_chrome!(plotattributes)
 
     if kind ∉ (:density, :histogram)
         error("`kind` must be one of `:density` or `:histogram`")
@@ -28,12 +29,13 @@
     xaxis := "Standardized Energy"
     yaxis := "Density"
     legend := :topright
+    color_palette --> CHAIN_PALETTE
 
     @series begin
         seriestype := kind
         label := "Marginal Energy"
         fillrange --> 0
-        fillalpha --> 0.5
+        fillalpha --> FILL_ALPHA
         normalize --> true
         bins --> 50
         centered_energy
@@ -43,7 +45,7 @@
         seriestype := kind
         label := "Energy Transition"
         fillrange --> 0
-        fillalpha --> 0.5
+        fillalpha --> FILL_ALPHA
         normalize --> true
         bins --> 50
         scaled_energy_error

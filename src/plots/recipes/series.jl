@@ -12,9 +12,16 @@ end
     color_palette --> CHAIN_PALETTE
     fillalpha --> FILL_ALPHA
     linealpha --> 0.8
-    bins --> 25
+    # Freedman and Diaconis against Sturges, rather than a fixed count that is too coarse on
+    # a long chain and too fine on a short one.
+    bins --> :auto
     trim --> true
-    [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
+
+    series = [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
+    # Each chain would otherwise be binned over its own range, which gives bars of different
+    # widths between chains and counts that cannot be compared.
+    bins := _histogram_edges(series, get(plotattributes, :bins, :auto))
+    series
 end
 
 @recipe function f(p::_MeanPlot)
@@ -92,7 +99,9 @@ end
     seriestype := :step
     xaxis --> "Rank (pooled over chains)"
     yaxis --> "Count"
-    color_palette --> CHAIN_PALETTE
+    # Named rather than taken from the palette in turn, so that the reference line below
+    # does not shift chain 1 off the colour it has in every other plot.
+    linecolor --> _chain_colours(size(counts, 2))
     # A flat line at the expected count is the reference the eye compares against.
     @series begin
         seriestype := :hline
