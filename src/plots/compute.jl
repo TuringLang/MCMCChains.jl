@@ -16,10 +16,17 @@ function _compute_plot_data(
     ordered = false,
 )
 
-    chain_dic = Dict(zip(quantile(chains)[:, 1], quantile(chains)[:, 4]))
-    sorted_chain = sort(collect(zip(values(chain_dic), keys(chain_dic))))
-    sorted_par = [sorted_chain[i][2] for i = 1:length(par_names)]
-    par = (ordered ? sorted_par : par_names)
+    # Only worked out when it is asked for. Sorting runs `quantile` over every parameter
+    # twice, once per row of the plot, and on a chain holding one parameter the table it
+    # reads back is a scalar rather than a column.
+    par = if ordered
+        summary = quantile(chains)
+        medians = Dict(zip(summary[:, 1], summary[:, 4]))
+        sorted = sort(collect(zip(values(medians), keys(medians))))
+        [sorted[j][2] for j = 1:length(par_names)]
+    else
+        par_names
+    end
     hpdi = sort(hpd_val)
 
     chain_sections = MCMCChains.group(chains, Symbol(par[i]))
@@ -86,15 +93,23 @@ holds an equal share of every rank range and its counts are flat. Returns the bi
 a bins by chains matrix of counts.
 """
 function _rank_bin_counts(val::AbstractMatrix, nbins::Integer)
-    niter, nchains = size(val)
-    ntotal = niter * nchains
-    ranks = reshape(ordinalrank(vec(val)), niter, nchains)
+    niter, _ = size(val)
+    flat = vec(val)
+    keep = .!ismissing.(flat)
+    ntotal = count(keep)
+    # Tied draws take the average of the ranks they span. Breaking ties by position would
+    # order them by which chain they came from, which draws a well mixed discrete parameter
+    # as though every chain held its own stretch of the range.
+    ranks = fill(NaN, length(flat))
+    ranks[keep] = tiedrank(collect(skipmissing(flat)))
+
     edges = range(0.5, ntotal + 0.5; length = nbins + 1)
-    counts = zeros(Int, nbins, nchains)
-    width = (ntotal) / nbins
-    for c = 1:nchains, r in view(ranks, :, c)
-        b = min(nbins, Int(fld(r - 1, width)) + 1)
-        counts[b, c] += 1
+    counts = zeros(Int, nbins, size(val, 2))
+    width = ntotal / nbins
+    for (k, r) in enumerate(ranks)
+        isnan(r) && continue
+        b = clamp(Int(fld(r - 1, width)) + 1, 1, nbins)
+        counts[b, cld(k, niter)] += 1
     end
     return edges, counts
 end
@@ -127,9 +142,11 @@ function _bin_count(values, rule::Symbol)
     rule === :sturges && return sturges
 
     iqr = quantile(values, 0.75) - quantile(values, 0.25)
-    fd = iqr > 0 ? ceil(Int, span * cbrt(n) / (2 * iqr)) : 0
-    rule === :fd && return clamp(fd, 1, 1000)
-    return clamp(max(fd, sturges), 1, 1000)
+    # Clamped before rounding, because a quartile range near zero sends this past what an
+    # `Int` can hold.
+    fd = iqr > 0 ? clamp(span * cbrt(n) / (2 * iqr), 1.0, 1000.0) : 1.0
+    rule === :fd && return ceil(Int, fd)
+    return ceil(Int, clamp(max(fd, float(sturges)), 1.0, 1000.0))
 end
 
 """
@@ -139,18 +156,21 @@ Bin edges covering every chain of one parameter.
 
 Binning each chain over its own range gives bars of different widths, which cannot be
 compared, so the edges come from the chains pooled. `bins` is a rule, a count, or edges to
-use as they are. The extra bin past the top is there because the last edge is open, and the
-largest draw would otherwise be counted nowhere.
+use as they are. The count asked for is the count returned: the top edge is nudged past the
+largest draw, which the last bin would otherwise leave out for being open on the right.
+
+Draws that are not finite are left out of the range, the way Plots leaves them out of its
+own.
 """
 function _histogram_edges(series, bins)
-    pooled = collect(Iterators.flatten(series))
+    pooled = [float(v) for v in Iterators.flatten(series) if !ismissing(v) && isfinite(v)]
     bins isa Symbol && (bins = _bin_count(pooled, bins))
     bins isa Integer || return bins
 
+    isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
     lo, hi = extrema(pooled)
     hi > lo || return range(lo - 0.5, lo + 0.5; length = bins + 1)
-    width = (hi - lo) / bins
-    return range(lo, hi + width; length = bins + 2)
+    return range(lo, nextfloat(hi); length = bins + 1)
 end
 
 """
@@ -168,15 +188,23 @@ function _ecdf_series(val::AbstractMatrix)
     return xs, ys
 end
 
+# MCMCDiagnosticTools splits a chain in two and needs more than four draws in each half, so
+# a shorter prefix than this has no effective sample size to report.
+const MIN_EVOLUTION_DRAWS = 10
+
 """
     _evolution_points(ndraws, npoints)
 
 Draw counts at which to recompute a diagnostic, spread evenly and always ending at `ndraws`.
+
+Nothing below `MIN_EVOLUTION_DRAWS`, because the effective sample size is not defined on a
+prefix that short and asking for it only returns a warning and a `NaN`.
 """
 function _evolution_points(ndraws::Integer, npoints::Integer)
     npoints = max(2, npoints)
+    first_point = min(MIN_EVOLUTION_DRAWS, ndraws)
     step = max(1, ndraws ÷ npoints)
-    points = collect(step:step:ndraws)
+    points = filter(>=(first_point), collect(step:step:ndraws))
     isempty(points) && return [ndraws]
     last(points) == ndraws || push!(points, ndraws)
     return points
@@ -328,8 +356,9 @@ function _standardise(m::AbstractMatrix)
     out = float(copy(m))
     for j in Base.axes(out, 2)
         col = view(out, :, j)
-        centre = mean(col)
-        spread = std(col)
+        present = filter(isfinite, col)
+        centre = isempty(present) ? zero(eltype(out)) : mean(present)
+        spread = length(present) > 1 ? std(present) : zero(eltype(out))
         col .= spread > 0 ? (col .- centre) ./ spread : zero(eltype(out))
     end
     return out

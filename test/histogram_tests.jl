@@ -38,10 +38,10 @@ using Random
 
         # The edges span both chains rather than either one of them.
         @test first(edges) ≈ minimum(Iterators.flatten(series))
+        # Past the largest draw, which an open last bin would otherwise leave out.
         @test last(edges) > maximum(Iterators.flatten(series))
-        # One bin past the top, so the largest draw has somewhere to go.
-        @test length(edges) == 22
-        @test step(edges) ≈ (maximum(Iterators.flatten(series)) - first(edges)) / 20
+        # The count asked for is the count returned.
+        @test length(edges) == 21
     end
 
     @testset "a chain that never moved still has bins" begin
@@ -56,8 +56,20 @@ using Random
         series = [randn(1000), randn(1000)]
         pooled = vcat(series...)
         auto = MCMCChains._histogram_edges(series, :auto)
-        @test length(auto) == MCMCChains._bin_count(pooled, :auto) + 2
+        @test length(auto) == MCMCChains._bin_count(pooled, :auto) + 1
         @test length(MCMCChains._histogram_edges(series, :sturges)) <= length(auto)
+        # A count asked for is the count of bins, not one more.
+        @test length(MCMCChains._histogram_edges(series, 60)) == 61
+    end
+
+    @testset "draws that are not finite are left out of the range" begin
+        series = [[1.0, 2.0, Inf], [0.0, 1.5]]
+        edges = MCMCChains._histogram_edges(series, 10)
+        @test all(isfinite, edges)
+        @test first(edges) ≈ 0.0
+        @test last(edges) > 2.0
+        # Nothing finite to bin on at all, so still a usable set of edges.
+        @test all(isfinite, MCMCChains._histogram_edges([[NaN, Inf]], 5))
     end
 
     @testset "recipe" begin
@@ -69,6 +81,11 @@ using Random
         edges = [s.plotattributes[:bins] for s in p.series_list]
         @test length(unique(edges)) == length(names(chn))
         @test all(e -> e isa AbstractRange, edges)
+
+        # Parameters may be on scales that share no useful edges, so only chains pool.
+        mixed = Chains(hcat(randn(300, 1, 2), 1000 .* randn(300, 1, 2)), [:small, :big])
+        by_parameter = histogram(mixed, colordim = :parameter)
+        @test all(s -> s.plotattributes[:bins] === :auto, by_parameter.series_list)
 
         @test histogram(chn, bins = 25) isa Plots.Plot
         @test histogram(Chains(randn(400, 1, 1), [:a])) isa Plots.Plot

@@ -47,6 +47,9 @@
         show_boxplot_kw = get(plotattributes, :show_boxplot, true)
         # Passes `_actual_indices_for_violin`` to `_ViolinPlot`` to ensure correct x-axis labels (parameter names or chain numbers).
         return _ViolinPlot(c, val, _actual_indices_for_violin, show_boxplot_kw, colordim)
+    elseif st === :histogram
+        # Carries the dimension, because only a histogram of chains may pool its bin edges.
+        _HistogramPlot(c, val, colordim)
     elseif st ∈ keys(translationdict)
         translationdict[st](c, val)
     else

@@ -35,10 +35,12 @@ end
     npar = length(par_names)
     npar > 1 || throw(ArgumentError("parallelplot needs at least two parameters"))
 
-    val = standardise ? _standardise(draws) : float(draws)
+    finite = [ismissing(v) ? NaN : float(v) for v in draws]
+    val = standardise ? _standardise(finite) : finite
     divergent = _divergences(chn)
-    rng =
-        random_seed === nothing ? Random.default_rng() : Random.MersenneTwister(random_seed)
+    # Its own generator, so that drawing a plot does not move the caller's random numbers
+    # along, and so that one chain thins to the same lines every time.
+    rng = Random.MersenneTwister(random_seed === nothing ? 0 : random_seed)
     rows = _thin_draws(size(val, 1), num_draws, rng)
 
     xticks --> (1:npar, string.(par_names))

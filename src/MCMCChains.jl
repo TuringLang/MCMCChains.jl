@@ -21,7 +21,7 @@ import StatsBase:
     summarystats,
     cov,
     ecdf,
-    ordinalrank
+    tiedrank
 
 import MCMCDiagnosticTools
 import MLJModelInterface

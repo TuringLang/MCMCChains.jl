@@ -13,7 +13,11 @@ end
 struct _HistogramPlot
     c::Any
     val::Any
+    # colordim: the series are chains of one parameter, or parameters of one chain. Only
+    # chains of one parameter can share bin edges.
+    colordim::Any
 end
+_HistogramPlot(c, val) = _HistogramPlot(c, val, :chain)
 struct _RankPlot
     c::Any
     val::Any
