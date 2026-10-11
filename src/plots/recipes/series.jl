@@ -16,9 +16,12 @@ end
     trim --> true
 
     series = [collect(skipmissing(p.val[:, k])) for k = 1:size(p.val, 2)]
-    # Each chain would otherwise be binned over its own range, which gives bars of different
-    # widths between chains and counts that cannot be compared.
-    bins := _histogram_edges(series, get(plotattributes, :bins, :auto))
+    # Chains of one parameter would otherwise each be binned over their own range, which
+    # gives bars of different widths and counts that cannot be compared. Parameters are a
+    # different matter: two of them may be on scales that share no useful edges at all.
+    if p.colordim === :chain
+        bins := _histogram_edges(series, get(plotattributes, :bins, :auto))
+    end
     series
 end
 
@@ -97,21 +100,32 @@ end
 @recipe function f(p::_RankPlot; nbins = 20)
     edges, counts = _rank_bin_counts(p.val, nbins)
     centres = [(edges[i] + edges[i+1]) / 2 for i = 1:(length(edges)-1)]
+    nchains = size(counts, 2)
+    colours = _chain_colours(nchains)
+    labels = get(plotattributes, :label, nothing)
 
-    seriestype := :step
     xaxis --> "Rank (pooled over chains)"
     yaxis --> "Count"
-    # Named rather than taken from the palette in turn, so that the reference line below
-    # does not shift chain 1 off the colour it has in every other plot.
-    linecolor --> _chain_colours(size(counts, 2))
-    # A flat line at the expected count is the reference the eye compares against.
-    @series begin
-        seriestype := :hline
-        label := nothing
-        linecolor := AXIS_COLOUR
-        linestyle := :dash
-        linewidth := 1
-        [size(p.val, 1) / nbins]
+
+    # Each chain is named and coloured on its own series. Plots hands a row vector of
+    # colours or labels out one series at a time, so the reference line would take the
+    # first of each and leave every chain wearing the one beside it.
+    for c = 1:nchains
+        @series begin
+            seriestype := :step
+            linecolor := colours[c]
+            label := labels isa AbstractArray ? labels[min(c, length(labels))] : nothing
+            centres, counts[:, c]
+        end
     end
-    centres, counts
+
+    # A flat line at the expected count is the reference the eye compares against. Returned
+    # rather than emitted, because a recipe that ends without data still adds a series, and
+    # that series takes the next label off the row vector.
+    seriestype := :hline
+    label := nothing
+    linecolor := AXIS_COLOUR
+    linestyle := :dash
+    linewidth := 1
+    [size(p.val, 1) / nbins]
 end

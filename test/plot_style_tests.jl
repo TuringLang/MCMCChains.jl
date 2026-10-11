@@ -36,7 +36,7 @@ using Random
 
         @testset "one legend by default" begin
             reset_plot_style!()
-            # Three parameters, two series types, so six panels and one legend.
+            # Two parameters, two series types, so four panels and one legend.
             p = plot(chn)
             @test count(sp -> sp[:legend_position] !== :none, p.subplots) == 1
 

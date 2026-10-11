@@ -111,23 +111,30 @@ end
 
     xaxis --> "Draws per chain"
     yaxis --> (diagnostic === :ess ? "Effective sample size" : "R-hat")
-    label --> permutedims(string.(par_names))
     linewidth --> 1.5
     markershape --> :circle
     markersize --> 3
     markerstrokewidth --> 0
 
-    reference = diagnostic === :ess ? 400.0 : 1.01
-    @series begin
-        seriestype := :hline
-        label := nothing
-        linecolor := AXIS_COLOUR
-        linestyle := :dash
-        linewidth := 1
-        [reference]
+    # One series per parameter, each named on its own. A row vector of labels is handed out
+    # one series at a time, so the reference line below would take the first and leave every
+    # curve named after the parameter beside it.
+    for (j, name) in enumerate(par_names)
+        @series begin
+            label := string(name)
+            points, values[:, j]
+        end
     end
 
-    points, values
+    # Returned rather than emitted: a recipe that ends without data still adds a series, and
+    # that series takes the next label off the row vector.
+    seriestype := :hline
+    label := nothing
+    linecolor := AXIS_COLOUR
+    linestyle := :dash
+    linewidth := 1
+    markershape := :none
+    [diagnostic === :ess ? 400.0 : 1.01]
 end
 
 @recipe function f(p::McsePlot; relative = false)

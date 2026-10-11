@@ -134,6 +134,62 @@ using Random
         @test_throws ArgumentError parallelplot(Chains(randn(niter, 1, nchains), [:a]))
     end
 
+    @testset "each curve is named after its own parameter" begin
+        p = evolutionplot(chn)
+        curves = filter(s -> s[:seriestype] === :path, p.series_list)
+        @test length(curves) == length(names(chn))
+
+        _, par_names, values = MCMCChains._evolution(chn, :ess, 20)
+        # The reference line must not take the first label from under the curves.
+        for (j, name) in enumerate(par_names)
+            @test curves[j][:label] == string(name)
+            @test last(filter(!isnan, collect(curves[j][:y]))) ≈ values[end, j]
+        end
+    end
+
+    @testset "a diagnostic is not asked for on too few draws" begin
+        # MCMCDiagnosticTools warns and returns NaN below its minimum, so the first point
+        # has to clear it.
+        points = MCMCChains._evolution_points(10, 20)
+        @test first(points) >= min(MCMCChains.MIN_EVOLUTION_DRAWS, 10)
+        @test last(points) == 10
+
+        _, _, values = MCMCChains._evolution(Chains(randn(40, 2, 3), [:a, :b]), :ess, 20)
+        @test all(isfinite, values)
+    end
+
+    @testset "divergences are coloured by chain" begin
+        p = nutsplot(chn_nuts, kind = :divergence)
+        fills = unique(
+            Float64.((
+                Plots.Colors.red(s[:fillcolor]),
+                Plots.Colors.green(s[:fillcolor]),
+                Plots.Colors.blue(s[:fillcolor]),
+            )) for s in p.series_list
+        )
+        # One colour per chain, rather than every bar taking the first of a row vector.
+        @test length(fills) >= nchains
+    end
+
+    @testset "a plot leaves the caller's random numbers alone" begin
+        Random.seed!(1)
+        parallelplot(chn, num_draws = 20)
+        after = rand()
+        Random.seed!(1)
+        @test after == rand()
+
+        # Thinning is reproducible without being asked for a seed.
+        a = parallelplot(chn, num_draws = 20).series_list[1][:y]
+        b = parallelplot(chn, num_draws = 20).series_list[1][:y]
+        @test isequal(a, b)
+    end
+
+    @testset "missing draws do not stop a parallel plot" begin
+        vals = Array{Union{Missing,Float64}}(randn(100, 3, 2))
+        vals[4] = missing
+        @test parallelplot(Chains(vals, [:a, :b, :c])) isa Plots.Plot
+    end
+
     @testset "standardising" begin
         m = [1.0 100.0; 3.0 300.0; 5.0 500.0]
         s = MCMCChains._standardise(m)
@@ -148,9 +204,10 @@ using Random
             @test nutsplot(chn_nuts, kind = kind) isa Plots.Plot
         end
 
-        # The divergence count is per chain, and is the number recorded.
+        # The divergence count is per chain, and is the number recorded. One bar per chain,
+        # so the heights are gathered across the series rather than from one of them.
         p = nutsplot(chn_nuts, kind = :divergence)
-        drawn = filter(!isnan, p.series_list[1][:y])
+        drawn = vcat((filter(!isnan, collect(s[:y])) for s in p.series_list)...)
         expected = vec(sum(Array(chn_nuts[:, :numerical_error, :]) .> 0; dims = 1))
         @test sort(unique(filter(>(0), drawn))) == sort(unique(expected))
 
