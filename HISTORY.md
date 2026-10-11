@@ -12,7 +12,7 @@ Added the `:ecdfplot` series type.
 Added `plot_style!` and `reset_plot_style!` to set the palette, the grid, the background, the frame, the font and where a multi-panel plot names its chains.
 Multi-panel plots name the chains in one panel, instead of leaving the lines unlabelled.
 A histogram bins every chain of a parameter over the same edges, so the bars line up between chains.
-Histograms choose their bin count from the draws, by Freedman and Diaconis against Sturges, rather than always using 25.
+Histograms choose their bin count from the draws rather than always using 25.
 Plots drop the grid, the top and right spines, and the legend box, and draw chains from the Okabe-Ito palette.
 `energyplot` and `ppcplot` take that look too, which they were missing.
 `rankplot` draws chain 1 in the same colour as every other plot does.

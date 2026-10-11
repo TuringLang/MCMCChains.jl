@@ -79,7 +79,7 @@ histogram(chn)
 
 Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
 
-The bin count comes from the draws, taking whichever of [Freedman and Diaconis (1981)](https://doi.org/10.1007/BF01025868) and Sturges asks for more.
+The bin count comes from the draws, taking whichever of the `:fd` and `:sturges` rules asks for more.
 Pass `bins` to override it, as a rule, a count, or the edges themselves.
 
 ```@example statsplots
@@ -100,7 +100,7 @@ autocorplot(chn)
 
 A rank plot histograms the ranks of the draws pooled over all chains, one line per chain.
 If every chain is sampling the same posterior then the ranks are uniform, so each chain should stay near the dashed line at the expected count.
-Rank plots keep working on long chains, where a trace plot turns into a band of ink ([Vehtari et al. 2021](https://doi.org/10.1214/20-BA1221)).
+Rank plots keep working on long chains, where a trace plot turns into a band of ink.
 
 ```@example statsplots
 rankplot(chn)
@@ -131,7 +131,7 @@ diagnosticsplot(chn)
 ```
 
 `essplot`, `rhatplot` and `mcseplot` draw one dot per parameter for the diagnostics that [`ess`](@ref), [`rhat`](@ref) and [`mcse`](@ref) already report.
-The dashed line is the threshold recommended by [Vehtari et al. (2021)](https://doi.org/10.1214/20-BA1221), an effective sample size of 400 and an R-hat of 1.01.
+The dashed line is at an effective sample size of 400, and at an R-hat of 1.01.
 
 ```@example statsplots
 essplot(chn)

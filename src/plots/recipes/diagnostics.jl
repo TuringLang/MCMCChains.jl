@@ -31,7 +31,6 @@ end
 
     df = ess(chn; kind = kind, relative = relative)
     niter, _, nchains = size(Chains(chn, :parameters))
-    # Vehtari et al. (2021) ask for an effective sample size of 400 before reading R-hat.
     threshold = relative ? 400 / (niter * nchains) : 400.0
     label =
         relative ? "Effective sample size / draws ($kind)" : "Effective sample size ($kind)"
@@ -44,7 +43,6 @@ end
     _apply_chrome!(plotattributes)
 
     df = rhat(chn; kind = kind)
-    # Vehtari et al. (2021) recommend sampling until R-hat is below 1.01.
     _ParameterDots(df.nt.parameters, collect(df.nt.rhat), [1.01], "R-hat ($kind)")
 end
 

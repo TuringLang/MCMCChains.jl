@@ -10,8 +10,8 @@ end
     yaxis --> "Frequency"
     fillalpha --> FILL_ALPHA
     linealpha --> 0.8
-    # Freedman and Diaconis against Sturges, rather than a fixed count that is too coarse on
-    # a long chain and too fine on a short one.
+    # Read off the draws, rather than a fixed count that is too coarse on a long chain and
+    # too fine on a short one.
     bins --> :auto
     trim --> true
 

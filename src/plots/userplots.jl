@@ -154,14 +154,11 @@ By default, all parameters are plotted.
 
 Plot the effective sample size of every parameter in `chains`.
 
-One dot per parameter, with a dashed line at the effective sample size of 400 that Vehtari et al. (2021) recommend reaching before trusting ``\\widehat{R}``.
+One dot per parameter, with a dashed line at an effective sample size of 400.
 
 # Keywords
 - `kind::Symbol` (default: `:bulk`): which effective sample size to estimate, one of `:bulk`, `:tail` or `:basic`.
 - `relative::Bool` (default: `false`): divide by the number of draws, so the dots and the reference line are fractions.
-
-# References
-Vehtari, Gelman, Simpson, Carpenter and Bürkner (2021). Rank-Normalization, Folding, and Localization: An Improved R̂ for Assessing Convergence of MCMC (with Discussion). Bayesian Analysis 16(2). https://doi.org/10.1214/20-BA1221
 """
 @userplot EssPlot
 
@@ -170,13 +167,10 @@ Vehtari, Gelman, Simpson, Carpenter and Bürkner (2021). Rank-Normalization, Fol
 
 Plot the ``\\widehat{R}`` diagnostic of every parameter in `chains`.
 
-One dot per parameter, with a dashed line at 1.01, the threshold Vehtari et al. (2021) recommend.
+One dot per parameter, with a dashed line at 1.01.
 
 # Keywords
 - `kind::Symbol` (default: `:rank`): which ``\\widehat{R}`` to estimate, passed on to [`rhat`](@ref).
-
-# References
-Vehtari, Gelman, Simpson, Carpenter and Bürkner (2021). Rank-Normalization, Folding, and Localization: An Improved R̂ for Assessing Convergence of MCMC (with Discussion). Bayesian Analysis 16(2). https://doi.org/10.1214/20-BA1221
 """
 @userplot RhatPlot
 
@@ -196,13 +190,10 @@ Plot the Monte Carlo standard error of every parameter in `chains`.
 Every convergence diagnostic for every parameter, in one grid.
 
 Each cell is coloured by whether the value is fine, worth a look, or bad, so the usual question of whether anything at all went wrong is one glance rather than five plots.
-The thresholds follow Vehtari et al. (2021): ``\\widehat{R}`` at most 1.01 and an effective sample size of at least 400.
+A cell counts as fine at ``\\widehat{R}`` of at most 1.01, an effective sample size of at least 400, at least half an effective draw per draw, and a Monte Carlo standard error of at most a twentieth of the posterior standard deviation.
 
 # Keywords
 - `digits` is read per column, so each diagnostic is rounded to what is worth reading.
-
-# References
-Vehtari, Gelman, Simpson, Carpenter and Bürkner (2021). Rank-Normalization, Folding, and Localization: An Improved R̂ for Assessing Convergence of MCMC (with Discussion). Bayesian Analysis 16(2). https://doi.org/10.1214/20-BA1221
 """
 @userplot DiagnosticsPlot
 

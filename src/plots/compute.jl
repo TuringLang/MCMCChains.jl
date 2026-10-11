@@ -119,14 +119,11 @@ end
 
 How many bins to cut `values` into.
 
-`:sturges` reads the count off the sample size alone, which is the oldest rule and gives too
-few bins on a large sample. `:fd` is Freedman and Diaconis (1981), width `2 IQR / cbrt(n)`,
-rank based so that one far-out draw does not widen every bin. `:auto` takes whichever of the
-two asks for more, so that a sample with no spread between its quartiles still gets a usable
-plot.
-
-# References
-Freedman and Diaconis (1981). On the histogram as a density estimator: L2 theory. Zeitschrift für Wahrscheinlichkeitstheorie und verwandte Gebiete 57(4). https://doi.org/10.1007/BF01025868
+`:sturges` reads the count off the sample size alone, `ceil(log2(n)) + 1`, which gives too
+few bins on a large sample. `:fd` sets the bin width to `2 IQR / cbrt(n)`, off the
+interquartile range so that one far-out draw does not widen every bin. `:auto` takes
+whichever of the two asks for more, so that a sample with no spread between its quartiles
+still gets a usable plot.
 """
 function _bin_count(values, rule::Symbol)
     rule in (:auto, :fd, :sturges) ||
@@ -240,8 +237,6 @@ function _evolution(chains::Chains, diagnostic::Symbol, npoints::Integer)
 end
 
 # The diagnostics worth seeing side by side, how to read each, and what counts as good.
-# The effective sample size and R-hat thresholds are the ones recommended in Vehtari et al.
-# (2021), https://doi.org/10.1214/20-BA1221.
 const _DIAGNOSTIC_COLUMNS = (
     (name = "R-hat", good = v -> v <= 1.01, warn = v -> v <= 1.05, digits = 3),
     (name = "Bulk ESS", good = v -> v >= 400, warn = v -> v >= 100, digits = 0),
