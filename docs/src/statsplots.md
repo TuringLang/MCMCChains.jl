@@ -78,6 +78,7 @@ histogram(chn)
 ```
 
 Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
+A parameter that only takes a few values gets one bar centred on each of them.
 
 The bin count comes from the draws, by the same rules Plots uses.
 Pass `bins` to override it, as a rule, a count, or the edges themselves.

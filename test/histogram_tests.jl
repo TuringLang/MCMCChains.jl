@@ -34,6 +34,33 @@ using Random
         @test_throws ArgumentError MCMCChains._bin_count(values, :nonsense)
     end
 
+    @testset "a parameter on a few values is binned on them" begin
+        # One bin centred on each value, rather than a width read off the spread.
+        @test MCMCChains._discrete_edges(float.(rand(1:2, 400))) == [0.5, 1.5, 2.5]
+        @test MCMCChains._discrete_edges(float.(rand(0:3, 400))) ==
+              [-0.5, 0.5, 1.5, 2.5, 3.5]
+        # Values that are not whole numbers, and not evenly spaced.
+        @test MCMCChains._discrete_edges(repeat([0.0, 0.25, 1.0], 100)) ==
+              [-0.125, 0.125, 0.625, 1.375]
+
+        # Not this kind of parameter.
+        @test MCMCChains._discrete_edges(randn(400)) === nothing
+        @test MCMCChains._discrete_edges(randn(15)) === nothing
+        @test MCMCChains._discrete_edges(fill(2.0, 100)) === nothing
+        @test MCMCChains._discrete_edges(Float64[]) === nothing
+        # Too many levels to give each one a bar.
+        @test MCMCChains._discrete_edges(float.(rand(1:50, 5000))) === nothing
+
+        chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
+        edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
+        @test all(e -> e == [0.5, 1.5, 2.5], edges)
+        # A count the caller asked for still wins.
+        @test all(
+            s -> length(s.plotattributes[:bins]) == 26,
+            histogram(chn, bins = 25).series_list,
+        )
+    end
+
     @testset "a rule we do not compute is left to Plots" begin
         # `:wand` is Plots', so it goes back untouched rather than raising.
         @test MCMCChains._histogram_edges([randn(50)], :wand) === :wand
