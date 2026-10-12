@@ -7,15 +7,17 @@ using Random
     Random.seed!(42)
 
     @testset "how many bins" begin
+        # Every rule has to give the count Plots gives, so that passing `bins` keeps
+        # meaning what it meant before these edges were worked out here.
+        for values in (randn(100), randn(5000), 3 .* randn(731) .+ 2, rand(50))
+            for rule in MCMCChains.BIN_RULES
+                @test MCMCChains._bin_count(values, rule) ==
+                      Plots._auto_binning_nbins((values,), 1; mode = rule)
+            end
+        end
+
         values = randn(2000)
-        @test MCMCChains._bin_count(values, :sturges) == ceil(Int, log2(2000)) + 1
-
-        # Freedman and Diaconis ask for more bins than Sturges on a sample this size, and
-        # `:auto` takes the larger of the two.
-        fd = MCMCChains._bin_count(values, :fd)
-        @test fd > MCMCChains._bin_count(values, :sturges)
-        @test MCMCChains._bin_count(values, :auto) == fd
-
+        @test MCMCChains._bin_count(values, :auto) == MCMCChains._bin_count(values, :fd)
         # More draws of the same thing, more bins.
         @test MCMCChains._bin_count(randn(20000), :fd) >
               MCMCChains._bin_count(randn(200), :fd)
@@ -23,12 +25,23 @@ using Random
         # Nothing to bin on, so one bin rather than an error or a division by zero.
         @test MCMCChains._bin_count(fill(2.0, 100), :auto) == 1
         @test MCMCChains._bin_count([1.0], :auto) == 1
-        # A sample with no spread between its quartiles still gets Sturges.
+        # Quartiles that coincide, so the width would be a division by zero.
         spiked = vcat(fill(0.0, 999), 10.0)
-        @test MCMCChains._bin_count(spiked, :auto) ==
-              MCMCChains._bin_count(spiked, :sturges)
+        for rule in MCMCChains.BIN_RULES
+            @test MCMCChains._bin_count(spiked, rule) >= 1
+        end
 
         @test_throws ArgumentError MCMCChains._bin_count(values, :nonsense)
+    end
+
+    @testset "a rule we do not compute is left to Plots" begin
+        # `:wand` is Plots', so it goes back untouched rather than raising.
+        @test MCMCChains._histogram_edges([randn(50)], :wand) === :wand
+
+        chn = Chains(randn(100, 1, 2), [:x])
+        for rule in (MCMCChains.BIN_RULES..., :wand)
+            @test histogram(chn; bins = rule) isa Plots.Plot
+        end
     end
 
     @testset "every chain is binned the same way" begin

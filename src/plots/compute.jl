@@ -114,36 +114,48 @@ function _rank_bin_counts(val::AbstractMatrix, nbins::Integer)
     return edges, counts
 end
 
+# The binning rules this computes itself, so that every chain of a parameter shares one set
+# of edges. Plots names these and `:wand`, which is left to Plots.
+const BIN_RULES = (:auto, :fd, :sturges, :sqrt, :rice, :scott)
+
 """
     _bin_count(values, rule)
 
-How many bins to cut `values` into.
+How many bins to cut `values` into, for the binning rules Plots names.
 
-`:sturges` reads the count off the sample size alone, `ceil(log2(n)) + 1`, which gives too
-few bins on a large sample. `:fd` sets the bin width to `2 IQR / cbrt(n)`, off the
-interquartile range so that one far-out draw does not widen every bin. `:auto` takes
-whichever of the two asks for more, so that a sample with no spread between its quartiles
-still gets a usable plot.
+`:sqrt`, `:sturges`, `:rice`, `:scott` and `:fd` are the rules Plots implements, computed the
+same way here so that passing `bins` keeps meaning what it always did. `:auto` is `:fd`.
 """
 function _bin_count(values, rule::Symbol)
-    rule in (:auto, :fd, :sturges) ||
-        throw(ArgumentError("`bins` must be `:auto`, `:fd`, `:sturges`, a count or edges"))
+    rule in BIN_RULES || throw(
+        ArgumentError(
+            "`bins` must be a count, a set of edges, or one of $(join(BIN_RULES, ", "))",
+        ),
+    )
 
     n = length(values)
     n > 1 || return 1
     lo, hi = extrema(values)
     hi > lo || return 1
     span = hi - lo
+    # Clamped as a float before rounding, because a near-zero spread sends the count past
+    # what an `Int` holds.
+    count(x) = clamp(ceil(Int, clamp(x, 1.0, 10_000.0)), 1, 10_000)
 
-    sturges = ceil(Int, log2(n)) + 1
-    rule === :sturges && return sturges
-
+    rule === :auto && (rule = :fd)
+    nd = cbrt(n)
+    if rule === :sqrt
+        return count(sqrt(n))
+    elseif rule === :sturges
+        return count(log2(n) + 1)
+    elseif rule === :rice
+        return count(2 * nd)
+    elseif rule === :scott
+        spread = std(values)
+        return count(spread > 0 ? span * nd / (3.5 * spread) : 1.0)
+    end
     iqr = quantile(values, 0.75) - quantile(values, 0.25)
-    # Clamped before rounding, because a quartile range near zero sends this past what an
-    # `Int` can hold.
-    fd = iqr > 0 ? clamp(span * cbrt(n) / (2 * iqr), 1.0, 1000.0) : 1.0
-    rule === :fd && return ceil(Int, fd)
-    return ceil(Int, clamp(max(fd, float(sturges)), 1.0, 1000.0))
+    return count(span * nd / (2 * (iqr > 0 ? iqr : one(iqr))))
 end
 
 """
@@ -156,10 +168,14 @@ compared, so the edges come from the chains pooled. `bins` is a rule, a count, o
 use as they are. The count asked for is the count returned: the top edge is nudged past the
 largest draw, which the last bin would otherwise leave out for being open on the right.
 
+A rule this does not compute, such as `:wand`, is handed back for Plots to apply. Those
+chains are then binned one at a time, which is what Plots did with all of them before.
+
 Draws that are not finite are left out of the range, the way Plots leaves them out of its
 own.
 """
 function _histogram_edges(series, bins)
+    bins isa Symbol && bins ∉ BIN_RULES && return bins
     pooled = [float(v) for v in Iterators.flatten(series) if !ismissing(v) && isfinite(v)]
     bins isa Symbol && (bins = _bin_count(pooled, bins))
     bins isa Integer || return bins
