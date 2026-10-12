@@ -77,10 +77,109 @@ density(chn)
 histogram(chn)
 ```
 
+Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
+
+The bin count comes from the draws, by the same rules Plots uses.
+Pass `bins` to override it, as a rule, a count, or the edges themselves.
+
+```@example statsplots
+histogram(chn, bins = :sturges)
+```
+
+```@example statsplots
+histogram(chn, bins = 60, fillalpha = 0.7)
+```
+
 ## Autocorrelation
 
 ```@example statsplots
 autocorplot(chn)
+```
+
+## Rank
+
+A rank plot histograms the ranks of the draws pooled over all chains, one line per chain.
+If every chain is sampling the same posterior then the ranks are uniform, so each chain should stay near the dashed line at the expected count.
+Rank plots keep working on long chains, where a trace plot turns into a band of ink.
+
+```@example statsplots
+rankplot(chn)
+```
+
+Use `nbins` to set how many bins the ranks are collected into.
+
+```@example statsplots
+rankplot(chn, nbins = 10)
+```
+
+## Empirical CDF
+
+```@example statsplots
+plot(chn, seriestype = :ecdfplot)
+```
+
+Two chains that agree lie on top of each other here, which is easier to judge than two density curves, because the eye compares positions rather than areas.
+The name `ecdfplot` belongs to StatsPlots and takes a vector, so a chain goes through `plot` with the series type.
+
+## Convergence diagnostics
+
+Most of the time the question is only whether anything went wrong, and `diagnosticsplot` answers that in one grid.
+Each cell is coloured by whether the value is fine, worth a look, or bad, and grey where the diagnostic does not apply.
+
+```@example statsplots
+diagnosticsplot(chn)
+```
+
+`essplot`, `rhatplot` and `mcseplot` draw one dot per parameter for the diagnostics that [`ess`](@ref), [`rhat`](@ref) and [`mcse`](@ref) already report.
+The dashed line is at an effective sample size of 400, and at an R-hat of 1.01.
+
+```@example statsplots
+essplot(chn)
+```
+
+`kind` picks which effective sample size to estimate.
+
+```@example statsplots
+essplot(chn, kind = :tail)
+```
+
+`relative = true` divides by the number of draws, which keeps the axis readable when chains are long.
+
+```@example statsplots
+essplot(chn, relative = true)
+```
+
+```@example statsplots
+rhatplot(chn)
+```
+
+```@example statsplots
+mcseplot(chn, relative = true)
+```
+
+A single number says how the run ended.
+`evolutionplot` says whether it was still improving, which is what tells you that running for longer would help.
+
+```@example statsplots
+evolutionplot(chn)
+```
+
+```@example statsplots
+evolutionplot(chn, diagnostic = :rhat)
+```
+
+## Parallel coordinates
+
+`parallelplot` draws one line per draw across all parameters, standardised so that parameters on different scales share one axis.
+
+```@example statsplots
+parallelplot(chn)
+```
+
+When the chain records divergent transitions they are drawn on top in a second colour, which is what makes this plot worth reading: it shows where in the parameter space the sampler is failing.
+
+```@example statsplots
+parallelplot(chn, num_draws = 100, standardise = false)
 ```
 
 ## Violin
@@ -161,6 +260,41 @@ energyplot(chn_energy)
 ```@example statsplots
 # The plot can also be generated as a histogram.
 energyplot(chn_energy, kind=:histogram)
+```
+
+## Sampler diagnostics
+
+`nutsplot` draws the statistics an HMC sampler records about its own behaviour, one series per chain.
+
+```@example statsplots
+# A chain carrying the sampler statistics NUTS records.
+n_iter = 500
+n_chain = 4
+nuts_val = hcat(
+    randn(n_iter, 1, n_chain),
+    clamp.(0.9 .+ 0.08 .* randn(n_iter, 1, n_chain), 0, 1),
+    0.35 .+ 0.02 .* randn(n_iter, 1, n_chain),
+    float.(rand(2:5, n_iter, 1, n_chain)),
+    float.(rand(n_iter, 1, n_chain) .< 0.03),
+)
+chn_nuts = Chains(
+    nuts_val,
+    [:a, :acceptance_rate, :step_size, :tree_depth, :numerical_error],
+    (
+        parameters = [:a],
+        internals = [:acceptance_rate, :step_size, :tree_depth, :numerical_error],
+    ),
+)
+
+nutsplot(chn_nuts)
+```
+
+```@example statsplots
+nutsplot(chn_nuts, kind = :treedepth)
+```
+
+```@example statsplots
+nutsplot(chn_nuts, kind = :divergence)
 ```
 
 For plotting multiple parameters, ridgeline, forest and caterpillar plots can be useful.
@@ -303,6 +437,39 @@ ppcplot(posterior_chains::Chains, posterior_predictive_chains::Chains, observed_
         legend=true, random_seed=nothing, ppc_group=:posterior)
 ```
 
+## Appearance
+
+Every plot on this page is drawn with the same look: no grid, no box around the plot or the legend, grey axes and text, and chains coloured from the Okabe-Ito palette, which stays readable for the common forms of colour blindness.
+
+`plot_style!` changes that for every plot drawn after it.
+
+```@example statsplots
+plot_style!(grid = :dots, framestyle = :box)
+meanplot(chn)
+```
+
+```@example statsplots
+plot_style!(grid = :none, framestyle = :axes, palette = ["#332288", "#117733", "#DDCC77", "#CC6677"])
+meanplot(chn)
+```
+
+`background = :transparent` draws no background at all, which is what you want when the page behind the plot is not white.
+
+Everything `plot_style!` sets is a default, so anything passed to a single plot still wins.
+
+```@example statsplots
+reset_plot_style!()
+meanplot(chn, grid = true, legend = :outertopright)
+```
+
+By default only the first panel of a multi-panel plot names the chains, since the same legend on every panel is ink that says nothing new and lands on top of the data.
+Set `legend_panel` to `:all` or `:none` to change that.
+
+```@example statsplots
+reset_plot_style!()
+nothing # hide
+```
+
 ## API
 
 ```@docs
@@ -314,4 +481,22 @@ ridgelineplot
 ridgelineplot!
 forestplot
 forestplot!
+diagnosticsplot
+diagnosticsplot!
+essplot
+essplot!
+rhatplot
+rhatplot!
+mcseplot
+mcseplot!
+evolutionplot
+evolutionplot!
+parallelplot
+parallelplot!
+nutsplot
+nutsplot!
+MCMCChains.CHAIN_PALETTE
+plot_style
+plot_style!
+reset_plot_style!
 ```

@@ -24,6 +24,14 @@ Random.seed!(0)
     println("Plotting")
     @time include("plot_test.jl")
 
+    # run tests for the ridgeline and forest plot helpers
+    println("Interval plots")
+    @time include("interval_plot_tests.jl")
+
+    # run tests for rank plots
+    println("Rank plots")
+    @time include("rank_plot_tests.jl")
+
     println("Display")
     @time include("display_tests.jl")
 
@@ -82,6 +90,18 @@ Random.seed!(0)
     # run tests for PPC plots
     println("PPC plots")
     @time include("ppc_tests.jl")
+
+    # run tests for histograms of several chains
+    println("Histograms")
+    @time include("histogram_tests.jl")
+
+    # run tests for the settable plot style
+    println("Plot style")
+    @time include("plot_style_tests.jl")
+
+    # run tests for the convergence and sampler diagnostic plots
+    println("Diagnostic plots")
+    @time include("diagnostic_plot_tests.jl")
 
     # Array printing depends on Julia version and architecture,
     # therefore we only run doctests with Julia >= 1.7 and on 64bit where `Int === Int64`

@@ -20,7 +20,8 @@ import StatsBase:
     sample,
     summarystats,
     cov,
-    ecdf
+    ecdf,
+    tiedrank
 
 import MCMCDiagnosticTools
 import MLJModelInterface
@@ -72,6 +73,8 @@ export rstar
 
 export hpd
 
+export plot_style, plot_style!, reset_plot_style!
+
 """
     Chains
 
@@ -106,7 +109,7 @@ include("rafterydiag.jl")
 include("sampling.jl")
 include("stats.jl")
 include("modelstats.jl")
-include("plot.jl")
+include("plots/plots.jl")
 include("tables.jl")
 include("rstar.jl")
 
