@@ -2,6 +2,7 @@ using MCMCChains
 using MCMCDiagnosticTools
 using AbstractMCMC: AbstractChains
 using Dates
+using Statistics
 using Test
 
 ## CHAIN TESTS
@@ -233,6 +234,37 @@ end
 
     @test MCMCChains.changerate(chn) isa ChainDataFrame
     @test MCMCChains.changerate(chn; append_chains = false) isa Vector{<:ChainDataFrame}
+
+    @testset "var, std and cov" begin
+        values = randn(100, 3, 2)
+        c = Chains(values, [:a, :b, :x])
+        # Every draw of every chain, rather than a summary of per-chain summaries.
+        pooled = vcat(values[:, :, 1], values[:, :, 2])
+
+        @test var(c)[:, :var] ≈ [var(pooled[:, i]) for i = 1:3]
+        @test std(c)[:, :std] ≈ [std(pooled[:, i]) for i = 1:3]
+
+        @test cov(c) isa ChainDataFrame
+        @test [cov(c)[p, q] for p in names(c), q in names(c)] ≈ cov(pooled)
+        # `cor` is laid out the same way and keeps its own values.
+        @test [cor(c)[p, q] for p in names(c), q in names(c)] ≈ cor(pooled)
+
+        @test var(c; append_chains = false) isa Vector{<:ChainDataFrame}
+        @test cov(c; append_chains = false) isa Vector{<:ChainDataFrame}
+        per_chain = cov(c; append_chains = false)[2]
+        @test [per_chain[p, q] for p in names(c), q in names(c)] ≈ cov(values[:, :, 2])
+
+        # Internals are left out, as they are for the other summaries.
+        internals = Chains(randn(50, 3, 2), [:a, :b, :lp], Dict(:internals => [:lp]))
+        @test size(var(internals))[1] == 2
+        @test size(cov(internals))[1] == 2
+
+        # Missing draws are skipped, as in `summarystats`.
+        with_missing =
+            Chains(Array{Union{Missing,Float64}}([1.0 2.0; missing 4.0; 3.0 6.0]), [:a, :b])
+        @test var(with_missing)[:, :var][1] ≈ var([1.0, 3.0])
+        @test std(with_missing)[:, :std][1] ≈ std([1.0, 3.0])
+    end
 
     @test hpd(chn) isa ChainDataFrame
     @test hpd(chn; append_chains = false) isa Vector{<:ChainDataFrame}

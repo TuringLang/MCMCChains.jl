@@ -1,5 +1,10 @@
 # MCMCChains Changelog
 
+## 7.9.0
+
+- `var` and `std` summarise a chain the way `mean` already does, one row per parameter.
+- `cov` returns the covariance between every pair of parameters, laid out the way `cor` already is.
+
 ## 7.8.0
 
 ### Added

@@ -67,6 +67,36 @@ function cor(
     append_chains = true,
     kwargs...,
 )
+    return _pairwise(cor, "Correlation", chains; sections, append_chains, kwargs...)
+end
+
+"""
+    cov(chains[; sections, append_chains = true, kwargs...])
+
+Compute the covariance matrix for the chain.
+
+Setting `append_chains=false` will return a vector of dataframes containing a covariance
+matrix for each chain.
+"""
+function cov(
+    chains::Chains;
+    sections = _default_sections(chains),
+    append_chains = true,
+    kwargs...,
+)
+    return _pairwise(cov, "Covariance", chains; sections, append_chains, kwargs...)
+end
+
+# `f` is applied to the draws laid out as a matrix, one column per parameter, and returns a
+# square matrix over the parameters.
+function _pairwise(
+    f,
+    name::String,
+    chains::Chains;
+    sections = _default_sections(chains),
+    append_chains = true,
+    kwargs...,
+)
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
@@ -74,25 +104,31 @@ function cor(
     names_of_params = names(_chains)
 
     if append_chains
-        df = chaindataframe_cor("Correlation", names_of_params, to_matrix(_chains))
+        df = chaindataframe_pairwise(f, name, names_of_params, to_matrix(_chains))
         return df
     else
         vector_of_df = [
-            chaindataframe_cor("Correlation - Chain $i", names_of_params, data) for
+            chaindataframe_pairwise(f, "$name - Chain $i", names_of_params, data) for
             (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_df
     end
 end
 
-function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwargs...)
-    # Compute the correlation matrix.
-    cormat = cor(chains)
+function chaindataframe_pairwise(
+    f,
+    name,
+    names_of_params,
+    chains::AbstractMatrix;
+    kwargs...,
+)
+    # Compute the matrix over the parameters.
+    mat = f(chains)
 
     # Summarize the results in a named tuple.
     nt = (;
         parameters = names_of_params,
-        zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...,
+        zip(names_of_params, (mat[:, i] for i in axes(mat, 2)))...,
     )
 
     # Create a ChainDataFrame.
@@ -391,6 +427,30 @@ end
 mean(chn::Chains, syms) = mean(chn[:, syms, :])
 # resolve method ambiguity with `mean(f, ::AbstractArray)`
 mean(chn::Chains, syms::AbstractVector) = mean(chn[:, syms, :])
+
+"""
+    var(chains[; kwargs...])
+
+Calculate the variance of a chain.
+"""
+function var(chains::Chains; kwargs...)
+    return summarize(chains, var ∘ cskip; func_names = [:var], name = "Variance", kwargs...)
+end
+
+"""
+    std(chains[; kwargs...])
+
+Calculate the standard deviation of a chain.
+"""
+function std(chains::Chains; kwargs...)
+    return summarize(
+        chains,
+        std ∘ cskip;
+        func_names = [:std],
+        name = "Standard Deviation",
+        kwargs...,
+    )
+end
 
 """
     MCMCDiagnosticTools.bfmi(chains::Chains)
