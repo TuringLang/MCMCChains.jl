@@ -59,6 +59,11 @@ using Random
             s -> length(s.plotattributes[:bins]) == 26,
             histogram(chn, bins = 25).series_list,
         )
+        # So does a rule. Only `:auto` leaves the choice to us.
+        pooled = float.(rand(1:2, 400))
+        for rule in filter(!=(:auto), collect(MCMCChains.BIN_RULES))
+            @test MCMCChains._histogram_edges([pooled], rule) isa AbstractRange
+        end
     end
 
     @testset "a rule we do not compute is left to Plots" begin

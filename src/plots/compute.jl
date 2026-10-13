@@ -205,9 +205,12 @@ function _histogram_edges(series, bins)
     bins isa Symbol && bins ∉ BIN_RULES && return bins
     pooled = [float(v) for v in Iterators.flatten(series) if !ismissing(v) && isfinite(v)]
     if bins isa Symbol
-        # Only when the count was left to us. A count or a set of edges is the caller's.
-        discrete = _discrete_edges(pooled)
-        discrete === nothing || return discrete
+        # Only under `:auto`. A named rule, a count, or a set of edges is the caller's choice
+        # of how to bin, and a parameter on a few values is no reason to overrule it.
+        if bins === :auto
+            discrete = _discrete_edges(pooled)
+            discrete === nothing || return discrete
+        end
         bins = _bin_count(pooled, bins)
     end
     bins isa Integer || return bins
