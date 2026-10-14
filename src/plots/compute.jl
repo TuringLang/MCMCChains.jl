@@ -140,11 +140,18 @@ function _discrete_edges(values)
     # Halfway between neighbours, written so that levels far out in the floating point range
     # do not overflow on the way.
     mids = [levels[i] + (levels[i+1] - levels[i]) / 2 for i = 1:(n-1)]
-    return vcat(
-        levels[1] - (mids[1] - levels[1]),
-        mids,
-        levels[n] + (levels[n] - mids[n-1]),
-    )
+
+    # The outer two edges reach the same distance again, past the lowest and highest level.
+    # Close enough to the ends of the range there is no room for that, so the outer levels
+    # keep the narrowest bin that still holds them.
+    low = levels[1] - (mids[1] - levels[1])
+    high = levels[n] + (levels[n] - mids[n-1])
+    isfinite(low) || (low = prevfloat(float(levels[1])))
+    isfinite(high) || (high = nextfloat(float(levels[n])))
+    # No room even for that, so the draws are left to a rule rather than given broken edges.
+    (isfinite(low) && isfinite(high)) || return nothing
+
+    return vcat(low, mids, high)
 end
 
 """
@@ -160,7 +167,7 @@ function _few_levels(values)
     for v in values
         # `-0.0` and `0.0` are one value here, where `isequal` holds them apart and would
         # leave two levels with nothing between them.
-        push!(levels, v === -zero(v) ? zero(v) : v)
+        push!(levels, iszero(v) ? zero(v) : v)
         length(levels) > MAX_DISCRETE_LEVELS && return nothing
     end
     # Several draws to each level, so a short continuous chain is not mistaken for this.
@@ -241,7 +248,10 @@ function _histogram_edges(series, bins)
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
     lo, hi = extrema(pooled)
     hi > lo || return range(lo - 0.5, lo + 0.5; length = bins + 1)
-    return range(lo, nextfloat(hi); length = bins + 1)
+    # A hair past the largest draw, which an open last bin would otherwise leave out. There
+    # is no room for that at the very top of the range, where the last bin holds it instead.
+    top = nextfloat(hi)
+    return range(lo, isfinite(top) ? top : hi; length = bins + 1)
 end
 
 """

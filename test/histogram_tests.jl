@@ -55,14 +55,26 @@ using Random
         drawable(edges) = all(isfinite, edges) && issorted(edges, lt = <=)
 
         # `-0.0` and `0.0` are the same point to a reader, so they share a bar rather than
-        # leaving two levels with nothing between them.
-        signed_zero = repeat([-0.0, 0.0], 100)
-        @test MCMCChains._discrete_edges(signed_zero) === nothing
-        @test drawable(MCMCChains._histogram_edges([signed_zero], :auto))
+        # leaving two levels with nothing between them. Every float type, not only the one
+        # where `-0.0` is its own object.
+        for zero_pair in (
+            repeat([-0.0, 0.0], 100),
+            repeat([-0.0f0, 0.0f0], 100),
+            repeat([BigFloat(-0.0), BigFloat(0.0)], 100),
+        )
+            @test MCMCChains._discrete_edges(zero_pair) === nothing
+            @test drawable(MCMCChains._histogram_edges([zero_pair], :auto))
+        end
         @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
 
-        # Levels far enough out that the midpoint of the pair overflows if taken as a sum.
-        @test drawable(MCMCChains._discrete_edges(repeat([1e308, 1.1e308], 100)))
+        # Levels far enough out that the midpoint overflows if taken as a sum, and far
+        # enough out again that reaching past the highest level overflows on its own.
+        for far in (repeat([1e308, 1.1e308], 100), repeat([1.7e308, 1.79e308], 100))
+            @test drawable(MCMCChains._discrete_edges(far))
+        end
+        # No room left to reach past the top draw at all, so edges rather than an error.
+        at_the_top = repeat([floatmax(Float64) / 2, floatmax(Float64)], 100)
+        @test drawable(MCMCChains._histogram_edges([at_the_top], :auto))
 
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
