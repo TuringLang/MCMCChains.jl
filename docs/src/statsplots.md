@@ -78,10 +78,13 @@ histogram(chn)
 ```
 
 Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
-A parameter that only takes a few values gets one bar centred on each of them.
+A parameter that only takes a few values gets one bar for each of them, reaching halfway to the value on either side.
+Evenly spaced values therefore get bars centred on them.
 
 The bin count comes from the draws, by the same rules Plots uses.
-Pass `bins` to override it, as a rule, a count, or the edges themselves.
+Pass `bins` to override it, as a rule, a count, or the edges themselves, and the choice is yours rather than ours.
+Chains of one parameter share their edges, so this applies under the default `colordim = :chain`.
+Under `colordim = :parameter` the edges are left to Plots, because two parameters may be on scales that share none.
 
 ```@example statsplots
 histogram(chn, bins = :sturges)

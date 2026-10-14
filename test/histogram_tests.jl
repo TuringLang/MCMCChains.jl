@@ -35,7 +35,7 @@ using Random
     end
 
     @testset "a parameter on a few values is binned on them" begin
-        # One bin centred on each value, rather than a width read off the spread.
+        # One bin for each value, rather than a width read off the spread.
         @test MCMCChains._discrete_edges(float.(rand(1:2, 400))) == [0.5, 1.5, 2.5]
         @test MCMCChains._discrete_edges(float.(rand(0:3, 400))) ==
               [-0.5, 0.5, 1.5, 2.5, 3.5]
@@ -50,6 +50,19 @@ using Random
         @test MCMCChains._discrete_edges(Float64[]) === nothing
         # Too many levels to give each one a bar.
         @test MCMCChains._discrete_edges(float.(rand(1:50, 5000))) === nothing
+
+        # Edges a histogram can actually be drawn over: finite, and each one past the last.
+        drawable(edges) = all(isfinite, edges) && issorted(edges, lt = <=)
+
+        # `-0.0` and `0.0` are the same point to a reader, so they share a bar rather than
+        # leaving two levels with nothing between them.
+        signed_zero = repeat([-0.0, 0.0], 100)
+        @test MCMCChains._discrete_edges(signed_zero) === nothing
+        @test drawable(MCMCChains._histogram_edges([signed_zero], :auto))
+        @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
+
+        # Levels far enough out that the midpoint of the pair overflows if taken as a sum.
+        @test drawable(MCMCChains._discrete_edges(repeat([1e308, 1.1e308], 100)))
 
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]

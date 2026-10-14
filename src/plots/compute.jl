@@ -124,25 +124,48 @@ const MAX_DISCRETE_LEVELS = 20
 """
     _discrete_edges(values)
 
-One bin centred on each value, for a parameter that only takes a few of them.
+One bin for each value, for a parameter that only takes a few of them.
 
-A rule that reads a bin width off the spread has little to work with when every draw sits on
-one of a handful of points. On a two-valued parameter Freedman and Diaconis ask for three
-bins across the pair, which draws bars over ground that holds no draws at all. Returns
-`nothing` when the draws do not look like that.
+Each bin reaches halfway to the value on either side, so evenly spaced values get bars
+centred on them. A rule that reads a bin width off the spread has little to work with when
+every draw sits on one of a handful of points. On a two-valued parameter Freedman and
+Diaconis ask for three bins across the pair, which draws bars over ground that holds no
+draws at all. Returns `nothing` when the draws do not look like that.
 """
 function _discrete_edges(values)
-    levels = sort!(unique(values))
+    levels = _few_levels(values)
+    levels === nothing && return nothing
     n = length(levels)
-    # Several draws to each level, so a short continuous chain is not mistaken for this.
-    (1 < n <= MAX_DISCRETE_LEVELS && 5n <= length(values)) || return nothing
 
-    mids = [(levels[i] + levels[i+1]) / 2 for i = 1:(n-1)]
+    # Halfway between neighbours, written so that levels far out in the floating point range
+    # do not overflow on the way.
+    mids = [levels[i] + (levels[i+1] - levels[i]) / 2 for i = 1:(n-1)]
     return vcat(
         levels[1] - (mids[1] - levels[1]),
         mids,
         levels[n] + (levels[n] - mids[n-1]),
     )
+end
+
+"""
+    _few_levels(values)
+
+The sorted distinct values, or `nothing` when there are too many to give each one a bar.
+
+Collected rather than sorted, so that a long continuous chain is given up on after the few
+draws it takes to pass the limit, instead of paying for a sort of every distinct value.
+"""
+function _few_levels(values)
+    levels = Set{eltype(values)}()
+    for v in values
+        # `-0.0` and `0.0` are one value here, where `isequal` holds them apart and would
+        # leave two levels with nothing between them.
+        push!(levels, v === -zero(v) ? zero(v) : v)
+        length(levels) > MAX_DISCRETE_LEVELS && return nothing
+    end
+    # Several draws to each level, so a short continuous chain is not mistaken for this.
+    (1 < length(levels) && 5 * length(levels) <= length(values)) || return nothing
+    return sort!(collect(levels))
 end
 
 """
