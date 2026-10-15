@@ -52,16 +52,44 @@ using Random
         @test MCMCChains._discrete_edges(float.(rand(1:50, 5000))) === nothing
 
         # `-0.0` and `0.0` are the same point to a reader, so they share a bar rather than
-        # leaving two levels with nothing between them. Every float type, not only the one
-        # where `-0.0` is its own object.
+        # leaving two levels with nothing between them. Every float type, including the
+        # ones whose numbers are objects and so are not the same object as their own zero.
         for zero_pair in (
             repeat([-0.0, 0.0], 100),
             repeat([-0.0f0, 0.0f0], 100),
             repeat([BigFloat(-0.0), BigFloat(0.0)], 100),
         )
             @test MCMCChains._discrete_edges(zero_pair) === nothing
+            fallback = MCMCChains._histogram_edges([zero_pair], :auto)
+            @test all(isfinite, fallback)
+            @test issorted(fallback, lt = <=)
         end
         @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
+        # And no empty bar left where the two were held apart.
+        for signed in (
+            repeat([-0.0, 0.0, 1.0], 100),
+            repeat(BigFloat[BigFloat(-0.0), BigFloat(0.0), BigFloat(1.0)], 100),
+        )
+            edges = MCMCChains._histogram_edges([signed], :auto)
+            @test StatsPlots.Plots._make_hist((signed,), edges).weights == [200, 100]
+        end
+
+        # The draws a bar for each value is offered on: at most twenty of them, over at
+        # least five times as many draws as there are values. Anything wider is binned by a
+        # rule, as the docs say.
+        @test MCMCChains._discrete_edges(repeat([0.0, 1.0, 2.0], 5)) !== nothing
+        @test MCMCChains._discrete_edges(repeat([0.0, 1.0, 2.0], 4)) === nothing
+        @test MCMCChains._discrete_edges(repeat(collect(1.0:20.0), 5)) !== nothing
+        @test MCMCChains._discrete_edges(repeat(collect(1.0:21.0), 5)) === nothing
+        # Counted across the chain, not on each value, so a parameter that sits on one
+        # value and visits the others rarely still gets a bar for each.
+        lopsided = vcat(fill(0.0, 13), [1.0, 2.0])
+        @test MCMCChains._discrete_edges(lopsided) !== nothing
+        @test StatsPlots.Plots._make_hist(
+            (lopsided,),
+            MCMCChains._histogram_edges([lopsided], :auto),
+        ).weights == [13, 1, 1]
+        @test MCMCChains._discrete_edges(vcat([0.0, 1.0], fill(2.0, 12))) === nothing
 
         # Neighbours a single step apart have no value between them to put an edge on, so
         # they share a bar rather than becoming two bars one step wide, which nobody can

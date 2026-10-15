@@ -78,8 +78,9 @@ histogram(chn)
 ```
 
 Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
-A parameter that only takes a few values gets one bar for each of them, reaching halfway to the value on either side.
+A parameter that takes at most twenty distinct values, over at least five times as many draws as it has values, gets one bar for each value, reaching halfway to the value on either side.
 Evenly spaced values therefore get bars centred on them.
+Draws spread wider than that are binned by the rules below, as a continuous parameter is.
 
 The bin count comes from the draws, by the same rules Plots uses.
 Pass `bins` to override it, as a rule, a count, or the edges themselves, and the choice is yours rather than ours.

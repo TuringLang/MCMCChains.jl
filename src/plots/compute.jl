@@ -271,11 +271,14 @@ function _few_levels(values)
     levels = Set{eltype(values)}()
     for v in values
         # `-0.0` and `0.0` are one value here, where `isequal` holds them apart and would
-        # leave two levels with nothing between them.
+        # leave two levels with nothing between them. Asked by value, because `===` on a
+        # type whose numbers are objects, `BigFloat` among them, compares the object.
         push!(levels, iszero(v) ? zero(v) : v)
         length(levels) > MAX_DISCRETE_LEVELS && return nothing
     end
-    # Several draws to each level, so a short continuous chain is not mistaken for this.
+    # Five times as many draws as levels, so a short continuous chain is not mistaken for
+    # this. Across the chain rather than on each level, because a parameter that sits on one
+    # value and visits the others rarely is still one of these.
     (1 < length(levels) && 5 * length(levels) <= length(values)) || return nothing
     return sort!(collect(levels))
 end
