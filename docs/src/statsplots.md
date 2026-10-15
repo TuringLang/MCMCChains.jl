@@ -77,15 +77,12 @@ density(chn)
 histogram(chn)
 ```
 
-Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
-A parameter that takes at most twenty distinct values, over at least five times as many draws as it has values, gets one bar for each value, reaching halfway to the value on either side.
-Evenly spaced values therefore get bars centred on them.
-Draws spread wider than that are binned by the rules below, as a continuous parameter is.
-
-The bin count comes from the draws, by the same rules Plots uses.
-Pass `bins` to override it, as a rule, a count, or the edges themselves, and the choice is yours rather than ours.
-Chains of one parameter share their edges, so this applies under the default `colordim = :chain`.
-Under `colordim = :parameter` the edges are left to Plots, because two parameters may be on scales that share none.
+By default, all chains of a parameter share bin edges.
+With `bins = :auto`, a parameter gets one bar per value when it has at most 20 distinct values and the total draw count is at least five times the number of values.
+Edges fall halfway between neighboring values.
+Other parameters use the same bin-count rules as Plots.
+Pass a rule, count, or set of edges as `bins` to choose the bins yourself.
+With `colordim = :parameter`, Plots chooses the edges.
 
 ```@example statsplots
 histogram(chn, bins = :sturges)

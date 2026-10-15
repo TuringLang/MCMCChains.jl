@@ -2,7 +2,7 @@
 
 ## 7.8.1
 
-- `histogram` binned a parameter that only takes a few values by a rule meant for continuous draws, so bars landed over ground that holds no draws. A parameter on at most twenty distinct values, over at least five times as many draws as it has values, now gets one bar for each value, reaching halfway to the value on either side.
+- `histogram` placed empty bars between a parameter's few sampled values and now centers one bar on each value under `bins = :auto`.
 
 ## 7.8.0
 
