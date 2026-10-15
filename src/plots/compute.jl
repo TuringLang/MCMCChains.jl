@@ -153,11 +153,14 @@ function _discrete_edges(values)
     isfinite(high) || (high = nextfloat(float(levels[n])))
 
     edges = vcat(low, mids, high)
-    # A pair wide enough to overflow leaves an edge between the levels infinite, and the
-    # levels themselves can sit too close to the ends to be reached past. Rather than
-    # enumerate the ways that happens, the edges are handed back only when they hold every
-    # level in a bin of its own, and the draws go to a rule when they do not.
-    _edges_hold(edges, levels[1], levels[n]) || return nothing
+    # One bar per value is only worth promising when the edges deliver it. A pair wide
+    # enough to overflow leaves an edge between them infinite, and a pair close enough
+    # together leaves no room for an edge between them at all, where the halfway point
+    # rounds onto one of the pair and the two share a bar. Rather than enumerate the ways
+    # that happens, the edges are handed back only when every level sits inside a bin of
+    # its own, and the draws go to a rule when they do not.
+    all(isfinite, edges) || return nothing
+    all(edges[i] <= levels[i] < edges[i+1] for i = 1:n) || return nothing
     return edges
 end
 
@@ -171,6 +174,9 @@ counted at all.
 """
 function _edges_hold(edges, lo, hi)
     all(isfinite, edges) || return false
+    # A range can hold finite ends and still step by `Inf` between them, over a span wider
+    # than the type reaches. Plots works along the step, so it cannot bin over that.
+    edges isa AbstractRange && !isfinite(step(edges)) && return false
     issorted(edges, lt = <=) || return false
     return first(edges) <= lo && hi < last(edges)
 end

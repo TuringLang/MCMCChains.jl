@@ -63,6 +63,33 @@ using Random
         end
         @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
 
+        # Values with nothing between them to put an edge on would share a bar, so they get
+        # a rule instead of a promise of one bar each.
+        @test MCMCChains._discrete_edges(repeat([0.0, 1.0, nextfloat(1.0)], 100)) ===
+              nothing
+        @test MCMCChains._discrete_edges(repeat([1.0, nextfloat(1.0)], 100)) === nothing
+        # And values too far apart to measure between.
+        @test MCMCChains._discrete_edges(repeat([-1e308, 1e308], 100)) === nothing
+
+        # Whenever edges are handed back, every level has a bar to itself.
+        for values in (
+            float.(rand(1:2, 400)),
+            float.(rand(0:3, 400)),
+            repeat([0.0, 0.25, 1.0], 100),
+            repeat([-0.0, 0.0, 1.0], 100),
+            repeat([1e308, 1.1e308], 100),
+            repeat(Float16[-60000, 60000], 100),
+            repeat(Float32[1, 2, 3], 100),
+        )
+            edges = MCMCChains._discrete_edges(values)
+            edges === nothing && continue
+            levels = sort!(unique(iszero(v) ? zero(v) : v for v in values))
+            @test length(edges) == length(levels) + 1
+            weights = StatsPlots.Plots._make_hist((values,), edges).weights
+            @test count(!iszero, weights) == length(levels)
+            @test sum(weights) == length(values)
+        end
+
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
         @test all(e -> e == [0.5, 1.5, 2.5], edges)
@@ -86,6 +113,12 @@ using Random
         function counted(values, bins)
             return sum(StatsPlots.Plots._make_hist((values,), bins).weights)
         end
+
+        # Draws spread so wide that the span between them overflows. The edges come back as
+        # a list rather than a range, because a range over them steps by `Inf`, which Plots
+        # cannot bin along however finite its ends are.
+        wide = repeat([-1.0e308, 1.0e308], 100)
+        @test counted(wide, MCMCChains._histogram_edges([wide], :auto)) == length(wide)
 
         for T in (Float16, Float32, Float64, BigFloat)
             far = T === BigFloat ? BigFloat(floatmax(Float64)) : floatmax(T)
