@@ -66,37 +66,36 @@ using Random
         # Neighbours a single step apart have no value between them to put an edge on, so
         # they share a bar rather than becoming two bars one step wide, which nobody can
         # see. Everything else keeps a bar to itself.
-        @test MCMCChains._halfway(1.0, 2.0) == 1.5
-        @test MCMCChains._halfway(1.0, nextfloat(1.0)) === nothing
-        @test MCMCChains._halfway(0.0, nextfloat(0.0)) === nothing
         @test MCMCChains._separable([0.0, 1.0, nextfloat(1.0)]) == [0.0, 1.0]
         @test MCMCChains._separable([1.0, 2.0, 3.0]) == [1.0, 2.0, 3.0]
+        # Too far apart to measure between is not the same as too close to fit between, so
+        # a pair whose distance overflows keeps a bar each.
+        @test MCMCChains._separable([-1.0e308, 1.0e308]) == [-1.0e308, 1.0e308]
+        @test MCMCChains._separable(Float16[-60000, 60000]) == Float16[-60000, 60000]
 
-        # Every bar holds draws, every draw is in a bar, and there is one bar for each
-        # value the draws can be told apart on.
-        for values in (
-            float.(rand(1:2, 400)),
-            float.(rand(0:3, 400)),
-            repeat([0.0, 0.25, 1.0], 100),
-            repeat([-0.0, 0.0, 1.0], 100),
-            repeat(Float32[1, 2, 3], 100),
-            # Neighbours with nothing between them.
-            vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)),
-            repeat([1.0, nextfloat(1.0)], 100),
-            repeat([0.0, nextfloat(0.0)], 100),
+        # Every bar holds draws, every draw is in a bar, and the bar count is the one
+        # written down here rather than one read back off the code under test.
+        for (values, bars) in (
+            (float.(rand(1:2, 400)), 2),
+            (float.(rand(0:3, 400)), 4),
+            (repeat([0.0, 0.25, 1.0], 100), 3),
+            (repeat([-0.0, 0.0, 1.0], 100), 2),
+            (repeat(Float32[1, 2, 3], 100), 3),
+            # Neighbours with nothing between them share a bar.
+            (vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)), 2),
+            (repeat([1.0, nextfloat(1.0)], 100), 1),
+            (repeat([0.0, nextfloat(0.0)], 100), 1),
             # Levels at the ends of the range, with nothing beyond them.
-            repeat([1.0e308, 1.1e308], 100),
-            repeat([-1.0e308, 1.0e308], 100),
-            repeat([0.0, floatmax(Float64)], 100),
-            repeat(Float16[-60000, 60000], 100),
+            (repeat([1.0e308, 1.1e308], 100), 2),
+            (repeat([-1.0e308, 1.0e308], 100), 2),
+            (repeat([0.0, floatmax(Float64)], 100), 2),
+            (repeat(Float16[-60000, 60000], 100), 2),
+            (repeat(Float16[-60000, 0, 60000], 100), 3),
         )
             edges = MCMCChains._discrete_edges(values)
             @test edges !== nothing
             @test all(isfinite, edges)
             @test issorted(edges, lt = <=)
-
-            levels = sort!(unique(iszero(v) ? zero(v) : v for v in values))
-            bars = length(MCMCChains._separable(levels))
             @test length(edges) == bars + 1
 
             weights = StatsPlots.Plots._make_hist((values,), edges).weights
@@ -135,6 +134,8 @@ using Random
             repeat([0.0, floatmax(Float64)], 100),
             fill(floatmax(Float64), 200),
             fill(-floatmax(Float64), 200),
+            # Edges a canvas can hold one at a time, but not the width across them.
+            repeat([-1.0e308, 1.0e308], 100),
         )
             edges = (@test_logs (:warn,) match_mode = :any MCMCChains._histogram_edges(
                 [undrawable],
@@ -145,7 +146,6 @@ using Random
         for drawable in (
             randn(200),
             repeat([-1.0e305, 1.0e305], 100),
-            repeat([-1.0e308, 1.0e308], 100),
             repeat(Float16[-60000, 60000], 100),
             repeat([0.0, 1.0, nextfloat(1.0)], 100),
             repeat([0.0, nextfloat(0.0)], 100),

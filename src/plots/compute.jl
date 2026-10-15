@@ -161,11 +161,15 @@ end
     _separable(levels)
 
 The sorted `levels`, with each run that no edge can be placed inside folded to its first.
+
+Whether a pair has room between it is asked as `nextfloat(a) < b`, which holds exactly when
+some value of their own type lies between them. Reading a distance off the pair instead
+would call a pair inseparable for being too far apart to measure, rather than too close.
 """
 function _separable(levels)
     kept = similar(levels, 0)
     for v in levels
-        (isempty(kept) || _halfway(last(kept), v) !== nothing) && push!(kept, v)
+        (isempty(kept) || nextfloat(last(kept)) < v) && push!(kept, v)
     end
     return kept
 end
@@ -381,9 +385,15 @@ an empty plot with no word of why is the harder thing to work out.
 """
 function _announced(edges, pooled)
     lo, hi = extrema(pooled)
-    # The same edges as the canvas sees them. Where they no longer hold the draws once read
-    # that way, there is nothing to lay the bars out along.
-    _edges_hold(map(Float64, edges), Float64(lo), Float64(hi)) || @warn(
+    # The same edges as the canvas sees them. They have to hold the draws when read that
+    # way, and the width across them has to be a width `Float64` can state: a canvas given
+    # one it cannot measure falls back to an axis running 0 to 1, which says nothing about
+    # the draws at all.
+    at_canvas = map(Float64, edges)
+    usable =
+        _edges_hold(at_canvas, Float64(lo), Float64(hi)) &&
+        isfinite(last(at_canvas) - first(at_canvas))
+    usable || @warn(
         "Draws reach the end of what a plot can place. They are counted into the right " *
         "bins, but the histogram is likely to come out empty.",
         extrema = (lo, hi),
