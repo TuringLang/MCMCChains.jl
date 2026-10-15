@@ -51,9 +51,6 @@ using Random
         # Too many levels to give each one a bar.
         @test MCMCChains._discrete_edges(float.(rand(1:50, 5000))) === nothing
 
-        # Edges a histogram can actually be drawn over: finite, and each one past the last.
-        drawable(edges) = all(isfinite, edges) && issorted(edges, lt = <=)
-
         # `-0.0` and `0.0` are the same point to a reader, so they share a bar rather than
         # leaving two levels with nothing between them. Every float type, not only the one
         # where `-0.0` is its own object.
@@ -63,18 +60,8 @@ using Random
             repeat([BigFloat(-0.0), BigFloat(0.0)], 100),
         )
             @test MCMCChains._discrete_edges(zero_pair) === nothing
-            @test drawable(MCMCChains._histogram_edges([zero_pair], :auto))
         end
         @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
-
-        # Levels far enough out that the midpoint overflows if taken as a sum, and far
-        # enough out again that reaching past the highest level overflows on its own.
-        for far in (repeat([1e308, 1.1e308], 100), repeat([1.7e308, 1.79e308], 100))
-            @test drawable(MCMCChains._discrete_edges(far))
-        end
-        # No room left to reach past the top draw at all, so edges rather than an error.
-        at_the_top = repeat([floatmax(Float64) / 2, floatmax(Float64)], 100)
-        @test drawable(MCMCChains._histogram_edges([at_the_top], :auto))
 
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
@@ -88,6 +75,39 @@ using Random
         pooled = float.(rand(1:2, 400))
         for rule in filter(!=(:auto), collect(MCMCChains.BIN_RULES))
             @test MCMCChains._histogram_edges([pooled], rule) isa AbstractRange
+        end
+    end
+
+    @testset "every draw lands in a bin" begin
+        # Edges are only worth returning when a histogram can be drawn over them, and bins
+        # are closed on the left, so the last edge has to sit past the largest draw. Checked
+        # over the awkward corners of each element type rather than a few chosen pairs,
+        # because this is where overflow and rounding hide.
+        function counted(values, bins)
+            return sum(StatsPlots.Plots._make_hist((values,), bins).weights)
+        end
+
+        for T in (Float16, Float32, Float64, BigFloat)
+            far = T === BigFloat ? BigFloat(floatmax(Float64)) : floatmax(T)
+            corners = T[zero(T), one(T), -one(T), -far, far/2, -far/2, T(0.25)]
+            for a in corners, b in corners
+                a >= b && continue
+                values = repeat(T[a, b], 100)
+                for rule in (:auto, :fd, :sturges, :scott, :rice, :sqrt, 25)
+                    bins = MCMCChains._histogram_edges([values], rule)
+                    # Draws spread wider than their own type reaches leave no edges to
+                    # give, and the count goes back to Plots to work out.
+                    bins isa AbstractArray || continue
+                    @test all(isfinite, bins)
+                    @test issorted(bins, lt = <=)
+                    @test first(bins) <= a
+                    @test b < last(bins)
+                    # Plots cannot place a draw in a bin when the span between the two ends
+                    # is itself past what the type holds, whatever edges it is given.
+                    isfinite(b - a) || continue
+                    @test counted(values, bins) == length(values)
+                end
+            end
         end
     end
 

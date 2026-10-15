@@ -135,6 +135,9 @@ draws at all. Returns `nothing` when the draws do not look like that.
 function _discrete_edges(values)
     levels = _few_levels(values)
     levels === nothing && return nothing
+    # Widened to at least `Float64` before any arithmetic, because draws held in a narrower
+    # type can sit further apart than that type reaches.
+    levels = convert(Vector{promote_type(eltype(levels), Float64)}, levels)
     n = length(levels)
 
     # Halfway between neighbours, written so that levels far out in the floating point range
@@ -148,10 +151,28 @@ function _discrete_edges(values)
     high = levels[n] + (levels[n] - mids[n-1])
     isfinite(low) || (low = prevfloat(float(levels[1])))
     isfinite(high) || (high = nextfloat(float(levels[n])))
-    # No room even for that, so the draws are left to a rule rather than given broken edges.
-    (isfinite(low) && isfinite(high)) || return nothing
 
-    return vcat(low, mids, high)
+    edges = vcat(low, mids, high)
+    # A pair wide enough to overflow leaves an edge between the levels infinite, and the
+    # levels themselves can sit too close to the ends to be reached past. Rather than
+    # enumerate the ways that happens, the edges are handed back only when they hold every
+    # level in a bin of its own, and the draws go to a rule when they do not.
+    _edges_hold(edges, levels[1], levels[n]) || return nothing
+    return edges
+end
+
+"""
+    _edges_hold(edges, lo, hi)
+
+Whether `edges` are usable as histogram bins for draws running from `lo` to `hi`.
+
+Bins are closed on the left, so the last edge has to sit past the largest draw for it to be
+counted at all.
+"""
+function _edges_hold(edges, lo, hi)
+    all(isfinite, edges) || return false
+    issorted(edges, lt = <=) || return false
+    return first(edges) <= lo && hi < last(edges)
 end
 
 """
@@ -194,10 +215,13 @@ function _bin_count(values, rule::Symbol)
     n > 1 || return 1
     lo, hi = extrema(values)
     hi > lo || return 1
-    span = hi - lo
+    # Measured at least as wide as `Float64`, because draws held in a narrower type can span
+    # more than that type reaches, and the spread would come out infinite.
+    W = promote_type(eltype(values), Float64)
+    span = W(hi) - W(lo)
     # Clamped as a float before rounding, because a near-zero spread sends the count past
-    # what an `Int` holds.
-    count(x) = clamp(ceil(Int, clamp(x, 1.0, 10_000.0)), 1, 10_000)
+    # what an `Int` holds. A rule that cannot read the draws at all leaves one bin.
+    count(x) = isnan(x) ? 1 : clamp(ceil(Int, clamp(x, 1.0, 10_000.0)), 1, 10_000)
 
     rule === :auto && (rule = :fd)
     nd = cbrt(n)
@@ -208,10 +232,12 @@ function _bin_count(values, rule::Symbol)
     elseif rule === :rice
         return count(2 * nd)
     elseif rule === :scott
-        spread = std(values)
+        # Summed in the wide type, because squaring draws held in a narrow one overflows
+        # long before the spread itself would.
+        spread = std(W(v) for v in values)
         return count(spread > 0 ? span * nd / (3.5 * spread) : 1.0)
     end
-    iqr = quantile(values, 0.75) - quantile(values, 0.25)
+    iqr = W(quantile(values, 0.75)) - W(quantile(values, 0.25))
     return count(span * nd / (2 * (iqr > 0 ? iqr : one(iqr))))
 end
 
@@ -246,12 +272,23 @@ function _histogram_edges(series, bins)
     bins isa Integer || return bins
 
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
-    lo, hi = extrema(pooled)
+    # Laid out in at least `Float64`, whatever the draws are held in, so that a narrow type
+    # cannot overflow between the lowest and highest of them.
+    W = promote_type(eltype(pooled), Float64)
+    lo, hi = W.(extrema(pooled))
     hi > lo || return range(lo - 0.5, lo + 0.5; length = bins + 1)
-    # A hair past the largest draw, which an open last bin would otherwise leave out. There
-    # is no room for that at the very top of the range, where the last bin holds it instead.
+    # A hair past the largest draw, which an open last bin would otherwise leave out. Right
+    # at the top of the range there is no such value, and the count goes back to Plots.
     top = nextfloat(hi)
-    return range(lo, isfinite(top) ? top : hi; length = bins + 1)
+    isfinite(top) || return bins
+    edges = range(lo, top; length = bins + 1)
+    _edges_hold(edges, lo, hi) && return edges
+    # Over a wide enough span that hair is smaller than the gap between the last two edges,
+    # and laying the range out evenly loses it again. The last edge is then placed on its
+    # own, so the largest draw still falls inside it.
+    nudged = collect(range(lo, hi; length = bins + 1))
+    nudged[end] = top
+    return _edges_hold(nudged, lo, hi) ? nudged : bins
 end
 
 """
