@@ -118,7 +118,13 @@ using Random
         # a list rather than a range, because a range over them steps by `Inf`, which Plots
         # cannot bin along however finite its ends are.
         wide = repeat([-1.0e308, 1.0e308], 100)
-        @test counted(wide, MCMCChains._histogram_edges([wide], :auto)) == length(wide)
+        wide_edges = (@test_logs (:warn,) match_mode = :any MCMCChains._histogram_edges(
+            [wide],
+            :auto,
+        ))
+        @test counted(wide, wide_edges) == length(wide)
+        # Nothing to say about draws a backend can lay out.
+        @test_logs MCMCChains._histogram_edges([randn(200)], :auto)
 
         for T in (Float16, Float32, Float64, BigFloat)
             far = T === BigFloat ? BigFloat(floatmax(Float64)) : floatmax(T)

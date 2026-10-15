@@ -283,6 +283,12 @@ function _histogram_edges(series, bins)
     W = promote_type(eltype(pooled), Float64)
     lo, hi = W.(extrema(pooled))
     hi > lo || return range(lo - 0.5, lo + 0.5; length = bins + 1)
+    # Draws this far apart are still counted into the right bins, but a backend has nothing
+    # to lay them out on, and the plot comes back empty. Said once here, because an empty
+    # plot with no word of why is the harder thing to work out.
+    isfinite(hi - lo) ||
+        @warn "Draws span more than $W can measure. The histogram counts " *
+              "them, but is likely to come out empty." lo hi maxlog = 1
     # A hair past the largest draw, which an open last bin would otherwise leave out. Right
     # at the top of the range there is no such value, and the count goes back to Plots.
     top = nextfloat(hi)
