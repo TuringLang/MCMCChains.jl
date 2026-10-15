@@ -135,51 +135,98 @@ draws at all. Returns `nothing` when the draws do not look like that.
 function _discrete_edges(values)
     levels = _few_levels(values)
     levels === nothing && return nothing
-    for T in _edge_types(eltype(levels))
-        edges = _bins_around(convert(Vector{T}, levels))
-        edges === nothing || return edges
+    lo, hi = first(levels), last(levels)
+
+    # Neighbours with no value between them share a bar, so a pair a single step apart does
+    # not become two bars one step wide, which is a bar nobody can see.
+    levels = _separable(levels)
+    length(levels) == 1 && return _one_bin(lo, hi)
+    return _bins_around(levels, lo, hi)
+end
+
+"""
+    _halfway(a, b)
+
+The value halfway between `a` and `b`, or `nothing` when the two have none between them.
+
+Written as a step from `a` rather than as a sum, which overflows on a pair far out in the
+range.
+"""
+function _halfway(a, b)
+    mid = a + (b - a) / 2
+    return a < mid < b ? mid : nothing
+end
+
+"""
+    _separable(levels)
+
+The sorted `levels`, with each run that no edge can be placed inside folded to its first.
+"""
+function _separable(levels)
+    kept = similar(levels, 0)
+    for v in levels
+        (isempty(kept) || _halfway(last(kept), v) !== nothing) && push!(kept, v)
+    end
+    return kept
+end
+
+"""
+    _wider_than(T)
+
+The element types to try edges in, for draws held as `T`, widest last.
+
+Draws at the end of the range have no value past them to put an edge on, and `BigFloat` has
+room for one.
+"""
+_wider_than(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
+
+"""
+    _one_bin(lo, hi)
+
+A single bin holding every draw from `lo` to `hi`, or `nothing` when none can be made.
+
+Half a unit to either side where the draws can take a step that size, and the next value
+along where they cannot, so a parameter that barely moved still gets a bar to look at.
+"""
+function _one_bin(lo, hi)
+    for T in _wider_than(typeof(lo))
+        a, b = T(lo), T(hi)
+        edges = [min(a - 0.5, prevfloat(a)), max(b + 0.5, nextfloat(b))]
+        _edges_hold(edges, a, b) && return edges
     end
     return nothing
 end
 
 """
-    _edge_types(T)
+    _bins_around(levels, lo, hi)
 
-The element types to work edges out in, for draws held as `T`, widest last.
+One bin around each of the sorted `levels`, covering every draw from `lo` to `hi`.
 
-Edges have to land between the draws and beyond them, and neither is always possible in the
-type the draws arrive in: neighbours a single step apart have no value between them, and
-draws at the end of the range have none past them. `BigFloat` has room for both.
+Returns `nothing` when no type has room for the edges the levels need.
 """
-_edge_types(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
-
-"""
-    _bins_around(levels)
-
-One bin around each of the sorted `levels`, or `nothing` when `eltype(levels)` has no room
-to separate them.
-"""
-function _bins_around(levels)
+function _bins_around(levels, lo, hi)
     n = length(levels)
-    # Halfway between neighbours, written so that levels far out in the range do not
-    # overflow on the way.
-    mids = [levels[i] + (levels[i+1] - levels[i]) / 2 for i = 1:(n-1)]
+    for T in _wider_than(eltype(levels))
+        at = convert(Vector{T}, levels)
+        mids = [_halfway(at[i], at[i+1]) for i = 1:(n-1)]
+        any(isnothing, mids) && continue
 
-    # The outer two edges reach the same distance again, past the lowest and highest level.
-    # Close enough to the ends of the range there is no room for that, so the outer levels
-    # keep the narrowest bin that still holds them.
-    low = levels[1] - (mids[1] - levels[1])
-    high = levels[n] + (levels[n] - mids[n-1])
-    isfinite(low) || (low = prevfloat(levels[1]))
-    isfinite(high) || (high = nextfloat(levels[n]))
+        # The outer two edges reach the same distance again, past the lowest and highest
+        # level. Close enough to the ends of the range there is no room for that, so the
+        # outer levels keep the narrowest bin that still holds the draws.
+        low = at[1] - (mids[1] - at[1])
+        high = at[n] + (at[n] - mids[n-1])
+        isfinite(low) || (low = prevfloat(at[1]))
+        isfinite(high) || (high = nextfloat(at[n]))
 
-    edges = vcat(low, mids, high)
-    # One bar per value is only worth promising when the edges deliver it, so they are
-    # handed back only when every level sits inside a bin of its own. That also makes them
-    # strictly increasing, since each edge is passed before the next level is reached.
-    all(isfinite, edges) || return nothing
-    all(edges[i] <= levels[i] < edges[i+1] for i = 1:n) || return nothing
-    return edges
+        edges = vcat(low, mids, high)
+        # One bar per level is only worth promising when the edges deliver it, so they are
+        # handed back only when every level sits inside a bin of its own. That also makes
+        # them strictly increasing, since each edge is passed before the next level.
+        all(edges[i] <= at[i] < edges[i+1] for i = 1:n) || continue
+        _edges_hold(edges, T(lo), T(hi)) && return edges
+    end
+    return nothing
 end
 
 """
@@ -297,10 +344,15 @@ function _histogram_edges(series, bins)
 
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
     first_draw, last_draw = extrema(pooled)
-    last_draw > first_draw ||
-        return range(first_draw - 0.5, first_draw + 0.5; length = bins + 1)
+    # A parameter that never moved has one bar's worth to say, and a count of bins over it
+    # would be that bar beside empty ones. Half a unit is no step at all once the value is
+    # large enough, so the bin is widened until it holds the draw.
+    if last_draw <= first_draw
+        single = _one_bin(first_draw, last_draw)
+        single === nothing || return _announced(single, pooled)
+    end
 
-    for T in _edge_types(eltype(pooled))
+    for T in _wider_than(eltype(pooled))
         lo, hi = T(first_draw), T(last_draw)
         # A hair past the largest draw, which an open last bin would otherwise leave out.
         top = nextfloat(hi)
@@ -328,11 +380,13 @@ are still counted into the right bins, but the plot comes back carrying only its
 an empty plot with no word of why is the harder thing to work out.
 """
 function _announced(edges, pooled)
-    width = Float64(last(edges)) - Float64(first(edges))
-    isfinite(width) || @warn(
-        "Draws reach too far apart to plot. They are counted into the right bins, but " *
-        "the histogram is likely to come out empty.",
-        extrema(pooled),
+    lo, hi = extrema(pooled)
+    # The same edges as the canvas sees them. Where they no longer hold the draws once read
+    # that way, there is nothing to lay the bars out along.
+    _edges_hold(map(Float64, edges), Float64(lo), Float64(hi)) || @warn(
+        "Draws reach the end of what a plot can place. They are counted into the right " *
+        "bins, but the histogram is likely to come out empty.",
+        extrema = (lo, hi),
         maxlog = 1,
     )
     return edges
