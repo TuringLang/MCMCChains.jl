@@ -228,26 +228,31 @@ using Random
     end
 
     @testset "a chain that never moved still has bins" begin
-        # One bar holding the draw, rather than that bar beside empty ones. Half a unit is
-        # no step at all once the value is large enough, so the bin widens until it holds.
-        for (value, rule) in (
-            (2.0, 5),
-            (2.0, :auto),
-            (1.0e16, :auto),
-            (1.0e16, 25),
-            (floatmax(Float64), :auto),
-            (-floatmax(Float64), :auto),
-            (1.0f16, :auto),
-            (Float16(2), :auto),
-            (nextfloat(0.0), :auto),
+        # A bin that holds the draw, at any size. Half a unit is no step at all once the
+        # value is large enough, so the span widens until it does hold it. How many bins to
+        # lay across that span stays the caller's: a rule has no spread to read a width off
+        # and gives one, and a count they asked for is the count they get.
+        for (value, rule, expected_bins) in (
+            (2.0, :auto, 1),
+            (2.0, :fd, 1),
+            (2.0, 5, 5),
+            (1.0e16, :auto, 1),
+            (1.0e16, 25, 25),
+            (floatmax(Float64), :auto, 1),
+            (-floatmax(Float64), :auto, 1),
+            (-floatmax(Float64), 4, 4),
+            (1.0f16, :auto, 1),
+            (Float16(2), :auto, 1),
+            (Float16(2), 3, 3),
+            (nextfloat(0.0), :auto, 1),
         )
             draws = fill(value, 200)
             edges = MCMCChains._histogram_edges([draws], rule)
             @test first(edges) <= value < last(edges)
             @test all(isfinite, edges)
-            weights = StatsPlots.Plots._make_hist((draws,), edges).weights
-            @test sum(weights) == 200
-            @test count(iszero, weights) == 0
+            @test length(edges) - 1 == expected_bins
+            # However many bins, every draw is inside one of them.
+            @test sum(StatsPlots.Plots._make_hist((draws,), edges).weights) == 200
         end
     end
 

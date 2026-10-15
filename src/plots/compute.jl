@@ -357,12 +357,15 @@ function _histogram_edges(series, bins)
 
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
     first_draw, last_draw = extrema(pooled)
-    # A parameter that never moved has one bar's worth to say, and a count of bins over it
-    # would be that bar beside empty ones. Half a unit is no step at all once the value is
-    # large enough, so the bin is widened until it holds the draw.
+    # A parameter that never moved needs a bin that holds it, and half a unit is no step at
+    # all once the value is large enough. The count stays the caller's: a rule gives one
+    # here, since there is no spread to read a width off, and a number they asked for is
+    # laid across the same span.
     if last_draw <= first_draw
         single = _one_bin(first_draw, last_draw)
-        single === nothing || return _announced(single, pooled)
+        single === nothing && return bins
+        edges = range(first(single), last(single); length = bins + 1)
+        return _announced(edges, pooled)
     end
 
     for T in _wider_than(eltype(pooled))
