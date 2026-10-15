@@ -118,19 +118,12 @@ end
 # of edges. Plots names these and `:wand`, which is left to Plots.
 const BIN_RULES = (:auto, :fd, :sturges, :sqrt, :rice, :scott)
 
-# How few distinct values a parameter may take before it is binned on them instead.
 const MAX_DISCRETE_LEVELS = 20
 
 """
     _discrete_edges(values)
 
-One bin for each value, for a parameter that only takes a few of them.
-
-Each bin reaches halfway to the value on either side, so evenly spaced values get bars
-centred on them. A rule that reads a bin width off the spread has little to work with when
-every draw sits on one of a handful of points. On a two-valued parameter Freedman and
-Diaconis ask for three bins across the pair, which draws bars over ground that holds no
-draws at all. Returns `nothing` when the draws do not look like that.
+Return bins for a low-cardinality parameter, grouping adjacent values when needed, or `nothing`.
 """
 function _discrete_edges(values)
     levels = _few_levels(values)
@@ -234,23 +227,16 @@ end
 """
     _few_levels(values)
 
-The sorted distinct values, or `nothing` when there are too many to give each one a bar.
-
-Collected rather than sorted, so that a long continuous chain is given up on after the few
-draws it takes to pass the limit, instead of paying for a sort of every distinct value.
+Return sorted distinct values if the level and draw counts qualify, or `nothing`.
 """
 function _few_levels(values)
     levels = Set{eltype(values)}()
     for v in values
-        # `-0.0` and `0.0` are one value here, where `isequal` holds them apart and would
-        # leave two levels with nothing between them. Asked by value, because `===` on a
-        # type whose numbers are objects, `BigFloat` among them, compares the object.
+        # Set uses `isequal`, which treats signed zeros as distinct values.
         push!(levels, iszero(v) ? zero(v) : v)
         length(levels) > MAX_DISCRETE_LEVELS && return nothing
     end
-    # Five times as many draws as levels, so a short continuous chain is not mistaken for
-    # this. Across the chain rather than on each level, because a parameter that sits on one
-    # value and visits the others rarely is still one of these.
+    # Count draws across all levels so rare levels still qualify.
     (1 < length(levels) && 5 * length(levels) <= length(values)) || return nothing
     return sort!(collect(levels))
 end
@@ -317,8 +303,7 @@ function _histogram_edges(series, bins)
     bins isa Symbol && bins ∉ BIN_RULES && return bins
     pooled = [float(v) for v in Iterators.flatten(series) if !ismissing(v) && isfinite(v)]
     if bins isa Symbol
-        # Only under `:auto`. A named rule, a count, or a set of edges is the caller's choice
-        # of how to bin, and a parameter on a few values is no reason to overrule it.
+        # Preserve explicit bin choices.
         if bins === :auto
             discrete = _discrete_edges(pooled)
             discrete === nothing || return _announced(discrete, pooled)
