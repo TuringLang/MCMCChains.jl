@@ -75,12 +75,22 @@ using Random
             @test StatsPlots.Plots._make_hist((signed,), edges).weights == [200, 100]
         end
 
-        # The draws a bar for each value is offered on: at most twenty of them, with at
-        # least five draws on each. Anything wider is binned by a rule, as the docs say.
+        # The draws a bar for each value is offered on: at most twenty of them, over at
+        # least five times as many draws as there are values. Anything wider is binned by a
+        # rule, as the docs say.
         @test MCMCChains._discrete_edges(repeat([0.0, 1.0, 2.0], 5)) !== nothing
         @test MCMCChains._discrete_edges(repeat([0.0, 1.0, 2.0], 4)) === nothing
         @test MCMCChains._discrete_edges(repeat(collect(1.0:20.0), 5)) !== nothing
         @test MCMCChains._discrete_edges(repeat(collect(1.0:21.0), 5)) === nothing
+        # Counted across the chain, not on each value, so a parameter that sits on one
+        # value and visits the others rarely still gets a bar for each.
+        lopsided = vcat(fill(0.0, 13), [1.0, 2.0])
+        @test MCMCChains._discrete_edges(lopsided) !== nothing
+        @test StatsPlots.Plots._make_hist(
+            (lopsided,),
+            MCMCChains._histogram_edges([lopsided], :auto),
+        ).weights == [13, 1, 1]
+        @test MCMCChains._discrete_edges(vcat([0.0, 1.0], fill(2.0, 12))) === nothing
 
         # Levels far enough out that the midpoint of the pair overflows if taken as a sum.
         @test drawable(MCMCChains._discrete_edges(repeat([1e308, 1.1e308], 100)))
