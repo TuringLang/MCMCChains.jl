@@ -137,8 +137,6 @@ function _discrete_edges(values)
     levels === nothing && return nothing
     lo, hi = first(levels), last(levels)
 
-    # Neighbours with no value between them share a bar, so a pair a single step apart does
-    # not become two bars one step wide, which is a bar nobody can see.
     runs = _runs(levels)
     length(runs) == 1 && return _one_bin(lo, hi)
     return _bins_around(levels, runs, lo, hi)
@@ -147,12 +145,7 @@ end
 """
     _runs(levels)
 
-The sorted `levels` split into runs with no room for an edge inside them.
-
-Each run becomes one bar. Whether a pair has room between it is asked as `nextfloat(a) < b`,
-which holds exactly when some value of their own type lies between them. Reading a distance
-off the pair instead would call a pair inseparable for being too far apart to measure,
-rather than too close.
+Group consecutive representable values into runs that share one bar.
 """
 function _runs(levels)
     runs = UnitRange{Int}[]
@@ -169,10 +162,7 @@ end
 """
     _halfway(a, b)
 
-The value halfway between `a` and `b`, or `nothing` when the two have none between them.
-
-Written as a step from `a` rather than as a sum, which overflows on a pair far out in the
-range.
+Return a midpoint strictly between `a` and `b`, or `nothing` if arithmetic cannot produce one.
 """
 function _halfway(a, b)
     mid = a + (b - a) / 2
@@ -182,20 +172,14 @@ end
 """
     _wider_than(T)
 
-The element types to try edges in, for draws held as `T`, widest last.
-
-Draws at the end of the range have no value past them to put an edge on, and `BigFloat` has
-room for one.
+Types to try for edges around draws of type `T`, widest last.
 """
 _wider_than(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
 
 """
     _one_bin(lo, hi)
 
-A single bin holding every draw from `lo` to `hi`, or `nothing` when none can be made.
-
-Half a unit to either side where the draws can take a step that size, and the next value
-along where they cannot, so a parameter that barely moved still gets a bar to look at.
+Return edges for one bin containing `[lo, hi]`, or `nothing` if none can hold it.
 """
 function _one_bin(lo, hi)
     for T in _wider_than(typeof(lo))
@@ -207,34 +191,26 @@ function _one_bin(lo, hi)
 end
 
 """
-    _bins_around(levels, lo, hi)
+    _bins_around(levels, runs, lo, hi)
 
-One bin around each of the sorted `levels`, covering every draw from `lo` to `hi`.
-
-Returns `nothing` when no type has room for the edges the levels need.
+Return one bin per run when suitable edges are found, or `nothing`.
 """
 function _bins_around(levels, runs, lo, hi)
     n = length(runs)
     for T in _wider_than(eltype(levels))
         at = convert(Vector{T}, levels)
-        # Between the end of one run and the start of the next, rather than between the
-        # values standing for them. A midpoint taken from the ends a run is measured by
-        # would fall inside that run, and cut its own draws in two.
+        # Use run boundaries so an edge cannot cut through a run.
         mids = [_halfway(at[last(runs[i])], at[first(runs[i+1])]) for i = 1:(n-1)]
         any(isnothing, mids) && continue
 
-        # The outer two edges reach the same distance again, past the first and last run.
-        # Close enough to the ends of the range there is no room for that, so the outer
-        # runs keep the narrowest bin that still holds the draws.
+        # Fall back to the next representable edge at the type's limits.
         low = at[first(runs[1])] - (mids[1] - at[last(runs[1])])
         high = at[last(runs[n])] + (at[first(runs[n])] - mids[n-1])
         isfinite(low) || (low = prevfloat(at[first(runs[1])]))
         isfinite(high) || (high = nextfloat(at[last(runs[n])]))
 
         edges = vcat(low, mids, high)
-        # One bar per run is only worth promising when the edges deliver it, so they are
-        # handed back only when every run sits inside a bin of its own, from its first
-        # value to its last. That also makes them strictly increasing.
+        # Checking only the extrema could miss an edge inside a run.
         all(edges[i] <= at[first(runs[i])] && at[last(runs[i])] < edges[i+1] for i = 1:n) ||
             continue
         _edges_hold(edges, T(lo), T(hi)) && return edges
@@ -245,15 +221,11 @@ end
 """
     _edges_hold(edges, lo, hi)
 
-Whether `edges` are usable as histogram bins for draws running from `lo` to `hi`.
-
-Bins are closed on the left, so the last edge has to sit past the largest draw for it to be
-counted at all.
+Check finite edges that hold `[lo, hi]` under left-closed bins.
 """
 function _edges_hold(edges, lo, hi)
     all(isfinite, edges) || return false
-    # A range can hold finite ends and still step by `Inf` between them, over a span wider
-    # than the type reaches. Plots works along the step, so it cannot bin over that.
+    # Finite endpoints can still give an infinite range step.
     edges isa AbstractRange && !isfinite(step(edges)) && return false
     issorted(edges, lt = <=) || return false
     return first(edges) <= lo && hi < last(edges)
@@ -302,12 +274,10 @@ function _bin_count(values, rule::Symbol)
     n > 1 || return 1
     lo, hi = extrema(values)
     hi > lo || return 1
-    # Measured at least as wide as `Float64`, because draws held in a narrower type can span
-    # more than that type reaches, and the spread would come out infinite.
+    # A Float16 or Float32 span can overflow in its own type.
     W = promote_type(eltype(values), Float64)
     span = W(hi) - W(lo)
-    # Clamped as a float before rounding, because a near-zero spread sends the count past
-    # what an `Int` holds. A rule that cannot read the draws at all leaves one bin.
+    # Clamp before converting a near-zero bin width to an integer count.
     count(x) = isnan(x) ? 1 : clamp(ceil(Int, clamp(x, 1.0, 10_000.0)), 1, 10_000)
 
     rule === :auto && (rule = :fd)
@@ -319,8 +289,7 @@ function _bin_count(values, rule::Symbol)
     elseif rule === :rice
         return count(2 * nd)
     elseif rule === :scott
-        # Summed in the wide type, because squaring draws held in a narrow one overflows
-        # long before the spread itself would.
+        # Squaring narrow floats can overflow before their standard deviation does.
         spread = std(W(v) for v in values)
         return count(spread > 0 ? span * nd / (3.5 * spread) : 1.0)
     end
@@ -360,10 +329,7 @@ function _histogram_edges(series, bins)
 
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
     first_draw, last_draw = extrema(pooled)
-    # A parameter that never moved needs a bin that holds it, and half a unit is no step at
-    # all once the value is large enough. The count stays the caller's: a rule gives one
-    # here, since there is no spread to read a width off, and a number they asked for is
-    # laid across the same span.
+    # Half a unit cannot widen a bin around a sufficiently large draw.
     if last_draw <= first_draw
         single = _one_bin(first_draw, last_draw)
         single === nothing && return bins
@@ -373,14 +339,12 @@ function _histogram_edges(series, bins)
 
     for T in _wider_than(eltype(pooled))
         lo, hi = T(first_draw), T(last_draw)
-        # A hair past the largest draw, which an open last bin would otherwise leave out.
+        # The last bin is open on the right.
         top = nextfloat(hi)
         isfinite(top) || continue
         edges = range(lo, top; length = bins + 1)
         _edges_hold(edges, lo, hi) && return _announced(edges, pooled)
-        # Over a span wide enough that the hair is smaller than the gap between the last two
-        # edges, laying the range out evenly loses it again. The last edge is then placed on
-        # its own, so the largest draw still falls inside it.
+        # A wide range can round away the extra step at the last edge.
         nudged = collect(range(lo, hi; length = bins + 1))
         nudged[end] = top
         _edges_hold(nudged, lo, hi) && return _announced(nudged, pooled)
@@ -391,26 +355,16 @@ end
 """
     _announced(edges, pooled)
 
-`edges`, after saying so when no canvas can be laid out across them.
-
-A backend works in `Float64`, whatever the draws are held in, and has nothing to place the
-bars on when the width between the outermost edges runs past what that measures. The draws
-are still counted into the right bins, but the plot comes back carrying only its labels, and
-an empty plot with no word of why is the harder thing to work out.
+Return `edges` and warn when their `Float64` range cannot hold the draws or has an infinite span.
 """
 function _announced(edges, pooled)
     lo, hi = extrema(pooled)
-    # The same edges as the canvas sees them. They have to hold the draws when read that
-    # way, and the width across them has to be a width `Float64` can state: a canvas given
-    # one it cannot measure falls back to an axis running 0 to 1, which says nothing about
-    # the draws at all.
     at_canvas = map(Float64, edges)
     usable =
         _edges_hold(at_canvas, Float64(lo), Float64(hi)) &&
         isfinite(last(at_canvas) - first(at_canvas))
     usable || @warn(
-        "Draws reach the end of what a plot can place. They are counted into the right " *
-        "bins, but the histogram is likely to come out empty.",
+        "Histogram range may exceed the plot axis. Draws were counted, but the plot may be empty.",
         extrema = (lo, hi),
         maxlog = 1,
     )

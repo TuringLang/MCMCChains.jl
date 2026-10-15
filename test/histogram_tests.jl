@@ -91,9 +91,6 @@ using Random
         ).weights == [13, 1, 1]
         @test MCMCChains._discrete_edges(vcat([0.0, 1.0], fill(2.0, 12))) === nothing
 
-        # Neighbours a single step apart have no value between them to put an edge on, so
-        # they share a bar rather than becoming two bars one step wide, which nobody can
-        # see. Everything else keeps a bar to itself.
         function consecutive(start, n)
             values = [start]
             for _ = 2:n
@@ -105,17 +102,12 @@ using Random
 
         @test MCMCChains._runs([0.0, 1.0, nextfloat(1.0)]) == [1:1, 2:3]
         @test MCMCChains._runs([1.0, 2.0, 3.0]) == [1:1, 2:2, 3:3]
-        # Too far apart to measure between is not the same as too close to fit between, so
-        # a pair whose distance overflows keeps a bar each.
+        # Overflow in `b - a` must not merge distant levels.
         @test MCMCChains._runs([-1.0e308, 1.0e308]) == [1:1, 2:2]
         @test MCMCChains._runs(Float16[-60000, 60000]) == [1:1, 2:2]
-        # A whole run is one bar, not every other member of it.
         @test MCMCChains._runs(consecutive(1.0, 4)) == [1:4]
         @test MCMCChains._runs(vcat(consecutive(1.0, 4), 5.0)) == [1:4, 5:5]
 
-        # The bars each case should have, counted out by hand here rather than read back
-        # off the code under test. Totals and empty-bin counts alone would not notice an
-        # edge dropped into the middle of a group of draws.
         trio = consecutive(1.0f0, 5)
         for (values, expected) in (
             (repeat([1.0, 2.0], 200), [200, 200]),
@@ -123,13 +115,10 @@ using Random
             (repeat([0.0, 0.25, 1.0], 100), [100, 100, 100]),
             (repeat([-0.0, 0.0, 1.0], 100), [200, 100]),
             (repeat(Float32[1, 2, 3], 100), [100, 100, 100]),
-            # Neighbours with nothing between them share a bar.
             (vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)), [100, 300]),
             (repeat([1.0, nextfloat(1.0)], 100), [200]),
             (repeat([0.0, nextfloat(0.0)], 100), [200]),
-            # A run, and a run with a value clear of it. The edge belongs between the end
-            # of one run and the start of the next, not between the values standing for
-            # them, which would fall inside the first run.
+            # The midpoint must separate runs without splitting either one.
             (repeat(consecutive(1.0, 4), 100), [400]),
             (repeat(consecutive(0.0, 9), 50), [450]),
             (
@@ -142,7 +131,6 @@ using Random
                 [300, 100],
             ),
             (vcat(fill(1.0, 90), fill(nextfloat(1.0), 10), fill(5.0, 50)), [100, 50]),
-            # Levels at the ends of the range, with nothing beyond them.
             (repeat([1.0e308, 1.1e308], 100), [100, 100]),
             (repeat([-1.0e308, 1.0e308], 100), [100, 100]),
             (repeat([0.0, floatmax(Float64)], 100), [100, 100]),
@@ -173,22 +161,14 @@ using Random
     end
 
     @testset "every draw lands in a bin" begin
-        # Edges are only worth returning when a histogram can be drawn over them, and bins
-        # are closed on the left, so the last edge has to sit past the largest draw. Checked
-        # over the awkward corners of each element type rather than a few chosen pairs,
-        # because this is where overflow and rounding hide.
         function counted(values, bins)
             return sum(StatsPlots.Plots._make_hist((values,), bins).weights)
         end
 
-        # Draws at the very end of the range need an edge past them that `Float64` has no
-        # room for, so the plot has nowhere to put it and comes back empty. The draws are
-        # still counted, and it is said out loud, for those draws and no others.
         for undrawable in (
             repeat([0.0, floatmax(Float64)], 100),
             fill(floatmax(Float64), 200),
             fill(-floatmax(Float64), 200),
-            # Edges a canvas can hold one at a time, but not the width across them.
             repeat([-1.0e308, 1.0e308], 100),
         )
             edges = (@test_logs (:warn,) match_mode = :any MCMCChains._histogram_edges(
@@ -216,15 +196,12 @@ using Random
                 values = repeat(T[a, b], 100)
                 for rule in (:auto, :fd, :sturges, :scott, :rice, :sqrt, 25)
                     bins = MCMCChains._histogram_edges([values], rule)
-                    # Draws spread wider than their own type reaches leave no edges to
-                    # give, and the count goes back to Plots to work out.
                     bins isa AbstractArray || continue
                     @test all(isfinite, bins)
                     @test issorted(bins, lt = <=)
                     @test first(bins) <= a
                     @test b < last(bins)
-                    # Plots cannot place a draw in a bin when the span between the two ends
-                    # is itself past what the type holds, whatever edges it is given.
+                    # Skip counts when the element type cannot represent the draw span.
                     isfinite(b - a) || continue
                     @test counted(values, bins) == length(values)
                 end
@@ -256,10 +233,6 @@ using Random
     end
 
     @testset "a chain that never moved still has bins" begin
-        # A bin that holds the draw, at any size. Half a unit is no step at all once the
-        # value is large enough, so the span widens until it does hold it. How many bins to
-        # lay across that span stays the caller's: a rule has no spread to read a width off
-        # and gives one, and a count they asked for is the count they get.
         for (value, rule, expected_bins) in (
             (2.0, :auto, 1),
             (2.0, :fd, 1),
@@ -279,7 +252,6 @@ using Random
             @test first(edges) <= value < last(edges)
             @test all(isfinite, edges)
             @test length(edges) - 1 == expected_bins
-            # However many bins, every draw is inside one of them.
             @test sum(StatsPlots.Plots._make_hist((draws,), edges).weights) == 200
         end
     end
