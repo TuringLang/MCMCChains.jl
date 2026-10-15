@@ -55,11 +55,32 @@ using Random
         drawable(edges) = all(isfinite, edges) && issorted(edges, lt = <=)
 
         # `-0.0` and `0.0` are the same point to a reader, so they share a bar rather than
-        # leaving two levels with nothing between them.
-        signed_zero = repeat([-0.0, 0.0], 100)
-        @test MCMCChains._discrete_edges(signed_zero) === nothing
-        @test drawable(MCMCChains._histogram_edges([signed_zero], :auto))
+        # leaving two levels with nothing between them. Every float type, including the
+        # ones whose numbers are objects and so are not the same object as their own zero.
+        for zero_pair in (
+            repeat([-0.0, 0.0], 100),
+            repeat([-0.0f0, 0.0f0], 100),
+            repeat([BigFloat(-0.0), BigFloat(0.0)], 100),
+        )
+            @test MCMCChains._discrete_edges(zero_pair) === nothing
+            @test drawable(MCMCChains._histogram_edges([zero_pair], :auto))
+        end
         @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
+        # And no empty bar left where the two were held apart.
+        for signed in (
+            repeat([-0.0, 0.0, 1.0], 100),
+            repeat(BigFloat[BigFloat(-0.0), BigFloat(0.0), BigFloat(1.0)], 100),
+        )
+            edges = MCMCChains._histogram_edges([signed], :auto)
+            @test StatsPlots.Plots._make_hist((signed,), edges).weights == [200, 100]
+        end
+
+        # The draws a bar for each value is offered on: at most twenty of them, with at
+        # least five draws on each. Anything wider is binned by a rule, as the docs say.
+        @test MCMCChains._discrete_edges(repeat([0.0, 1.0, 2.0], 5)) !== nothing
+        @test MCMCChains._discrete_edges(repeat([0.0, 1.0, 2.0], 4)) === nothing
+        @test MCMCChains._discrete_edges(repeat(collect(1.0:20.0), 5)) !== nothing
+        @test MCMCChains._discrete_edges(repeat(collect(1.0:21.0), 5)) === nothing
 
         # Levels far enough out that the midpoint of the pair overflows if taken as a sum.
         @test drawable(MCMCChains._discrete_edges(repeat([1e308, 1.1e308], 100)))

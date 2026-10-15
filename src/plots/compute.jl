@@ -159,8 +159,9 @@ function _few_levels(values)
     levels = Set{eltype(values)}()
     for v in values
         # `-0.0` and `0.0` are one value here, where `isequal` holds them apart and would
-        # leave two levels with nothing between them.
-        push!(levels, v === -zero(v) ? zero(v) : v)
+        # leave two levels with nothing between them. Asked by value, because `===` on a
+        # type whose numbers are objects, `BigFloat` among them, compares the object.
+        push!(levels, iszero(v) ? zero(v) : v)
         length(levels) > MAX_DISCRETE_LEVELS && return nothing
     end
     # Several draws to each level, so a short continuous chain is not mistaken for this.

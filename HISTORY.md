@@ -2,7 +2,7 @@
 
 ## 7.8.1
 
-- `histogram` binned a parameter that only takes a few values by a rule meant for continuous draws, so bars landed over ground that holds no draws. Each value now gets its own bar, reaching halfway to the value on either side.
+- `histogram` binned a parameter that only takes a few values by a rule meant for continuous draws, so bars landed over ground that holds no draws. A parameter on at most twenty distinct values, with at least five draws on each, now gets one bar for each value, reaching halfway to the value on either side.
 
 ## 7.8.0
 
