@@ -72,6 +72,22 @@ using Random
         # a pair whose distance overflows keeps a bar each.
         @test MCMCChains._separable([-1.0e308, 1.0e308]) == [-1.0e308, 1.0e308]
         @test MCMCChains._separable(Float16[-60000, 60000]) == Float16[-60000, 60000]
+        # A whole run of consecutive values is one bar, not every other member of it.
+        function consecutive(start, n)
+            values = [start]
+            for _ = 2:n
+                push!(values, nextfloat(last(values)))
+            end
+            return values
+        end
+        @test consecutive(1.0, 4) == [
+            1.0,
+            nextfloat(1.0),
+            nextfloat(nextfloat(1.0)),
+            nextfloat(nextfloat(nextfloat(1.0))),
+        ]
+        @test MCMCChains._separable(consecutive(1.0, 4)) == [1.0]
+        @test MCMCChains._separable(vcat(consecutive(1.0, 4), 5.0)) == [1.0, 5.0]
 
         # Every bar holds draws, every draw is in a bar, and the bar count is the one
         # written down here rather than one read back off the code under test.
@@ -85,6 +101,10 @@ using Random
             (vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)), 2),
             (repeat([1.0, nextfloat(1.0)], 100), 1),
             (repeat([0.0, nextfloat(0.0)], 100), 1),
+            # A run of them, and a run with something clear of it.
+            (repeat(consecutive(1.0, 4), 100), 1),
+            (repeat(consecutive(0.0, 9), 50), 1),
+            (repeat(vcat(consecutive(1.0, 4), 5.0), 80), 2),
             # Levels at the ends of the range, with nothing beyond them.
             (repeat([1.0e308, 1.1e308], 100), 2),
             (repeat([-1.0e308, 1.0e308], 100), 2),

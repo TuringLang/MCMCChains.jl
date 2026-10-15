@@ -168,8 +168,11 @@ would call a pair inseparable for being too far apart to measure, rather than to
 """
 function _separable(levels)
     kept = similar(levels, 0)
-    for v in levels
-        (isempty(kept) || nextfloat(last(kept)) < v) && push!(kept, v)
+    for (i, v) in enumerate(levels)
+        # Against the value before it, not against the last one kept. A run of consecutive
+        # values is a run of pairs with no room between them, and measuring from the one
+        # kept would keep every other member of it.
+        (i == 1 || nextfloat(levels[i-1]) < v) && push!(kept, v)
     end
     return kept
 end
