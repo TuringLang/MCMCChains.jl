@@ -139,9 +139,31 @@ function _discrete_edges(values)
 
     # Neighbours with no value between them share a bar, so a pair a single step apart does
     # not become two bars one step wide, which is a bar nobody can see.
-    levels = _separable(levels)
-    length(levels) == 1 && return _one_bin(lo, hi)
-    return _bins_around(levels, lo, hi)
+    runs = _runs(levels)
+    length(runs) == 1 && return _one_bin(lo, hi)
+    return _bins_around(levels, runs, lo, hi)
+end
+
+"""
+    _runs(levels)
+
+The sorted `levels` split into runs with no room for an edge inside them.
+
+Each run becomes one bar. Whether a pair has room between it is asked as `nextfloat(a) < b`,
+which holds exactly when some value of their own type lies between them. Reading a distance
+off the pair instead would call a pair inseparable for being too far apart to measure,
+rather than too close.
+"""
+function _runs(levels)
+    runs = UnitRange{Int}[]
+    start = firstindex(levels)
+    for i = (start+1):lastindex(levels)
+        nextfloat(levels[i-1]) < levels[i] || continue
+        push!(runs, start:(i-1))
+        start = i
+    end
+    push!(runs, start:lastindex(levels))
+    return runs
 end
 
 """
@@ -155,26 +177,6 @@ range.
 function _halfway(a, b)
     mid = a + (b - a) / 2
     return a < mid < b ? mid : nothing
-end
-
-"""
-    _separable(levels)
-
-The sorted `levels`, with each run that no edge can be placed inside folded to its first.
-
-Whether a pair has room between it is asked as `nextfloat(a) < b`, which holds exactly when
-some value of their own type lies between them. Reading a distance off the pair instead
-would call a pair inseparable for being too far apart to measure, rather than too close.
-"""
-function _separable(levels)
-    kept = similar(levels, 0)
-    for (i, v) in enumerate(levels)
-        # Against the value before it, not against the last one kept. A run of consecutive
-        # values is a run of pairs with no room between them, and measuring from the one
-        # kept would keep every other member of it.
-        (i == 1 || nextfloat(levels[i-1]) < v) && push!(kept, v)
-    end
-    return kept
 end
 
 """
@@ -211,26 +213,30 @@ One bin around each of the sorted `levels`, covering every draw from `lo` to `hi
 
 Returns `nothing` when no type has room for the edges the levels need.
 """
-function _bins_around(levels, lo, hi)
-    n = length(levels)
+function _bins_around(levels, runs, lo, hi)
+    n = length(runs)
     for T in _wider_than(eltype(levels))
         at = convert(Vector{T}, levels)
-        mids = [_halfway(at[i], at[i+1]) for i = 1:(n-1)]
+        # Between the end of one run and the start of the next, rather than between the
+        # values standing for them. A midpoint taken from the ends a run is measured by
+        # would fall inside that run, and cut its own draws in two.
+        mids = [_halfway(at[last(runs[i])], at[first(runs[i+1])]) for i = 1:(n-1)]
         any(isnothing, mids) && continue
 
-        # The outer two edges reach the same distance again, past the lowest and highest
-        # level. Close enough to the ends of the range there is no room for that, so the
-        # outer levels keep the narrowest bin that still holds the draws.
-        low = at[1] - (mids[1] - at[1])
-        high = at[n] + (at[n] - mids[n-1])
-        isfinite(low) || (low = prevfloat(at[1]))
-        isfinite(high) || (high = nextfloat(at[n]))
+        # The outer two edges reach the same distance again, past the first and last run.
+        # Close enough to the ends of the range there is no room for that, so the outer
+        # runs keep the narrowest bin that still holds the draws.
+        low = at[first(runs[1])] - (mids[1] - at[last(runs[1])])
+        high = at[last(runs[n])] + (at[first(runs[n])] - mids[n-1])
+        isfinite(low) || (low = prevfloat(at[first(runs[1])]))
+        isfinite(high) || (high = nextfloat(at[last(runs[n])]))
 
         edges = vcat(low, mids, high)
-        # One bar per level is only worth promising when the edges deliver it, so they are
-        # handed back only when every level sits inside a bin of its own. That also makes
-        # them strictly increasing, since each edge is passed before the next level.
-        all(edges[i] <= at[i] < edges[i+1] for i = 1:n) || continue
+        # One bar per run is only worth promising when the edges deliver it, so they are
+        # handed back only when every run sits inside a bin of its own, from its first
+        # value to its last. That also makes them strictly increasing.
+        all(edges[i] <= at[first(runs[i])] && at[last(runs[i])] < edges[i+1] for i = 1:n) ||
+            continue
         _edges_hold(edges, T(lo), T(hi)) && return edges
     end
     return nothing

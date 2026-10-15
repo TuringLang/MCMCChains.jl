@@ -66,13 +66,6 @@ using Random
         # Neighbours a single step apart have no value between them to put an edge on, so
         # they share a bar rather than becoming two bars one step wide, which nobody can
         # see. Everything else keeps a bar to itself.
-        @test MCMCChains._separable([0.0, 1.0, nextfloat(1.0)]) == [0.0, 1.0]
-        @test MCMCChains._separable([1.0, 2.0, 3.0]) == [1.0, 2.0, 3.0]
-        # Too far apart to measure between is not the same as too close to fit between, so
-        # a pair whose distance overflows keeps a bar each.
-        @test MCMCChains._separable([-1.0e308, 1.0e308]) == [-1.0e308, 1.0e308]
-        @test MCMCChains._separable(Float16[-60000, 60000]) == Float16[-60000, 60000]
-        # A whole run of consecutive values is one bar, not every other member of it.
         function consecutive(start, n)
             values = [start]
             for _ = 2:n
@@ -80,47 +73,60 @@ using Random
             end
             return values
         end
-        @test consecutive(1.0, 4) == [
-            1.0,
-            nextfloat(1.0),
-            nextfloat(nextfloat(1.0)),
-            nextfloat(nextfloat(nextfloat(1.0))),
-        ]
-        @test MCMCChains._separable(consecutive(1.0, 4)) == [1.0]
-        @test MCMCChains._separable(vcat(consecutive(1.0, 4), 5.0)) == [1.0, 5.0]
+        @test consecutive(1.0, 3) == [1.0, nextfloat(1.0), nextfloat(nextfloat(1.0))]
 
-        # Every bar holds draws, every draw is in a bar, and the bar count is the one
-        # written down here rather than one read back off the code under test.
-        for (values, bars) in (
-            (float.(rand(1:2, 400)), 2),
-            (float.(rand(0:3, 400)), 4),
-            (repeat([0.0, 0.25, 1.0], 100), 3),
-            (repeat([-0.0, 0.0, 1.0], 100), 2),
-            (repeat(Float32[1, 2, 3], 100), 3),
+        @test MCMCChains._runs([0.0, 1.0, nextfloat(1.0)]) == [1:1, 2:3]
+        @test MCMCChains._runs([1.0, 2.0, 3.0]) == [1:1, 2:2, 3:3]
+        # Too far apart to measure between is not the same as too close to fit between, so
+        # a pair whose distance overflows keeps a bar each.
+        @test MCMCChains._runs([-1.0e308, 1.0e308]) == [1:1, 2:2]
+        @test MCMCChains._runs(Float16[-60000, 60000]) == [1:1, 2:2]
+        # A whole run is one bar, not every other member of it.
+        @test MCMCChains._runs(consecutive(1.0, 4)) == [1:4]
+        @test MCMCChains._runs(vcat(consecutive(1.0, 4), 5.0)) == [1:4, 5:5]
+
+        # The bars each case should have, counted out by hand here rather than read back
+        # off the code under test. Totals and empty-bin counts alone would not notice an
+        # edge dropped into the middle of a group of draws.
+        trio = consecutive(1.0f0, 5)
+        for (values, expected) in (
+            (repeat([1.0, 2.0], 200), [200, 200]),
+            (vcat(fill(0.0, 50), fill(1.0, 150), fill(2.0, 100)), [50, 150, 100]),
+            (repeat([0.0, 0.25, 1.0], 100), [100, 100, 100]),
+            (repeat([-0.0, 0.0, 1.0], 100), [200, 100]),
+            (repeat(Float32[1, 2, 3], 100), [100, 100, 100]),
             # Neighbours with nothing between them share a bar.
-            (vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)), 2),
-            (repeat([1.0, nextfloat(1.0)], 100), 1),
-            (repeat([0.0, nextfloat(0.0)], 100), 1),
-            # A run of them, and a run with something clear of it.
-            (repeat(consecutive(1.0, 4), 100), 1),
-            (repeat(consecutive(0.0, 9), 50), 1),
-            (repeat(vcat(consecutive(1.0, 4), 5.0), 80), 2),
+            (vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)), [100, 300]),
+            (repeat([1.0, nextfloat(1.0)], 100), [200]),
+            (repeat([0.0, nextfloat(0.0)], 100), [200]),
+            # A run, and a run with a value clear of it. The edge belongs between the end
+            # of one run and the start of the next, not between the values standing for
+            # them, which would fall inside the first run.
+            (repeat(consecutive(1.0, 4), 100), [400]),
+            (repeat(consecutive(0.0, 9), 50), [450]),
+            (
+                vcat(
+                    fill(trio[1], 100),
+                    fill(trio[2], 100),
+                    fill(trio[3], 100),
+                    fill(trio[5], 100),
+                ),
+                [300, 100],
+            ),
+            (vcat(fill(1.0, 90), fill(nextfloat(1.0), 10), fill(5.0, 50)), [100, 50]),
             # Levels at the ends of the range, with nothing beyond them.
-            (repeat([1.0e308, 1.1e308], 100), 2),
-            (repeat([-1.0e308, 1.0e308], 100), 2),
-            (repeat([0.0, floatmax(Float64)], 100), 2),
-            (repeat(Float16[-60000, 60000], 100), 2),
-            (repeat(Float16[-60000, 0, 60000], 100), 3),
+            (repeat([1.0e308, 1.1e308], 100), [100, 100]),
+            (repeat([-1.0e308, 1.0e308], 100), [100, 100]),
+            (repeat([0.0, floatmax(Float64)], 100), [100, 100]),
+            (repeat(Float16[-60000, 60000], 100), [100, 100]),
+            (repeat(Float16[-60000, 0, 60000], 100), [100, 100, 100]),
         )
             edges = MCMCChains._discrete_edges(values)
             @test edges !== nothing
             @test all(isfinite, edges)
             @test issorted(edges, lt = <=)
-            @test length(edges) == bars + 1
-
-            weights = StatsPlots.Plots._make_hist((values,), edges).weights
-            @test count(!iszero, weights) == bars
-            @test sum(weights) == length(values)
+            @test length(edges) == length(expected) + 1
+            @test StatsPlots.Plots._make_hist((values,), edges).weights == expected
         end
 
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
