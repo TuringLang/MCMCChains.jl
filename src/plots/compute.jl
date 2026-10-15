@@ -135,13 +135,34 @@ draws at all. Returns `nothing` when the draws do not look like that.
 function _discrete_edges(values)
     levels = _few_levels(values)
     levels === nothing && return nothing
-    # Widened to at least `Float64` before any arithmetic, because draws held in a narrower
-    # type can sit further apart than that type reaches.
-    levels = convert(Vector{promote_type(eltype(levels), Float64)}, levels)
-    n = length(levels)
+    for T in _edge_types(eltype(levels))
+        edges = _bins_around(convert(Vector{T}, levels))
+        edges === nothing || return edges
+    end
+    return nothing
+end
 
-    # Halfway between neighbours, written so that levels far out in the floating point range
-    # do not overflow on the way.
+"""
+    _edge_types(T)
+
+The element types to work edges out in, for draws held as `T`, widest last.
+
+Edges have to land between the draws and beyond them, and neither is always possible in the
+type the draws arrive in: neighbours a single step apart have no value between them, and
+draws at the end of the range have none past them. `BigFloat` has room for both.
+"""
+_edge_types(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
+
+"""
+    _bins_around(levels)
+
+One bin around each of the sorted `levels`, or `nothing` when `eltype(levels)` has no room
+to separate them.
+"""
+function _bins_around(levels)
+    n = length(levels)
+    # Halfway between neighbours, written so that levels far out in the range do not
+    # overflow on the way.
     mids = [levels[i] + (levels[i+1] - levels[i]) / 2 for i = 1:(n-1)]
 
     # The outer two edges reach the same distance again, past the lowest and highest level.
@@ -149,16 +170,13 @@ function _discrete_edges(values)
     # keep the narrowest bin that still holds them.
     low = levels[1] - (mids[1] - levels[1])
     high = levels[n] + (levels[n] - mids[n-1])
-    isfinite(low) || (low = prevfloat(float(levels[1])))
-    isfinite(high) || (high = nextfloat(float(levels[n])))
+    isfinite(low) || (low = prevfloat(levels[1]))
+    isfinite(high) || (high = nextfloat(levels[n]))
 
     edges = vcat(low, mids, high)
-    # One bar per value is only worth promising when the edges deliver it. A pair wide
-    # enough to overflow leaves an edge between them infinite, and a pair close enough
-    # together leaves no room for an edge between them at all, where the halfway point
-    # rounds onto one of the pair and the two share a bar. Rather than enumerate the ways
-    # that happens, the edges are handed back only when every level sits inside a bin of
-    # its own, and the draws go to a rule when they do not.
+    # One bar per value is only worth promising when the edges deliver it, so they are
+    # handed back only when every level sits inside a bin of its own. That also makes them
+    # strictly increasing, since each edge is passed before the next level is reached.
     all(isfinite, edges) || return nothing
     all(edges[i] <= levels[i] < edges[i+1] for i = 1:n) || return nothing
     return edges
@@ -271,36 +289,53 @@ function _histogram_edges(series, bins)
         # of how to bin, and a parameter on a few values is no reason to overrule it.
         if bins === :auto
             discrete = _discrete_edges(pooled)
-            discrete === nothing || return discrete
+            discrete === nothing || return _announced(discrete, pooled)
         end
         bins = _bin_count(pooled, bins)
     end
     bins isa Integer || return bins
 
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
-    # Laid out in at least `Float64`, whatever the draws are held in, so that a narrow type
-    # cannot overflow between the lowest and highest of them.
-    W = promote_type(eltype(pooled), Float64)
-    lo, hi = W.(extrema(pooled))
-    hi > lo || return range(lo - 0.5, lo + 0.5; length = bins + 1)
-    # Draws this far apart are still counted into the right bins, but a backend has nothing
-    # to lay them out on, and the plot comes back empty. Said once here, because an empty
-    # plot with no word of why is the harder thing to work out.
-    isfinite(hi - lo) ||
-        @warn "Draws span more than $W can measure. The histogram counts " *
-              "them, but is likely to come out empty." lo hi maxlog = 1
-    # A hair past the largest draw, which an open last bin would otherwise leave out. Right
-    # at the top of the range there is no such value, and the count goes back to Plots.
-    top = nextfloat(hi)
-    isfinite(top) || return bins
-    edges = range(lo, top; length = bins + 1)
-    _edges_hold(edges, lo, hi) && return edges
-    # Over a wide enough span that hair is smaller than the gap between the last two edges,
-    # and laying the range out evenly loses it again. The last edge is then placed on its
-    # own, so the largest draw still falls inside it.
-    nudged = collect(range(lo, hi; length = bins + 1))
-    nudged[end] = top
-    return _edges_hold(nudged, lo, hi) ? nudged : bins
+    first_draw, last_draw = extrema(pooled)
+    last_draw > first_draw ||
+        return range(first_draw - 0.5, first_draw + 0.5; length = bins + 1)
+
+    for T in _edge_types(eltype(pooled))
+        lo, hi = T(first_draw), T(last_draw)
+        # A hair past the largest draw, which an open last bin would otherwise leave out.
+        top = nextfloat(hi)
+        isfinite(top) || continue
+        edges = range(lo, top; length = bins + 1)
+        _edges_hold(edges, lo, hi) && return _announced(edges, pooled)
+        # Over a span wide enough that the hair is smaller than the gap between the last two
+        # edges, laying the range out evenly loses it again. The last edge is then placed on
+        # its own, so the largest draw still falls inside it.
+        nudged = collect(range(lo, hi; length = bins + 1))
+        nudged[end] = top
+        _edges_hold(nudged, lo, hi) && return _announced(nudged, pooled)
+    end
+    return bins
+end
+
+"""
+    _announced(edges, pooled)
+
+`edges`, after saying so when no canvas can be laid out across them.
+
+A backend works in `Float64`, whatever the draws are held in, and has nothing to place the
+bars on when the width between the outermost edges runs past what that measures. The draws
+are still counted into the right bins, but the plot comes back carrying only its labels, and
+an empty plot with no word of why is the harder thing to work out.
+"""
+function _announced(edges, pooled)
+    width = Float64(last(edges)) - Float64(first(edges))
+    isfinite(width) || @warn(
+        "Draws reach too far apart to plot. They are counted into the right bins, but " *
+        "the histogram is likely to come out empty.",
+        extrema(pooled),
+        maxlog = 1,
+    )
+    return edges
 end
 
 """

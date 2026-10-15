@@ -63,28 +63,29 @@ using Random
         end
         @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
 
-        # Values with nothing between them to put an edge on would share a bar, so they get
-        # a rule instead of a promise of one bar each.
-        @test MCMCChains._discrete_edges(repeat([0.0, 1.0, nextfloat(1.0)], 100)) ===
-              nothing
-        @test MCMCChains._discrete_edges(repeat([1.0, nextfloat(1.0)], 100)) === nothing
-        # And values too far apart to measure between.
-        @test MCMCChains._discrete_edges(repeat([-1e308, 1e308], 100)) === nothing
-
-        # Whenever edges are handed back, every level has a bar to itself.
+        # Every level gets a bar to itself, including where the draws' own type has no room
+        # for an edge between them or beyond them, and the edges are worked out wider.
         for values in (
             float.(rand(1:2, 400)),
             float.(rand(0:3, 400)),
             repeat([0.0, 0.25, 1.0], 100),
             repeat([-0.0, 0.0, 1.0], 100),
-            repeat([1e308, 1.1e308], 100),
-            repeat(Float16[-60000, 60000], 100),
             repeat(Float32[1, 2, 3], 100),
+            # Neighbours one step apart, with no value in between to put an edge on.
+            repeat([0.0, 1.0, nextfloat(1.0)], 100),
+            repeat([1.0, nextfloat(1.0)], 100),
+            # Levels at the ends of the range, with nothing beyond them.
+            repeat([1.0e308, 1.1e308], 100),
+            repeat([-1.0e308, 1.0e308], 100),
+            repeat([0.0, floatmax(Float64)], 100),
+            repeat(Float16[-60000, 60000], 100),
         )
             edges = MCMCChains._discrete_edges(values)
-            edges === nothing && continue
+            @test edges !== nothing
             levels = sort!(unique(iszero(v) ? zero(v) : v for v in values))
             @test length(edges) == length(levels) + 1
+            @test all(isfinite, edges)
+            @test issorted(edges, lt = <=)
             weights = StatsPlots.Plots._make_hist((values,), edges).weights
             @test count(!iszero, weights) == length(levels)
             @test sum(weights) == length(values)
@@ -114,17 +115,25 @@ using Random
             return sum(StatsPlots.Plots._make_hist((values,), bins).weights)
         end
 
-        # Draws spread so wide that the span between them overflows. The edges come back as
-        # a list rather than a range, because a range over them steps by `Inf`, which Plots
-        # cannot bin along however finite its ends are.
-        wide = repeat([-1.0e308, 1.0e308], 100)
-        wide_edges = (@test_logs (:warn,) match_mode = :any MCMCChains._histogram_edges(
-            [wide],
-            :auto,
-        ))
-        @test counted(wide, wide_edges) == length(wide)
-        # Nothing to say about draws a backend can lay out.
-        @test_logs MCMCChains._histogram_edges([randn(200)], :auto)
+        # A backend has nothing to lay a canvas out on when the width between the outermost
+        # edges runs past `Float64`, so the draws are counted and the plot comes back empty.
+        # Said out loud, and only for the draws it is true of.
+        for undrawable in
+            (repeat([-1.0e308, 1.0e308], 100), repeat([0.0, floatmax(Float64)], 100))
+            edges = (@test_logs (:warn,) match_mode = :any MCMCChains._histogram_edges(
+                [undrawable],
+                :auto,
+            ))
+            @test counted(undrawable, edges) == length(undrawable)
+        end
+        for drawable in (
+            randn(200),
+            repeat([-1.0e305, 1.0e305], 100),
+            repeat(Float16[-60000, 60000], 100),
+            repeat([0.0, 1.0, nextfloat(1.0)], 100),
+        )
+            @test_logs MCMCChains._histogram_edges([drawable], :auto)
+        end
 
         for T in (Float16, Float32, Float64, BigFloat)
             far = T === BigFloat ? BigFloat(floatmax(Float64)) : floatmax(T)
