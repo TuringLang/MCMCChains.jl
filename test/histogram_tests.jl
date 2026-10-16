@@ -77,8 +77,6 @@ using Random
 
         @test drawable(MCMCChains._discrete_edges(repeat([1e308, 1.1e308], 100)))
 
-        # Values with no room for an edge between them take a rule, since the midpoint would
-        # round onto one of the pair and close its bin to nothing. Every draw still counts.
         for crowded in (
             repeat([prevfloat(1.0), 1.0], 100),
             repeat([1.0, nextfloat(1.0)], 100),

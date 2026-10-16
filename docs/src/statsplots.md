@@ -78,9 +78,9 @@ histogram(chn)
 ```
 
 By default, all chains of a parameter share bin edges.
-With `bins = :auto`, a parameter gets one bar per value when it has at most 20 distinct values and the total draw count is at least five times the number of values.
+With `bins = :auto`, a parameter gets one bin per value when it has at most 20 distinct values, the total draw count is at least five times the number of values, and the edges fit.
 Edges fall halfway between neighboring values.
-Other parameters use the same bin-count rules as Plots.
+Otherwise, the bin count follows the same rules as Plots.
 Pass a rule, count, or set of edges as `bins` to choose the bins yourself.
 With `colordim = :parameter`, Plots chooses the edges.
 

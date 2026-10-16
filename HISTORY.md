@@ -2,7 +2,7 @@
 
 ## 7.8.1
 
-- `histogram` placed empty bars between a parameter's few sampled values and now gives each value a bar under `bins = :auto`, with edges halfway between neighboring values.
+- `histogram` placed empty bars between a parameter's few sampled values and now bins on those values under `bins = :auto` when the edges fit.
 
 ## 7.8.0
 
