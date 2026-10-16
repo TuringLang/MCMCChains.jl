@@ -95,6 +95,9 @@ Random.seed!(0)
     println("Histograms")
     @time include("histogram_tests.jl")
 
+    println("Count plots")
+    @time include("count_plot_tests.jl")
+
     # run tests for the settable plot style
     println("Plot style")
     @time include("plot_style_tests.jl")

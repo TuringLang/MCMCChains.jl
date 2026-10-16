@@ -33,6 +33,24 @@ end
     xs, ys
 end
 
+@recipe function f(p::_CountPlot; relative = false)
+    levels, counts = _value_counts(p.val)
+    heights = if relative
+        totals = sum(counts; dims = 1)
+        all(>(0), totals) ||
+            throw(ArgumentError("countplot proportions require draws in every series"))
+        counts ./ totals
+    else
+        counts
+    end
+
+    xguide --> "Sample value (categorical)"
+    yguide --> (relative ? "Proportion" : "Count")
+    xticks --> (collect(eachindex(levels)), string.(levels))
+    seriestype := :bar
+    RecipesBase.recipetype(:groupedbar, collect(eachindex(levels)), heights)
+end
+
 @recipe function f(p::_MeanPlot)
     seriestype := :path
     xaxis --> "Iteration"

@@ -26,6 +26,10 @@ struct _EcdfPlot
     c::Any
     val::Any
 end
+struct _CountPlot{C,V}
+    c::C
+    val::V
+end
 struct _AutocorPlot
     lags::Any
     val::Any
@@ -55,6 +59,7 @@ const translationdict = Dict(
     :meanplot => _MeanPlot,
     :density => _DensityPlot,
     :histogram => _HistogramPlot,
+    :countplot => _CountPlot,
     :autocorplot => _AutocorPlot,
     :rankplot => _RankPlot,
     :ecdfplot => _EcdfPlot,
