@@ -224,12 +224,20 @@ using Random
             (Float16(2), :auto, 1),
             (Float16(2), 3, 3),
             (nextfloat(0.0), :auto, 1),
+            (BigFloat(1.0e16), 25, 25),
+            (floatmax(Float64), 25, 25),
+            (-floatmax(Float64), 25, 25),
         )
             draws = fill(value, 200)
             edges = MCMCChains._histogram_edges([draws], rule)
             @test first(edges) <= value < last(edges)
             @test all(isfinite, edges)
             @test length(edges) - 1 == expected_bins
+            # Each edge past the one before it. A span divided finer than the gap between
+            # neighbouring values repeats its edges and leaves bins of no width, which the
+            # count of edges alone would not notice.
+            @test issorted(collect(edges), lt = <=)
+            @test length(unique(collect(edges))) == expected_bins + 1
             @test sum(StatsPlots.Plots._make_hist((draws,), edges).weights) == 200
         end
     end

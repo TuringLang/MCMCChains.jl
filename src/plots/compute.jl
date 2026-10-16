@@ -174,10 +174,19 @@ _wider_than(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
 
 Return edges for one bin containing `[lo, hi]`, or `nothing` if none can hold it.
 """
-function _one_bin(lo, hi)
+function _one_bin(lo, hi, bins = 1)
     for T in _wider_than(typeof(lo))
         a, b = T(lo), T(hi)
-        edges = [min(a - 0.5, prevfloat(a)), max(b + 0.5, nextfloat(b))]
+        # Half a unit to either side, and never less than `bins` steps of the range at this
+        # size. Divided any finer than the gap between neighbouring values, the edges would
+        # land on top of each other and leave bins of no width.
+        room = bins * eps(max(abs(a), abs(b), one(T)))
+        reach = max(T(0.5), room)
+        low = min(a - reach, prevfloat(a))
+        high = max(b + reach, nextfloat(b))
+        # Checked before the range is laid out, which raises on an end it cannot reach.
+        (isfinite(low) && isfinite(high)) || continue
+        edges = range(low, high; length = bins + 1)
         _edges_hold(edges, a, b) && return edges
     end
     return nothing
@@ -316,10 +325,9 @@ function _histogram_edges(series, bins)
     first_draw, last_draw = extrema(pooled)
     # Half a unit cannot widen a bin around a sufficiently large draw.
     if last_draw <= first_draw
-        single = _one_bin(first_draw, last_draw)
+        single = _one_bin(first_draw, last_draw, bins)
         single === nothing && return bins
-        edges = range(first(single), last(single); length = bins + 1)
-        return _announced(edges, pooled)
+        return _announced(single, pooled)
     end
 
     for T in _wider_than(eltype(pooled))
