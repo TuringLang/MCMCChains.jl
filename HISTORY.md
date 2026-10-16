@@ -1,5 +1,10 @@
 # MCMCChains Changelog
 
+## 7.9.0
+
+- `var` and `std`, with one estimate per parameter.
+- `cov`, with parameter names on both axes of the covariance matrix.
+
 ## 7.8.1
 
 - `countplot`, which counts distinct sampled values on a categorical axis.
