@@ -107,6 +107,25 @@ x.a
 x = get(chn, [:a, :b])
 ```
 
+## Add derived parameters
+
+Create a chain for a quantity computed from each draw and combine it with `hcat`.
+Use the original iteration range so the draws line up:
+
+```@example derived
+using MCMCChains
+chn = Chains(reshape(1:24, 4, 3, 2), [:a, :b, :c]; start=101, thin=2)
+total = chn[:a] .+ chn[:b]
+derived = Chains(
+    reshape(total, size(chn, 1), 1, size(chn, 3)),
+    [:total];
+    iterations=range(chn),
+)
+extended = hcat(chn, derived)
+```
+
+The inputs must have matching iteration ranges and chain IDs, and distinct parameter names.
+
 ## Saving and Loading Chains
 
 Like any Julia object, a `Chains` object can be saved using `Serialization.serialize`
