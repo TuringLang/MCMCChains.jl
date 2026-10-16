@@ -142,6 +142,18 @@ using Random
             @test sum(weights) == length(crowded)
         end
 
+        # Draws whose span runs past their type, under every way of asking for bins. A range
+        # can hold a finite step across a width that is not finite, and a bin worked out by
+        # arithmetic from its first edge then fails on the way to a number, so the edges come
+        # back as a list instead.
+        far_apart = repeat([-1.0e308, 1.0e308], 100)
+        for rule in (:auto, :fd, :sturges, :scott, :rice, :sqrt, 25)
+            edges = MCMCChains._histogram_edges([far_apart], rule)
+            @test edges isa AbstractArray
+            @test StatsPlots.Plots._make_hist((far_apart,), edges).weights |> sum ==
+                  length(far_apart)
+        end
+
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
         @test all(e -> e == [0.5, 1.5, 2.5], edges)
@@ -196,8 +208,6 @@ using Random
                     @test issorted(bins, lt = <=)
                     @test first(bins) <= a
                     @test b < last(bins)
-                    # Skip counts when the element type cannot represent the draw span.
-                    isfinite(b - a) || continue
                     @test counted(values, bins) == length(values)
                 end
             end
