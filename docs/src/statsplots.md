@@ -92,6 +92,26 @@ histogram(chn, bins = :sturges)
 histogram(chn, bins = 60, fillalpha = 0.7)
 ```
 
+## Counts
+
+`countplot` counts each distinct value in sorted categories.
+Use it for parameters with a small set of sampled values, including values too close or too large for numeric histogram edges.
+The spacing between categories does not represent numeric distance.
+Bars compare chains side by side.
+`countplot!` keeps existing category positions and adds new values at the end of the axis.
+Missing draws are skipped and non-finite values are rejected.
+
+```@example statsplots
+countplot(chn, :D)
+```
+
+Set `relative = true` for proportions within each chain, or `append_chains = true` to pool chains.
+Use `xticks` to replace long value labels.
+
+```@example statsplots
+countplot(chn, :D; relative = true)
+```
+
 ## Autocorrelation
 
 ```@example statsplots
@@ -475,6 +495,8 @@ nothing # hide
 ## API
 
 ```@docs
+countplot
+countplot!
 energyplot
 energyplot!
 ppcplot

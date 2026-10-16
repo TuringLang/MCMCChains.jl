@@ -26,6 +26,18 @@ struct _EcdfPlot
     c::Any
     val::Any
 end
+struct _CountPlot{C,V}
+    c::C
+    val::V
+end
+
+# Plots treats unwrapped numbers as coordinates.
+struct _CountValue{T}
+    value::T
+end
+Base.isequal(a::_CountValue, b::_CountValue) = isequal(a.value, b.value)
+Base.hash(v::_CountValue, h::UInt) = hash(v.value, h)
+Base.show(io::IO, v::_CountValue) = print(io, v.value)
 struct _AutocorPlot
     lags::Any
     val::Any
@@ -55,6 +67,7 @@ const translationdict = Dict(
     :meanplot => _MeanPlot,
     :density => _DensityPlot,
     :histogram => _HistogramPlot,
+    :countplot => _CountPlot,
     :autocorplot => _AutocorPlot,
     :rankplot => _RankPlot,
     :ecdfplot => _EcdfPlot,
