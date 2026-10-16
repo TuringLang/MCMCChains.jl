@@ -1,5 +1,9 @@
 # MCMCChains Changelog
 
+## 7.8.2
+
+- `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` threw when given a `Chains` object.
+
 ## 7.8.1
 
 - `countplot`, which counts distinct sampled values on a categorical axis.
