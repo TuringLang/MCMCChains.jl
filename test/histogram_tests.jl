@@ -129,9 +129,6 @@ using Random
             @test StatsPlots.Plots._make_hist((values,), edges).weights == expected
         end
 
-        # Where the core branch leaves these to a rule, having no edge to put between the
-        # pair, here the pair shares a bar and the far pair keeps one each. Either way every
-        # draw is counted, and no bar is left holding none.
         for (crowded, bars) in (
             (repeat([prevfloat(1.0), 1.0], 100), 1),
             (repeat([1.0, nextfloat(1.0)], 100), 1),
@@ -249,9 +246,6 @@ using Random
             @test first(edges) <= value < last(edges)
             @test all(isfinite, edges)
             @test length(edges) - 1 == expected_bins
-            # Each edge past the one before it. A span divided finer than the gap between
-            # neighbouring values repeats its edges and leaves bins of no width, which the
-            # count of edges alone would not notice.
             @test issorted(collect(edges), lt = <=)
             @test length(unique(collect(edges))) == expected_bins + 1
             @test sum(StatsPlots.Plots._make_hist((draws,), edges).weights) == 200

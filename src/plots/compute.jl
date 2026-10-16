@@ -170,21 +170,18 @@ Types to try for edges around draws of type `T`, widest last.
 _wider_than(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
 
 """
-    _one_bin(lo, hi)
+    _one_bin(lo, hi, bins=1)
 
 Return edges for one bin containing `[lo, hi]`, or `nothing` if none can hold it.
 """
 function _one_bin(lo, hi, bins = 1)
     for T in _wider_than(typeof(lo))
         a, b = T(lo), T(hi)
-        # Half a unit to either side, and never less than `bins` steps of the range at this
-        # size. Divided any finer than the gap between neighbouring values, the edges would
-        # land on top of each other and leave bins of no width.
+        # Allow enough room for distinct edges when a count was requested.
         room = bins * eps(max(abs(a), abs(b), one(T)))
         reach = max(T(0.5), room)
         low = min(a - reach, prevfloat(a))
         high = max(b + reach, nextfloat(b))
-        # Checked before the range is laid out, which raises on an end it cannot reach.
         (isfinite(low) && isfinite(high)) || continue
         edges = range(low, high; length = bins + 1)
         _edges_hold(edges, a, b) && return edges
