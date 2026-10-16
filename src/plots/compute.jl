@@ -120,145 +120,25 @@ const BIN_RULES = (:auto, :fd, :sturges, :sqrt, :rice, :scott)
 
 const MAX_DISCRETE_LEVELS = 20
 
-function _with_draw_precision(f, values)
-    T = eltype(values)
-    isconcretetype(T) && T !== BigFloat && return f()
-    current = precision(BigFloat)
-    needed = current
-    for v in values
-        v isa BigFloat && (needed = max(needed, precision(v)))
-    end
-    needed == current && return f()
-    return setprecision(BigFloat, needed) do
-        result = f()
-        return result isa AbstractRange{BigFloat} ? collect(result) : result
-    end
-end
-
 """
     _discrete_edges(values)
 
-Return bins for a low-cardinality parameter, grouping adjacent values when needed, or `nothing`.
+Return one bin per distinct value for a low-cardinality parameter, or `nothing`.
 """
 function _discrete_edges(values)
-    return _with_draw_precision(values) do
-        _discrete_edges_at_precision(values)
-    end
-end
-
-function _discrete_edges_at_precision(values)
     levels = _few_levels(values)
     levels === nothing && return nothing
-    lo, hi = first(levels), last(levels)
+    n = length(levels)
 
-    runs = _runs(levels)
-    length(runs) == 1 && return _one_bin(lo, hi)
-    return _bins_around(levels, runs, lo, hi)
-end
+    # Avoid overflowing `a + b` when both levels are large and positive.
+    mids = [levels[i] + (levels[i+1] - levels[i]) / 2 for i = 1:(n-1)]
+    edges =
+        vcat(levels[1] - (mids[1] - levels[1]), mids, levels[n] + (levels[n] - mids[n-1]))
 
-"""
-    _runs(levels)
-
-Group consecutive representable values into runs that share one bar.
-"""
-function _runs(levels)
-    runs = UnitRange{Int}[]
-    start = firstindex(levels)
-    for i = (start+1):lastindex(levels)
-        _has_gap(levels[i-1], levels[i]) || continue
-        push!(runs, start:(i-1))
-        start = i
-    end
-    push!(runs, start:lastindex(levels))
-    return runs
-end
-
-_has_gap(a, b) = nextfloat(a) < b
-
-function _has_gap(a::BigFloat, b::BigFloat)
-    # Both draws must resolve the gap when their stored precisions differ.
-    bits = min(precision(a), precision(b))
-    return nextfloat(BigFloat(a, RoundDown; precision = bits)) < b
-end
-
-"""
-    _halfway(a, b)
-
-Return a midpoint strictly between `a` and `b`, or `nothing` if arithmetic cannot produce one.
-"""
-function _halfway(a, b)
-    mid = a + (b - a) / 2
-    return a < mid < b ? mid : nothing
-end
-
-"""
-    _wider_than(T)
-
-Types to try for edges around draws of type `T`, widest last.
-"""
-_wider_than(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
-
-"""
-    _one_bin(lo, hi, bins=1)
-
-Return edges for `bins` bins covering `[lo, hi]`, or `nothing` if they do not fit.
-"""
-function _one_bin(lo, hi, bins = 1)
-    for T in _wider_than(typeof(lo))
-        a, b = convert(T, lo), convert(T, hi)
-        # Allow enough room for distinct edges when a count was requested.
-        room = bins * eps(max(abs(a), abs(b), one(T)))
-        reach = max(T(0.5), room)
-        low = min(a - reach, prevfloat(a))
-        high = max(b + reach, nextfloat(b))
-        (isfinite(low) && isfinite(high)) || continue
-        edges = range(low, high; length = bins + 1)
-        _edges_hold(edges, a, b) && return edges
-    end
-    return nothing
-end
-
-"""
-    _bins_around(levels, runs, lo, hi)
-
-Return one bin per run when suitable edges are found, or `nothing`.
-"""
-function _bins_around(levels, runs, lo, hi)
-    n = length(runs)
-    for T in _wider_than(eltype(levels))
-        at = convert(Vector{T}, levels)
-        # Use run boundaries so an edge cannot cut through a run.
-        mids = [_halfway(at[last(runs[i])], at[first(runs[i+1])]) for i = 1:(n-1)]
-        any(isnothing, mids) && continue
-
-        # Fall back to the next representable edge at the type's limits.
-        low = at[first(runs[1])] - (mids[1] - at[last(runs[1])])
-        high = at[last(runs[n])] + (at[first(runs[n])] - mids[n-1])
-        isfinite(low) || (low = prevfloat(at[first(runs[1])]))
-        isfinite(high) || (high = nextfloat(at[last(runs[n])]))
-
-        edges = vcat(low, mids, high)
-        # Checking only the extrema could miss an edge inside a run.
-        all(edges[i] <= at[first(runs[i])] && at[last(runs[i])] < edges[i+1] for i = 1:n) ||
-            continue
-        _edges_hold(edges, lo, hi) && return edges
-    end
-    return nothing
-end
-
-"""
-    _edges_hold(edges, lo, hi)
-
-Check finite edges that hold `[lo, hi]` under left-closed bins.
-"""
-function _edges_hold(edges, lo, hi)
-    all(isfinite, edges) || return false
-    # A finite step can still span a width that breaks range bin lookup.
-    if edges isa AbstractRange
-        (isfinite(step(edges)) && isfinite(last(edges) - first(edges))) || return false
-    end
-    issorted(edges, lt = <=) || return false
-    return first(edges) <= lo && hi < last(edges)
+    # A right-open bin drops its level if the upper edge rounds onto it.
+    all(isfinite, edges) || return nothing
+    all(edges[i] <= levels[i] < edges[i+1] for i = 1:n) || return nothing
+    return edges
 end
 
 """
@@ -266,18 +146,16 @@ end
 
 Return sorted distinct values if the level and draw counts qualify, or `nothing`.
 """
-function _few_levels(draws)
-    levels = Dict{eltype(draws),eltype(draws)}()
-    for v in draws
-        v = iszero(v) ? zero(v) : v
-        if !haskey(levels, v) || (v isa BigFloat && precision(v) < precision(levels[v]))
-            levels[v] = v
-        end
+function _few_levels(values)
+    levels = Set{eltype(values)}()
+    for v in values
+        # Set uses `isequal`, which treats signed zeros as distinct values.
+        push!(levels, iszero(v) ? zero(v) : v)
         length(levels) > MAX_DISCRETE_LEVELS && return nothing
     end
     # Count draws across all levels so rare levels still qualify.
-    (1 < length(levels) && 5 * length(levels) <= length(draws)) || return nothing
-    return sort!(collect(values(levels)))
+    (1 < length(levels) && 5 * length(levels) <= length(values)) || return nothing
+    return sort!(collect(levels))
 end
 
 """
@@ -289,12 +167,6 @@ How many bins to cut `values` into, for the binning rules Plots names.
 same way here so that passing `bins` keeps meaning what it always did. `:auto` is `:fd`.
 """
 function _bin_count(values, rule::Symbol)
-    return _with_draw_precision(values) do
-        _bin_count_at_precision(values, rule)
-    end
-end
-
-function _bin_count_at_precision(values, rule::Symbol)
     rule in BIN_RULES || throw(
         ArgumentError(
             "`bins` must be a count, a set of edges, or one of $(join(BIN_RULES, ", "))",
@@ -305,11 +177,10 @@ function _bin_count_at_precision(values, rule::Symbol)
     n > 1 || return 1
     lo, hi = extrema(values)
     hi > lo || return 1
-    # A Float16 or Float32 span can overflow in its own type.
-    W = promote_type(eltype(values), Float64)
-    span = convert(W, hi) - convert(W, lo)
-    # Clamp before converting a near-zero bin width to an integer count.
-    count(x) = isnan(x) ? 1 : clamp(ceil(Int, clamp(x, 1.0, 10_000.0)), 1, 10_000)
+    span = hi - lo
+    # Clamped as a float before rounding, because a near-zero spread sends the count past
+    # what an `Int` holds.
+    count(x) = clamp(ceil(Int, clamp(x, 1.0, 10_000.0)), 1, 10_000)
 
     rule === :auto && (rule = :fd)
     nd = cbrt(n)
@@ -320,30 +191,11 @@ function _bin_count_at_precision(values, rule::Symbol)
     elseif rule === :rice
         return count(2 * nd)
     elseif rule === :scott
-        # Squaring narrow floats can overflow before their standard deviation does.
-        spread = std(convert(W, v) for v in values)
-        iszero(spread) && return 1
-        denominator = 3.5 * spread
-        estimate = span * nd / denominator
-        if all(isfinite, (span, spread, denominator, estimate))
-            return count(estimate)
-        end
-        wide_spread = std(convert(BigFloat, v) for v in values)
-        return count(
-            (convert(BigFloat, hi) - convert(BigFloat, lo)) * nd /
-            (BigFloat(3.5) * wide_spread),
-        )
+        spread = std(values)
+        return count(spread > 0 ? span * nd / (3.5 * spread) : 1.0)
     end
-    lower, upper = quantile(values, 0.25), quantile(values, 0.75)
-    iqr = convert(W, upper) - convert(W, lower)
-    denominator = 2 * (iqr > 0 ? iqr : one(iqr))
-    estimate = span * nd / denominator
-    if all(isfinite, (span, iqr, denominator, estimate))
-        return count(estimate)
-    end
-    wide_iqr = convert(BigFloat, upper) - convert(BigFloat, lower)
-    wide_denominator = 2 * (wide_iqr > 0 ? wide_iqr : one(wide_iqr))
-    return count((convert(BigFloat, hi) - convert(BigFloat, lo)) * nd / wide_denominator)
+    iqr = quantile(values, 0.75) - quantile(values, 0.25)
+    return count(span * nd / (2 * (iqr > 0 ? iqr : one(iqr))))
 end
 
 """
@@ -364,66 +216,20 @@ own.
 """
 function _histogram_edges(series, bins)
     bins isa Symbol && bins ∉ BIN_RULES && return bins
-    bins isa Integer || bins isa Symbol || return bins
     pooled = [float(v) for v in Iterators.flatten(series) if !ismissing(v) && isfinite(v)]
-    return _with_draw_precision(pooled) do
-        _histogram_edges_at_precision(pooled, bins)
-    end
-end
-
-function _histogram_edges_at_precision(pooled, bins)
     if bins isa Symbol
         if bins === :auto
-            discrete = _discrete_edges_at_precision(pooled)
-            discrete === nothing || return _announced(discrete, pooled)
+            discrete = _discrete_edges(pooled)
+            discrete === nothing || return discrete
         end
-        bins = _bin_count_at_precision(pooled, bins)
+        bins = _bin_count(pooled, bins)
     end
     bins isa Integer || return bins
 
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
-    first_draw, last_draw = extrema(pooled)
-    # Half a unit cannot widen a bin around a sufficiently large draw.
-    if last_draw <= first_draw
-        single = _one_bin(first_draw, last_draw, bins)
-        single === nothing && return bins
-        return _announced(single, pooled)
-    end
-
-    for T in _wider_than(eltype(pooled))
-        lo, hi = convert(T, first_draw), convert(T, last_draw)
-        # The last bin is open on the right.
-        top = nextfloat(hi)
-        isfinite(top) || continue
-        edges = range(lo, top; length = bins + 1)
-        _edges_hold(edges, first_draw, last_draw) && return _announced(edges, pooled)
-        # A wide range can round away the extra step at the last edge.
-        nudged = collect(range(lo, hi; length = bins + 1))
-        nudged[end] = top
-        _edges_hold(nudged, first_draw, last_draw) && return _announced(nudged, pooled)
-    end
-    fallback = _one_bin(first_draw, last_draw, bins)
-    return fallback === nothing ? bins : _announced(fallback, pooled)
-end
-
-"""
-    _announced(edges, pooled)
-
-Return `edges` and warn when their `Float64` range cannot hold the draws or has an infinite span.
-"""
-function _announced(edges, pooled)
     lo, hi = extrema(pooled)
-    at_canvas = map(Float64, edges)
-    usable =
-        all(isfinite, at_canvas) &&
-        first(at_canvas) <= Float64(lo) <= Float64(hi) <= last(at_canvas) &&
-        0 < last(at_canvas) - first(at_canvas) < Inf
-    usable || @warn(
-        "Histogram range may exceed the plot axis. Draws were counted, but the plot may be empty.",
-        extrema = (lo, hi),
-        maxlog = 1,
-    )
-    return edges
+    hi > lo || return range(lo - 0.5, lo + 0.5; length = bins + 1)
+    return range(lo, nextfloat(hi); length = bins + 1)
 end
 
 """

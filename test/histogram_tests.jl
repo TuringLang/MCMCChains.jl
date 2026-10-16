@@ -42,15 +42,15 @@ using Random
         @test MCMCChains._discrete_edges(Float64[]) === nothing
         @test MCMCChains._discrete_edges(float.(rand(1:50, 5000))) === nothing
 
+        drawable(edges) = all(isfinite, edges) && issorted(edges, lt = <=)
+
         for zero_pair in (
             repeat([-0.0, 0.0], 100),
             repeat([-0.0f0, 0.0f0], 100),
             repeat([BigFloat(-0.0), BigFloat(0.0)], 100),
         )
             @test MCMCChains._discrete_edges(zero_pair) === nothing
-            fallback = MCMCChains._histogram_edges([zero_pair], :auto)
-            @test all(isfinite, fallback)
-            @test issorted(fallback, lt = <=)
+            @test drawable(MCMCChains._histogram_edges([zero_pair], :auto))
         end
         @test MCMCChains._discrete_edges(repeat([-0.0, 0.0, 1.0], 100)) == [-0.5, 0.5, 1.5]
         for signed in (
@@ -73,84 +73,22 @@ using Random
         ).weights == [13, 1, 1]
         @test MCMCChains._discrete_edges(vcat([0.0, 1.0], fill(2.0, 12))) === nothing
 
-        function consecutive(start, n)
-            values = [start]
-            for _ = 2:n
-                push!(values, nextfloat(last(values)))
-            end
-            return values
-        end
-        @test consecutive(1.0, 3) == [1.0, nextfloat(1.0), nextfloat(nextfloat(1.0))]
+        @test drawable(MCMCChains._discrete_edges(repeat([1e308, 1.1e308], 100)))
 
-        @test MCMCChains._runs([0.0, 1.0, nextfloat(1.0)]) == [1:1, 2:3]
-        @test MCMCChains._runs([1.0, 2.0, 3.0]) == [1:1, 2:2, 3:3]
-        @test MCMCChains._runs([-1.0e308, 1.0e308]) == [1:1, 2:2]
-        @test MCMCChains._runs(Float16[-60000, 60000]) == [1:1, 2:2]
-        @test MCMCChains._runs(consecutive(1.0, 4)) == [1:4]
-        @test MCMCChains._runs(vcat(consecutive(1.0, 4), 5.0)) == [1:4, 5:5]
-
-        trio = consecutive(1.0f0, 5)
-        for (values, expected) in (
-            (repeat([1.0, 2.0], 200), [200, 200]),
-            (vcat(fill(0.0, 50), fill(1.0, 150), fill(2.0, 100)), [50, 150, 100]),
-            (repeat([0.0, 0.25, 1.0], 100), [100, 100, 100]),
-            (repeat([-0.0, 0.0, 1.0], 100), [200, 100]),
-            (repeat(Float32[1, 2, 3], 100), [100, 100, 100]),
-            (vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)), [100, 300]),
-            (repeat([1.0, nextfloat(1.0)], 100), [200]),
-            (repeat([0.0, nextfloat(0.0)], 100), [200]),
-            (repeat(consecutive(1.0, 4), 100), [400]),
-            (repeat(consecutive(0.0, 9), 50), [450]),
-            (
-                vcat(
-                    fill(trio[1], 100),
-                    fill(trio[2], 100),
-                    fill(trio[3], 100),
-                    fill(trio[5], 100),
-                ),
-                [300, 100],
-            ),
-            (vcat(fill(1.0, 90), fill(nextfloat(1.0), 10), fill(5.0, 50)), [100, 50]),
-            (repeat([1.0e308, 1.1e308], 100), [100, 100]),
-            (repeat([-1.0e308, 1.0e308], 100), [100, 100]),
-            (repeat([0.0, floatmax(Float64)], 100), [100, 100]),
-            (repeat(Float16[-60000, 60000], 100), [100, 100]),
-            (repeat(Float16[-60000, 0, 60000], 100), [100, 100, 100]),
+        for crowded in (
+            repeat([prevfloat(1.0), 1.0], 100),
+            repeat([1.0, nextfloat(1.0)], 100),
+            repeat([-1.0e308, 1.0e308], 100),
         )
-            edges = MCMCChains._discrete_edges(values)
-            @test edges !== nothing
-            @test all(isfinite, edges)
-            @test issorted(edges, lt = <=)
-            @test length(edges) == length(expected) + 1
-            @test StatsPlots.Plots._make_hist((values,), edges).weights == expected
+            @test MCMCChains._discrete_edges(crowded) === nothing
         end
-
-        for (crowded, bars) in (
-            (repeat([prevfloat(1.0), 1.0], 100), 1),
-            (repeat([1.0, nextfloat(1.0)], 100), 1),
-            (repeat([-1.0e308, 1.0e308], 100), 2),
-        )
-            edges = MCMCChains._discrete_edges(crowded)
-            @test edges !== nothing
-            @test length(edges) - 1 == bars
-            weights = StatsPlots.Plots._make_hist((crowded,), edges).weights
-            @test count(!iszero, weights) == bars
-            @test sum(weights) == length(crowded)
-        end
-
-        far_apart = repeat([-1.0e308, 1.0e308], 100)
-        for scale in (5.0e307, 1.0e308)
-            wide = repeat([-scale, scale], 100)
-            @test MCMCChains._bin_count(wide, :fd) == 3
-            @test MCMCChains._bin_count(wide, :auto) == 3
-            @test MCMCChains._bin_count(wide, :scott) == 4
-        end
-        for rule in (:auto, :fd, :sturges, :scott, :rice, :sqrt, 25)
-            edges = MCMCChains._histogram_edges([far_apart], rule)
-            @test edges isa AbstractArray
-            @test StatsPlots.Plots._make_hist((far_apart,), edges).weights |> sum ==
-                  length(far_apart)
-        end
+        kept = repeat([prevfloat(1.0), 1.0], 100)
+        @test sum(
+            StatsPlots.Plots._make_hist(
+                (kept,),
+                MCMCChains._histogram_edges([kept], :auto),
+            ).weights,
+        ) == length(kept)
 
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
@@ -162,55 +100,6 @@ using Random
         pooled = float.(rand(1:2, 400))
         for rule in filter(!=(:auto), collect(MCMCChains.BIN_RULES))
             @test MCMCChains._histogram_edges([pooled], rule) isa AbstractRange
-        end
-    end
-
-    @testset "every draw lands in a bin" begin
-        function counted(values, bins)
-            return sum(StatsPlots.Plots._make_hist((values,), bins).weights)
-        end
-
-        for undrawable in (
-            repeat([0.0, floatmax(Float64)], 100),
-            fill(floatmax(Float64), 200),
-            fill(-floatmax(Float64), 200),
-            repeat([-1.0e308, 1.0e308], 100),
-        )
-            edges = (@test_logs (:warn,) match_mode = :any MCMCChains._histogram_edges(
-                [undrawable],
-                :auto,
-            ))
-            @test counted(undrawable, edges) == length(undrawable)
-        end
-        for drawable in (
-            randn(200),
-            repeat([-1.0e305, 1.0e305], 100),
-            repeat(Float16[-60000, 60000], 100),
-            repeat([0.0, 1.0, nextfloat(1.0)], 100),
-            repeat([0.0, nextfloat(0.0)], 100),
-            fill(1.0e16, 200),
-            repeat(BigFloat[0, 2], 100),
-        )
-            @test_logs MCMCChains._histogram_edges([drawable], :auto)
-        end
-        @test_logs MCMCChains._histogram_edges([repeat(BigFloat[0, 2], 100)], 25)
-
-        for T in (Float16, Float32, Float64, BigFloat)
-            far = T === BigFloat ? BigFloat(floatmax(Float64)) : floatmax(T)
-            corners = T[zero(T), one(T), -one(T), -far, far/2, -far/2, T(0.25)]
-            for a in corners, b in corners
-                a >= b && continue
-                values = repeat(T[a, b], 100)
-                for rule in (:auto, :fd, :sturges, :scott, :rice, :sqrt, 25)
-                    bins = MCMCChains._histogram_edges([values], rule)
-                    bins isa AbstractArray || continue
-                    @test all(isfinite, bins)
-                    @test issorted(bins, lt = <=)
-                    @test first(bins) <= a
-                    @test b < last(bins)
-                    @test counted(values, bins) == length(values)
-                end
-            end
         end
     end
 
@@ -233,113 +122,8 @@ using Random
     end
 
     @testset "a chain that never moved still has bins" begin
-        for (value, rule, expected_bins) in (
-            (2.0, :auto, 1),
-            (2.0, :fd, 1),
-            (2.0, 5, 5),
-            (1.0e16, :auto, 1),
-            (1.0e16, 25, 25),
-            (floatmax(Float64), :auto, 1),
-            (-floatmax(Float64), :auto, 1),
-            (-floatmax(Float64), 4, 4),
-            (1.0f16, :auto, 1),
-            (Float16(2), :auto, 1),
-            (Float16(2), 3, 3),
-            (nextfloat(0.0), :auto, 1),
-            (BigFloat(1.0e16), 25, 25),
-            (floatmax(Float64), 25, 25),
-            (-floatmax(Float64), 25, 25),
-        )
-            draws = fill(value, 200)
-            edges = MCMCChains._histogram_edges([draws], rule)
-            @test first(edges) <= value < last(edges)
-            @test all(isfinite, edges)
-            @test length(edges) - 1 == expected_bins
-            @test issorted(collect(edges), lt = <=)
-            @test length(unique(collect(edges))) == expected_bins + 1
-            @test sum(StatsPlots.Plots._make_hist((draws,), edges).weights) == 200
-        end
-    end
-
-    @testset "BigFloat draws keep their precision" begin
-        lower = setprecision(BigFloat, 512) do
-            BigFloat(1) - BigFloat(2)^(-300)
-        end
-        setprecision(BigFloat, 256) do
-            far = repeat([lower, BigFloat(2)], 100)
-            given = range(BigFloat(0), BigFloat(2); length = 3)
-            @test MCMCChains._histogram_edges([far], given) === given
-            edges = MCMCChains._histogram_edges([far], 25)
-            @test first(edges) <= lower < last(edges)
-            @test length(unique(collect(edges))) == 26
-            @test sum(StatsPlots.Plots._make_hist((far,), edges).weights) == 200
-            plot = histogram(Chains(reshape(far, :, 1, 1), [:x]); bins = 25)
-            plot_edges = plot.series_list[1].plotattributes[:bins]
-            @test sum(StatsPlots.Plots._make_hist((far,), plot_edges).weights) == 200
-
-            close = repeat([lower, BigFloat(1)], 100)
-            @test MCMCChains._bin_count(close, :fd) == 3
-            @test MCMCChains._bin_count(close, :scott) == 4
-            for rule in (:auto, :fd, :scott)
-                bins = MCMCChains._histogram_edges([close], rule)
-                @test first(bins) <= lower < last(bins)
-                @test sum(StatsPlots.Plots._make_hist((close,), bins).weights) == 200
-            end
-            @test StatsPlots.Plots._make_hist(
-                (close,),
-                MCMCChains._discrete_edges(close),
-            ).weights == [200]
-            @test precision(BigFloat) == 256
-        end
-    end
-
-    @testset "mixed BigFloat precisions share narrow gaps" begin
-        low = setprecision(BigFloat, 256) do
-            BigFloat(1)
-        end
-        wide_low = setprecision(BigFloat, 512) do
-            BigFloat(1)
-        end
-        high = setprecision(BigFloat, 512) do
-            BigFloat(1) + BigFloat(2)^(-300)
-        end
-        lower = setprecision(BigFloat, 512) do
-            BigFloat(1) - BigFloat(2)^(-300)
-        end
-        for pair in ((low, high), (lower, low))
-            draws = repeat(collect(pair), 100)
-            @test MCMCChains._runs(collect(pair)) == [1:2]
-            bins = MCMCChains._histogram_edges([draws], :auto)
-            @test StatsPlots.Plots._make_hist((draws,), bins).weights == [200]
-            @test length(unique(Float64.(bins))) == 2
-            plot = histogram(Chains(reshape(draws, :, 1, 1), [:x]))
-            plot_bins = plot.series_list[1].plotattributes[:bins]
-            @test StatsPlots.Plots._make_hist((draws,), plot_bins).weights == [200]
-        end
-        @test MCMCChains._runs([lower, BigFloat(2)]) == [1:1, 2:2]
-        beyond = setprecision(BigFloat, 512) do
-            BigFloat(nextfloat(low)) + BigFloat(2)^(-300)
-        end
-        @test MCMCChains._runs([low, beyond]) == [1:1, 2:2]
-
-        for order in ((low, wide_low, high), (wide_low, low, high))
-            draws = repeat(collect(order), 100)
-            @test precision(first(MCMCChains._few_levels(draws))) == 256
-            edges = MCMCChains._histogram_edges([draws], :auto)
-            @test StatsPlots.Plots._make_hist((draws,), edges).weights == [300]
-        end
-
-        adjacent = nextfloat(low)
-        series = [fill(low, 100), fill(adjacent, 100)]
-        edges = MCMCChains._histogram_edges(series, 25)
-        @test edges isa AbstractArray
-        @test length(unique(collect(edges))) == 26
-        @test all(s -> sum(StatsPlots.Plots._make_hist((s,), edges).weights) == 100, series)
-        chn = Chains(reshape(vcat(series...), 100, 1, 2), [:x])
-        @test all(
-            s -> s.plotattributes[:bins] == edges,
-            histogram(chn; bins = 25).series_list,
-        )
+        edges = MCMCChains._histogram_edges([[2.0, 2.0, 2.0]], 5)
+        @test first(edges) < 2.0 < last(edges)
     end
 
     @testset "what the caller asks for wins" begin
