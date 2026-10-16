@@ -297,7 +297,7 @@ function Base.get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}, flat
         # If the name contains a bracket,
         # split it so get can group them correctly.
         if flatten
-            append!(names, c.name_map[v])
+            union!(names, c.name_map[v])
         else
             for name in c.name_map[v]
                 m = match(regex, string(name))

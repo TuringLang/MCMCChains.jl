@@ -1,5 +1,9 @@
 # MCMCChains Changelog
 
+## 7.8.2
+
+- `get` and `get_params` threw when flattening sections.
+
 ## 7.8.1
 
 - `countplot`, which counts distinct sampled values on a categorical axis.
