@@ -295,6 +295,9 @@ using Random
         low = setprecision(BigFloat, 256) do
             BigFloat(1)
         end
+        wide_low = setprecision(BigFloat, 512) do
+            BigFloat(1)
+        end
         high = setprecision(BigFloat, 512) do
             BigFloat(1) + BigFloat(2)^(-300)
         end
@@ -316,6 +319,25 @@ using Random
             BigFloat(nextfloat(low)) + BigFloat(2)^(-300)
         end
         @test MCMCChains._runs([low, beyond]) == [1:1, 2:2]
+
+        for order in ((low, wide_low, high), (wide_low, low, high))
+            draws = repeat(collect(order), 100)
+            @test precision(first(MCMCChains._few_levels(draws))) == 256
+            edges = MCMCChains._histogram_edges([draws], :auto)
+            @test StatsPlots.Plots._make_hist((draws,), edges).weights == [300]
+        end
+
+        adjacent = nextfloat(low)
+        series = [fill(low, 100), fill(adjacent, 100)]
+        edges = MCMCChains._histogram_edges(series, 25)
+        @test edges isa AbstractArray
+        @test length(unique(collect(edges))) == 26
+        @test all(s -> sum(StatsPlots.Plots._make_hist((s,), edges).weights) == 100, series)
+        chn = Chains(reshape(vcat(series...), 100, 1, 2), [:x])
+        @test all(
+            s -> s.plotattributes[:bins] == edges,
+            histogram(chn; bins = 25).series_list,
+        )
     end
 
     @testset "what the caller asks for wins" begin

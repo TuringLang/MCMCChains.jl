@@ -266,16 +266,18 @@ end
 
 Return sorted distinct values if the level and draw counts qualify, or `nothing`.
 """
-function _few_levels(values)
-    levels = Set{eltype(values)}()
-    for v in values
-        # Set uses `isequal`, which treats signed zeros as distinct values.
-        push!(levels, iszero(v) ? zero(v) : v)
+function _few_levels(draws)
+    levels = Dict{eltype(draws),eltype(draws)}()
+    for v in draws
+        v = iszero(v) ? zero(v) : v
+        if !haskey(levels, v) || (v isa BigFloat && precision(v) < precision(levels[v]))
+            levels[v] = v
+        end
         length(levels) > MAX_DISCRETE_LEVELS && return nothing
     end
     # Count draws across all levels so rare levels still qualify.
-    (1 < length(levels) && 5 * length(levels) <= length(values)) || return nothing
-    return sort!(collect(levels))
+    (1 < length(levels) && 5 * length(levels) <= length(draws)) || return nothing
+    return sort!(collect(values(levels)))
 end
 
 """
@@ -400,7 +402,8 @@ function _histogram_edges_at_precision(pooled, bins)
         nudged[end] = top
         _edges_hold(nudged, first_draw, last_draw) && return _announced(nudged, pooled)
     end
-    return bins
+    fallback = _one_bin(first_draw, last_draw, bins)
+    return fallback === nothing ? bins : _announced(fallback, pooled)
 end
 
 """
