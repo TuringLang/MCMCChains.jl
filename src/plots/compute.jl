@@ -120,12 +120,33 @@ const BIN_RULES = (:auto, :fd, :sturges, :sqrt, :rice, :scott)
 
 const MAX_DISCRETE_LEVELS = 20
 
+function _with_draw_precision(f, values)
+    T = eltype(values)
+    isconcretetype(T) && T !== BigFloat && return f()
+    current = precision(BigFloat)
+    needed = current
+    for v in values
+        v isa BigFloat && (needed = max(needed, precision(v)))
+    end
+    needed == current && return f()
+    return setprecision(BigFloat, needed) do
+        result = f()
+        return result isa AbstractRange{BigFloat} ? collect(result) : result
+    end
+end
+
 """
     _discrete_edges(values)
 
 Return bins for a low-cardinality parameter, grouping adjacent values when needed, or `nothing`.
 """
 function _discrete_edges(values)
+    return _with_draw_precision(values) do
+        _discrete_edges_at_precision(values)
+    end
+end
+
+function _discrete_edges_at_precision(values)
     levels = _few_levels(values)
     levels === nothing && return nothing
     lo, hi = first(levels), last(levels)
@@ -176,7 +197,7 @@ Return edges for `bins` bins covering `[lo, hi]`, or `nothing` if they do not fi
 """
 function _one_bin(lo, hi, bins = 1)
     for T in _wider_than(typeof(lo))
-        a, b = T(lo), T(hi)
+        a, b = convert(T, lo), convert(T, hi)
         # Allow enough room for distinct edges when a count was requested.
         room = bins * eps(max(abs(a), abs(b), one(T)))
         reach = max(T(0.5), room)
@@ -212,7 +233,7 @@ function _bins_around(levels, runs, lo, hi)
         # Checking only the extrema could miss an edge inside a run.
         all(edges[i] <= at[first(runs[i])] && at[last(runs[i])] < edges[i+1] for i = 1:n) ||
             continue
-        _edges_hold(edges, T(lo), T(hi)) && return edges
+        _edges_hold(edges, lo, hi) && return edges
     end
     return nothing
 end
@@ -258,6 +279,12 @@ How many bins to cut `values` into, for the binning rules Plots names.
 same way here so that passing `bins` keeps meaning what it always did. `:auto` is `:fd`.
 """
 function _bin_count(values, rule::Symbol)
+    return _with_draw_precision(values) do
+        _bin_count_at_precision(values, rule)
+    end
+end
+
+function _bin_count_at_precision(values, rule::Symbol)
     rule in BIN_RULES || throw(
         ArgumentError(
             "`bins` must be a count, a set of edges, or one of $(join(BIN_RULES, ", "))",
@@ -270,7 +297,7 @@ function _bin_count(values, rule::Symbol)
     hi > lo || return 1
     # A Float16 or Float32 span can overflow in its own type.
     W = promote_type(eltype(values), Float64)
-    span = W(hi) - W(lo)
+    span = convert(W, hi) - convert(W, lo)
     # Clamp before converting a near-zero bin width to an integer count.
     count(x) = isnan(x) ? 1 : clamp(ceil(Int, clamp(x, 1.0, 10_000.0)), 1, 10_000)
 
@@ -284,26 +311,29 @@ function _bin_count(values, rule::Symbol)
         return count(2 * nd)
     elseif rule === :scott
         # Squaring narrow floats can overflow before their standard deviation does.
-        spread = std(W(v) for v in values)
+        spread = std(convert(W, v) for v in values)
         iszero(spread) && return 1
         denominator = 3.5 * spread
         estimate = span * nd / denominator
         if all(isfinite, (span, spread, denominator, estimate))
             return count(estimate)
         end
-        wide_spread = std(BigFloat(v) for v in values)
-        return count((BigFloat(hi) - BigFloat(lo)) * nd / (BigFloat(3.5) * wide_spread))
+        wide_spread = std(convert(BigFloat, v) for v in values)
+        return count(
+            (convert(BigFloat, hi) - convert(BigFloat, lo)) * nd /
+            (BigFloat(3.5) * wide_spread),
+        )
     end
     lower, upper = quantile(values, 0.25), quantile(values, 0.75)
-    iqr = W(upper) - W(lower)
+    iqr = convert(W, upper) - convert(W, lower)
     denominator = 2 * (iqr > 0 ? iqr : one(iqr))
     estimate = span * nd / denominator
     if all(isfinite, (span, iqr, denominator, estimate))
         return count(estimate)
     end
-    wide_iqr = BigFloat(upper) - BigFloat(lower)
+    wide_iqr = convert(BigFloat, upper) - convert(BigFloat, lower)
     wide_denominator = 2 * (wide_iqr > 0 ? wide_iqr : one(wide_iqr))
-    return count((BigFloat(hi) - BigFloat(lo)) * nd / wide_denominator)
+    return count((convert(BigFloat, hi) - convert(BigFloat, lo)) * nd / wide_denominator)
 end
 
 """
@@ -324,13 +354,20 @@ own.
 """
 function _histogram_edges(series, bins)
     bins isa Symbol && bins ∉ BIN_RULES && return bins
+    bins isa Integer || bins isa Symbol || return bins
     pooled = [float(v) for v in Iterators.flatten(series) if !ismissing(v) && isfinite(v)]
+    return _with_draw_precision(pooled) do
+        _histogram_edges_at_precision(pooled, bins)
+    end
+end
+
+function _histogram_edges_at_precision(pooled, bins)
     if bins isa Symbol
         if bins === :auto
-            discrete = _discrete_edges(pooled)
+            discrete = _discrete_edges_at_precision(pooled)
             discrete === nothing || return _announced(discrete, pooled)
         end
-        bins = _bin_count(pooled, bins)
+        bins = _bin_count_at_precision(pooled, bins)
     end
     bins isa Integer || return bins
 
@@ -344,16 +381,16 @@ function _histogram_edges(series, bins)
     end
 
     for T in _wider_than(eltype(pooled))
-        lo, hi = T(first_draw), T(last_draw)
+        lo, hi = convert(T, first_draw), convert(T, last_draw)
         # The last bin is open on the right.
         top = nextfloat(hi)
         isfinite(top) || continue
         edges = range(lo, top; length = bins + 1)
-        _edges_hold(edges, lo, hi) && return _announced(edges, pooled)
+        _edges_hold(edges, first_draw, last_draw) && return _announced(edges, pooled)
         # A wide range can round away the extra step at the last edge.
         nudged = collect(range(lo, hi; length = bins + 1))
         nudged[end] = top
-        _edges_hold(nudged, lo, hi) && return _announced(nudged, pooled)
+        _edges_hold(nudged, first_draw, last_draw) && return _announced(nudged, pooled)
     end
     return bins
 end

@@ -259,6 +259,38 @@ using Random
         end
     end
 
+    @testset "BigFloat draws keep their precision" begin
+        lower = setprecision(BigFloat, 512) do
+            BigFloat(1) - BigFloat(2)^(-300)
+        end
+        setprecision(BigFloat, 256) do
+            far = repeat([lower, BigFloat(2)], 100)
+            given = range(BigFloat(0), BigFloat(2); length = 3)
+            @test MCMCChains._histogram_edges([far], given) === given
+            edges = MCMCChains._histogram_edges([far], 25)
+            @test first(edges) <= lower < last(edges)
+            @test length(unique(collect(edges))) == 26
+            @test sum(StatsPlots.Plots._make_hist((far,), edges).weights) == 200
+            plot = histogram(Chains(reshape(far, :, 1, 1), [:x]); bins = 25)
+            plot_edges = plot.series_list[1].plotattributes[:bins]
+            @test sum(StatsPlots.Plots._make_hist((far,), plot_edges).weights) == 200
+
+            close = repeat([lower, BigFloat(1)], 100)
+            @test MCMCChains._bin_count(close, :fd) == 3
+            @test MCMCChains._bin_count(close, :scott) == 4
+            for rule in (:auto, :fd, :scott)
+                bins = MCMCChains._histogram_edges([close], rule)
+                @test first(bins) <= lower < last(bins)
+                @test sum(StatsPlots.Plots._make_hist((close,), bins).weights) == 200
+            end
+            @test StatsPlots.Plots._make_hist(
+                (close,),
+                MCMCChains._discrete_edges(close),
+            ).weights == [100, 100]
+            @test precision(BigFloat) == 256
+        end
+    end
+
     @testset "what the caller asks for wins" begin
         edges = range(-1, 1; length = 5)
         @test MCMCChains._histogram_edges([randn(10)], edges) === edges
