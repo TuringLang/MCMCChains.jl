@@ -165,12 +165,20 @@ function _runs(levels)
     runs = UnitRange{Int}[]
     start = firstindex(levels)
     for i = (start+1):lastindex(levels)
-        nextfloat(levels[i-1]) < levels[i] || continue
+        _has_gap(levels[i-1], levels[i]) || continue
         push!(runs, start:(i-1))
         start = i
     end
     push!(runs, start:lastindex(levels))
     return runs
+end
+
+_has_gap(a, b) = nextfloat(a) < b
+
+function _has_gap(a::BigFloat, b::BigFloat)
+    # Both draws must resolve the gap when their stored precisions differ.
+    bits = min(precision(a), precision(b))
+    return nextfloat(BigFloat(a, RoundDown; precision = bits)) < b
 end
 
 """

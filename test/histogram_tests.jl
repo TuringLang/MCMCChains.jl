@@ -286,9 +286,36 @@ using Random
             @test StatsPlots.Plots._make_hist(
                 (close,),
                 MCMCChains._discrete_edges(close),
-            ).weights == [100, 100]
+            ).weights == [200]
             @test precision(BigFloat) == 256
         end
+    end
+
+    @testset "mixed BigFloat precisions share narrow gaps" begin
+        low = setprecision(BigFloat, 256) do
+            BigFloat(1)
+        end
+        high = setprecision(BigFloat, 512) do
+            BigFloat(1) + BigFloat(2)^(-300)
+        end
+        lower = setprecision(BigFloat, 512) do
+            BigFloat(1) - BigFloat(2)^(-300)
+        end
+        for pair in ((low, high), (lower, low))
+            draws = repeat(collect(pair), 100)
+            @test MCMCChains._runs(collect(pair)) == [1:2]
+            bins = MCMCChains._histogram_edges([draws], :auto)
+            @test StatsPlots.Plots._make_hist((draws,), bins).weights == [200]
+            @test length(unique(Float64.(bins))) == 2
+            plot = histogram(Chains(reshape(draws, :, 1, 1), [:x]))
+            plot_bins = plot.series_list[1].plotattributes[:bins]
+            @test StatsPlots.Plots._make_hist((draws,), plot_bins).weights == [200]
+        end
+        @test MCMCChains._runs([lower, BigFloat(2)]) == [1:1, 2:2]
+        beyond = setprecision(BigFloat, 512) do
+            BigFloat(nextfloat(low)) + BigFloat(2)^(-300)
+        end
+        @test MCMCChains._runs([low, beyond]) == [1:1, 2:2]
     end
 
     @testset "what the caller asks for wins" begin
