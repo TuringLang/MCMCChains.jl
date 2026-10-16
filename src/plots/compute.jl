@@ -172,7 +172,7 @@ _wider_than(::Type{T}) where {T} = (promote_type(T, Float64), BigFloat)
 """
     _one_bin(lo, hi, bins=1)
 
-Return edges for one bin containing `[lo, hi]`, or `nothing` if none can hold it.
+Return edges for `bins` bins covering `[lo, hi]`, or `nothing` if they do not fit.
 """
 function _one_bin(lo, hi, bins = 1)
     for T in _wider_than(typeof(lo))
