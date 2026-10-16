@@ -224,10 +224,7 @@ Check finite edges that hold `[lo, hi]` under left-closed bins.
 """
 function _edges_hold(edges, lo, hi)
     all(isfinite, edges) || return false
-    # A range is read by stepping along it, so a draw's bin is worked out by arithmetic from
-    # the first edge. Both the step and the whole width have to be measurable for that: a
-    # step can come out finite over a width that does not, and the arithmetic then fails on
-    # the way to a bin number. A list of edges is searched instead, and does not mind.
+    # A finite step can still span a width that breaks range bin lookup.
     if edges isa AbstractRange
         (isfinite(step(edges)) && isfinite(last(edges) - first(edges))) || return false
     end

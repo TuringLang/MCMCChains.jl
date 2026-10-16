@@ -86,7 +86,6 @@ using Random
 
         @test MCMCChains._runs([0.0, 1.0, nextfloat(1.0)]) == [1:1, 2:3]
         @test MCMCChains._runs([1.0, 2.0, 3.0]) == [1:1, 2:2, 3:3]
-        # Overflow in `b - a` must not merge distant levels.
         @test MCMCChains._runs([-1.0e308, 1.0e308]) == [1:1, 2:2]
         @test MCMCChains._runs(Float16[-60000, 60000]) == [1:1, 2:2]
         @test MCMCChains._runs(consecutive(1.0, 4)) == [1:4]
@@ -102,7 +101,6 @@ using Random
             (vcat(fill(0.0, 100), fill(1.0, 100), fill(nextfloat(1.0), 200)), [100, 300]),
             (repeat([1.0, nextfloat(1.0)], 100), [200]),
             (repeat([0.0, nextfloat(0.0)], 100), [200]),
-            # The midpoint must separate runs without splitting either one.
             (repeat(consecutive(1.0, 4), 100), [400]),
             (repeat(consecutive(0.0, 9), 50), [450]),
             (
@@ -142,10 +140,6 @@ using Random
             @test sum(weights) == length(crowded)
         end
 
-        # Draws whose span runs past their type, under every way of asking for bins. A range
-        # can hold a finite step across a width that is not finite, and a bin worked out by
-        # arithmetic from its first edge then fails on the way to a number, so the edges come
-        # back as a list instead.
         far_apart = repeat([-1.0e308, 1.0e308], 100)
         for rule in (:auto, :fd, :sturges, :scott, :rice, :sqrt, 25)
             edges = MCMCChains._histogram_edges([far_apart], rule)
