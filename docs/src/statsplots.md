@@ -94,10 +94,11 @@ histogram(chn, bins = 60, fillalpha = 0.7)
 
 ## Counts
 
-`countplot` counts each distinct value in sorted, equally spaced categories.
+`countplot` counts each distinct value in sorted categories.
 Use it for parameters with a small set of sampled values, including values too close or too large for numeric histogram edges.
 The spacing between categories does not represent numeric distance.
 Bars compare chains side by side.
+`countplot!` keeps existing category positions and adds new values at the end of the axis.
 Missing draws are skipped and non-finite values are rejected.
 
 ```@example statsplots

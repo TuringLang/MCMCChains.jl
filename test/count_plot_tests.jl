@@ -30,10 +30,12 @@ using StatsPlots
             @test MCMCChains._value_counts(values) == (levels, fill(3, length(levels), 1))
             p = countplot(Chains(reshape(values, :, 1, 1)))
             bars = only(filter(s -> s[:seriestype] === :shape, p.series_list))
-            @test p[1][:xaxis][:ticks] == (collect(eachindex(levels)), string.(levels))
+            positions, labels = only(xticks(p))
+            @test labels == string.(levels)
+            @test all(==(1), diff(positions))
             for i in eachindex(levels)
                 x = bars[:x][(6i-5):(6i-1)]
-                @test all(isapprox.(extrema(x), (i - 0.4, i + 0.4)))
+                @test all(isapprox.(extrema(x), (positions[i] - 0.4, positions[i] + 0.4)))
                 @test maximum(bars[:y][(6i-5):(6i-1)]) == 3
             end
         end
@@ -54,8 +56,8 @@ using StatsPlots
             @test levels == [low, nearby]
             @test counts == reshape([2, 1], :, 1)
             p = countplot(Chains(reshape(values, :, 1, 1)))
-            @test p[1][:xaxis][:ticks] == ([1, 2], string.([low, nearby]))
-            @test length(unique(p[1][:xaxis][:ticks][2])) == 2
+            @test only(xticks(p))[2] == string.([low, nearby])
+            @test length(unique(only(xticks(p))[2])) == 2
             @test precision(BigFloat) == before
         end
     end
@@ -79,7 +81,7 @@ using StatsPlots
         multi = Chains(cat(values, values .+ 10; dims = 2), [:a, :b])
         p = countplot(multi)
         @test length(p.subplots) == 2
-        @test p[2][:xaxis][:ticks][2] == ["10.0", "11.0", "12.0"]
+        @test xticks(p[2])[2] == ["10.0", "11.0", "12.0"]
         p = countplot(multi; colordim = :parameter)
         @test length(p.subplots) == 2
         bars = filter(s -> s[:seriestype] === :shape, p.series_list)
