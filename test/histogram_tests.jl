@@ -129,6 +129,22 @@ using Random
             @test StatsPlots.Plots._make_hist((values,), edges).weights == expected
         end
 
+        # Where the core branch leaves these to a rule, having no edge to put between the
+        # pair, here the pair shares a bar and the far pair keeps one each. Either way every
+        # draw is counted, and no bar is left holding none.
+        for (crowded, bars) in (
+            (repeat([prevfloat(1.0), 1.0], 100), 1),
+            (repeat([1.0, nextfloat(1.0)], 100), 1),
+            (repeat([-1.0e308, 1.0e308], 100), 2),
+        )
+            edges = MCMCChains._discrete_edges(crowded)
+            @test edges !== nothing
+            @test length(edges) - 1 == bars
+            weights = StatsPlots.Plots._make_hist((crowded,), edges).weights
+            @test count(!iszero, weights) == bars
+            @test sum(weights) == length(crowded)
+        end
+
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
         @test all(e -> e == [0.5, 1.5, 2.5], edges)
