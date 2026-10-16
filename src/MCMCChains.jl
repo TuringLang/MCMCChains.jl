@@ -35,7 +35,7 @@ import IteratorInterfaceExtensions
 
 import LinearAlgebra
 import Random
-import Statistics: std, cor, cov, mean, var, mean!
+import Statistics: std, cor, mean, var, mean!
 
 export Chains, chains, chainscat, chainsstack
 export setrange, resetrange

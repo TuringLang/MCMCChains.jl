@@ -67,36 +67,6 @@ function cor(
     append_chains = true,
     kwargs...,
 )
-    return _pairwise(cor, "Correlation", chains; sections, append_chains, kwargs...)
-end
-
-"""
-    cov(chains[; sections, append_chains = true, kwargs...])
-
-Compute the covariance matrix for the chain.
-
-Setting `append_chains=false` will return a vector of dataframes containing a covariance
-matrix for each chain.
-"""
-function cov(
-    chains::Chains;
-    sections = _default_sections(chains),
-    append_chains = true,
-    kwargs...,
-)
-    return _pairwise(cov, "Covariance", chains; sections, append_chains, kwargs...)
-end
-
-# `f` is applied to the draws laid out as a matrix, one column per parameter, and returns a
-# square matrix over the parameters.
-function _pairwise(
-    f,
-    name::String,
-    chains::Chains;
-    sections = _default_sections(chains),
-    append_chains = true,
-    kwargs...,
-)
     # Subset the chain.
     _chains = Chains(chains, _clean_sections(chains, sections))
 
@@ -104,35 +74,51 @@ function _pairwise(
     names_of_params = names(_chains)
 
     if append_chains
-        df = chaindataframe_pairwise(f, name, names_of_params, to_matrix(_chains))
+        df = chaindataframe_cor("Correlation", names_of_params, to_matrix(_chains))
         return df
     else
         vector_of_df = [
-            chaindataframe_pairwise(f, "$name - Chain $i", names_of_params, data) for
+            chaindataframe_cor("Correlation - Chain $i", names_of_params, data) for
             (i, data) in enumerate(to_vector_of_matrices(_chains))
         ]
         return vector_of_df
     end
 end
 
-function chaindataframe_pairwise(
-    f,
-    name,
-    names_of_params,
-    chains::AbstractMatrix;
-    kwargs...,
-)
-    # Compute the matrix over the parameters.
-    mat = f(chains)
+function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwargs...)
+    # Compute the correlation matrix.
+    cormat = cor(chains)
 
     # Summarize the results in a named tuple.
     nt = (;
         parameters = names_of_params,
-        zip(names_of_params, (mat[:, i] for i in axes(mat, 2)))...,
+        zip(names_of_params, (cormat[:, i] for i in axes(cormat, 2)))...,
     )
 
     # Create a ChainDataFrame.
     return ChainDataFrame(name, nt; kwargs...)
+end
+
+"""
+    cov(chains; sections, append_chains=true, corrected=true)
+
+Return the covariance matrix as an `AxisArray` with parameter names on its `row` and `col` axes.
+Draws are pooled across chains by default.
+Set `append_chains=false` to return one matrix per chain.
+Set `corrected=false` to divide by `n` instead of `n - 1`.
+Missing draws propagate to the affected rows and columns.
+"""
+function cov(
+    chains::Chains;
+    sections = _default_sections(chains),
+    append_chains::Bool = true,
+    corrected::Bool = true,
+)
+    chn = Chains(chains, _clean_sections(chains, sections))
+    params = names(chn)
+    covariance = x -> AxisArray(cov(x; corrected), Axis{:row}(params), Axis{:col}(params))
+    return append_chains ? covariance(to_matrix(chn)) :
+           map(covariance, to_vector_of_matrices(chn))
 end
 
 """
@@ -429,23 +415,35 @@ mean(chn::Chains, syms) = mean(chn[:, syms, :])
 mean(chn::Chains, syms::AbstractVector) = mean(chn[:, syms, :])
 
 """
-    var(chains[; kwargs...])
+    var(chains; corrected=true, kwargs...)
 
-Calculate the variance of a chain.
+Return a `ChainDataFrame` with the variance of each parameter, skipping missing draws.
+By default, draws are pooled across chains and the divisor is `n - 1`.
+Set `corrected=false` to divide by `n`.
+Other keywords are passed to [`summarize`](@ref), including `sections` and `append_chains`.
 """
-function var(chains::Chains; kwargs...)
-    return summarize(chains, var ∘ cskip; func_names = [:var], name = "Variance", kwargs...)
+function var(chains::Chains; corrected::Bool = true, kwargs...)
+    return summarize(
+        chains,
+        x -> var(cskip(x); corrected);
+        func_names = [:var],
+        name = "Variance",
+        kwargs...,
+    )
 end
 
 """
-    std(chains[; kwargs...])
+    std(chains; corrected=true, kwargs...)
 
-Calculate the standard deviation of a chain.
+Return a `ChainDataFrame` with the standard deviation of each parameter, skipping missing draws.
+By default, draws are pooled across chains and the variance uses the divisor `n - 1`.
+Set `corrected=false` to use the divisor `n`.
+Other keywords are passed to [`summarize`](@ref), including `sections` and `append_chains`.
 """
-function std(chains::Chains; kwargs...)
+function std(chains::Chains; corrected::Bool = true, kwargs...)
     return summarize(
         chains,
-        std ∘ cskip;
+        x -> std(cskip(x); corrected);
         func_names = [:std],
         name = "Standard Deviation",
         kwargs...,

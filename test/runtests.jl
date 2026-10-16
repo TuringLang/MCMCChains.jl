@@ -39,6 +39,9 @@ Random.seed!(0)
     println("Diagnostics")
     @time include("diagnostic_tests.jl")
 
+    println("Summary statistics")
+    @time include("summary_stats_tests.jl")
+
     # run tests for missing values
     println("Missing values")
     @time include("missing_tests.jl")

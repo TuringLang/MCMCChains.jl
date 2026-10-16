@@ -2,8 +2,8 @@
 
 ## 7.9.0
 
-- `var` and `std` summarise a chain the way `mean` already does, one row per parameter.
-- `cov` returns the covariance between every pair of parameters, laid out the way `cor` already is.
+- `var` and `std`, with one estimate per parameter.
+- `cov`, with parameter names on both axes of the covariance matrix.
 
 ## 7.8.1
 
