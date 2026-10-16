@@ -33,6 +33,55 @@ end
     xs, ys
 end
 
+@recipe function f(p::_CountPlot; relative = false)
+    levels, counts = _value_counts(p.val)
+    heights = if relative
+        totals = sum(counts; dims = 1)
+        all(>(0), totals) ||
+            throw(ArgumentError("countplot proportions require draws in every series"))
+        counts ./ totals
+    else
+        counts
+    end
+
+    xguide --> "Sample value (categorical)"
+    yguide --> (relative ? "Proportion" : "Count")
+    nchains = size(heights, 2)
+    width = something(get(plotattributes, :bar_width, nothing), 0.8)
+    width isa Real && isfinite(width) && width > 0 ||
+        throw(ArgumentError("countplot requires a finite, positive bar_width"))
+    width /= nchains
+    for c = 1:nchains
+        @series begin
+            seriestype := :_countbar
+            bar_width := width
+            countplot_values := _CountValue.(levels)
+            countplot_offset := (c - (nchains + 1) / 2) .* width
+            collect(eachindex(levels)), heights[:, c]
+        end
+    end
+    nothing
+end
+
+function RecipesBase.apply_recipe(
+    attrs::AbstractDict{Symbol,Any},
+    ::Type{Val{:_countbar}},
+    x,
+    y,
+    z,
+)
+    values, offset = attrs[:countplot_values], attrs[:countplot_offset]
+    delete!(attrs, :countplot_values)
+    delete!(attrs, :countplot_offset)
+    axis = get(attrs, :orientation, :vertical) in (:vertical, :v, :vert) ? :x : :y
+    # The bar recipe registers exact values on the subplot's categorical axis.
+    series = RecipesBase.apply_recipe(attrs, Val{:bar}, values, y, z)
+    for data in series
+        data.plotattributes[axis] = data.plotattributes[axis] .+ offset
+    end
+    return series
+end
+
 @recipe function f(p::_MeanPlot)
     seriestype := :path
     xaxis --> "Iteration"

@@ -8,6 +8,18 @@
 @shorthands violinplot
 
 """
+    countplot(chains::Chains[, parameters]; relative=false, kwargs...)
+
+Count each distinct sampled value in sorted categories.
+Bars for each chain are placed side by side.
+`countplot!` reuses existing categories and appends new ones at the end of the axis.
+Set `relative=true` for proportions within each chain, or `append_chains=true` to pool chains.
+Missing draws are skipped and non-finite values are rejected.
+With `colordim=:parameter`, bars compare parameters within each chain.
+"""
+@shorthands countplot
+
+"""
     energyplot(chains::Chains; kind=:density, kwargs...)
 
 Generate an energy plot for the samples in `chains`.
