@@ -73,7 +73,7 @@ function RecipesBase.apply_recipe(
     values, offset = attrs[:countplot_values], attrs[:countplot_offset]
     delete!(attrs, :countplot_values)
     delete!(attrs, :countplot_offset)
-    axis = get(attrs, :orientation, :vertical) in (:horizontal, :h) ? :y : :x
+    axis = get(attrs, :orientation, :vertical) in (:vertical, :v, :vert) ? :x : :y
     # The bar recipe registers exact values on the subplot's categorical axis.
     series = RecipesBase.apply_recipe(attrs, Val{:bar}, values, y, z)
     for data in series

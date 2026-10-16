@@ -95,6 +95,24 @@ using StatsPlots
         @test :countplot in MCMCChains.supportedplots
     end
 
+    @testset "bar orientation" begin
+        chn = Chains(reshape([10, 10, 20, 10, 20, 20], 3, 1, 2))
+        for (orientations, category, magnitude) in
+            (((:vertical, :v, :vert), :x, :y), ((:horizontal, :h, :hor), :y, :x))
+            for orientation in orientations
+                p = countplot(chn; orientation, relative = true, bar_width = 0.6)
+                bars = filter(s -> s[:seriestype] === :shape, p.series_list)
+                for (i, bar) in enumerate(bars)
+                    @test bar[magnitude][2:6:end] == [0, 0]
+                    @test bar[magnitude][1:6:end] ≈
+                          (i == 1 ? [2 / 3, 1 / 3] : [1 / 3, 2 / 3])
+                    @test bar[category][1:6:end] ≈ (i == 1 ? [0.2, 1.2] : [0.5, 1.5])
+                    @test bar[category][3:6:end] ≈ (i == 1 ? [0.5, 1.5] : [0.8, 1.8])
+                end
+            end
+        end
+    end
+
     @testset "missing values and proportions" begin
         values = Union{Missing,Float64}[0 1; 1 missing; 1 missing]
         @test MCMCChains._value_counts(values) == ([0.0, 1], [1 0; 2 1])
