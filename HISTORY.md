@@ -5,6 +5,10 @@
 - `var` and `std` summarise a chain the way `mean` already does, one row per parameter.
 - `cov` returns the covariance between every pair of parameters, laid out the way `cor` already is.
 
+## 7.8.1
+
+- `histogram` placed empty bars between a parameter's few sampled values and now bins on those values under `bins = :auto` when the edges fit.
+
 ## 7.8.0
 
 ### Added

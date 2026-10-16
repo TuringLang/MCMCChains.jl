@@ -77,10 +77,12 @@ density(chn)
 histogram(chn)
 ```
 
-Every chain of a parameter is binned over the same edges, so the bars line up and the counts can be compared.
-
-The bin count comes from the draws, by the same rules Plots uses.
-Pass `bins` to override it, as a rule, a count, or the edges themselves.
+By default, all chains of a parameter share bin edges.
+With `bins = :auto`, a parameter gets one bin per value when it has at most 20 distinct values, the total draw count is at least five times the number of values, and the edges fit.
+Edges fall halfway between neighboring values.
+Otherwise, the bin count follows the same rules as Plots.
+Pass a rule, count, or set of edges as `bins` to choose the bins yourself.
+With `colordim = :parameter`, Plots chooses the edges.
 
 ```@example statsplots
 histogram(chn, bins = :sturges)

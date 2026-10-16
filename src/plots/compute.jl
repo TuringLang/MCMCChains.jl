@@ -118,6 +118,46 @@ end
 # of edges. Plots names these and `:wand`, which is left to Plots.
 const BIN_RULES = (:auto, :fd, :sturges, :sqrt, :rice, :scott)
 
+const MAX_DISCRETE_LEVELS = 20
+
+"""
+    _discrete_edges(values)
+
+Return one bin per distinct value for a low-cardinality parameter, or `nothing`.
+"""
+function _discrete_edges(values)
+    levels = _few_levels(values)
+    levels === nothing && return nothing
+    n = length(levels)
+
+    # Avoid overflowing `a + b` when both levels are large and positive.
+    mids = [levels[i] + (levels[i+1] - levels[i]) / 2 for i = 1:(n-1)]
+    edges =
+        vcat(levels[1] - (mids[1] - levels[1]), mids, levels[n] + (levels[n] - mids[n-1]))
+
+    # A right-open bin drops its level if the upper edge rounds onto it.
+    all(isfinite, edges) || return nothing
+    all(edges[i] <= levels[i] < edges[i+1] for i = 1:n) || return nothing
+    return edges
+end
+
+"""
+    _few_levels(values)
+
+Return sorted distinct values if the level and draw counts qualify, or `nothing`.
+"""
+function _few_levels(values)
+    levels = Set{eltype(values)}()
+    for v in values
+        # Set uses `isequal`, which treats signed zeros as distinct values.
+        push!(levels, iszero(v) ? zero(v) : v)
+        length(levels) > MAX_DISCRETE_LEVELS && return nothing
+    end
+    # Count draws across all levels so rare levels still qualify.
+    (1 < length(levels) && 5 * length(levels) <= length(values)) || return nothing
+    return sort!(collect(levels))
+end
+
 """
     _bin_count(values, rule)
 
@@ -177,7 +217,13 @@ own.
 function _histogram_edges(series, bins)
     bins isa Symbol && bins ∉ BIN_RULES && return bins
     pooled = [float(v) for v in Iterators.flatten(series) if !ismissing(v) && isfinite(v)]
-    bins isa Symbol && (bins = _bin_count(pooled, bins))
+    if bins isa Symbol
+        if bins === :auto
+            discrete = _discrete_edges(pooled)
+            discrete === nothing || return discrete
+        end
+        bins = _bin_count(pooled, bins)
+    end
     bins isa Integer || return bins
 
     isempty(pooled) && return range(-0.5, 0.5; length = bins + 1)
