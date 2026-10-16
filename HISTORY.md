@@ -1,5 +1,9 @@
 # MCMCChains Changelog
 
+## 7.8.2
+
+- `ChainDataFrame` could not be converted with `Array`, and `convert(Array, summary)` failed for a single statistic.
+
 ## 7.8.1
 
 - `countplot`, which counts distinct sampled values on a categorical axis.

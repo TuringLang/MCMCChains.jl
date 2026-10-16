@@ -64,3 +64,25 @@ using Statistics: std
     @test three_parms_df_2[:, :parameters] == [:a, :b, :g]
     @test size(three_parms_df_2) == (3, 3)
 end
+
+@testset "summary array conversion" begin
+    chn = Chains(reshape(1:12, 3, 2, 2), ["x[1]", "x[2]"])
+    summary = mean(group(chn, :x))
+    expected = reshape([5.0, 8.0], 2, 1)
+    @test Array(summary) == expected
+    @test Array{Float32}(summary) == Float32.(expected)
+    @test convert(Array, summary) == expected
+    @test eltype(convert(Array, summary)) === Float64
+    per_chain = mean(chn; append_chains = false)
+    @test convert(Array, per_chain) == reshape([2.0, 5.0, 8.0, 11.0], 2, 1, 2)
+    for nt in (
+        (parameters = [:a, :b], mean = Float32[1, 2], count = [3, 4]),
+        (parameters = [:a, :b], mean = Union{Missing,Float64}[1, missing]),
+        (parameters = Symbol[], mean = Float64[]),
+    )
+        df = ChainDataFrame(nt)
+        expected = hcat(values(Base.tail(nt))...)
+        @test isequal(Array(df), expected)
+        @test eltype(Array(df)) === eltype(expected)
+    end
+end

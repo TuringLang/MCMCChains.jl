@@ -110,6 +110,9 @@ function Base.lastindex(c::ChainDataFrame, i::Integer)
     end
 end
 
+Base.Array(c::ChainDataFrame) = convert(Array, c)
+Base.Array{T}(c::ChainDataFrame) where {T} = convert(Array{T}, c)
+
 function Base.convert(::Type{Array}, c::ChainDataFrame)
     T = promote_eltype_namedtuple_tail(c.nt)
     return convert(Array{T}, c)

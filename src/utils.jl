@@ -141,10 +141,10 @@ end
 
 # promote element types of a tuple
 promote_eltype_tuple_type(::Type{Tuple{}}) = Any
-promote_eltype_tuple_type(::Type{Tuple{T}}) where {T} = T
+promote_eltype_tuple_type(::Type{Tuple{T}}) where {T} = eltype(T)
 function promote_eltype_tuple_type(t::Type{<:Tuple})
-    Base.promote_eltype(
-        Base.tuple_type_head(t),
+    promote_type(
+        eltype(Base.tuple_type_head(t)),
         promote_eltype_tuple_type(Base.tuple_type_tail(t)),
     )
 end
