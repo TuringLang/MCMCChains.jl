@@ -189,9 +189,11 @@ using Random
             repeat([0.0, 1.0, nextfloat(1.0)], 100),
             repeat([0.0, nextfloat(0.0)], 100),
             fill(1.0e16, 200),
+            repeat(BigFloat[0, 2], 100),
         )
             @test_logs MCMCChains._histogram_edges([drawable], :auto)
         end
+        @test_logs MCMCChains._histogram_edges([repeat(BigFloat[0, 2], 100)], 25)
 
         for T in (Float16, Float32, Float64, BigFloat)
             far = T === BigFloat ? BigFloat(floatmax(Float64)) : floatmax(T)

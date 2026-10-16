@@ -415,8 +415,9 @@ function _announced(edges, pooled)
     lo, hi = extrema(pooled)
     at_canvas = map(Float64, edges)
     usable =
-        _edges_hold(at_canvas, Float64(lo), Float64(hi)) &&
-        isfinite(last(at_canvas) - first(at_canvas))
+        all(isfinite, at_canvas) &&
+        first(at_canvas) <= Float64(lo) <= Float64(hi) <= last(at_canvas) &&
+        0 < last(at_canvas) - first(at_canvas) < Inf
     usable || @warn(
         "Histogram range may exceed the plot axis. Draws were counted, but the plot may be empty.",
         extrema = (lo, hi),
