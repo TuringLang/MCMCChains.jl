@@ -37,3 +37,22 @@ Random.seed!(20)
     @test getall == get(chn, section = [:parameters])
     @test length(keys(getall)) == 2
 end
+
+@testset "flattened sections" begin
+    chn = Chains(
+        reshape(1:24, 4, 3, 2),
+        [:a, Symbol("x[1]"), Symbol("x[2]")],
+        Dict(:parameters => [:a, Symbol("x[1]")], :internals => [Symbol("x[2]")]),
+    )
+    for (section, selected) in (
+        (:parameters, [:a, Symbol("x[1]")]),
+        ([:internals, :parameters], [Symbol("x[2]"), :a, Symbol("x[1]")]),
+        ([:parameters, :parameters], [:a, Symbol("x[1]")]),
+    )
+        result = get(chn; section, flatten = true)
+        @test keys(result) == Tuple(selected)
+        @test result == get(chn, selected; flatten = true)
+    end
+    @test get_params(chn; flatten = true) == get(chn, names(chn); flatten = true)
+    @test get(chn; section = Symbol[], flatten = true) == NamedTuple()
+end
