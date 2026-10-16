@@ -139,6 +139,12 @@ using Random
         end
 
         far_apart = repeat([-1.0e308, 1.0e308], 100)
+        for scale in (5.0e307, 1.0e308)
+            wide = repeat([-scale, scale], 100)
+            @test MCMCChains._bin_count(wide, :fd) == 3
+            @test MCMCChains._bin_count(wide, :auto) == 3
+            @test MCMCChains._bin_count(wide, :scott) == 4
+        end
         for rule in (:auto, :fd, :sturges, :scott, :rice, :sqrt, 25)
             edges = MCMCChains._histogram_edges([far_apart], rule)
             @test edges isa AbstractArray

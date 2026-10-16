@@ -285,10 +285,25 @@ function _bin_count(values, rule::Symbol)
     elseif rule === :scott
         # Squaring narrow floats can overflow before their standard deviation does.
         spread = std(W(v) for v in values)
-        return count(spread > 0 ? span * nd / (3.5 * spread) : 1.0)
+        iszero(spread) && return 1
+        denominator = 3.5 * spread
+        estimate = span * nd / denominator
+        if all(isfinite, (span, spread, denominator, estimate))
+            return count(estimate)
+        end
+        wide_spread = std(BigFloat(v) for v in values)
+        return count((BigFloat(hi) - BigFloat(lo)) * nd / (BigFloat(3.5) * wide_spread))
     end
-    iqr = W(quantile(values, 0.75)) - W(quantile(values, 0.25))
-    return count(span * nd / (2 * (iqr > 0 ? iqr : one(iqr))))
+    lower, upper = quantile(values, 0.25), quantile(values, 0.75)
+    iqr = W(upper) - W(lower)
+    denominator = 2 * (iqr > 0 ? iqr : one(iqr))
+    estimate = span * nd / denominator
+    if all(isfinite, (span, iqr, denominator, estimate))
+        return count(estimate)
+    end
+    wide_iqr = BigFloat(upper) - BigFloat(lower)
+    wide_denominator = 2 * (wide_iqr > 0 ? wide_iqr : one(wide_iqr))
+    return count((BigFloat(hi) - BigFloat(lo)) * nd / wide_denominator)
 end
 
 """
