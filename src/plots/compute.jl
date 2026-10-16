@@ -132,11 +132,16 @@ function _discrete_edges(values)
 
     # Avoid overflowing `a + b` when both levels are large and positive.
     mids = [levels[i] + (levels[i+1] - levels[i]) / 2 for i = 1:(n-1)]
-    return vcat(
-        levels[1] - (mids[1] - levels[1]),
-        mids,
-        levels[n] + (levels[n] - mids[n-1]),
-    )
+    edges =
+        vcat(levels[1] - (mids[1] - levels[1]), mids, levels[n] + (levels[n] - mids[n-1]))
+
+    # Two levels a single step apart have no value between them, so the midpoint rounds onto
+    # one of the pair and the bin between them closes to nothing. Bins are closed on the
+    # left, so a draw on that edge would be counted nowhere. Hand the edges back only when
+    # each level sits inside a bin of its own, and leave the rest to a rule.
+    all(isfinite, edges) || return nothing
+    all(edges[i] <= levels[i] < edges[i+1] for i = 1:n) || return nothing
+    return edges
 end
 
 """

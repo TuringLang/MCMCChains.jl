@@ -77,6 +77,23 @@ using Random
 
         @test drawable(MCMCChains._discrete_edges(repeat([1e308, 1.1e308], 100)))
 
+        # Values with no room for an edge between them take a rule, since the midpoint would
+        # round onto one of the pair and close its bin to nothing. Every draw still counts.
+        for crowded in (
+            repeat([prevfloat(1.0), 1.0], 100),
+            repeat([1.0, nextfloat(1.0)], 100),
+            repeat([-1.0e308, 1.0e308], 100),
+        )
+            @test MCMCChains._discrete_edges(crowded) === nothing
+        end
+        kept = repeat([prevfloat(1.0), 1.0], 100)
+        @test sum(
+            StatsPlots.Plots._make_hist(
+                (kept,),
+                MCMCChains._histogram_edges([kept], :auto),
+            ).weights,
+        ) == length(kept)
+
         chn = Chains(float.(rand(1:2, 200, 1, 2)), [:d])
         edges = [s.plotattributes[:bins] for s in histogram(chn).series_list]
         @test all(e -> e == [0.5, 1.5, 2.5], edges)
