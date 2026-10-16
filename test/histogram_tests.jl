@@ -42,7 +42,6 @@ using Random
         @test MCMCChains._discrete_edges(Float64[]) === nothing
         @test MCMCChains._discrete_edges(float.(rand(1:50, 5000))) === nothing
 
-        # Include BigFloat, whose signed zeros are distinct objects.
         for zero_pair in (
             repeat([-0.0, 0.0], 100),
             repeat([-0.0f0, 0.0f0], 100),
@@ -66,7 +65,6 @@ using Random
         @test MCMCChains._discrete_edges(repeat([0.0, 1.0, 2.0], 4)) === nothing
         @test MCMCChains._discrete_edges(repeat(collect(1.0:20.0), 5)) !== nothing
         @test MCMCChains._discrete_edges(repeat(collect(1.0:21.0), 5)) === nothing
-        # The draw threshold applies across levels, including rarely visited ones.
         lopsided = vcat(fill(0.0, 13), [1.0, 2.0])
         @test MCMCChains._discrete_edges(lopsided) !== nothing
         @test StatsPlots.Plots._make_hist(
@@ -209,7 +207,6 @@ using Random
     end
 
     @testset "a rule we do not compute is left to Plots" begin
-        # `:wand` is handled by Plots.
         @test MCMCChains._histogram_edges([randn(50)], :wand) === :wand
 
         chn = Chains(randn(100, 1, 2), [:x])
