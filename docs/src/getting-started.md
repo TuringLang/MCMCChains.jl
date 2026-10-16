@@ -25,6 +25,22 @@ val = rand(500, 2, 3)
 chn = Chains(val, [:a, :b])
 ```
 
+Select parameters by name with a vector to keep a `Chains` object for plotting or summaries:
+
+```@example index
+selected = chn[[:a, :b]]
+size(selected)
+```
+
+A single name returns a matrix with iterations in rows and chains in columns.
+A one-element vector keeps all three dimensions:
+
+```@example index
+size(chn[:a]), size(chn[[:a]])
+```
+
+Selected parameters follow their order in the original chain.
+
 By default, parameters will be given the name `param_i`, where `i` is the parameter
 number:
 
