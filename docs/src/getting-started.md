@@ -122,6 +122,8 @@ For a vector quantity, pass an iteration-by-chain matrix of vectors or an iterat
 The components are named `quantity[1]`, `quantity[2]`, and so on.
 An iteration-by-chain matrix of named tuples, such as model return values, adds each named field as a parameter.
 Names must be distinct from those already in the chain.
+Unlabeled arrays use the chain's iteration and chain order.
+An `AxisArray` must have `:iter` and `:chain` axes whose labels match the chain's iteration labels and chain IDs.
 
 ```@example derived
 generated = map(chn[:a], chn[:b]) do a, b

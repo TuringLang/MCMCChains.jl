@@ -224,6 +224,7 @@ function Base.hcat(c::Chains, addition::Pair, additions::Pair...)
     for (key, values) in (addition, additions...)
         key isa Union{Symbol,AbstractString} ||
             throw(ArgumentError("parameter names must be symbols or strings"))
+        _check_addition_axes(c, values)
         name = Symbol(key)
         parameter_names, data = _addition_data(name, values, size(c, 1), size(c, 3))
         append!(added_names, parameter_names)
@@ -242,12 +243,26 @@ end
 function Base.hcat(c::Chains, draws::AbstractMatrix{<:NamedTuple})
     size(draws) == (size(c, 1), size(c, 3)) ||
         throw(DimensionMismatch("generated values must match the iterations and chains"))
+    _check_addition_axes(c, draws)
     isempty(draws) && throw(ArgumentError("cannot infer names from empty generated values"))
     keys = propertynames(first(draws))
     isempty(keys) && throw(ArgumentError("generated values must have at least one name"))
     all(x -> propertynames(x) == keys, draws) ||
         throw(ArgumentError("generated values must have the same names"))
     return hcat(c, (key => getproperty.(draws, key) for key in keys)...)
+end
+
+_check_addition_axes(::Chains, ::Any) = nothing
+
+function _check_addition_axes(c::Chains, values::AxisArray)
+    ndims(values) in (2, 3) || return nothing
+    axis_names = AxisArrays.axisnames(values)
+    (first(axis_names), last(axis_names)) == (:iter, :chain) ||
+        throw(ArgumentError("added AxisArray must have :iter and :chain axes"))
+    axis_values = AxisArrays.axisvalues(values)
+    first(axis_values) == range(c) || throw(ArgumentError("chain ranges differ"))
+    last(axis_values) == chains(c) || throw(ArgumentError("sets of chains differ"))
+    return nothing
 end
 
 function _addition_data(name::Symbol, values, niter::Int, nchains::Int)

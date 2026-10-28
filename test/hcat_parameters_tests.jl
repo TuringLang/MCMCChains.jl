@@ -39,6 +39,44 @@
     from_generated = hcat(selected, generated)
     @test from_generated.value == extended.value
 
+    labeled_scalar =
+        MCMCChains.AxisArray(scalar; iter = range(selected), chain = chains(selected))
+    @test hcat(selected, :labeled => labeled_scalar)[:labeled] == scalar
+    unnamed_scalar =
+        MCMCChains.AxisArray(scalar; draw = range(selected), chain = chains(selected))
+    @test_throws ArgumentError hcat(selected, :bad => unnamed_scalar)
+    shifted = setrange(selected, 201:2:207)
+    other_chain = chn[2:5, :, 1:1]
+    @test_throws ArgumentError hcat(selected, :bad => shifted[:a])
+    @test_throws ArgumentError hcat(selected, :bad => other_chain[:a])
+    @test_throws ArgumentError hcat(selected, :bad => shifted.value)
+    matching_cube = MCMCChains.AxisArray(
+        cube;
+        iter = range(selected),
+        component = 1:2,
+        chain = chains(selected),
+    )
+    @test hcat(selected, :labeled_cube => matching_cube)[Symbol("labeled_cube[2]")] ==
+          2 .* scalar
+    labeled_generated = MCMCChains.AxisArray(
+        map(x -> (generated = x,), scalar);
+        iter = range(selected),
+        chain = chains(selected),
+    )
+    @test hcat(selected, labeled_generated)[:generated] == scalar
+    shifted_generated = MCMCChains.AxisArray(
+        map(x -> (generated = x,), scalar);
+        iter = range(shifted),
+        chain = chains(selected),
+    )
+    @test_throws ArgumentError hcat(selected, shifted_generated)
+    other_chain_generated = MCMCChains.AxisArray(
+        map(x -> (generated = x,), scalar);
+        iter = range(selected),
+        chain = chains(other_chain),
+    )
+    @test_throws ArgumentError hcat(selected, other_chain_generated)
+
     partly_missing = Matrix{Union{Missing,Float64}}(scalar)
     partly_missing[1, 1] = missing
     with_missing = hcat(selected, :maybe => partly_missing)
