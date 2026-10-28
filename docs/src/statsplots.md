@@ -250,8 +250,10 @@ plot(chn, seriestype = :violin)
 
 ## Corner
 
+Use `StatsPlots.cornerplot` for a Plots corner plot. PairPlots uses `pairplot` for a Makie pair plot.
+
 ```@example statsplots
-cornerplot(chn)
+StatsPlots.cornerplot(chn)
 ```
 
 ## Energy Plot
