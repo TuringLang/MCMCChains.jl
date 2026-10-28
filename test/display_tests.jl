@@ -13,4 +13,9 @@
     @test render(context_digits = 3, digits = 1) == render(context_digits = 1)
     @test render(digits = 0) == render(context_digits = 0)
     @test_throws ArgumentError describe(IOBuffer(), chn; digits = -1)
+    for invalid in (true, false)
+        io = IOBuffer()
+        @test_throws ArgumentError describe(io, chn; digits = invalid)
+        @test isempty(take!(io))
+    end
 end

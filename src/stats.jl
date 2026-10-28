@@ -200,6 +200,7 @@ end
              kwargs...])
 Print chain metadata, summary statistics, and quantiles. Use `describe(chains)` for REPL output to `stdout`, or specify `io` for other streams (e.g., file output).
 Set `digits` to a nonnegative integer to choose the decimal places shown in the summary and quantile tables.
+Boolean values are not accepted.
 """
 function DataAPI.describe(
     io::IO,
@@ -210,7 +211,8 @@ function DataAPI.describe(
     kwargs...,
 )
     if digits !== nothing
-        digits >= 0 || throw(ArgumentError("digits must be nonnegative"))
+        (digits isa Bool || digits < 0) &&
+            throw(ArgumentError("digits must be a nonnegative integer"))
         io = IOContext(io, :digits => digits)
     end
     print(io, "Chains ", chains, ":\n\n", header(chains))
