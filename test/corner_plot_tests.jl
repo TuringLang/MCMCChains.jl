@@ -14,27 +14,39 @@ using Test, MCMCChains, StatsPlots, Random
             @test a[:seriestype] == b[:seriestype]
             @test isequal(a[:x], b[:x])
             @test isequal(a[:y], b[:y])
+            @test isequal(a[:label], b[:label])
         end
     end
-    for (c, parameters, kwargs) in (
-        (chn, (), (;)),
-        (chn[:, :, 2:3], (), (; compact = false)),
-        (chn, ([:b, :lp],), (; size = (450, 450))),
-        (chn, (), (; sections = nothing)),
+    for (c, parameters, kwargs, expected_names) in (
+        (chn, (), (;), [:a, :b]),
+        (chn[:, :, 2:3], (), (; compact = false), [:a, :b]),
+        (chn, ([:b, :lp],), (; size = (450, 450)), [:b, :lp]),
+        (chn, (), (; sections = nothing), [:a, :b, :lp]),
+        (chn, (:a,), (;), [:a]),
+        (chn, ([2, 3],), (;), [:b, :lp]),
     )
         @testset "$(parameters), $(kwargs)" begin
-            expected = corner(c, parameters...; kwargs...)
+            matrix = vcat([Array(c.value[:, expected_names, i]) for i = 1:size(c, 3)]...)
+            expected = StatsPlots.cornerplot(
+                matrix;
+                label = permutedims(string.(expected_names)),
+                compact = get(kwargs, :compact, length(expected_names) > 1),
+                size = get(kwargs, :size, (600, 600)),
+            )
             actual = StatsPlots.cornerplot(c, parameters...; kwargs...)
             compare_plots(actual, expected)
         end
     end
     @testset "append" begin
-        expected = corner(chn)
-        corner!(expected, chn)
+        matrix = vcat([Array(chn.value[:, [:a, :b], i]) for i = 1:size(chn, 3)]...)
+        labels = permutedims(["a", "b"])
+        expected =
+            StatsPlots.cornerplot(matrix; label = labels, compact = true, size = (600, 600))
+        StatsPlots.cornerplot!(expected, matrix; label = labels, compact = true)
         actual = StatsPlots.cornerplot(chn)
         @test StatsPlots.cornerplot!(actual, chn) === actual
         compare_plots(actual, expected)
-        corner!(expected, chn)
+        StatsPlots.cornerplot!(expected, matrix; label = labels, compact = true)
         plot!(actual)
         @test StatsPlots.cornerplot!(chn) === actual
         compare_plots(actual, expected)
