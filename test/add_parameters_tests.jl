@@ -48,6 +48,7 @@
     @test_throws DimensionMismatch add_parameters(selected, :bad => rand(3, 1))
     @test_throws DimensionMismatch add_parameters(selected, :bad => rand(4, 2, 2))
     @test_throws DimensionMismatch add_parameters(selected, generated[1:3, :])
+    @test_throws ArgumentError add_parameters(selected, :bad => rand(4))
     @test_throws ArgumentError add_parameters(selected, :a => scalar)
     @test_throws ArgumentError add_parameters(selected, :total => scalar, :total => scalar)
     @test_throws ArgumentError add_parameters(
