@@ -251,7 +251,7 @@ plot(chn, seriestype = :violin)
 ## Corner
 
 ```@example statsplots
-StatsPlots.cornerplot(chn)
+cornerplot(chn)
 ```
 
 ## Energy Plot

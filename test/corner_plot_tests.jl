@@ -39,4 +39,20 @@ using Test, MCMCChains, StatsPlots, Random
         @test StatsPlots.cornerplot!(chn) === actual
         compare_plots(actual, expected)
     end
+    @testset "render" begin
+        previous_backend = StatsPlots.Plots.backend()
+        try
+            StatsPlots.gr()
+            plot = StatsPlots.cornerplot(chn)
+            @test occursin("<svg", sprint(show, MIME("image/svg+xml"), plot))
+            @test StatsPlots.cornerplot!(plot, chn) === plot
+            @test occursin("<svg", sprint(show, MIME("image/svg+xml"), plot))
+            custom_margin = 5 * StatsPlots.Plots.mm
+            custom = StatsPlots.cornerplot(chn; left_margin = custom_margin)
+            @test custom.subplots[1][:left_margin] == custom_margin
+            @test occursin("<svg", sprint(show, MIME("image/svg+xml"), custom))
+        finally
+            StatsPlots.Plots.backend(previous_backend)
+        end
+    end
 end
