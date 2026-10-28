@@ -124,7 +124,9 @@ derived = Chains(
 extended = hcat(chn, derived)
 ```
 
-The inputs must have matching iteration ranges and chain IDs, and distinct parameter names.
+`hcat` requires matching iteration ranges and chain IDs, and distinct parameter names.
+The new `Chains` constructor numbers chains from `1`, so this example requires those IDs on `chn`.
+`hcat` sets the result's log evidence to `missing`.
 
 ## Saving and Loading Chains
 
