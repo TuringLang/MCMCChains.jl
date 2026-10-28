@@ -6,7 +6,7 @@
 
 ```@example summary
 using MCMCChains
-chn = Chains(reshape(1:24, 4, 3, 2), [:a, :b, :c])
+chn = Chains(reshape(1:120, 20, 3, 2), [:a, :b, :c])
 summary = mean(chn)
 ```
 
@@ -30,7 +30,7 @@ Use Tables.jl to extract named columns, or convert to a DataFrame:
 
 ```@example summary
 using Tables
-Tables.columntable(summary)
+Tables.columntable(summary).mean
 ```
 
 ```@example summary
