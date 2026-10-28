@@ -88,6 +88,9 @@ Random.seed!(0)
     println("Concatenation")
     @time include("concatenation_tests.jl")
 
+    println("Adding parameters")
+    @time include("hcat_parameters_tests.jl")
+
     # run tests related to rstar statistic
     println("Rstar")
     @time include("rstar_tests.jl")

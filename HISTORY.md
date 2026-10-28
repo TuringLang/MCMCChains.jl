@@ -2,8 +2,10 @@
 
 ## 7.9.0
 
+- `hcat` now adds scalar or vector values by name, including matrices of named tuples, while preserving iteration labels and chain metadata.
 - `var` and `std`, with one estimate per parameter.
 - `cov`, with parameter names on both axes of the covariance matrix.
+
 ## 7.8.2
 
 - `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` now accept `Chains` objects.
