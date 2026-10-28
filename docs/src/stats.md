@@ -2,7 +2,7 @@
 
 ## Display precision
 
-Set `:digits` in an `IOContext` to choose the number of decimal places printed by `describe`:
+Set `:digits` in an `IOContext` to choose the decimal places shown in `describe`'s summary and quantile tables:
 
 ```@example precision
 using MCMCChains
