@@ -2,8 +2,10 @@
 
 ## 7.9.0
 
+- `add_parameters`, which adds scalar or vector quantities computed for each draw while keeping the chain's iteration labels and metadata.
 - `var` and `std`, with one estimate per parameter.
 - `cov`, with parameter names on both axes of the covariance matrix.
+
 ## 7.8.2
 
 - `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` now accept `Chains` objects.
@@ -11,7 +13,6 @@
 
 ## 7.8.1
 
-- `add_parameters`, which adds scalar or vector quantities computed for each draw while keeping the chain's iteration labels and metadata.
 - `countplot`, which counts distinct sampled values on a categorical axis.
 - `histogram` placed empty bars between a parameter's few sampled values and now bins on those values under `bins = :auto` when the edges fit.
 
