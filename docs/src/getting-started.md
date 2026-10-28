@@ -109,24 +109,31 @@ x = get(chn, [:a, :b])
 
 ## Add derived parameters
 
-Create a chain for a quantity computed from each draw and combine it with `hcat`.
-Use the original iteration range so the draws line up:
+```@docs
+add_parameters
+```
+
+Use [`add_parameters`](@ref) to store quantities computed from each draw:
 
 ```@example derived
 using MCMCChains
 chn = Chains(reshape(1:24, 4, 3, 2), [:a, :b, :c]; start=101, thin=2)
 total = chn[:a] .+ chn[:b]
-derived = Chains(
-    reshape(total, size(chn, 1), 1, size(chn, 3)),
-    [:total];
-    iterations=range(chn),
-)
-extended = hcat(chn, derived)
+extended = add_parameters(chn, :total => total)
 ```
 
-`hcat` requires matching iteration ranges and chain IDs, and distinct parameter names.
-The new `Chains` constructor numbers chains from `1`, so this example requires those IDs on `chn`.
-`hcat` sets the result's log evidence to `missing`.
+For a vector quantity, pass an iteration-by-chain matrix of vectors or an iteration-by-parameter-by-chain array.
+The components are named `quantity[1]`, `quantity[2]`, and so on.
+An iteration-by-chain matrix of named tuples, such as model return values, adds each named field as a parameter.
+Names must be distinct from those already in the chain.
+
+```@example derived
+generated = map(chn[:a], chn[:b]) do a, b
+    (sum = a + b, prediction = [a, a + b])
+end
+with_generated = add_parameters(chn, generated)
+namesingroup(with_generated, :prediction)
+```
 
 ## Saving and Loading Chains
 

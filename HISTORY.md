@@ -2,6 +2,7 @@
 
 ## 7.8.1
 
+- `add_parameters`, which adds scalar or vector quantities computed for each draw while keeping the chain's iteration labels and metadata.
 - `countplot`, which counts distinct sampled values on a categorical axis.
 - `histogram` placed empty bars between a parameter's few sampled values and now bins on those values under `bins = :auto` when the edges fit.
 

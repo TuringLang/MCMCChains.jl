@@ -40,6 +40,7 @@ import Statistics: std, cor, mean, var, mean!
 export Chains, chains, chainscat, chainsstack
 export setrange, resetrange
 export set_section, get_params, sections, sort_sections, setinfo
+export add_parameters
 export replacenames, namesingroup, group
 export autocor, describe, sample, summarystats, AbstractWeights, mean, quantile
 export ChainDataFrame
