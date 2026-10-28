@@ -24,6 +24,8 @@ Random.seed!(0)
     println("Plotting")
     @time include("plot_test.jl")
 
+    @time include("corner_plot_tests.jl")
+
     # run tests for the ridgeline and forest plot helpers
     println("Interval plots")
     @time include("interval_plot_tests.jl")
@@ -38,6 +40,9 @@ Random.seed!(0)
     # run function tests
     println("Diagnostics")
     @time include("diagnostic_tests.jl")
+
+    println("Summary statistics")
+    @time include("summary_stats_tests.jl")
 
     # run tests for missing values
     println("Missing values")

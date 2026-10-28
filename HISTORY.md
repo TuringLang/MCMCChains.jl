@@ -1,5 +1,14 @@
 # MCMCChains Changelog
 
+## 7.9.0
+
+- `var` and `std`, with one estimate per parameter.
+- `cov`, with parameter names on both axes of the covariance matrix.
+## 7.8.2
+
+- `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` now accept `Chains` objects.
+- `corner`, `corner!` and the `:corner` series type were removed in favour of `StatsPlots.cornerplot` and `StatsPlots.cornerplot!`.
+
 ## 7.8.1
 
 - `add_parameters`, which adds scalar or vector quantities computed for each draw while keeping the chain's iteration labels and metadata.
