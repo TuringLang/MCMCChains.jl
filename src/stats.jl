@@ -100,6 +100,28 @@ function chaindataframe_cor(name, names_of_params, chains::AbstractMatrix; kwarg
 end
 
 """
+    cov(chains; sections, append_chains=true, corrected=true)
+
+Return the covariance matrix as an `AxisArray` with parameter names on its `row` and `col` axes.
+Draws are pooled across chains by default.
+Set `append_chains=false` to return one matrix per chain.
+Set `corrected=false` to divide by `n` instead of `n - 1`.
+Missing draws propagate to the affected rows and columns.
+"""
+function cov(
+    chains::Chains;
+    sections = _default_sections(chains),
+    append_chains::Bool = true,
+    corrected::Bool = true,
+)
+    chn = Chains(chains, _clean_sections(chains, sections))
+    params = names(chn)
+    covariance = x -> AxisArray(cov(x; corrected), Axis{:row}(params), Axis{:col}(params))
+    return append_chains ? covariance(to_matrix(chn)) :
+           map(covariance, to_vector_of_matrices(chn))
+end
+
+"""
     changerate(chains[; sections, append_chains = true, kwargs...])
 
 Compute the change rate for the chain.
@@ -391,6 +413,42 @@ end
 mean(chn::Chains, syms) = mean(chn[:, syms, :])
 # resolve method ambiguity with `mean(f, ::AbstractArray)`
 mean(chn::Chains, syms::AbstractVector) = mean(chn[:, syms, :])
+
+"""
+    var(chains; corrected=true, kwargs...)
+
+Return a `ChainDataFrame` with the variance of each parameter, skipping missing draws.
+By default, draws are pooled across chains and the divisor is `n - 1`.
+Set `corrected=false` to divide by `n`.
+Other keywords are passed to [`summarize`](@ref), including `sections` and `append_chains`.
+"""
+function var(chains::Chains; corrected::Bool = true, kwargs...)
+    return summarize(
+        chains,
+        x -> var(cskip(x); corrected);
+        func_names = [:var],
+        name = "Variance",
+        kwargs...,
+    )
+end
+
+"""
+    std(chains; corrected=true, kwargs...)
+
+Return a `ChainDataFrame` with the standard deviation of each parameter, skipping missing draws.
+By default, draws are pooled across chains and the variance uses the divisor `n - 1`.
+Set `corrected=false` to use the divisor `n`.
+Other keywords are passed to [`summarize`](@ref), including `sections` and `append_chains`.
+"""
+function std(chains::Chains; corrected::Bool = true, kwargs...)
+    return summarize(
+        chains,
+        x -> std(cskip(x); corrected);
+        func_names = [:std],
+        name = "Standard Deviation",
+        kwargs...,
+    )
+end
 
 """
     MCMCDiagnosticTools.bfmi(chains::Chains)
