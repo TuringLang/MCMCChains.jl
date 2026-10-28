@@ -1,5 +1,10 @@
 # MCMCChains Changelog
 
+## 7.8.2
+
+- `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` now accept `Chains` objects.
+- `corner`, `corner!` and the `:corner` series type were removed in favour of `StatsPlots.cornerplot` and `StatsPlots.cornerplot!`.
+
 ## 7.8.1
 
 - `countplot`, which counts distinct sampled values on a categorical axis.

@@ -56,10 +56,10 @@ Logging.disable_logging(Logging.Warn)
     println("\nmixeddensity")
     display(mixeddensity(chn, 1))
 
-    println("corner")
-    display(corner(chn[:, 1:2, :]))
+    println("cornerplot")
+    display(cornerplot(chn[:, 1:2, :]))
     # https://github.com/TuringLang/MCMCChains.jl/issues/413
-    display(corner(chn[:, 1:2, 2:3]))
+    display(cornerplot(chn[:, 1:2, 2:3]))
 
     # Violinplot tests
     println("\nviolinplot")

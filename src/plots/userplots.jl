@@ -4,7 +4,6 @@
 @shorthands mixeddensity
 @shorthands pooleddensity
 @shorthands traceplot
-@shorthands corner
 @shorthands violinplot
 
 """
