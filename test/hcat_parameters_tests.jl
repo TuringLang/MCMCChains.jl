@@ -38,6 +38,16 @@
     generated = map(x -> (total = x, prediction = [x, 2x]), scalar)
     from_generated = hcat(selected, generated)
     @test from_generated.value == extended.value
+    reordered = Matrix{NamedTuple}(undef, size(scalar))
+    for i in eachindex(scalar)
+        x = scalar[i]
+        reordered[i] =
+            isodd(i) ? (total = x, prediction = [x, 2x]) : (prediction = [x, 2x], total = x)
+    end
+    @test hcat(selected, reordered).value == extended.value
+    mismatched_names = copy(reordered)
+    mismatched_names[2] = (prediction = [1, 2], other = 3)
+    @test_throws ArgumentError hcat(selected, mismatched_names)
 
     labeled_scalar =
         MCMCChains.AxisArray(scalar; iter = range(selected), chain = chains(selected))

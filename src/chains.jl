@@ -247,8 +247,12 @@ function Base.hcat(c::Chains, draws::AbstractMatrix{<:NamedTuple})
     isempty(draws) && throw(ArgumentError("cannot infer names from empty generated values"))
     keys = propertynames(first(draws))
     isempty(keys) && throw(ArgumentError("generated values must have at least one name"))
-    all(x -> propertynames(x) == keys, draws) ||
-        throw(ArgumentError("generated values must have the same names"))
+    all(
+        x ->
+            length(propertynames(x)) == length(keys) &&
+                all(key -> hasproperty(x, key), keys),
+        draws,
+    ) || throw(ArgumentError("generated values must have the same names"))
     return hcat(c, (key => getproperty.(draws, key) for key in keys)...)
 end
 
