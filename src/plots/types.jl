@@ -76,4 +76,4 @@ const translationdict = Dict(
     :violin => _ViolinPlot,
 )
 
-const supportedplots = push!(collect(keys(translationdict)), :mixeddensity, :corner)
+const supportedplots = push!(collect(keys(translationdict)), :mixeddensity)
