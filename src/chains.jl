@@ -218,21 +218,10 @@ Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 Base.lastindex(c::Chains) = lastindex(c.value, 1)
 Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
 
-"""
-    add_parameters(chain::Chains, additions::Pair...)
-    add_parameters(chain::Chains, draws::AbstractMatrix{<:NamedTuple})
-
-Return a new chain with parameters computed for each iteration and chain.
-Each pair maps a name to an iteration-by-chain matrix of scalars or vectors, or to an iteration-by-parameter-by-chain array of scalars.
-Vector values are stored under names such as `x[1]` and `x[2]`.
-The named tuple form accepts an iteration-by-chain matrix of generated values.
-The result keeps the original iteration range, chain IDs, sections, log evidence, and info.
-"""
-function add_parameters(c::Chains, additions::Pair...)
-    isempty(additions) && throw(ArgumentError("provide at least one parameter"))
+function Base.hcat(c::Chains, addition::Pair, additions::Pair...)
     added_names = Symbol[]
     added_data = []
-    for (key, values) in additions
+    for (key, values) in (addition, additions...)
         key isa Union{Symbol,AbstractString} ||
             throw(ArgumentError("parameter names must be symbols or strings"))
         name = Symbol(key)
@@ -250,14 +239,15 @@ function add_parameters(c::Chains, additions::Pair...)
     return Chains(value, c.logevidence, name_map, c.info)
 end
 
-function add_parameters(c::Chains, draws::AbstractMatrix{<:NamedTuple})
+function Base.hcat(c::Chains, draws::AbstractMatrix{<:NamedTuple})
     size(draws) == (size(c, 1), size(c, 3)) ||
         throw(DimensionMismatch("generated values must match the iterations and chains"))
     isempty(draws) && throw(ArgumentError("cannot infer names from empty generated values"))
     keys = propertynames(first(draws))
+    isempty(keys) && throw(ArgumentError("generated values must have at least one name"))
     all(x -> propertynames(x) == keys, draws) ||
         throw(ArgumentError("generated values must have the same names"))
-    return add_parameters(c, (key => getproperty.(draws, key) for key in keys)...)
+    return hcat(c, (key => getproperty.(draws, key) for key in keys)...)
 end
 
 function _addition_data(name::Symbol, values, niter::Int, nchains::Int)

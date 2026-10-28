@@ -2,7 +2,7 @@
 
 ## 7.9.0
 
-- `add_parameters`, which adds scalar or vector quantities computed for each draw while keeping the chain's iteration labels and metadata.
+- `hcat` now adds scalar or vector values by name, including matrices of named tuples, while preserving iteration labels and chain metadata.
 - `var` and `std`, with one estimate per parameter.
 - `cov`, with parameter names on both axes of the covariance matrix.
 
