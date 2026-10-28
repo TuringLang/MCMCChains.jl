@@ -196,16 +196,23 @@ end
     describe(io, chains[;
              q = [0.025, 0.25, 0.5, 0.75, 0.975],
              etype = :bm,
+             digits = nothing,
              kwargs...])
 Print chain metadata, summary statistics, and quantiles. Use `describe(chains)` for REPL output to `stdout`, or specify `io` for other streams (e.g., file output).
+Set `digits` to a nonnegative integer to choose the decimal places shown in the summary and quantile tables.
 """
 function DataAPI.describe(
     io::IO,
     chains::Chains;
     q = [0.025, 0.25, 0.5, 0.75, 0.975],
     etype = :bm,
+    digits::Union{Nothing,Integer} = nothing,
     kwargs...,
 )
+    if digits !== nothing
+        digits >= 0 || throw(ArgumentError("digits must be nonnegative"))
+        io = IOContext(io, :digits => digits)
+    end
     print(io, "Chains ", chains, ":\n\n", header(chains))
 
     summstats = summarystats(chains; etype = etype, kwargs...)
