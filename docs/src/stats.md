@@ -24,6 +24,9 @@ The methods listed below are defined in `src/stats.jl`.
 autocor
 describe
 mean
+MCMCChains.var
+MCMCChains.std
+MCMCChains.cov
 summarystats
 quantile
 hpd
