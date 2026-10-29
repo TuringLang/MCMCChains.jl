@@ -38,6 +38,17 @@
     generated = map(x -> (total = x, prediction = [x, 2x]), scalar)
     from_generated = hcat(selected, generated)
     @test from_generated.value == extended.value
+    any_generated = reshape(Any[generated...], size(generated))
+    @test hcat(selected, any_generated).value == extended.value
+    one_draw = selected[1:1, :, :]
+    @test hcat(one_draw, any_generated[1:1, :]) isa Chains
+    @test hcat(one_draw, any_generated[1:1, :])[:total] == scalar[1:1, :]
+    labeled_any_generated = MCMCChains.AxisArray(
+        any_generated;
+        iter = range(selected),
+        chain = chains(selected),
+    )
+    @test hcat(selected, labeled_any_generated).value == extended.value
     reordered = Matrix{NamedTuple}(undef, size(scalar))
     for i in eachindex(scalar)
         x = scalar[i]
@@ -45,9 +56,19 @@
             isodd(i) ? (total = x, prediction = [x, 2x]) : (prediction = [x, 2x], total = x)
     end
     @test hcat(selected, reordered).value == extended.value
+    @test hcat(selected, reshape(Any[reordered...], size(reordered))).value ==
+          extended.value
     mismatched_names = copy(reordered)
     mismatched_names[2] = (prediction = [1, 2], other = 3)
     @test_throws ArgumentError hcat(selected, mismatched_names)
+    @test_throws ArgumentError hcat(
+        selected,
+        reshape(Any[mismatched_names...], size(mismatched_names)),
+    )
+    mixed_values = copy(any_generated)
+    mixed_values[2] = 2
+    @test_throws ArgumentError hcat(selected, mixed_values)
+    @test_throws ArgumentError hcat(selected, fill(1.0, size(scalar)))
 
     labeled_scalar =
         MCMCChains.AxisArray(scalar; iter = range(selected), chain = chains(selected))
@@ -80,6 +101,9 @@
         chain = chains(selected),
     )
     @test_throws ArgumentError hcat(selected, shifted_generated)
+    shifted_any_generated =
+        MCMCChains.AxisArray(any_generated; iter = range(shifted), chain = chains(selected))
+    @test_throws ArgumentError hcat(selected, shifted_any_generated)
     other_chain_generated = MCMCChains.AxisArray(
         map(x -> (generated = x,), scalar);
         iter = range(selected),
@@ -96,6 +120,7 @@
     @test_throws DimensionMismatch hcat(selected, :bad => rand(3, 1))
     @test_throws DimensionMismatch hcat(selected, :bad => rand(4, 2, 2))
     @test_throws DimensionMismatch hcat(selected, generated[1:3, :])
+    @test_throws DimensionMismatch hcat(selected, any_generated[1:3, :])
     @test_throws ArgumentError hcat(selected, :bad => rand(4))
     @test_throws ArgumentError hcat(selected, :a => scalar)
     @test_throws ArgumentError hcat(selected, :total => scalar, :total => scalar)
