@@ -22,6 +22,16 @@ plot(chn; size=(840, 600))
 
 ![Basic plot for Chains](https://turinglang.github.io/MCMCChains.jl/dev/default_plot.svg)
 
+Select parameters with a vector of names to keep a `Chains` object:
+
+```julia
+selected = chn[[:A, :C]]
+summarystats(selected)
+plot(selected)
+```
+
+Use `chn[:A]` to get a matrix of draws for one parameter, or `chn[[:A]]` to keep a `Chains` object.
+
 See the [docs](https://TuringLang.github.io/MCMCChains.jl/dev/) for more information.
 
 ## License Notice

@@ -1,8 +1,16 @@
 # MCMCChains Changelog
 
+## 7.9.0
+
+- `hcat` now adds scalar or vector values by name, including matrices of named tuples, while preserving iteration labels and chain metadata.
+- `var` and `std`, with one estimate per parameter.
+- `cov`, with parameter names on both axes of the covariance matrix.
+- `ChainDataFrame` summaries could not be converted with `Array`, and `convert(Array, summary)` failed for a single statistic.
+
 ## 7.8.2
 
-- `ChainDataFrame` could not be converted with `Array`, and `convert(Array, summary)` failed for a single statistic.
+- `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` now accept `Chains` objects.
+- `corner`, `corner!` and the `:corner` series type were removed in favour of `StatsPlots.cornerplot` and `StatsPlots.cornerplot!`.
 
 ## 7.8.1
 

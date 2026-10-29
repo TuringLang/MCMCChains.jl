@@ -218,6 +218,98 @@ Base.setindex!(c::Chains, v, i...) = setindex!(c.value, v, i...)
 Base.lastindex(c::Chains) = lastindex(c.value, 1)
 Base.lastindex(c::Chains, d::Integer) = lastindex(c.value, d)
 
+function Base.hcat(c::Chains, addition::Pair, additions::Pair...)
+    added_names = Symbol[]
+    added_data = []
+    for (key, values) in (addition, additions...)
+        key isa Union{Symbol,AbstractString} ||
+            throw(ArgumentError("parameter names must be symbols or strings"))
+        _check_addition_axes(c, values)
+        name = Symbol(key)
+        parameter_names, data = _addition_data(name, values, size(c, 1), size(c, 3))
+        append!(added_names, parameter_names)
+        push!(added_data, data)
+    end
+    all_names = vcat(names(c), added_names)
+    length(unique(all_names)) == length(all_names) ||
+        throw(ArgumentError("non-unique parameter names"))
+
+    data = cat(c.value.data, added_data...; dims = 2)
+    value = AxisArray(data; iter = range(c), var = all_names, chain = chains(c))
+    name_map = merge_union(c.name_map, (parameters = added_names,))
+    return Chains(value, c.logevidence, name_map, c.info)
+end
+
+function Base.hcat(c::Chains, draws::AbstractMatrix{<:NamedTuple})
+    size(draws) == (size(c, 1), size(c, 3)) ||
+        throw(DimensionMismatch("generated values must match the iterations and chains"))
+    _check_addition_axes(c, draws)
+    isempty(draws) && throw(ArgumentError("cannot infer names from empty generated values"))
+    keys = propertynames(first(draws))
+    isempty(keys) && throw(ArgumentError("generated values must have at least one name"))
+    all(
+        x ->
+            length(propertynames(x)) == length(keys) &&
+                all(key -> hasproperty(x, key), keys),
+        draws,
+    ) || throw(ArgumentError("generated values must have the same names"))
+    return hcat(c, (key => getproperty.(draws, key) for key in keys)...)
+end
+
+_check_addition_axes(::Chains, ::Any) = nothing
+
+function _check_addition_axes(c::Chains, values::AxisArray)
+    ndims(values) in (2, 3) || return nothing
+    axis_names = AxisArrays.axisnames(values)
+    (first(axis_names), last(axis_names)) == (:iter, :chain) ||
+        throw(ArgumentError("added AxisArray must have :iter and :chain axes"))
+    axis_values = AxisArrays.axisvalues(values)
+    first(axis_values) == range(c) || throw(ArgumentError("chain ranges differ"))
+    last(axis_values) == chains(c) || throw(ArgumentError("sets of chains differ"))
+    return nothing
+end
+
+function _addition_data(name::Symbol, values, niter::Int, nchains::Int)
+    values isa AbstractArray || throw(ArgumentError("parameter values must be an array"))
+    if ndims(values) == 2
+        size(values) == (niter, nchains) || throw(
+            DimensionMismatch("parameter values must match the iterations and chains"),
+        )
+        if eltype(values) <: Union{Missing,Real}
+            return [name], reshape(values, niter, 1, nchains)
+        end
+        isempty(values) && throw(ArgumentError("cannot infer the length of empty vectors"))
+        first(values) isa AbstractVector ||
+            throw(ArgumentError("parameter values must be real or vectors of real values"))
+        nparams = length(first(values))
+        nparams > 0 || throw(ArgumentError("parameter vectors must not be empty"))
+        all(
+            x -> x isa AbstractVector{<:Union{Missing,Real}} && length(x) == nparams,
+            values,
+        ) ||
+            throw(ArgumentError("parameter vectors must have equal length and real values"))
+        parameter_names = [Symbol("$name[$i]") for i = 1:nparams]
+        data = cat(
+            (reshape(getindex.(values, i), niter, 1, nchains) for i = 1:nparams)...;
+            dims = 2,
+        )
+        eltype(data) <: Union{Missing,Real} ||
+            throw(ArgumentError("parameter values must be real or missing"))
+        return parameter_names, data
+    elseif ndims(values) == 3
+        size(values, 1) == niter && size(values, 3) == nchains || throw(
+            DimensionMismatch("parameter values must match the iterations and chains"),
+        )
+        nparams = size(values, 2)
+        nparams > 0 ||
+            throw(ArgumentError("parameter arrays must have a parameter dimension"))
+        eltype(values) <: Union{Missing,Real} ||
+            throw(ArgumentError("parameter values must be real or missing"))
+        return [Symbol("$name[$i]") for i = 1:nparams], values
+    end
+    throw(ArgumentError("parameter values must have two or three dimensions"))
+end
+
 """
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)

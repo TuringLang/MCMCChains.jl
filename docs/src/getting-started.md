@@ -12,7 +12,7 @@ Chains can be constructed with parameter names.
 For example, to create a chains object with
 
 - 500 samples,
-- 2 parameters (named `a` and `b`)
+- 3 parameters (named `a`, `b`, and `c`)
 - 3 chains
 
 use
@@ -21,9 +21,25 @@ use
 using MCMCChains # hide
 using Random # hide
 Random.seed!(0) # hide
-val = rand(500, 2, 3)
-chn = Chains(val, [:a, :b])
+val = rand(500, 3, 3)
+chn = Chains(val, [:a, :b, :c])
 ```
+
+Select parameters by name with a vector to keep a `Chains` object for plotting or summaries:
+
+```@example index
+selected = chn[[:a, :c]]
+size(selected)
+```
+
+A single name returns a matrix with iterations in rows and chains in columns.
+A one-element vector keeps all three dimensions:
+
+```@example index
+size(chn[:a]), size(chn[[:a]])
+```
+
+Selected parameters follow their order in the original chain.
 
 By default, parameters will be given the name `param_i`, where `i` is the parameter
 number:
@@ -105,6 +121,33 @@ x.a
 
 ```@example get
 x = get(chn, [:a, :b])
+```
+
+## Add derived parameters
+
+Use `hcat` to store quantities computed from each draw:
+
+```@example derived
+using MCMCChains
+chn = Chains(reshape(1:24, 4, 3, 2), [:a, :b, :c]; start=101, thin=2)
+total = chn[:a] .+ chn[:b]
+extended = hcat(chn, :total => total)
+```
+
+For a vector quantity, pass an iteration-by-chain matrix of vectors or an iteration-by-parameter-by-chain array.
+The components are named `quantity[1]`, `quantity[2]`, and so on.
+An iteration-by-chain matrix of named tuples, such as model return values, adds each named field as a parameter.
+The fields may appear in different orders, but every draw must have the same field names.
+Names must be distinct from those already in the chain.
+Unlabeled arrays use the chain's iteration and chain order.
+An `AxisArray` must have `:iter` and `:chain` axes whose labels match the chain's iteration labels and chain IDs.
+
+```@example derived
+generated = map(chn[:a], chn[:b]) do a, b
+    (sum = a + b, prediction = [a, a + b])
+end
+with_generated = hcat(chn, generated)
+namesingroup(with_generated, :prediction)
 ```
 
 ## Saving and Loading Chains
