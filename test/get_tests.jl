@@ -50,6 +50,7 @@ end
     @test names(chn[requested]) == requested
     @test chn[requested].value.data == chn.value.data[:, [13, 1], :]
     @test names(chn[:, requested, :]) == requested
+    @test names(chn[:, String.(requested), :]) == requested
     @test names(chn[String.(requested)]) == requested
     @test names(chn[[requested[1], requested[1]]]) == requested[[1, 1]]
     @test_throws ArgumentError chn[[:missing]]

@@ -193,6 +193,8 @@ Base.getindex(c::Chains, v::Symbol) = c[:, v, :]
 Base.getindex(c::Chains, v::AbstractVector{Symbol}) = c[:, v, :]
 
 Base.getindex(chn::Chains, i, j, k) = _getindex(chn, chn.value[_toindex(i, j, k)...])
+Base.getindex(chn::Chains, i, j::AbstractVector{<:AbstractString}, k) =
+    chn[i, Symbol.(j), k]
 function Base.getindex(chn::Chains, i, j::AbstractVector{Symbol}, k)
     available = Dict{Symbol,Int}()
     for (index, name) in enumerate(names(chn))
