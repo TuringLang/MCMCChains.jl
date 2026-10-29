@@ -37,3 +37,36 @@ Random.seed!(20)
     @test getall == get(chn, section = [:parameters])
     @test length(keys(getall)) == 2
 end
+
+@testset "ordered array parameter access" begin
+    chn = Chains(reshape(1:39, 3, 13, 1), ["x[$i]" for i = 13:-1:1])
+    components = get(chn, :x).x
+    @test length(components) == 13
+    @test components[1] == chn[Symbol("x[1]")]
+    @test components[2] == chn[Symbol("x[2]")]
+    @test components[13] == chn[Symbol("x[13]")]
+
+    requested = [Symbol("x[1]"), Symbol("x[13]")]
+    @test names(chn[requested]) == requested
+    @test chn[requested].value.data == chn.value.data[:, [13, 1], :]
+    @test names(chn[:, requested, :]) == requested
+    @test names(chn[String.(requested)]) == requested
+    @test names(chn[[requested[1], requested[1]]]) == requested[[1, 1]]
+    @test_throws ArgumentError chn[[:missing]]
+    scalar_chn = Chains(reshape(1:9, 3, 3, 1), [:a, :b, :c])
+    selected = scalar_chn[[:c, :a]]
+    @test selected.name_map.parameters == [:c, :a]
+    @test collect(keys(get_params(selected))) == [:c, :a]
+
+    matrix_chn = Chains(reshape(1:4, 1, 4, 1), ["θ[2,2]", "θ[1,2]", "θ[2,1]", "θ[1,1]"])
+    @test map(only, get(matrix_chn, :θ).θ) == (4, 3, 2, 1)
+    nonnumeric_chn = Chains(reshape(1:2, 1, 2, 1), ["x[b]", "x[a]"])
+    @test map(only, get(nonnumeric_chn, :x).x) == (1, 2)
+    mixed_rank_chn = Chains(reshape(1:2, 1, 2, 1), ["x[1,1]", "x[2]"])
+    @test map(only, get(mixed_rank_chn, :x).x) == (1, 2)
+    large_index_chn = Chains(reshape(1:2, 1, 2, 1), ["x[999999999999999999999]", "x[1]"])
+    @test map(only, get(large_index_chn, :x).x) == (1, 2)
+
+    summary = mean(chn)
+    @test summary.nt.mean == [mean(chn[name]) for name in summary.nt.parameters]
+end

@@ -24,7 +24,7 @@ This is an internal function used to remove values from a name map
 and return a new name map.
 """
 @generated function namemap_intersect(namemap::NamedTuple{sections}, names) where {sections}
-    :((; $((:($section = intersect(namemap.$section, names)) for section in sections)...)))
+    :((; $((:($section = intersect(names, namemap.$section)) for section in sections)...)))
 end
 
 """

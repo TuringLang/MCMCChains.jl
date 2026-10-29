@@ -123,6 +123,15 @@ x.a
 x = get(chn, [:a, :b])
 ```
 
+When all names in a group have the same number of numeric indices, `get` follows Julia's array order, even when the chain stores the columns in another order.
+A vector of parameter names selects columns in the order given:
+
+```@example get
+indexed_chn = Chains(reshape(1:6, 3, 2, 1), ["x[2]", "x[1]"])
+get(indexed_chn, :x).x[1] == indexed_chn["x[1]"]
+names(indexed_chn[[Symbol("x[1]"), Symbol("x[2]")]])
+```
+
 ## Add derived parameters
 
 Use `hcat` to store quantities computed from each draw:

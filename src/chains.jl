@@ -193,6 +193,17 @@ Base.getindex(c::Chains, v::Symbol) = c[:, v, :]
 Base.getindex(c::Chains, v::AbstractVector{Symbol}) = c[:, v, :]
 
 Base.getindex(chn::Chains, i, j, k) = _getindex(chn, chn.value[_toindex(i, j, k)...])
+function Base.getindex(chn::Chains, i, j::AbstractVector{Symbol}, k)
+    available = Dict{Symbol,Int}()
+    for (index, name) in enumerate(names(chn))
+        get!(available, name, index)
+    end
+    indices = map(j) do name
+        haskey(available, name) || throw(ArgumentError("index $name not found"))
+        return available[name]
+    end
+    return _getindex(chn, chn.value[_toindex(i, indices, k)...])
+end
 
 _getindex(::Chains, data) = data
 function _getindex(chains::Chains, data::AxisArray{<:Any,3})
@@ -310,12 +321,30 @@ function _addition_data(name::Symbol, values, niter::Int, nchains::Int)
     throw(ArgumentError("parameter values must have two or three dimensions"))
 end
 
+function _ordered_group_names(c::Chains, v::Symbol)
+    syms = namesingroup(c, v)
+    isempty(syms) && return syms
+    pattern = Regex("^\\Q$v\\E\\[([0-9]+(?:,\\s*[0-9]+)*)\\]\$")
+    indices = map(syms) do name
+        m = match(pattern, string(name))
+        isnothing(m) && return nothing
+        parts = tryparse.(Int, strip.(split(m.captures[1], ',')))
+        any(isnothing, parts) && return nothing
+        return Tuple(something.(parts))
+    end
+    isnothing(first(indices)) && return syms
+    rank = length(first(indices))
+    all(index -> !isnothing(index) && length(index) == rank, indices) || return syms
+    return syms[sortperm(indices; by = reverse)]
+end
+
 """
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
 
 Return a `NamedTuple` with `v` as the key, and matching parameter
 names as the values.
+When all names have the same number of numeric indices, they follow Julia's array order.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
 
@@ -337,7 +366,7 @@ julia> get(chn, :param_1; flatten=true)
 function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
     pairs = OrderedCollections.OrderedDict()
     for v in vs
-        syms = namesingroup(c, v)
+        syms = _ordered_group_names(c, v)
         len = length(syms)
         val = ()
         if len > 1
