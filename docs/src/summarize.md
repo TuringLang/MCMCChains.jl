@@ -40,11 +40,18 @@ DataFrame(summary)
 
 `Array(summary)` returns the statistic columns as a matrix. Rows follow `summary[:, :parameters]`, and columns follow `names(summary)[2:end]`.
 
-For a vector of means from a grouped parameter, flatten the single-column matrix:
+For a vector of means from a grouped parameter, select the named column:
 
 ```@example summary
 grouped_chn = Chains(reshape(1:120, 20, 3, 2), ["x[1]", "x[2]", "y"])
-vec(Array(mean(group(grouped_chn, :x))))
+grouped_mean = mean(group(grouped_chn, :x))
+Tables.getcolumn(grouped_mean, :mean)
+```
+
+The matrix form keeps its statistic dimension, including when it contains only one column:
+
+```@example summary
+size(Array(grouped_mean))
 ```
 
 ## API

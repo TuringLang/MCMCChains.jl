@@ -1,4 +1,4 @@
-using MCMCChains, Test
+using MCMCChains, Tables, Test
 using Statistics: std
 
 @testset "Summarize to DataFrame tests" begin
@@ -66,13 +66,18 @@ using Statistics: std
 end
 
 @testset "summary array conversion" begin
-    chn = Chains(reshape(1:12, 3, 2, 2), ["x[1]", "x[2]"])
+    chn = Chains(reshape(1:12, 3, 2, 2), ["x[2]", "x[1]"])
     summary = mean(group(chn, :x))
     expected = reshape([5.0, 8.0], 2, 1)
+    @test summary.nt.parameters == [Symbol("x[2]"), Symbol("x[1]")]
     @test Array(summary) == expected
+    @test vec(Array(summary)) == Tables.getcolumn(summary, :mean)
     @test Array{Float32}(summary) == Float32.(expected)
     @test convert(Array, summary) == expected
     @test eltype(convert(Array, summary)) === Float64
+    single = mean(group(chn, Symbol("x[2]")))
+    @test size(Array(single)) == (1, 1)
+    @test vec(Array(single)) == Tables.getcolumn(single, :mean)
     per_chain = mean(chn; append_chains = false)
     @test convert(Array, per_chain) == reshape([2.0, 5.0, 8.0, 11.0], 2, 1, 2)
     for nt in (
