@@ -38,6 +38,15 @@ using DataFrames
 DataFrame(summary)
 ```
 
+`Array(summary)` returns the statistic columns as a matrix. Rows follow `summary[:, :parameters]`, and columns follow `names(summary)[2:end]`.
+
+For a vector of means from a grouped parameter, flatten the single-column matrix:
+
+```@example summary
+grouped_chn = Chains(reshape(1:120, 20, 3, 2), ["x[1]", "x[2]", "y"])
+vec(Array(mean(group(grouped_chn, :x))))
+```
+
 ## API
 
 The methods listed below are defined in `src/summarize.jl`.
