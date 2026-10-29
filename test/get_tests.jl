@@ -52,7 +52,13 @@ end
         result = get(chn; section, flatten = true)
         @test keys(result) == Tuple(selected)
         @test result == get(chn, selected; flatten = true)
+        @test all(name -> result[name] == chn[name], selected)
+        @test all(name -> size(result[name]) == (4, 2), selected)
     end
-    @test get_params(chn; flatten = true) == get(chn, names(chn); flatten = true)
+    all_params = get_params(chn; flatten = true)
+    @test keys(all_params) == Tuple(names(chn))
+    @test all(name -> all_params[name] == chn[name], names(chn))
+    @test get(chn, :a; flatten = true).a == chn[:a]
+    @test get(chn, :x; flatten = true)[Symbol("x[2]")] == chn[Symbol("x[2]")]
     @test get(chn; section = Symbol[], flatten = true) == NamedTuple()
 end

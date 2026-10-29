@@ -1,8 +1,16 @@
 # MCMCChains Changelog
 
+## 7.9.0
+
+- `hcat` now adds scalar or vector values by name, including matrices of named tuples, while preserving iteration labels and chain metadata.
+- `var` and `std`, with one estimate per parameter.
+- `cov`, with parameter names on both axes of the covariance matrix.
+- `get` and `get_params` with `flatten=true` returned only the first draw for scalar parameters and threw for section selections.
+
 ## 7.8.2
 
-- `get` and `get_params` threw when flattening sections.
+- `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` now accept `Chains` objects.
+- `corner`, `corner!` and the `:corner` series type were removed in favour of `StatsPlots.cornerplot` and `StatsPlots.cornerplot!`.
 
 ## 7.8.1
 

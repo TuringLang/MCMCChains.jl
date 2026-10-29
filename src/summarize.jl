@@ -1,3 +1,12 @@
+"""
+    ChainDataFrame
+
+A table returned by summary functions such as `mean` and `summarystats`.
+Index rows by parameter name and columns by statistic name, as in `summary[:a, :mean]`.
+One parameter and one statistic return a scalar.
+Multiple parameters and one statistic return a vector.
+The table also supports the Tables.jl interface.
+"""
 struct ChainDataFrame{NT<:NamedTuple}
     name::String
     nt::NT
