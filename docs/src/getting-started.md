@@ -12,7 +12,7 @@ Chains can be constructed with parameter names.
 For example, to create a chains object with
 
 - 500 samples,
-- 2 parameters (named `a` and `b`)
+- 3 parameters (named `a`, `b`, and `c`)
 - 3 chains
 
 use
@@ -21,14 +21,14 @@ use
 using MCMCChains # hide
 using Random # hide
 Random.seed!(0) # hide
-val = rand(500, 2, 3)
-chn = Chains(val, [:a, :b])
+val = rand(500, 3, 3)
+chn = Chains(val, [:a, :b, :c])
 ```
 
 Select parameters by name with a vector to keep a `Chains` object for plotting or summaries:
 
 ```@example index
-selected = chn[[:a, :b]]
+selected = chn[[:a, :c]]
 size(selected)
 ```
 
