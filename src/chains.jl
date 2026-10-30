@@ -312,6 +312,11 @@ function _addition_data(name::Symbol, values, niter::Int, nchains::Int)
     throw(ArgumentError("parameter values must have two or three dimensions"))
 end
 
+function _flattened_parameter(c::Chains, name::Symbol)
+    draws = c.value[:, name, :]
+    return length(draws) == 1 ? only(draws) : draws
+end
+
 """
     Base.get(c::Chains, v::Symbol; flatten=false)
     Base.get(c::Chains, vs::Vector{Symbol}; flatten=false)
@@ -320,6 +325,7 @@ Return a `NamedTuple` with `v` as the key, and matching parameter
 names as the values.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
+A one-draw, one-chain selection has scalar flattened values.
 
 # Example
 
@@ -333,29 +339,21 @@ julia> get(chn, [:param_2])
 (param_2 = [3; 4;;],)
 
 julia> get(chn, :param_1; flatten=true)
-(param_1 = 1,)
+(param_1 = [1; 2;;],)
 ```
 """
 function Base.get(c::Chains, vs::Vector{Symbol}; flatten = false)
     pairs = OrderedCollections.OrderedDict()
     for v in vs
         syms = namesingroup(c, v)
-        len = length(syms)
-        val = ()
-        if len > 1
-            val = ntuple(i -> c.value[:, syms[i], :], length(syms))
-        elseif len == 1
-            val = c.value[:, syms[1], :]
-        else
-            continue
-        end
-
         if flatten
-            for i in eachindex(syms)
-                pairs[syms[i]] = val[i]
+            for name in syms
+                pairs[name] = _flattened_parameter(c, name)
             end
-        else
-            pairs[v] = val
+        elseif length(syms) > 1
+            pairs[v] = ntuple(i -> c.value[:, syms[i], :], length(syms))
+        elseif !isempty(syms)
+            pairs[v] = c.value[:, only(syms), :]
         end
     end
     return _dict2namedtuple(pairs)
@@ -368,6 +366,7 @@ Base.get(c::Chains, v::Symbol; flatten = false) = get(c, [v]; flatten = flatten)
 Return all parameters in a given section(s) as a `NamedTuple`.
 
 Passing `flatten=true` will return a `NamedTuple` with keys ungrouped.
+A one-draw, one-chain selection has scalar flattened values.
 
 # Example
 
@@ -391,7 +390,7 @@ function Base.get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}, flat
         # If the name contains a bracket,
         # split it so get can group them correctly.
         if flatten
-            append!(names, c.name_map[v])
+            union!(names, c.name_map[v])
         else
             for name in c.name_map[v]
                 m = match(regex, string(name))
@@ -400,7 +399,14 @@ function Base.get(c::Chains; section::Union{Symbol,AbstractVector{Symbol}}, flat
         end
     end
 
-    return get(c, collect(names); flatten = flatten)
+    if flatten
+        pairs = OrderedCollections.OrderedDict()
+        for name in names
+            pairs[name] = _flattened_parameter(c, name)
+        end
+        return _dict2namedtuple(pairs)
+    end
+    return get(c, collect(names))
 end
 
 """
