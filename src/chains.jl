@@ -240,11 +240,13 @@ function Base.hcat(c::Chains, addition::Pair, additions::Pair...)
     return Chains(value, c.logevidence, name_map, c.info)
 end
 
-function Base.hcat(c::Chains, draws::AbstractMatrix{<:NamedTuple})
+function Base.hcat(c::Chains, draws::AbstractMatrix)
     size(draws) == (size(c, 1), size(c, 3)) ||
         throw(DimensionMismatch("generated values must match the iterations and chains"))
     _check_addition_axes(c, draws)
     isempty(draws) && throw(ArgumentError("cannot infer names from empty generated values"))
+    (eltype(draws) <: NamedTuple || all(x -> x isa NamedTuple, draws)) ||
+        throw(ArgumentError("generated values must be named tuples"))
     keys = propertynames(first(draws))
     isempty(keys) && throw(ArgumentError("generated values must have at least one name"))
     all(
