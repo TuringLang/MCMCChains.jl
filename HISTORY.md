@@ -5,6 +5,7 @@
 - `hcat` now adds scalar or vector values by name, including matrices of named tuples, while preserving iteration labels and chain metadata.
 - `var` and `std`, with one estimate per parameter.
 - `cov`, with parameter names on both axes of the covariance matrix.
+- `hcat` failed to add named-tuple draws stored in an `Any`-typed matrix and could return a plain matrix for one draw.
 - `ChainDataFrame` summaries could not be converted with `Array`, and `convert(Array, summary)` failed for a single statistic.
 - `get` returned numeric array parameters in stored column order instead of array index order.
 - `Chains` selection by a vector of parameter names returned columns in stored order instead of requested order.
