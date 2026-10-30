@@ -6,7 +6,7 @@
 - `var` and `std`, with one estimate per parameter.
 - `cov`, with parameter names on both axes of the covariance matrix.
 - `hcat` failed to add named-tuple draws stored in an `Any`-typed matrix and could return a plain matrix for one draw.
-- `get` and `get_params` with `flatten=true` returned only the first draw for scalar parameters and threw for section selections.
+- `get` and `get_params` with `flatten=true` lost draws, while `get` also threw for section selections or included names from other sections.
 
 ## 7.8.2
 

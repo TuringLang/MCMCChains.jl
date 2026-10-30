@@ -61,4 +61,22 @@ end
     @test get(chn, :a; flatten = true).a == chn[:a]
     @test get(chn, :x; flatten = true)[Symbol("x[2]")] == chn[Symbol("x[2]")]
     @test get(chn; section = Symbol[], flatten = true) == NamedTuple()
+    @test get(chn[1:1, :, 1:1]; section = :internals, flatten = true)[Symbol("x[2]")] ==
+          chn[1, Symbol("x[2]"), 1]
+    @test get(chn[1:1, :, 1:1], Symbol("x[2]"); flatten = true)[Symbol("x[2]")] ==
+          chn[1, Symbol("x[2]"), 1]
+    @test size(get(chn[1:1, :, :]; section = :internals, flatten = true)[Symbol("x[2]")]) ==
+          (1, 2)
+    @test size(
+        get(chn[1:2, :, 1:1]; section = :internals, flatten = true)[Symbol("x[2]")],
+    ) == (2, 1)
+
+    split = set_section(
+        Chains(reshape(1:6, 3, 2, 1), [:a, Symbol("a[1]")]),
+        Dict(:parameters => [:a], :internals => [Symbol("a[1]")]),
+    )
+    @test keys(get(split; section = :parameters, flatten = true)) == (:a,)
+    @test keys(get(split; section = :internals, flatten = true)) == (Symbol("a[1]"),)
+    @test get(split; section = :parameters, flatten = true).a == split[:a]
+    @test keys(get_params(split; flatten = true)) == (:a, Symbol("a[1]"))
 end

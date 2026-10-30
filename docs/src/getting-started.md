@@ -124,6 +124,8 @@ x = get(chn, [:a, :b])
 ```
 
 Use `flatten=true` to keep each parameter's full draws under its own name when reading a section:
+Only names in the selected section appear in the result.
+For a single draw from one chain, the value is a scalar.
 
 ```@example get
 get(chn; section=:parameters, flatten=true).a == chn[:a]
