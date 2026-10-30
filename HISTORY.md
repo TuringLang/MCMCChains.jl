@@ -2,6 +2,7 @@
 
 ## 7.9.0
 
+- `describe` accepts `digits` to set the decimal places in its summary and quantile tables.
 - `hcat` now adds scalar or vector values by name, including matrices of named tuples, while preserving iteration labels and chain metadata.
 - `var` and `std`, with one estimate per parameter.
 - `cov`, with parameter names on both axes of the covariance matrix.
