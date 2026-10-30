@@ -124,7 +124,7 @@ x = get(chn, [:a, :b])
 ```
 
 When all names in a group have the same number of numeric indices, `get` follows Julia's array order, even when the chain stores the columns in another order.
-A vector of parameter names selects columns in the order given:
+A vector of parameter names selects and assigns columns in the order given:
 
 ```@example get
 indexed_chn = Chains(reshape(1:6, 3, 2, 1), ["x[2]", "x[1]"])

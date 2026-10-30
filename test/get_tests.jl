@@ -38,6 +38,29 @@ Random.seed!(20)
     @test length(keys(getall)) == 2
 end
 
+@testset "named parameter assignment" begin
+    chn = Chains(reshape(collect(1:24), 3, 4, 2), [:a, :b, :c, :d])
+    before = copy(chn.value.data)
+    requested = [:c, :a]
+    chn[:, requested, :] = chn[:, requested, :].value.data
+    @test chn.value.data == before
+
+    replacement = reshape(101:112, 3, 2, 2)
+    chn[:, requested, :] = replacement
+    @test chn.value.data[:, 3, :] == replacement[:, 1, :]
+    @test chn.value.data[:, 1, :] == replacement[:, 2, :]
+    @test chn.value.data[:, [2, 4], :] == before[:, [2, 4], :]
+
+    chn[[:b, :a]] = chn[[:b, :a]].value.data
+    @test chn.value.data[:, 1, :] == replacement[:, 2, :]
+    chn[:, ["b", "a"], :] = chn[:, ["b", "a"], :].value.data
+    @test chn.value.data[:, 1, :] == replacement[:, 2, :]
+    chn[["b", "a"]] = chn[["b", "a"]].value.data
+    @test chn.value.data[:, 2, :] == before[:, 2, :]
+    @test_throws ArgumentError setindex!(chn, replacement, :, [:missing, :a], :)
+    @test chn.value.data[:, [2, 4], :] == before[:, [2, 4], :]
+end
+
 @testset "ordered array parameter access" begin
     chn = Chains(reshape(1:39, 3, 13, 1), ["x[$i]" for i = 13:-1:1])
     components = get(chn, :x).x
