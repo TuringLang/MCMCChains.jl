@@ -38,6 +38,63 @@ Random.seed!(20)
     @test length(keys(getall)) == 2
 end
 
+@testset "named parameter assignment" begin
+    chn = Chains(reshape(collect(1:24), 3, 4, 2), [:a, :b, :c, :d])
+    before = copy(chn.value.data)
+    requested = [:c, :a]
+    chn[:, requested, :] = chn[:, requested, :].value.data
+    @test chn.value.data == before
+
+    replacement = reshape(101:112, 3, 2, 2)
+    chn[:, requested, :] = replacement
+    @test chn.value.data[:, 3, :] == replacement[:, 1, :]
+    @test chn.value.data[:, 1, :] == replacement[:, 2, :]
+    @test chn.value.data[:, [2, 4], :] == before[:, [2, 4], :]
+
+    chn[[:b, :a]] = chn[[:b, :a]].value.data
+    @test chn.value.data[:, 1, :] == replacement[:, 2, :]
+    chn[:, ["b", "a"], :] = chn[:, ["b", "a"], :].value.data
+    @test chn.value.data[:, 1, :] == replacement[:, 2, :]
+    chn[["b", "a"]] = chn[["b", "a"]].value.data
+    @test chn.value.data[:, 2, :] == before[:, 2, :]
+    @test_throws ArgumentError setindex!(chn, replacement, :, [:missing, :a], :)
+    @test chn.value.data[:, [2, 4], :] == before[:, [2, 4], :]
+end
+
+@testset "ordered array parameter access" begin
+    chn = Chains(reshape(1:39, 3, 13, 1), ["x[$i]" for i = 13:-1:1])
+    components = get(chn, :x).x
+    @test length(components) == 13
+    @test components[1] == chn[Symbol("x[1]")]
+    @test components[2] == chn[Symbol("x[2]")]
+    @test components[13] == chn[Symbol("x[13]")]
+
+    requested = [Symbol("x[1]"), Symbol("x[13]")]
+    @test names(chn[requested]) == requested
+    @test chn[requested].value.data == chn.value.data[:, [13, 1], :]
+    @test names(chn[:, requested, :]) == requested
+    @test names(chn[:, String.(requested), :]) == requested
+    @test names(chn[String.(requested)]) == requested
+    @test names(chn[[requested[1], requested[1]]]) == requested[[1, 1]]
+    @test_throws ArgumentError chn[[:missing]]
+    scalar_chn = Chains(reshape(1:9, 3, 3, 1), [:a, :b, :c])
+    selected = scalar_chn[[:c, :a]]
+    @test selected.name_map.parameters == [:c, :a]
+    @test collect(keys(get_params(selected))) == [:c, :a]
+
+    matrix_chn = Chains(reshape(1:4, 1, 4, 1), ["θ[2,2]", "θ[1,2]", "θ[2,1]", "θ[1,1]"])
+    @test map(only, get(matrix_chn, :θ).θ) == (4, 3, 2, 1)
+    nonnumeric_chn = Chains(reshape(1:2, 1, 2, 1), ["x[b]", "x[a]"])
+    @test map(only, get(nonnumeric_chn, :x).x) == (1, 2)
+    mixed_rank_chn = Chains(reshape(1:2, 1, 2, 1), ["x[1,1]", "x[2]"])
+    @test map(only, get(mixed_rank_chn, :x).x) == (1, 2)
+    large_index_chn = Chains(reshape(1:2, 1, 2, 1), ["x[999999999999999999999]", "x[1]"])
+    @test map(only, get(large_index_chn, :x).x) == (1, 2)
+
+    summary = mean(chn)
+    @test summary.nt.mean == [mean(chn[name]) for name in summary.nt.parameters]
+end
+
 @testset "flattened sections" begin
     chn = Chains(
         reshape(1:24, 4, 3, 2),
@@ -79,4 +136,11 @@ end
     @test keys(get(split; section = :internals, flatten = true)) == (Symbol("a[1]"),)
     @test get(split; section = :parameters, flatten = true).a == split[:a]
     @test keys(get_params(split; flatten = true)) == (:a, Symbol("a[1]"))
+
+    indexed = set_section(
+        Chains(reshape(1:6, 3, 2, 1), [Symbol("x[2]"), Symbol("x[1]")]),
+        Dict(:parameters => [Symbol("x[1]")], :internals => [Symbol("x[2]")]),
+    )
+    @test keys(get(indexed, :x; flatten = true)) == (Symbol("x[1]"), Symbol("x[2]"))
+    @test keys(get(indexed; section = :parameters, flatten = true)) == (Symbol("x[1]"),)
 end

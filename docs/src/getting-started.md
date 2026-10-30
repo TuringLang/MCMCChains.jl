@@ -123,6 +123,15 @@ x.a
 x = get(chn, [:a, :b])
 ```
 
+When all names in a group have the same number of numeric indices, `get` follows Julia's array order, even when the chain stores the columns in another order.
+A vector of parameter names selects and assigns columns in the order given:
+
+```@example get
+indexed_chn = Chains(reshape(1:6, 3, 2, 1), ["x[2]", "x[1]"])
+get(indexed_chn, :x).x[1] == indexed_chn["x[1]"]
+names(indexed_chn[[Symbol("x[1]"), Symbol("x[2]")]])
+```
+
 Use `flatten=true` to keep each parameter's full draws under its own name when reading a section:
 Only names in the selected section appear in the result.
 For a single draw from one chain, the value is a scalar.

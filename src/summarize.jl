@@ -119,6 +119,11 @@ function Base.lastindex(c::ChainDataFrame, i::Integer)
     end
 end
 
+_drop_single_statistic(a::AbstractMatrix) = size(a, 2) == 1 ? vec(a) : a
+
+Base.Array(c::ChainDataFrame) = _drop_single_statistic(convert(Array, c))
+Base.Array{T}(c::ChainDataFrame) where {T} = _drop_single_statistic(convert(Array{T}, c))
+
 function Base.convert(::Type{Array}, c::ChainDataFrame)
     T = promote_eltype_namedtuple_tail(c.nt)
     return convert(Array{T}, c)

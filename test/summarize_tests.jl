@@ -1,4 +1,4 @@
-using MCMCChains, Test
+using MCMCChains, Tables, Test
 using Statistics: std
 
 @testset "Summarize to DataFrame tests" begin
@@ -63,4 +63,38 @@ using Statistics: std
     )
     @test three_parms_df_2[:, :parameters] == [:a, :b, :g]
     @test size(three_parms_df_2) == (3, 3)
+end
+
+@testset "summary array conversion" begin
+    chn = Chains(reshape(1:12, 3, 2, 2), ["x[2]", "x[1]"])
+    summary = mean(group(chn, :x))
+    expected = [5.0, 8.0]
+    @test summary.nt.parameters == [Symbol("x[2]"), Symbol("x[1]")]
+    @test Array(summary) == expected
+    @test Array(summary) == Tables.getcolumn(summary, :mean)
+    @test Array(mean(sort(group(chn, :x)))) == reverse(expected)
+    @test Array{Float32}(summary) == Float32.(expected)
+    @test convert(Array, summary) == reshape(expected, 2, 1)
+    @test eltype(convert(Array, summary)) === Float64
+    single = mean(group(chn, Symbol("x[2]")))
+    @test Array(single) == [5.0]
+    @test size(convert(Array, single)) == (1, 1)
+    @test size(Array(summarize(group(chn, Symbol("x[2]")), mean, std))) == (1, 2)
+    multi = summarize(chn, mean, std)
+    @test size(Array(multi)) == (2, 2)
+    @test Array(multi)[:, 1] == Tables.getcolumn(multi, :mean)
+    @test size(Array(ChainDataFrame((parameters = [:a, :b],)))) == (2, 0)
+    per_chain = mean(chn; append_chains = false)
+    @test convert(Array, per_chain) == reshape([2.0, 5.0, 8.0, 11.0], 2, 1, 2)
+    for nt in (
+        (parameters = [:a, :b], mean = Float32[1, 2], count = [3, 4]),
+        (parameters = [:a, :b], mean = Union{Missing,Float64}[1, missing]),
+        (parameters = Symbol[], mean = Float64[]),
+    )
+        df = ChainDataFrame(nt)
+        expected = hcat(values(Base.tail(nt))...)
+        expected = size(expected, 2) == 1 ? vec(expected) : expected
+        @test isequal(Array(df), expected)
+        @test eltype(Array(df)) === eltype(expected)
+    end
 end
