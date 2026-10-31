@@ -1,22 +1,27 @@
 # MCMCChains Changelog
 
-## 7.9.0
+## 8.0.0
+
+### Added
 
 - `describe` accepts `digits` to set the decimal places in its summary and quantile tables.
 - `hcat` now adds scalar or vector values by name, including matrices of named tuples, while preserving iteration labels and chain metadata.
 - `var` and `std`, with one estimate per parameter.
 - `cov`, with parameter names on both axes of the covariance matrix.
+
+### Changed
+
+- `corner`, `corner!` and `seriestype=:corner` were replaced by `StatsPlots.cornerplot` and `StatsPlots.cornerplot!`.
+
+### Fixed
+
+- `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` threw when given a `Chains` object.
 - `hcat` failed to add named-tuple draws stored in an `Any`-typed matrix and could return a plain matrix for one draw.
 - `ChainDataFrame` summaries could not be converted with `Array`, and `convert(Array, summary)` failed for a single statistic.
 - `get` returned numeric array parameters in stored column order instead of array index order.
 - `Chains` selection by a vector of parameter names returned columns in stored order instead of requested order.
 - `Chains` assignment by a vector of parameter names placed values in stored order instead of requested order.
 - `get` and `get_params` with `flatten=true` lost draws, while `get` also threw for section selections or included names from other sections.
-
-## 7.8.2
-
-- `StatsPlots.cornerplot` and `StatsPlots.cornerplot!` now accept `Chains` objects.
-- `corner`, `corner!` and the `:corner` series type were removed in favour of `StatsPlots.cornerplot` and `StatsPlots.cornerplot!`.
 
 ## 7.8.1
 
