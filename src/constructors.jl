@@ -62,6 +62,63 @@ function Base.Array(
     end
 end
 
+"""
+    Array(chain::Chains, name::Union{AbstractString,Symbol}, shape::Tuple)
+
+Copy an array-valued parameter into an array of size `(size(chain, 1), shape..., size(chain, 3))`.
+Components such as `x[1,2]` are placed by their indices, regardless of column order.
+Repeated brackets join indices from left to right, so `x[1][2,3]` maps to `(1, 2, 3)`.
+Names with other suffixes, such as `x[1]_acceptance_rate`, are ignored.
+Absent components are `missing`, including when the entire parameter is absent.
+The element type is `Union{Missing,T}`, where `T` is the chain's element type.
+The first and last dimensions follow the chain's iteration and chain order.
+Pass `()` as the shape to extract a scalar parameter as an iteration-by-chain matrix.
+
+Dimensions must be nonnegative integers.
+Matching names must have integer indices of the requested rank within `shape`.
+Duplicate component indices are rejected.
+"""
+function Base.Array(
+    chain::Chains{T},
+    name::Union{AbstractString,Symbol},
+    shape::NTuple{N,Integer},
+) where {T,N}
+    dims = Int.(shape)
+    all(>=(0), dims) || throw(ArgumentError("parameter dimensions must be nonnegative"))
+    base = string(name)
+    prefix = base * "["
+    columns = Dict{CartesianIndex{N},Int}()
+    for (column, parameter) in enumerate(names(chain))
+        label = string(parameter)
+        if label == base
+            N == 0 || throw(DimensionMismatch("$parameter is a scalar parameter"))
+            index = CartesianIndex()
+        elseif startswith(label, prefix)
+            suffix = chop(label; head = length(base), tail = 0)
+            occursin(r"\A(?:\[[^\[\]]*\])+\z", suffix) || continue
+            parts = split(replace(chop(suffix; head = 1, tail = 1), "][" => ","), ',')
+            length(parts) == N ||
+                throw(DimensionMismatch("$parameter does not match shape $shape"))
+            parsed = tryparse.(Int, strip.(parts))
+            any(isnothing, parsed) &&
+                throw(ArgumentError("invalid component name $parameter"))
+            indices = Tuple(something.(parsed))
+            all(i -> 1 <= indices[i] <= dims[i], 1:N) ||
+                throw(DimensionMismatch("$parameter is outside shape $shape"))
+            index = CartesianIndex{N}(indices)
+        else
+            continue
+        end
+        haskey(columns, index) && throw(ArgumentError("duplicate component $parameter"))
+        columns[index] = column
+    end
+    result = Array{Union{Missing,T}}(missing, size(chain, 1), dims..., size(chain, 3))
+    for (index, column) in columns
+        view(result, :, Tuple(index)..., :) .= view(chain.value.data, :, column, :)
+    end
+    return result
+end
+
 function to_matrix(chain::Chains)
     x = permutedims(chain.value.data, (1, 3, 2))
     return Matrix(reshape(x, size(x, 1) * size(x, 2), size(x, 3)))
