@@ -75,6 +75,7 @@ Random.seed!(0)
     # run tests for array constructor
     println("Array")
     @time include("arrayconstructor_tests.jl")
+    @time include("parameter_array_tests.jl")
 
     # run tests for dataframe summary
     println("Summary")

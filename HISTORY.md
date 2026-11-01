@@ -1,5 +1,9 @@
 # MCMCChains Changelog
 
+## 8.1.0
+
+- `Array(chain, name, shape)` reconstructs array-valued parameters by index, with `missing` for absent components.
+
 ## 8.0.0
 
 ### Added

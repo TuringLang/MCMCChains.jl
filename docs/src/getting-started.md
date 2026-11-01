@@ -140,6 +140,33 @@ For a single draw from one chain, the value is a scalar.
 get(chn; section=:parameters, flatten=true).a == chn[:a]
 ```
 
+## Array-valued parameters
+
+Pass a parameter name and its shape to `Array` to recover its components by index.
+The result keeps iterations first and chains last, with the parameter dimensions between them.
+
+```@example parameter_array
+using MCMCChains
+chn = Chains(reshape(1:12, 3, 2, 2), ["x[2,1]", "x[1,2]"])
+draws = Array(chn, :x, (2, 2))
+size(draws) # (3, 2, 2, 2)
+```
+
+Column order does not affect where a component is placed.
+Absent components are `missing`:
+
+```@example parameter_array
+draws[:, 2, 1, :] == chn["x[2,1]"]
+```
+
+```@example parameter_array
+all(ismissing, draws[:, 1, 1, :])
+```
+
+```@docs
+Array(::Chains, ::Union{AbstractString,Symbol}, ::NTuple{N,Integer}) where {N}
+```
+
 ## Add derived parameters
 
 Use `hcat` to store quantities computed from each draw:
