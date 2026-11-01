@@ -61,9 +61,10 @@ using MCMCChains, Test, Random
             c = Chains(reshape(1:6, 3, 1, 2), [label])
             @test_throws DimensionMismatch Array(c, :x, (3,))
         end
-        for label in ("x[a]", "x[1", "x[1][2]", "x[]")
+        for (label, shape) in
+            (("x[a]", (3,)), ("x[]", (3,)), ("x[a][1]", (3, 3)), ("x[][1]", (3, 3)))
             c = Chains(reshape(1:6, 3, 1, 2), [label])
-            @test_throws ArgumentError Array(c, :x, (3,))
+            @test_throws ArgumentError Array(c, :x, shape)
         end
         c = Chains(reshape(1:12, 3, 2, 2), ["x[1]", "x[01]"])
         @test_throws ArgumentError Array(c, :x, (1,))
@@ -74,6 +75,38 @@ using MCMCChains, Test, Random
         @test_throws DimensionMismatch Array(chain, :x, (2, 2))
         @test_throws DimensionMismatch Array(chain, :x, ())
         @test_throws MethodError Array(chain, :x, (3.0, 2))
+    end
+
+    @testset "component names" begin
+        for label in ("x[1]_acceptance_rate", "x[1]_stat[2]", "x[1].field", "x[1")
+            c = Chains(
+                reshape(1:12, 3, 2, 2),
+                ["x[1]", label],
+                Dict(:internals => [Symbol(label)]),
+            )
+            @test Array(c, :x, (1,))[:, 1, :] == c["x[1]"]
+        end
+        expected =
+            [1000c + 100i + 10j + k + t for t = 1:3, i = 1:2, j = 1:3, k = 1:4, c = 1:2]
+        for labels in (
+            [Symbol("x[$i][$j,$k]") for k = 1:4 for j = 1:3 for i = 1:2],
+            [Symbol("x[$i,$j][$k]") for k = 1:4 for j = 1:3 for i = 1:2],
+            [Symbol("x[$i][$j][$k]") for k = 1:4 for j = 1:3 for i = 1:2],
+        )
+            c = Chains(reshape(expected, 3, 24, 2)[:, end:-1:1, :], reverse(labels))
+            @test isequal(@inferred(Array(c, :x, (2, 3, 4))), expected)
+        end
+        c = Chains(reshape(1:18, 3, 3, 2), ["x[2][1]", "x[1][2]", "x[1][1]"])
+        a = Array(c, :x, (2, 2))
+        @test a[:, 2, 1, :] == c["x[2][1]"]
+        @test a[:, 1, 2, :] == c["x[1][2]"]
+        @test a[:, 1, 1, :] == c["x[1][1]"]
+        @test all(ismissing, a[:, 2, 2, :])
+        @test Array(c, "x[1]", (2,)) == a[:, 1, :, :]
+        @test_throws DimensionMismatch Array(c, :x, (4,))
+        @test_throws DimensionMismatch Array(c, :x, (1, 2))
+        c = Chains(reshape(1:12, 3, 2, 2), ["x[1][2]", "x[1,2]"])
+        @test_throws ArgumentError Array(c, :x, (1, 2))
     end
 
     @testset "higher ranks" begin

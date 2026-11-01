@@ -67,6 +67,8 @@ end
 
 Copy an array-valued parameter into an array of size `(size(chain, 1), shape..., size(chain, 3))`.
 Components such as `x[1,2]` are placed by their indices, regardless of column order.
+Repeated brackets join indices from left to right, so `x[1][2,3]` maps to `(1, 2, 3)`.
+Names with other suffixes, such as `x[1]_acceptance_rate`, are ignored.
 Absent components are `missing`, including when the entire parameter is absent.
 The element type is `Union{Missing,T}`, where `T` is the chain's element type.
 The first and last dimensions follow the chain's iteration and chain order.
@@ -92,9 +94,9 @@ function Base.Array(
             N == 0 || throw(DimensionMismatch("$parameter is a scalar parameter"))
             index = CartesianIndex()
         elseif startswith(label, prefix)
-            endswith(label, "]") ||
-                throw(ArgumentError("invalid component name $parameter"))
-            parts = split(chop(label; head = length(prefix), tail = 1), ',')
+            suffix = chop(label; head = length(base), tail = 0)
+            occursin(r"\A(?:\[[^\[\]]*\])+\z", suffix) || continue
+            parts = split(replace(chop(suffix; head = 1, tail = 1), "][" => ","), ',')
             length(parts) == N ||
                 throw(DimensionMismatch("$parameter does not match shape $shape"))
             parsed = tryparse.(Int, strip.(parts))

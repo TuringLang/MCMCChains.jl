@@ -163,6 +163,14 @@ draws[:, 2, 1, :] == chn["x[2,1]"]
 all(ismissing, draws[:, 1, 1, :])
 ```
 
+Nested arrays use indices from left to right: `x[1][2]` maps to `(1, 2)`.
+Names with other suffixes, such as `x[1]_acceptance_rate`, are ignored.
+
+```@example parameter_array
+nested = Chains(reshape(1:12, 3, 2, 2), ["x[1][2]", "x[1]_acceptance_rate"])
+Array(nested, :x, (2, 2))[:, 1, 2, :] == nested["x[1][2]"]
+```
+
 ```@docs
 Array(::Chains, ::Union{AbstractString,Symbol}, ::NTuple{N,Integer}) where {N}
 ```
