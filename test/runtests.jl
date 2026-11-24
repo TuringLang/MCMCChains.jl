@@ -71,6 +71,7 @@ Random.seed!(0)
     # run tests for sampling api
     println("Sampling")
     @time include("sampling_tests.jl")
+    @time include("sampling_output_tests.jl")
 
     # run tests for array constructor
     println("Array")

@@ -113,6 +113,11 @@ include("plots/plots.jl")
 include("tables.jl")
 include("rstar.jl")
 
+if pkgversion(AbstractMCMC) >= v"5.18.0"
+    include("sampling_output.jl")
+    export SamplingChains
+end
+
 function write_stancsv end
 function read_stancsv end
 

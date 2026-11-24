@@ -1,5 +1,9 @@
 # MCMCChains Changelog
 
+## 8.0.1
+
+- `SamplingChains` wraps a `SamplingOutput` and preserves structured draws and iteration numbers when sliced. Requires AbstractMCMC 5.18 or later.
+
 ## 8.0.0
 
 ### Added

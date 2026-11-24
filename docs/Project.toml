@@ -1,4 +1,5 @@
 [deps]
+AbstractMCMC = "80f14c24-f653-4e6a-9b94-39d6b0f70001"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -10,6 +11,7 @@ StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 
 [compat]
+AbstractMCMC = "5.18"
 CairoMakie = "0.6 - 0.13.0, 0.13.2 - 0.15"
 CategoricalArrays = "0.8, 0.9, 0.10, 1"
 DataFrames = "0.22, 1"
