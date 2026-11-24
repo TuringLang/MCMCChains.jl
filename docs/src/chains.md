@@ -1,8 +1,6 @@
 # Chains
 
-The methods listed below are defined in `src/chains.jl`.
-
 ```@autodocs
 Modules = [MCMCChains]
-Pages = ["chains.jl"]
+Pages = ["chains.jl", "sampling_output.jl"]
 ```
